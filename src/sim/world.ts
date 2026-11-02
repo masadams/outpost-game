@@ -1,5 +1,8 @@
+import { createCombat, type CombatState, type CombatAction } from './combatConfig';
+import { applyCombatAction, isCombatAction, stepCombat } from './combat';
+import { serviceCombatAtPad } from './combatSupply';
 import { createDefence, type DefenceState } from './defenceConfig';
-import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction } from './defence';
+import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, resolveDefenceHits } from './defence';
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
 import { heading } from './math';
@@ -14,13 +17,13 @@ import { createColony, applyColonyAction, stepColony, type Colony, type ColonyAc
 import { refuelShip } from './colonyService';
 import { notify } from './messages';
 
-export interface WorldControls extends Controls { mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
+export interface WorldControls extends Controls { combatFire?: boolean; combatActions?: CombatAction[]; mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
 export interface WorldState {
   ship: Ship; asteroids: Asteroid[]; pickups: Pickup[]; depot: Inventory;
   beam: Beam | null; tractorActive: boolean; nextId: number; unloaded: number;
   playerMode: 'ship' | 'astronaut'; astronaut: Astronaut; depotOpen: boolean;
   buttons: { board: boolean; interact: boolean }; notice: { message: string; time: number };
-  colony: Colony; defence: DefenceState;
+  colony: Colony; defence: DefenceState; combat: CombatState;
 }
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
@@ -35,17 +38,19 @@ export function createWorld(): WorldState {
   asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
   asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
   return { ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
-    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, colony: createColony(), defence: createDefence() };
+    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, colony: createColony(), defence: createDefence(), combat: createCombat() };
 }
 export function stepWorld(world: WorldState, input: WorldControls, dt: number): void {
   world.notice.time = Math.max(0, world.notice.time - dt);
   if (input.board && !world.buttons.board) { world.defence.controlled = null; boardOrExit(world); }
   for (const action of input.colonyActions ?? []) {
-    if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
+    if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
   }
+  for (const action of input.combatActions ?? []) applyCombatAction(world, action);
   const interact = !!input.unload && !world.buttons.interact;
   world.buttons = { board: !!input.board, interact: !!input.unload };
   const piloting = world.playerMode === 'ship';
+  const startSuit = { ...world.astronaut.position }, meteorStarts = new Map(world.defence.meteors.map(m => [m.id, { ...m.position }]));
   const startShip = { ...world.ship.position };
   const starts = new Map(world.asteroids.map(rock => [rock.id, { ...rock.position }]));
   stepShip(world.ship, piloting ? input : { thrust: false, turn: 0 }, dt);
@@ -71,11 +76,14 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   world.pickups = world.pickups.filter(pickup => pickup.mass > 1e-9);
   if (piloting && input.unload) {
     unloadCargo(world);
+    serviceCombatAtPad(world);
     const fuel = refuelShip(world, world.ship.position);
     if (fuel > 0) notify(world, `FUEL TRANSFERRED · +${fuel.toFixed(1)} kg`);
   }
   stepColony(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
+  stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });
+  resolveDefenceHits(world);
   if (world.asteroids.some(rock => rock.health <= 0)) resolveMinedRocks(world);
 }
 

@@ -74,3 +74,8 @@ kbd { color: #d7e6e8; font-family: inherit; }
 
 #threat-alert { position: absolute; top: 250px; left: 34px; color: #ffb47c; font-size: 10px; background: #201815dc; }
 @media (max-width: 800px) { #threat-alert { left: 16px; top: 222px; } }
+
+.combat-panel { border-top: 1px solid #3b6874; padding-top: 12px; margin-top: 10px; line-height: 1.7; }
+.combat-panel small { display: block; font-size: 9px; line-height: 1.6; }
+#combat-status { position: absolute; right: 34px; top: 198px; font-size: 10px; color: #8bf5ff; background: #0a1724dd; }
+@media (max-width: 1100px) { #combat-status { right: 16px; top: 214px; font-size: 9px; } }

@@ -50,7 +50,7 @@ export function applyDefenceAction(world: WorldState, action: DefenceAction): vo
 }
 export const isDefenceAction = (action: { type: string }): action is DefenceAction => ['startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding'].includes(action.type);
 export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: number, shipStart: Vec): void {
-  resolveDestroyed(world);
+  resolveDefenceHits(world);
   const d = world.defence, starts = new Map(d.meteors.map(m => [m.id, { ...m.position }]));
   const survivors: Meteor[] = [];
   for (const m of d.meteors) {
@@ -64,10 +64,10 @@ export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: 
   d.meteors = survivors;
   controlledTurret(world);
   stepWeapons(world, fire, turn, dt, starts);
-  resolveDestroyed(world);
+  resolveDefenceHits(world);
 }
 
-function resolveDestroyed(world: WorldState): void {
+export function resolveDefenceHits(world: WorldState): void {
   const d = world.defence;
   const destroyed = d.meteors.filter(m => m.health <= 0);
   d.meteors = d.meteors.filter(m => m.health > 0);

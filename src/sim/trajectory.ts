@@ -10,7 +10,7 @@ export interface Trajectory {
 export function predictCoast(ship: Ship, maxSeconds = 180): Trajectory {
   const result: Trajectory = { points: [], seconds: 0, contact: null };
   if (ship.state !== 'flying') return result;
-  const predicted: Ship = { ...ship, position: { ...ship.position }, velocity: { ...ship.velocity }, cargo: { ...ship.cargo }, impact: 0 };
+  const predicted: Ship = { ...ship, position: { ...ship.position }, velocity: { ...ship.velocity }, cargo: { ...ship.cargo }, armament: { ...ship.armament }, impact: 0 };
   result.points.push({ ...predicted.position });
   const steps = Math.ceil(Math.min(240, Math.max(0, maxSeconds)) / STEP);
   for (let i = 1; i <= steps; i++) {

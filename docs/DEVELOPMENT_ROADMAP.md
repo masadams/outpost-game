@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–4, basic sound/help and atmospheric flight feedback are merged through PR #7. The user authorized merging #7 and continuing the roadmap. Phase 5 planetary defence is implemented on its feature branch pending review; Phase 6+ remain separate milestones.
+**Status:** Phases 0–4, basic sound/help and atmospheric flight feedback are merged through PR #7. The user authorized merging #7 and continuing the roadmap. Phase 5 defence is open in PR #8. Phase 6 ship combat is implemented on a branch stacked on #8, pending separate review; Phase 7+ remain separate milestones. The initial technical presentation/UX audit is recorded, with human evaluation and the full overhaul still pending.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -92,6 +92,8 @@ Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) on `feat
 **Exit:** Defend base from a real incoming asteroid, with meaningful damage on failure.
 
 ## Phase 6 — Ship combat and threats
+
+Implemented on `feat/ship-combat`, stacked on PR #8 until defence merges. Pending separate review/merge; checkboxes remain open. See [Task 006](../CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
 **Dependencies:** Phases 1–2, 5.
 - [ ] Ship weapon systems, heat/energy/ammo balancing and hit feedback.
 - [ ] Enemy spacecraft/hostile drones with readable AI behaviours.
@@ -154,7 +156,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review the Phase 5 implementation and playtest alpha 0.3 using [PLAYTEST.md](PLAYTEST.md). Check defence handling, danger, scarcity, repairs and active saves alongside the existing loop before starting Phase 6 ship combat. After Phase 6, begin the Phase 9 visual-direction/UX audit before adding automation interfaces; the full graphics, UX and UI overhaul is a required milestone before reliability playtesting.
+Review Phase 5 defence and Phase 6 combat in dependency order, then playtest alpha 0.4 using [PLAYTEST.md](PLAYTEST.md). Evaluate combat/defence handling, scarcity, repairs/recovery and active saves. Use the initial presentation audit to develop visual direction and contextual layout mockups before automation interfaces; the full Phase 9 overhaul remains required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

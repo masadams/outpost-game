@@ -1,0 +1,30 @@
+import { expect, test } from '@playwright/test';
+
+test('launches, pauses an opt-in drone encounter, fires with heat/ammo feedback, and reloads combat progress', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/'); const hud = page.locator('#hud'), panel = page.locator('.combat-panel');
+  await expect(panel).toHaveAttribute('data-enemies', '0'); await expect(panel).toHaveAttribute('data-encounters', '0');
+  await page.keyboard.down('w'); await page.keyboard.down('Space'); await page.keyboard.down('c');
+  await expect.poll(async () => Number(await hud.getAttribute('data-altitude')), { timeout: 15000, intervals: [100] }).toBeGreaterThan(200);
+  await page.keyboard.up('w'); await page.keyboard.up('Space'); await page.keyboard.up('c');
+  await page.keyboard.press('o'); await expect(panel).toHaveAttribute('data-enemies', '1');
+  await expect(page.locator('#threat-alert')).toContainText('HOSTILE');
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  const ammo = await panel.getAttribute('data-cannon'), altitude = await hud.getAttribute('data-altitude');
+  await page.waitForTimeout(300); expect(await panel.getAttribute('data-cannon')).toBe(ammo); expect(await hud.getAttribute('data-altitude')).toBe(altitude);
+  await page.mouse.move(640, 350); await page.mouse.wheel(0, 300); await page.waitForTimeout(900);
+  await page.screenshot({ path: 'docs/screenshots/ship-combat.png' });
+  await page.keyboard.press('p'); await page.keyboard.press('z'); await expect(page.locator('#combat-status')).toContainText('MISSILE');
+  await page.keyboard.press('z'); await page.keyboard.down('Shift');
+  await expect.poll(async () => Number(await panel.getAttribute('data-shots'))).toBeGreaterThan(0);
+  await expect.poll(async () => Number(await panel.getAttribute('data-cannon'))).toBeLessThan(40);
+  await expect.poll(async () => Number(await panel.getAttribute('data-heat'))).toBeGreaterThan(0);
+  await expect.poll(async () => Number(await panel.getAttribute('data-kills')), { timeout: 25000, intervals: [100] }).toBe(1);
+  await page.keyboard.up('Shift'); await expect(panel).toHaveAttribute('data-enemies', '0');
+  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED');
+  const rounds = await panel.getAttribute('data-cannon');
+  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused');
+  await expect(panel).toHaveAttribute('data-kills', '1'); await expect(panel).toHaveAttribute('data-cannon', rounds!);
+  expect(errors).toEqual([]);
+});

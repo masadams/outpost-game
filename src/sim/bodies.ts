@@ -1,8 +1,9 @@
+import { shipMass } from './shipMass';
 import { WORLD } from './config';
 import { dot, heading, length, type Vec } from './math';
 import { surfaceHit, type Ship } from './physics';
 import { integrateVelocity } from './environment';
-import { inventoryMass, type Resource } from './resources';
+import { type Resource } from './resources';
 
 export interface Body { id: number; position: Vec; velocity: Vec; radius: number; mass: number; resource: Resource }
 export interface Asteroid extends Body { stage: number; health: number; maxHealth: number }
@@ -55,7 +56,7 @@ export function collideShip(ship: Ship, rock: Asteroid, startShip: Vec, startRoc
   // Roll back to contact rather than allowing a fast pass through the moving rock.
   ship.position = { x: startRock.x + (rock.position.x - startRock.x) * hit + n.x * (radius + 0.01),
     y: startRock.y + (rock.position.y - startRock.y) * hit + n.y * (radius + 0.01) };
-  const mass = WORLD.dryMass + ship.fuel + inventoryMass(ship.cargo);
+  const mass = shipMass(ship);
   const impulse = -(1 + 0.25) * inward / (1 / mass + 1 / rock.mass);
   ship.velocity.x += n.x * impulse / mass; ship.velocity.y += n.y * impulse / mass;
   rock.velocity.x -= n.x * impulse / rock.mass; rock.velocity.y -= n.y * impulse / rock.mass;

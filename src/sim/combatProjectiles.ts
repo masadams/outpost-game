@@ -1,0 +1,59 @@
+import { SHIP_WEAPONS, type CombatProjectile, type Drone } from './combatConfig';
+import { integrateVelocity } from './environment';
+import { clamp, length, type Vec } from './math';
+import { WORLD } from './config';
+import { surfaceHit } from './physics';
+import { SUIT } from './astronaut';
+import { damageColony } from './buildingDamage';
+import { lineOfSight } from './weapons';
+import type { Asteroid } from './bodies';
+import type { WorldState } from './world';
+
+export interface CombatStarts { ship: Vec; enemies: Map<number, Vec>; rocks: Map<number, Vec>; meteors: Map<number, Vec>; suit: Vec }
+type Victim = { kind: 'drone'; body: Drone } | { kind: 'rock' | 'meteor'; body: Asteroid } | { kind: 'ship' | 'suit' | 'terrain' };
+export function damageShip(world: WorldState, damage: number): void {
+  const s = world.ship; s.hull = Math.max(0, s.hull - damage); s.impact = 1;
+  if (s.hull === 0) { s.state = 'crashed'; s.velocity = { x: 0, y: 0 }; s.thrusting = false; }
+}
+function missileBlast(world: WorldState, at: Vec, damage: number): void {
+  for (const d of world.combat.enemies) if (Math.hypot(d.position.x - at.x, d.position.y - at.y) <= 64 && lineOfSight(at, d.position)) d.hull = Math.max(0, d.hull - damage);
+  for (const b of [...world.asteroids, ...world.defence.meteors]) if (Math.hypot(b.position.x - at.x, b.position.y - at.y) <= 55 + b.radius && lineOfSight(at, b.position)) b.health -= damage / 50;
+}
+export function stepCombatProjectiles(world: WorldState, dt: number, starts: CombatStarts): void {
+  const c = world.combat, remaining: CombatProjectile[] = [];
+  for (const p of c.projectiles) {
+    const spec = SHIP_WEAPONS[p.kind], start = { ...p.position }, acceleration = { x: 0, y: 0 };
+    const target = p.owner === 'ship' && p.kind === 'missile' ? c.enemies.find(d => d.id === p.targetId && d.hull > 0) : null;
+    if (target) {
+      const delta = { x: target.position.x - start.x, y: target.position.y - start.y }, distance = length(delta);
+      if (distance > 0) { acceleration.x = clamp((delta.x / distance * spec.speed - p.velocity.x) * 3, -80, 80); acceleration.y = clamp((delta.y / distance * spec.speed - p.velocity.y) * 3, -80, 80); }
+    }
+    p.velocity = integrateVelocity(start, p.velocity, acceleration, spec.mass, spec.mass * 0.00125, dt);
+    p.position = { x: start.x + p.velocity.x * dt, y: start.y + p.velocity.y * dt }; p.life = Math.max(0, p.life - dt);
+    let hit = surfaceHit(start, p.position, WORLD.radius + 1), victim: Victim | null = hit === null ? null : { kind: 'terrain' };
+    const test = (position: Vec, previous: Vec, radius: number, candidate: Victim) => {
+      const t = surfaceHit({ x: start.x - previous.x, y: start.y - previous.y }, { x: p.position.x - position.x, y: p.position.y - position.y }, radius + 1.5);
+      if (t !== null && (hit === null || t < hit)) { hit = t; victim = candidate; }
+    };
+    for (const b of world.asteroids) test(b.position, starts.rocks.get(b.id) ?? b.position, b.radius, { kind: 'rock', body: b });
+    for (const b of world.defence.meteors) test(b.position, starts.meteors.get(b.id) ?? b.position, b.radius, { kind: 'meteor', body: b });
+    if (p.owner === 'ship') {
+      for (const d of c.enemies) if (d.hull > 0) test(d.position, starts.enemies.get(d.id) ?? d.position, 9, { kind: 'drone', body: d });
+    } else {
+      if (world.ship.state !== 'crashed') test(world.ship.position, starts.ship, WORLD.shipRadius, { kind: 'ship' });
+      if (world.playerMode === 'astronaut' && world.astronaut.health > 0) test(world.astronaut.position, starts.suit, SUIT.radius, { kind: 'suit' });
+    }
+    if (hit !== null && victim) {
+      const at = { x: start.x + (p.position.x - start.x) * hit, y: start.y + (p.position.y - start.y) * hit };
+      c.flashes.push({ position: at, life: 0.25 });
+      const impacted = victim as Victim;
+      if (p.owner === 'ship' && p.kind === 'missile') missileBlast(world, at, spec.damage);
+      else if (impacted.kind === 'drone') impacted.body.hull = Math.max(0, impacted.body.hull - spec.damage);
+      else if (impacted.kind === 'rock' || impacted.kind === 'meteor') impacted.body.health -= (p.owner === 'enemy' ? 10 : spec.damage) / 50;
+      else if (impacted.kind === 'ship') damageShip(world, 10);
+      else if (impacted.kind === 'suit') world.astronaut.health = Math.max(0, world.astronaut.health - 15);
+      else if (p.owner === 'enemy') damageColony(world, at, 10, 18, 'HOSTILE IMPACT');
+    } else if (p.life > 0) remaining.push(p);
+  }
+  c.projectiles = remaining; c.flashes = c.flashes.slice(-64);
+}

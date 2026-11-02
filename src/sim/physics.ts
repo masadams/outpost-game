@@ -1,6 +1,8 @@
+import { createArmament, type Armament } from './combatConfig';
+import { shipMass } from './shipMass';
 import { ATMOSPHERE, WORLD } from './config';
 import { clamp, dot, heading, length, localAngle, wrap, type Vec } from './math';
-import { emptyInventory, inventoryMass, type Inventory } from './resources';
+import { emptyInventory, type Inventory } from './resources';
 import { integrateVelocity } from './environment';
 export { gravity } from './environment';
 
@@ -11,12 +13,12 @@ export interface Ship {
   position: Vec; velocity: Vec; angle: number; angularVelocity: number;
   fuel: number; hull: number; state: FlightState; thrusting: boolean;
   impact: number; landings: number;
-  cargo: Inventory;
+  cargo: Inventory; armament: Armament;
 }
 export function createShip(): Ship {
   return { position: { x: 0, y: -WORLD.radius - WORLD.shipRadius },
     velocity: { x: 0, y: 0 }, angle: 0, angularVelocity: 0,
-    fuel: WORLD.fuelCapacity, hull: 100, state: 'landed', thrusting: false, impact: 0, landings: 0, cargo: emptyInventory() };
+    fuel: WORLD.fuelCapacity, hull: 100, state: 'landed', thrusting: false, impact: 0, landings: 0, cargo: emptyInventory(), armament: createArmament() };
 }
 export function telemetry(ship: Pick<Ship, 'position' | 'velocity' | 'angle'>, bodyRadius: number = WORLD.shipRadius) {
   const radius = length(ship.position);
@@ -56,7 +58,7 @@ export function stepShip(ship: Ship, input: Controls, dt: number): void {
   ship.angularVelocity = clamp(ship.angularVelocity, -WORLD.maxAngularSpeed, WORLD.maxAngularSpeed);
   ship.angle = wrap(ship.angle + ship.angularVelocity * dt);
   const acceleration = { x: 0, y: 0 };
-  let mass = WORLD.dryMass + ship.fuel + inventoryMass(ship.cargo);
+  let mass = shipMass(ship);
   if (input.thrust && ship.fuel > 0) {
     const consumed = Math.min(ship.fuel, WORLD.burnRate * dt);
     const force = WORLD.thrust * consumed / (WORLD.burnRate * dt);

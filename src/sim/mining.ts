@@ -1,3 +1,4 @@
+import { shipMass as totalShipMass } from './shipMass';
 import { WORLD } from './config';
 import { dot, heading, length, type Vec } from './math';
 import { type Asteroid, type Pickup } from './bodies';
@@ -52,7 +53,7 @@ export function tractor(ship: Ship, pickup: Pickup, dt: number): void {
   if (distance > MINING.tractorRange) return;
   if (distance <= MINING.collectRange) {
     const accepted = Math.min(pickup.mass, CARGO_CAPACITY - inventoryMass(ship.cargo));
-    const mass = WORLD.dryMass + ship.fuel + inventoryMass(ship.cargo);
+    const mass = totalShipMass(ship);
     ship.velocity.x = (ship.velocity.x * mass + pickup.velocity.x * accepted) / (mass + accepted);
     ship.velocity.y = (ship.velocity.y * mass + pickup.velocity.y * accepted) / (mass + accepted);
     ship.cargo[pickup.resource] += accepted; pickup.mass -= accepted;
@@ -65,7 +66,7 @@ export function tractor(ship: Ship, pickup: Pickup, dt: number): void {
   const change = { x: (desired.x - pickup.velocity.x) * gain, y: (desired.y - pickup.velocity.y) * gain };
   const scale = Math.min(1, MINING.tractorAcceleration * dt / Math.max(length(change), 1e-9));
   pickup.velocity.x += change.x * scale; pickup.velocity.y += change.y * scale;
-  const shipMass = WORLD.dryMass + ship.fuel + inventoryMass(ship.cargo);
+  const shipMass = totalShipMass(ship);
   ship.velocity.x -= change.x * scale * pickup.mass / shipMass;
   ship.velocity.y -= change.y * scale * pickup.mass / shipMass;
 }

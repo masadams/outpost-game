@@ -1,3 +1,5 @@
+import { createArmament, createCombat } from '../sim/combatConfig';
+import { validCombat } from './validateCombat';
 import { createDefence } from '../sim/defenceConfig';
 import { validDefence } from './validateDefence';
 import { createWorld, type WorldState } from '../sim/world';
@@ -42,20 +44,25 @@ function validWorld(value: unknown): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 3, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
+  return JSON.stringify({ version: 4, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || ![1, 2, 3].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2, 3, 4].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
   if (envelope.version !== 1 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
-  if (envelope.version !== 3) envelope.world.defence = createDefence();
+  if ((envelope.version as number) < 3) envelope.world.defence = createDefence();
+  if (envelope.version !== 4) {
+    if (!object(envelope.world.ship)) throw new Error('Checkpoint ship is invalid');
+    envelope.world.ship.armament = createArmament(); envelope.world.combat = createCombat();
+  }
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
+  world.combat.flashes = [];
   world.defence.controlled = null; world.defence.beams = [];
   if (envelope.version === 1) { migrateSmallMoon(world); if (!validWorld(world)) throw new Error('Checkpoint migration failed'); }
   world.buttons = { board: false, interact: false }; world.astronaut.jumpHeld = false; world.beam = null; world.tractorActive = false;

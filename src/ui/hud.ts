@@ -19,10 +19,10 @@ export class Hud {
   destroy(): void { this.root.remove(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.3</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
+    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.4</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <div class="status" role="status" aria-live="polite"></div>
-      <div id="threat-alert"></div>
+      <div id="threat-alert"></div><div id="combat-status"></div>
       <aside class="mining" aria-label="Cargo and mining telemetry"></aside>
       <aside class="colony-panel" aria-label="Colony construction and production"></aside>
       <footer><div><b>FLIGHT / COLONY MANUAL</b><p><kbd>W / ↑</kbd> thrust &nbsp; <kbd>A D / ← →</kbd> rotate / walk<br><kbd>SPACE</kbd> mine / jump &nbsp; <kbd>C</kbd> tractor &nbsp; <kbd>E</kbd> unload / interact<br><kbd>F</kbd> board / exit &nbsp; <kbd>B</kbd> build &nbsp; <kbd>K / L</kbd> save / load &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>R</kbd> reset</p></div><div class="landing-guide">TOUCHDOWN ENVELOPE<br><small>Descent ≤ 6 m/s · Drift ≤ 4 m/s<br>Tilt ≤ 15° · Settle rotation before contact</small></div></footer>`;
@@ -55,7 +55,7 @@ export class Hud {
       [onFoot ? 'SUIT' : 'HULL', `${(onFoot ? world.astronaut.health : ship.hull).toFixed(0)}<small> %</small>`],
       [onFoot ? 'FOOTING' : 'TILT', onFoot ? world.astronaut.grounded ? 'GROUND' : 'AIR' : `${(t.tilt * 180 / Math.PI).toFixed(0)}<small> °</small>`] ].map(([label, value]) => `<div><label>${label}</label><strong>${value}</strong></div>`).join('');
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · R TO RESTART' :
-      !onFoot && ship.state === 'crashed' ? 'HULL LOST · R TO RESTART' : world.notice.time > 0 ? world.notice.message :
+      !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? world.notice.message :
       world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
       onFoot ? (world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : 'ON FOOT · A/D WALK · SPACE JUMP · F BOARD') :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
@@ -76,7 +76,11 @@ export class Hud {
     const incoming = threats.filter(t => t.impact).sort((a, b) => a.seconds - b.seconds)[0];
     const alert = this.root.querySelector('#threat-alert')!;
     const warning = world.defence.meteors.length ? `⚠ ${world.defence.meteors.length} INCOMING${incoming ? ` · IMPACT ${incoming.seconds.toFixed(0)} s` : ''}` : '';
-    if (alert.textContent !== warning) alert.textContent = warning;
+    const combatStatus = this.root.querySelector('#combat-status')!, arm = ship.armament;
+    const combatText = world.playerMode === 'ship' ? `${arm.selected.toUpperCase()} ${arm[arm.selected]} · CELL ${arm.energy.toFixed(0)} · HEAT ${arm.heat.toFixed(0)}${arm.overheated ? ' · COOLING LOCK' : ''}` : '';
+    if (combatStatus.textContent !== combatText) combatStatus.textContent = combatText;
+    const hostiles = world.combat.enemies.length ? `${warning ? ' · ' : ''}${world.combat.enemies.length} HOSTILE${world.combat.enemies.every(d => d.state === 'retreat') ? ' · DISENGAGING' : world.combat.enemies.some(d => d.windup > 0) ? ' · DRONE AIMING' : ' · APPROACHING'}` : '';
+    if (alert.textContent !== warning + hostiles) alert.textContent = warning + hostiles;
     this.updateMining(world);
     const panel = colonyPanel(world, paused, threats);
     if (this.colonyMarkup !== panel) { patchMarkup(this.colony, panel); this.colonyMarkup = panel; }

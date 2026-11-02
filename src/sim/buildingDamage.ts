@@ -16,7 +16,7 @@ export function constrainDamagedStorage(world: WorldState): void {
   for (const p of PRODUCTS) { const excess = Math.max(0, c.products[p] - productCapacity(c)); world.defence.lostStock += excess; c.products[p] -= excess; }
   c.energy = Math.min(c.energy, energyCapacity(c));
 }
-export function damageColony(world: WorldState, position: Vec, damage: number, radius: number): void {
+export function damageColony(world: WorldState, position: Vec, damage: number, radius: number, label = 'METEOR IMPACT'): void {
   const angle = localAngle(position);
   let hit = false;
   for (const b of world.colony.buildings) {
@@ -38,7 +38,7 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
     if (distanceSuit < radius) world.astronaut.health = Math.max(0, world.astronaut.health - damage * (1 - distanceSuit / radius));
   }
   constrainDamagedStorage(world);
-  notify(world, hit ? 'METEOR IMPACT · COLONY DAMAGED · U REPAIRS NEARBY FACILITY' : 'METEOR IMPACT · KEEP CLEAR OF THE MARKED SITE');
+  notify(world, hit ? `${label} · COLONY DAMAGED · U REPAIRS NEARBY FACILITY` : `${label} · KEEP CLEAR OF THE MARKED SITE`);
 }
 export function repairBuilding(world: WorldState): void {
   const b = nearbyBuilding(world);

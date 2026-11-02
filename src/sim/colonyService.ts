@@ -1,3 +1,4 @@
+import { resupplyArmament } from './combatSupply';
 import { operational } from './buildingHealth';
 import { SUIT } from './astronaut';
 import { WORLD } from './config';
@@ -25,5 +26,6 @@ export function serviceAtBuilding(world: WorldState, building: Building): void {
   const repair = near ? Math.min(100 - world.ship.hull, products.alloy * 10) : 0;
   world.ship.hull += repair; products.alloy = Math.max(0, products.alloy - repair / 10);
   const fuel = refuelShip(world, at);
+  if (near) resupplyArmament(world);
   notify(world, `SERVICE · O₂ +${(oxygen * SUIT.oxygen).toFixed(0)} s · HULL +${repair.toFixed(0)} · FUEL +${fuel.toFixed(1)} kg`);
 }
