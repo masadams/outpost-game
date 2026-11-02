@@ -63,6 +63,10 @@ Buildings default to 100 hull; impact energy/distance causes radial blast damage
 
 All values are provisional arcade tuning; shields, hostile ships, detailed ammunition manufacturing, campaign escalation and logistical automation belong to later work. This phase is open for review in [PR #8](https://github.com/masadams/outpost-game/pull/8), without enabling automatic merge. See [DEFENCE.md](DEFENCE.md) for controls, numbers and limitations.
 
+## Graphics, UX and UI overhaul commitment
+
+The user explicitly requested a graphics, UX and UI overhaul in the development plan. Phase 9 now requires a full visual and interaction redesign across the playable systems, including contextual HUDs, construction/management flows, onboarding/settings, camera comfort, accessibility, desktop layouts, audio polish and measured graphics budgets. Start visual direction and the UX audit after Phase 6, before adding automation/logistics interfaces; complete the overhaul before Phase 10 reliability playtesting. This schedules future implementation and does not change the current physics or begin the overhaul in the defence milestone. The established retro art direction and continuous-world design remain the foundation. See [Phase 9 in the roadmap](DEVELOPMENT_ROADMAP.md#phase-9--graphics-ux-and-ui-overhaul-audio-polish).
+
 ## Open questions (not decisions)
 - Exact planet scale, gravity strength, thrust-to-weight ratio, orbit speeds and landing tolerances: tune through prototype playtesting.
 - Whether lateral thrusters, landing gear toggles or advanced flight assists improve controls.
