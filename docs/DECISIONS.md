@@ -61,7 +61,7 @@ Three constructed turrets offer manual E/A/D/Space controls and G automation; ma
 
 Buildings default to 100 hull; impact energy/distance causes radial blast damage. Wrecks retain footprints but lose operations/capacity, reporting destroyed overflow inventory and discarding excess charge. U repairs within 18 m for 1 alloy/10 hull; salvage is scaled by remaining hull to prevent wreck refunds. Home pad/terminals remain recovery infrastructure. This is not solid-building structural collision. Version-3 full-world checkpoints persist damage, threats/projectiles, turret state and costs; v1/v2 migrate peacefully, loading pauses/releases manual control and clears visual beams. Existing planetary migration remains intact.
 
-All values are provisional arcade tuning; shields, hostile ships, detailed ammunition manufacturing, campaign escalation and logistical automation belong to later work. This phase gets its own review PR, without enabling automatic merge. See [DEFENCE.md](DEFENCE.md) for controls, numbers and limitations.
+All values are provisional arcade tuning; shields, hostile ships, detailed ammunition manufacturing, campaign escalation and logistical automation belong to later work. This phase is open for review in [PR #8](https://github.com/masadams/outpost-game/pull/8), without enabling automatic merge. See [DEFENCE.md](DEFENCE.md) for controls, numbers and limitations.
 
 ## Open questions (not decisions)
 - Exact planet scale, gravity strength, thrust-to-weight ratio, orbit speeds and landing tolerances: tune through prototype playtesting.

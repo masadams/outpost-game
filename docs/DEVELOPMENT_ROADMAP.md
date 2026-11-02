@@ -80,7 +80,7 @@ Merged in PR #5 after review and successful CI. Includes six facilities, preview
 
 ## Phase 5 — Planetary defence (Missile Command influence)
 
-Implemented on `feat/planetary-defence`, pending PR review/merge; checkboxes stay open until merged. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
+Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) on `feat/planetary-defence`, pending review/merge; checkboxes stay open until merged. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
 **Dependencies:** Phases 1, 4.
 - [ ] Incoming meteors/asteroids with actual world trajectories.
 - [ ] Radar early warning and trajectory indicators.
