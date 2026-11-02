@@ -1,6 +1,7 @@
 import { WORLD } from './config';
 import { dot, heading, length, type Vec } from './math';
-import { gravity, surfaceHit, type Ship } from './physics';
+import { surfaceHit, type Ship } from './physics';
+import { integrateVelocity } from './environment';
 import { inventoryMass, type Resource } from './resources';
 
 export interface Body { id: number; position: Vec; velocity: Vec; radius: number; mass: number; resource: Resource }
@@ -8,8 +9,7 @@ export interface Asteroid extends Body { stage: number; health: number; maxHealt
 export interface Pickup extends Body {}
 
 export function moveBody(body: Body, dt: number): void {
-  const g = gravity(body.position);
-  body.velocity.x += g.x * dt; body.velocity.y += g.y * dt;
+  body.velocity = integrateVelocity(body.position, body.velocity, { x: 0, y: 0 }, body.mass, 0.47 * Math.PI * body.radius ** 2, dt);
   const end = { x: body.position.x + body.velocity.x * dt, y: body.position.y + body.velocity.y * dt };
   const radius = WORLD.radius + body.radius;
   const hit = surfaceHit(body.position, end, radius);

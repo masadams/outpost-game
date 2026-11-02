@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { WORLD } from '../../src/sim/config';
 test('launch, coast, pause, restart and resize in a real browser', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/'); const hud = page.locator('#hud');
@@ -37,7 +38,7 @@ test('exits, walks and jumps to the depot, services the suit, then boards and la
   await page.waitForTimeout(200); expect(await hud.getAttribute('data-oxygen')).toBe(pausedOxygen);
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'landed');
   await page.keyboard.down('d');
-  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 8000, intervals: [100] }).toBeGreaterThan(0.083);
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(50);
   await page.keyboard.up('d');
   // Brake on the surface before opening the depot.
   await page.waitForTimeout(450);
@@ -49,13 +50,13 @@ test('exits, walks and jumps to the depot, services the suit, then boards and la
   await expect.poll(async () => Number(await hud.getAttribute('data-altitude'))).toBeGreaterThan(5);
   await expect(hud).toHaveAttribute('data-grounded', 'true', { timeout: 8000 });
   await page.keyboard.down('a');
-  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 12000, intervals: [100] }).toBeLessThan(-0.083);
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 12000, intervals: [100] }).toBeLessThan(-50);
   await page.keyboard.up('a'); await page.waitForTimeout(450);
   await page.keyboard.press('e');
   await expect.poll(async () => Number(await hud.getAttribute('data-oxygen'))).toBeGreaterThan(179);
   await expect(page.locator('.status')).toContainText('SUIT RESTORED');
   await page.keyboard.down('d');
-  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 8000, intervals: [100] }).toBeGreaterThan(-0.02);
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(-12);
   await page.keyboard.up('d'); await page.keyboard.press('f');
   await expect(hud).toHaveAttribute('data-mode', 'ship');
   await page.keyboard.down('w'); await expect(hud).toHaveAttribute('data-state', 'flying');
@@ -94,7 +95,7 @@ test('constructs a powered production line and preserves its world checkpoint ac
   await expect(hud).toHaveAttribute('data-mode', 'ship');
   await page.keyboard.press('f'); await expect(hud).toHaveAttribute('data-mode', 'astronaut');
   await page.keyboard.down('d');
-  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 10000, intervals: [100] }).toBeGreaterThan(0.16);
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 10000, intervals: [100] }).toBeGreaterThan(96);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-build-open', 'true');
   await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');

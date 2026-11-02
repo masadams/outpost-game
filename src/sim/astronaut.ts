@@ -1,6 +1,7 @@
-import { WORLD } from './config';
+import { ATMOSPHERE, WORLD } from './config';
 import { clamp, dot, heading, length, localAngle, type Vec } from './math';
-import { gravity, surfaceHit } from './physics';
+import { surfaceHit } from './physics';
+import { integrateVelocity } from './environment';
 
 export const SUIT = { radius: 2.5, walkSpeed: 12, acceleration: 30, jumpSpeed: 12, oxygen: 180,
   boardingRange: 20, exitOffset: 14, safeImpact: 14 } as const;
@@ -34,8 +35,7 @@ export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number):
     suit.velocity = { x: tangent.x * speed + normal.x * SUIT.jumpSpeed, y: tangent.y * speed + normal.y * SUIT.jumpSpeed };
     suit.grounded = false;
   }
-  const g = gravity(suit.position);
-  suit.velocity.x += g.x * dt; suit.velocity.y += g.y * dt;
+  suit.velocity = integrateVelocity(suit.position, suit.velocity, { x: 0, y: 0 }, ATMOSPHERE.suitMass, ATMOSPHERE.suitDragArea, dt);
   const end = { x: suit.position.x + suit.velocity.x * dt, y: suit.position.y + suit.velocity.y * dt };
   const contactRadius = WORLD.radius + SUIT.radius;
   const hit = surfaceHit(suit.position, end, contactRadius);

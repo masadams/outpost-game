@@ -2,7 +2,7 @@
 
 A single-player, retro-inspired 2D spaceflight, asteroid mining, combat and colony-building game. Target balance: **60% action / 40% construction**.
 
-**Status:** Playtest alpha 0.1. Flight, mining, surface exploration and colony construction/economy have been reviewed and merged through PRs #2–#5 after explicit user authorization. This playtest pass adds procedural audio, sound controls and the H quick-start guide. Human handling/balance/audio feedback comes next; defence/combat remain deferred.
+**Status:** Playtest alpha 0.2. Phases 0–4 and basic sound/help are merged through PR #6. This feedback iteration adds a larger planet, atmosphere, coast prediction and manual zoom for review. Defence/combat remain deferred.
 
 ## Play locally
 
@@ -28,6 +28,9 @@ Open the local Vite URL in a modern desktop browser. Click the game if keyboard 
 | X / V | Demolish nearby facility (palette open) / cycle nearby refinery recipe |
 | K / L | Save / load browser checkpoint |
 | H / M | Quick-start guide / sound mute |
+| J | Toggle current coast trajectory |
+| Wheel / − / + | Manual camera zoom (also while paused) |
+| 0 | Restore automatic zoom |
 | P | Pause / resume |
 | R | Reset runtime sandbox, including colony; keep saved checkpoint |
 
@@ -35,9 +38,11 @@ The game also pauses when its window loses focus or the tab is hidden. Press P t
 
 The **H** guide includes a first-sortie and construction walkthrough, pauses safely, and returns to your previous pause state when closed. **M** mutes; the top bar controls volume. Sound starts only after your first click/key, and uses original procedural engine/mining/tractor/machinery loops plus landing, impact, pickup, airlock, footstep, construction and warning cues. All audio silences on pause/focus loss. Sound preferences persist separately from your world checkpoint; no external sound assets or music are used. See [the playtest route](docs/PLAYTEST.md).
 
-For a first return flight, launch vertically for about **6.5 seconds**, then coast. Keep the nose upright. Watch radial velocity: positive means climbing, negative means descending. Use short thrust pulses on descent, starting early to keep descent under 30 m/s, then reduce it below 6 m/s near the pad. Thrust is an acceleration, so releasing W preserves momentum. Sustained burns can escape the moon; turn around and burn to return, or press R to practice again.
+For a first return flight, launch vertically for about **6.5 seconds**, holding Space to clear the starter deposit above the pad (or steering around it), then coast. Keep the nose upright. Watch radial velocity: positive means climbing, negative means descending. Use short thrust pulses on descent, starting early to keep descent under 30 m/s, then reduce it below 6 m/s near the pad. Thrust is an acceleration; releasing W leaves gravity and atmospheric drag acting on your momentum. With a clear flight path, this low hop peaks around 467 m; a roughly 10-second vertical burn reaches about 1.7 km. Sustained burns can escape the moon; turn around and burn to return, or press R to practice again.
 
-For orbital flight, gradually pitch toward the horizon after launch and build tangential speed. Circular speed is about 42 m/s at 400 m altitude. The small radar shows the moon, green home pad and amber ship, including when home is off screen. Land on the green pad with radial speed ≤ 6 m/s, tangential speed ≤ 4 m/s, tilt ≤ 15° and angular speed ≤ 0.35 rad/s. A safe touchdown locks the ship to the pad until thrust resumes. Moderate impacts damage hull and rebound; hard or overturned impacts crash. Landing does not refill fuel or repair hull.
+For orbital flight, gradually pitch toward the horizon after launch and build tangential speed. Circular speed is about 69 m/s at 1,600 m altitude, above the 1,200 m atmosphere. Low atmospheric orbits lose energy to drag. The dashed **J coast path** predicts up to 180 seconds with controls released, using the same gravity, drag and terrain collision as live flight. It stops at first terrain contact; rocks, powered tools and future control inputs are excluded. The arrow shows current velocity. **Wheel / − / +** sets manual zoom; **0** returns to altitude-based auto zoom.
+
+The small radar shows the moon, green home pad and amber ship, including when home is off screen. Land on the green pad with radial speed ≤ 6 m/s, tangential speed ≤ 4 m/s, tilt ≤ 15° and angular speed ≤ 0.35 rad/s. A safe touchdown locks the ship to the pad until thrust resumes. Moderate impacts damage hull and rebound; hard or overturned impacts crash. Landing does not refill fuel or repair hull.
 
 ## First mining sortie
 
@@ -76,7 +81,7 @@ The left colony ledger shows generation/demand, energy, material stocks and mach
 
 **K** writes one local browser checkpoint. **L** restores it, and page startup automatically loads an existing checkpoint **paused**; press P to resume. Saves include the entire world: facility placement, production timers, energy, raw/manufactured inventories, depleted asteroid field, ship and suit. Thus loading does not recreate already-mined ore. R starts a fresh runtime sandbox while keeping the last checkpoint; L recovers it. Saving the new runtime with K deliberately replaces that checkpoint.
 
-Saves are local to the browser/origin and are not cloud synced. There is no autosave, offline production or migration from future/unsupported formats. Invalid checkpoints and storage failures leave the live world playable, with feedback. The versioned bounded loader rejects malformed data; a mature save/backup/migration system remains a later roadmap phase.
+Saves are local to the browser/origin and are not cloud synced. There is no autosave or offline production. Version-1 checkpoints migrate to the larger planet, preserving altitude, local heading, signed surface distance from home, inventories, facilities and depleted deposits. They load paused; old orbital paths change with the environment. K writes version 2 using the existing storage slot. Unsupported future formats are rejected. Invalid checkpoints and storage failures leave the live world playable, with feedback. The versioned bounded loader rejects malformed data; a mature save/backup/migration system remains a later roadmap phase.
 
 ## Verification
 
@@ -91,7 +96,7 @@ npm run test:preview
 
 `npm run preview` serves the production build. `dist/` can be hosted on any static HTTP server. `test:browser` checks the dev server; `test:preview` checks the built game. CI runs typecheck, unit tests, build and production Chromium checks, and uploads screenshots, results and the `outpost-playtest` static build artifact.
 
-The **84 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Seven production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
+The **98 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Nine production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Additional checks cover gravity/drag, orbital energy, collision/tractor momentum, trajectory accuracy, zoom and legacy saves. See the [atmosphere and trajectory](docs/screenshots/atmosphere-trajectory.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
 
 ## Architecture and tuning
 
@@ -100,13 +105,13 @@ The **84 unit tests** cover flight, mining, suit/camera behavior, colony constru
 - `src/persistence/`: versioned full-world snapshot encoding, bounded validation and storage adapters; browser storage is accessed only by the scene.
 - `src/audio/`: pure state-to-cue director, guarded preferences and a procedural Web Audio mixer. Phaser's unused sound manager is disabled; audio never mutates simulation state.
 - `src/input/`: keyboard sampling per physics step, retaining short F/E/Space presses until consumed, and focus/pause-safe release.
-- `src/render/`: Phaser scene, procedural world/ship/stars/radar and a smoothed follow frame. Local-up rotation blends into the inertial frame between 100 and 900 m altitude; zoom follows altitude continuously. A transformed world container renders the camera frame, keeping HUD/radar in screen coordinates.
+- `src/render/`: Phaser scene, procedural world/ship/stars/radar and a smoothed follow frame. Local-up rotation blends into the inertial frame between 900 and 1,800 m altitude; zoom follows altitude continuously unless manually overridden. A transformed world container renders the camera frame, keeping HUD/radar in screen coordinates.
 - `src/ui/`: DOM telemetry and controls, outside world transforms.
 - `tests/`: simulation/camera regressions and real Chromium smoke test.
 
-Collision uses a circular 7 m hull swept against the 600 m moon, then classifies pad contact by arc tolerance, speed, tilt and spin. Semi-implicit Euler integration applies radial gravity and fuel-limited thrust with no linear drag. Phaser delta smoothing is disabled so the accumulator receives elapsed time even at low rendering rates. Catch-up is capped at 15 steps/250 ms; long stalls intentionally discard time. Angular damping stabilizes steering without changing linear inertia.
+Collision uses a circular 7 m hull swept against the 1,800 m planet, then classifies pad contact by arc tolerance, speed, tilt and spin. Shared environmental integration applies inverse-square radial gravity, fuel-limited thrust and mass-dependent quadratic atmospheric drag. Gravity smoothly becomes linear inside the planet and reaches zero at its center. Drag reaches zero at 1,200 m; vacuum has no artificial linear damping. See [the physics model](docs/PHYSICS.md) for tuning and limitations. Phaser delta smoothing is disabled so the accumulator receives elapsed time even at low rendering rates. Catch-up is capped at 15 steps/250 ms; long stalls intentionally discard time. Angular damping stabilizes steering without changing linear inertia.
 
-Known limitations: smooth circular terrain; approximate ship/suit collision; suit collides with terrain only, with no air steering, EVA or backpack; buildings are non-solid and have no damage. No autopilot, interpolation, wiring, day/night, offline production or advanced automation. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Panels target desktop widths and are hidden below 560 px; mobile controls are out of scope. Phaser's roughly 1.26 MB minified JS bundle (~352 KB gzip) emits Vite's standard large-chunk warning.
+Known limitations: a fixed non-rotating planet, no mutual object gravity, lift, wind or heating; simplified isotropic drag and collision radii; coast prediction excludes traffic/tools; smooth circular terrain; approximate ship/suit collision; suit collides with terrain only, with no air steering, EVA or backpack; buildings are non-solid and have no damage. No autopilot, interpolation, wiring, day/night, offline production or advanced automation. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Panels target desktop widths and are hidden below 560 px; mobile controls are out of scope. Phaser's roughly 1.27 MB minified JS bundle (~354 KB gzip) emits Vite's standard large-chunk warning.
 
 Next: human playtesting of the current slice before Phase 5 planetary defence. See [the pre-playtest review](docs/PLAYTEST_REVIEW.md). No further systems are needed before this first playtest.
 
@@ -126,4 +131,4 @@ Launch from a small circular moon, fly in a continuous 2D world with radial grav
 ## Development workflow
 Implement one roadmap phase at a time on a feature branch. Open a PR with tests and playtest notes; update the roadmap and decision log. Do not merge automatically.
 
-Tasks 001–004 were reviewed and merged in dependency order for this playtest at the user's explicit request. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).
+Tasks 001–004 and the sound/help pass were reviewed and merged in dependency order for this playtest at the user's explicit request. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).

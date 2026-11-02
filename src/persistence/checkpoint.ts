@@ -4,8 +4,9 @@ import { energyCapacity, oreCapacity, productCapacity } from '../sim/colony';
 import { CARGO_CAPACITY, inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
+import { migrateSmallMoon } from './migratePlanet';
 
-export const SAVE_KEY = 'outpost.checkpoint.v1';
+export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version controls migration.
 type RecordValue = Record<string, unknown>;
 const object = (value: unknown): value is RecordValue => value !== null && typeof value === 'object' && !Array.isArray(value);
 const number = (value: unknown, min = 0, max = 1e9): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
@@ -42,15 +43,17 @@ function validWorld(value: unknown): value is WorldState {
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 1, world });
+  return JSON.stringify({ version: 2, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || envelope.version !== 1 || !validWorld(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2].includes(envelope.version as number) || !validWorld(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (envelope.version === 2 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
   const world = envelope.world;
+  if (envelope.version === 1) { migrateSmallMoon(world); if (!validWorld(world)) throw new Error('Checkpoint migration failed'); }
   world.buttons = { board: false, interact: false }; world.astronaut.jumpHeld = false; world.beam = null; world.tractorActive = false;
-  world.notice = { message: 'CHECKPOINT LOADED · P TO RESUME', time: 3 };
+  world.notice = { message: envelope.version === 1 ? 'CHECKPOINT MIGRATED TO LARGER PLANET · P TO RESUME' : 'CHECKPOINT LOADED · P TO RESUME', time: 3 };
   return world;
 }
 export function writeCheckpoint(storage: Pick<Storage, 'setItem'>, world: WorldState): void { storage.setItem(SAVE_KEY, encodeCheckpoint(world)); }

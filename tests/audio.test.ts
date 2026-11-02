@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AudioDirector } from '../src/audio/director';
 import { parsePreferences } from '../src/audio/preferences';
 import { createWorld } from '../src/sim/world';
+import { WORLD } from '../src/sim/config';
 
 describe('audio events stay separate from simulation', () => {
   it('emits launch, impact, touchdown and crash cues only on transitions', () => {
@@ -41,7 +42,7 @@ describe('audio events stay separate from simulation', () => {
   });
   it('coalesces construction cues and restricts production hum to nearby working facilities', () => {
     const world = createWorld(), director = new AudioDirector(); director.reset(world);
-    world.colony.buildings.push({ id: 1, kind: 'refinery', angle: 0.2, enabled: true, recipe: 0, progress: 1.9, status: 'running' });
+    world.colony.buildings.push({ id: 1, kind: 'refinery', angle: 120 / WORLD.radius, enabled: true, recipe: 0, progress: 1.9, status: 'running' });
     expect(director.update(world, 1 / 60, false)).toMatchObject({ cues: ['build'], machinery: true });
     world.colony.buildings[0].progress = 0;
     expect(director.update(world, 1 / 60, false).cues).toContain('production');

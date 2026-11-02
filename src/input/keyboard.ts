@@ -7,9 +7,9 @@ export class Keyboard {
   private pending = new Set<string>();
   private onBlur = (): void => this.release();
   constructor(scene: Phaser.Scene) {
-    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,Q,T,ENTER,X,V,K,L,M,H', true) as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO', true) as Record<string, Phaser.Input.Keyboard.Key>;
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
-    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H']) {
+    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
         if (!event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
@@ -41,5 +41,9 @@ export class Keyboard {
   load(): boolean { return this.pending.delete('L'); }
   mute(): boolean { return this.pending.delete('M'); }
   help(): boolean { return this.pending.delete('H'); }
+  trajectory(): boolean { return this.pending.delete('J'); }
+  zoomIn(): boolean { return this.pending.delete('PLUS'); }
+  zoomOut(): boolean { return this.pending.delete('MINUS'); }
+  autoZoom(): boolean { return this.pending.delete('ZERO'); }
   destroy(): void { window.removeEventListener('blur', this.onBlur); this.release(); }
 }

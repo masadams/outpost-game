@@ -3,7 +3,7 @@ import { applyColonyAction, energyCapacity, oreCapacity, placementError, stepCol
 import { BUILD_TYPES, type BuildType } from '../src/sim/colonyConfig';
 import { refuelShip, serviceAtBuilding } from '../src/sim/colonyService';
 import { FixedClock } from '../src/sim/clock';
-import { STEP, WORLD } from '../src/sim/config';
+import { ATMOSPHERE, STEP, WORLD } from '../src/sim/config';
 import { inventoryMass } from '../src/sim/resources';
 import { stationPosition } from '../src/sim/stations';
 import { createWorld, stepWorld, unloadCargo, type WorldState } from '../src/sim/world';
@@ -21,7 +21,7 @@ describe('surface construction', () => {
     const world = createWorld(); BUILD_TYPES.forEach((kind, i) => build(world, kind, 120 + i * 40));
     expect(world.colony.buildings).toHaveLength(6); expect(new Set(world.colony.buildings.map(b => b.id)).size).toBe(6);
     expect(world.colony.products.alloy).toBe(0); expect(world.colony.products.wire).toBe(2);
-    expect(world.colony.buildings[0].angle).toBeCloseTo(0.2);
+    expect(world.colony.buildings[0].angle * WORLD.radius).toBeCloseTo(120);
     expect(oreCapacity(world.colony)).toBe(600); expect(energyCapacity(world.colony)).toBe(220);
   });
   it('rejects piloting, airborne, pad/terminal, overlapping and unaffordable sites without spending', () => {
@@ -30,7 +30,7 @@ describe('surface construction', () => {
     world.playerMode = 'astronaut'; world.astronaut.grounded = false; expect(placementError(world)).toMatch(/Stand/);
     world.astronaut.grounded = true; world.astronaut.position = stationPosition(0);
     expect(placementError(world, 'solar', 0)).toMatch(/pad/);
-    expect(placementError(world, 'solar', 0.09)).toMatch(/terminals/);
+    expect(placementError(world, 'solar', 54 / WORLD.radius)).toMatch(/terminals/);
     build(world, 'solar', 120); expect(placementError(world)).toMatch(/overlap/);
     world.astronaut.position = stationPosition(0.5); world.colony.products.alloy = 0;
     expect(placementError(world)).toMatch(/materials/);
@@ -44,7 +44,7 @@ describe('surface construction', () => {
   });
   it('blocks storage demolition that would strand inventory, and clamps discarded battery charge', () => {
     const world = createWorld(); build(world, 'storage', 120); world.depot.iron = 500;
-    world.astronaut.position = stationPosition(0.2); applyColonyAction(world, { type: 'demolish' });
+    world.astronaut.position = stationPosition(120 / WORLD.radius); applyColonyAction(world, { type: 'demolish' });
     expect(world.colony.buildings).toHaveLength(1);
     world.depot.iron = 390; applyColonyAction(world, { type: 'demolish' }); expect(world.colony.buildings).toHaveLength(0);
     build(world, 'battery', 160); world.colony.energy = 220;
@@ -96,7 +96,7 @@ describe('power and manufacturing', () => {
   });
   it('keeps production running while the player is piloting away from the colony', () => {
     const world = createWorld(); build(world, 'solar', 120); build(world, 'fuelProcessor', 160);
-    world.playerMode = 'ship'; world.ship.state = 'flying'; world.ship.position.y = -1500;
+    world.playerMode = 'ship'; world.ship.state = 'flying'; world.ship.position.y = -WORLD.radius - ATMOSPHERE.height - 500;
     for (let i = 0; i < 240; i++) stepWorld(world, { thrust: false, turn: 0 }, STEP);
     expect(world.colony.products.fuel).toBe(1.25);
   });

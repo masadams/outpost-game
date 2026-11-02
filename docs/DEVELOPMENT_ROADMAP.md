@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–4 have been implemented, tested, reviewed and merged as PRs #2–#5 after explicit user authorization. The playtest pass adds basic procedural sound and H help. Human handling, balance and audio-mix feedback is the next step; defence and further systems are deferred.
+**Status:** Phases 0–4 have been implemented, tested, reviewed and merged as PRs #2–#5 after explicit user authorization. PR #6 adds basic procedural sound and H help. Alpha 0.2 implements the first flight feedback below for review; defence and further systems are deferred.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -10,6 +10,16 @@
 - Keep physics/simulation independent of Phaser renderer and input.
 - No automatic merges. Every PR reports tests actually run and updates this roadmap and DECISIONS.md if needed.
 - Milestone complete only when its acceptance criteria are demonstrated in a playable build.
+
+## Current feedback iteration — alpha 0.2
+
+Implemented on `feat/atmospheric-flight-trajectory`, pending review/merge (checkboxes remain open until merged):
+- [ ] Larger 1.8 km planet and 1.2 km atmosphere with shared gravity/drag for dynamic bodies.
+- [ ] Controls-released coast prediction and velocity arrow, J toggle, manual zoom and 0 auto.
+- [ ] Preserve legacy checkpoint progress on the larger planet; load paused.
+- [ ] Verify physics invariants and production browser playtest routes; document tuning/limits.
+
+No Phase 5 defence/combat work is included. Continue human handling/camera feedback first.
 
 ## Phase 0 — Foundations and design
 

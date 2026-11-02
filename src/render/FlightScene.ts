@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Keyboard } from '../input/keyboard';
 import { FixedClock } from '../sim/clock';
-import { WORLD } from '../sim/config';
+import { ATMOSPHERE, WORLD } from '../sim/config';
 import { heading, localAngle } from '../sim/math';
 import { createWorld, stepWorld } from '../sim/world';
 import { RESOURCE_INFO } from '../sim/resources';
@@ -16,6 +16,11 @@ import { readCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
 import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
 import { SoundControls } from '../ui/SoundControls';
+import { FlightTools, type ViewAction } from '../ui/FlightTools';
+import { predictCoast, type Trajectory } from '../sim/trajectory';
+import { createAtmosphere } from './atmosphere';
+import { createPlanet } from './planet';
+import { drawTrajectory } from './trajectory';
 
 export class FlightScene extends Phaser.Scene {
   private simulation = createWorld();
@@ -26,6 +31,8 @@ export class FlightScene extends Phaser.Scene {
   private hud!: Hud;
   private world!: Phaser.GameObjects.Container;
   private art!: Phaser.GameObjects.Graphics;
+  private atmosphere!: Phaser.GameObjects.Image;
+  private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
   private map!: Phaser.GameObjects.Graphics;
   private paused = false;
@@ -35,6 +42,9 @@ export class FlightScene extends Phaser.Scene {
   private soundControls!: SoundControls;
   private help!: Help;
   private pausedBeforeHelp = false;
+  private flightTools!: FlightTools;
+  private prediction: Trajectory | null = null;
+  private predictionTime = 0;
   private starPoints = Array.from({ length: 240 }, (_, i) => ({ x: ((i * 0.61803398875) % 1), y: ((i * i * 0.41421356237) % 1), bright: i % 7 === 0 }));
   constructor() { super('flight'); }
   create(): void {
@@ -45,18 +55,33 @@ export class FlightScene extends Phaser.Scene {
       this.setPaused(open ? true : this.pausedBeforeHelp);
     });
     this.soundControls = new SoundControls(this.audio, () => this.help.toggle());
+    this.flightTools = new FlightTools(action => this.viewAction(action));
     this.loadCheckpoint(false);
     this.audio.reset(this.simulation);
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship);
     this.stars = this.add.graphics();
-    this.world = this.add.container(0, 0); this.art = this.add.graphics(); this.world.add(this.art);
+    this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
+    this.planet = createPlanet(this);
+    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.art]);
     this.map = this.add.graphics();
     const blur = () => this.setPaused(true), visibility = () => { if (document.hidden) this.setPaused(true); };
     window.addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
+    const wheel = (event: WheelEvent) => {
+      if (this.help.isOpen) return;
+      this.follow.zoomBy(Math.exp(-Math.max(-300, Math.min(300, event.deltaY)) * 0.002)); event.preventDefault();
+    };
+    this.game.canvas.addEventListener('wheel', wheel, { passive: false });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility);
       this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
+      this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
+  }
+  private viewAction(action: ViewAction): void {
+    if (this.help.isOpen) return;
+    if (action === 'trajectory') { this.flightTools.trajectory = !this.flightTools.trajectory; this.prediction = null; }
+    else if (action === 'autoZoom') this.follow.autoZoom();
+    else this.follow.zoomBy(action === 'zoomIn' ? 1.25 : 0.8);
   }
   private setPaused(value: boolean): void {
     this.paused = value; this.keys.release(); this.colonyActions = []; this.clock.reset();
@@ -65,21 +90,32 @@ export class FlightScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (this.keys.mute()) this.audio.toggleMute();
     if (this.keys.help()) this.help.toggle();
-    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship); this.audio.reset(this.simulation); }
+    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship); this.audio.reset(this.simulation); this.prediction = null; }
     if (!this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
       catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
     }
     if (!this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
     if (!this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
+    if (!this.help.isOpen) {
+      if (this.keys.trajectory()) this.viewAction('trajectory');
+      if (this.keys.zoomIn()) this.viewAction('zoomIn');
+      if (this.keys.zoomOut()) this.viewAction('zoomOut');
+      if (this.keys.autoZoom()) this.viewAction('autoZoom');
+    }
     if (!this.paused) {
       this.clock.advance(delta / 1000, dt => {
         const input = this.keys.read();
         stepWorld(this.simulation, { ...input, colonyActions: [...(input.colonyActions ?? []), ...this.colonyActions.splice(0)] }, dt);
       });
-      const onFoot = this.simulation.playerMode === 'astronaut';
-      this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot);
     }
+    const onFoot = this.simulation.playerMode === 'astronaut';
+    this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot);
+    this.predictionTime += delta / 1000;
+    if (this.flightTools.trajectory && (this.prediction === null || (!this.paused && this.predictionTime >= 0.2))) {
+      this.prediction = predictCoast(this.ship); this.predictionTime = 0;
+    }
+    this.flightTools.update(this.ship, this.follow, this.prediction);
     this.audio.update(this.simulation, this.paused, delta / 1000);
     this.soundControls.update();
     this.draw();
@@ -93,6 +129,7 @@ export class FlightScene extends Phaser.Scene {
         this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
         this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship);
         this.audio.reset(saved); this.audio.silence();
+        this.prediction = null;
       } else if (requested) notify(this.simulation, 'NO CHECKPOINT · PRESS K TO SAVE');
     } catch { notify(this.simulation, 'CHECKPOINT INVALID OR STORAGE UNAVAILABLE · CURRENT WORLD KEPT'); }
   }
@@ -105,25 +142,16 @@ export class FlightScene extends Phaser.Scene {
     }
     this.world.setPosition(width / 2, height * 0.53).setScale(this.follow.zoom).setRotation(-this.follow.angle);
     g.setPosition(-this.follow.x, -this.follow.y);
-    g.lineStyle(2, 0x314b58, 0.35); g.strokeCircle(0, 0, WORLD.radius + 90);
-    g.fillStyle(0x17282e); g.fillCircle(0, 0, WORLD.radius);
-    g.lineStyle(2, 0x6a8b8b); g.strokeCircle(0, 0, WORLD.radius);
-    // Deterministic geological markings, entirely inside the collision rim.
-    for (let i = 0; i < 100; i++) {
-      const a = i * 2.399963; const r = 50 + ((i * 137) % 500);
-      g.lineStyle(1, 0x30464b, 0.8); g.strokeCircle(Math.cos(a) * r, Math.sin(a) * r, 4 + i % 19);
-    }
-    for (let i = 0; i < 180; i++) {
-      const n = heading(i * Math.PI / 90);
-      g.lineStyle(1, 0x466263, 0.7); g.lineBetween(n.x * 590, n.y * 590, n.x * 598, n.y * 598);
-    }
-    g.lineStyle(4, 0x73f3cf); g.lineBetween(-30, -600, 30, -600);
+    this.atmosphere.setPosition(-this.follow.x, -this.follow.y);
+    this.planet.setPosition(-this.follow.x, -this.follow.y);
+    g.lineStyle(4, 0x73f3cf); g.lineBetween(-30, -WORLD.radius, 30, -WORLD.radius);
     for (const x of [-32, 32]) {
-      g.lineStyle(1, 0x73f3cf); g.lineBetween(x, -600, x, -618);
-      g.fillStyle(0x73f3cf); g.fillCircle(x, -619, 2);
+      g.lineStyle(1, 0x73f3cf); g.lineBetween(x, -WORLD.radius, x, -WORLD.radius - 18);
+      g.fillStyle(0x73f3cf); g.fillCircle(x, -WORLD.radius - 19, 2);
     }
     // Pad beacon remains visible at orbital zoom.
-    g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -607, 16 / this.follow.zoom);
+    g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -WORLD.radius - WORLD.shipRadius, 16 / this.follow.zoom);
+    if (this.flightTools.trajectory) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
     drawColony(g, this.simulation);
     drawSurface(g, this.simulation);
@@ -143,6 +171,7 @@ export class FlightScene extends Phaser.Scene {
     const m = this.map; m.fillStyle(0x0a1724, 0.9); m.fillCircle(mx, my, 68);
     m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
     m.lineStyle(1, 0x3b5969); m.strokeCircle(mx, my, radius);
+    m.lineStyle(1, 0x5481b0, 0.6); m.strokeCircle(mx, my, radius * (1 + ATMOSPHERE.height / WORLD.radius));
     m.fillStyle(0x73f3cf); m.fillRect(mx - 3, my - radius - 2, 6, 4);
     const angle = localAngle(s.position); const direction = heading(angle);
     const distance = Math.min(61, Math.hypot(s.position.x, s.position.y) / WORLD.radius * radius);
