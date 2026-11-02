@@ -3,12 +3,15 @@ import { Keyboard } from '../input/keyboard';
 import { FixedClock } from '../sim/clock';
 import { WORLD } from '../sim/config';
 import { heading, localAngle } from '../sim/math';
-import { createShip, stepShip } from '../sim/physics';
+import { createWorld, stepWorld } from '../sim/world';
+import { RESOURCE_INFO } from '../sim/resources';
 import { Hud } from '../ui/hud';
 import { FlightCamera } from './camera';
+import { drawMining } from './mining';
 
 export class FlightScene extends Phaser.Scene {
-  private ship = createShip();
+  private simulation = createWorld();
+  private get ship() { return this.simulation.ship; }
   private clock = new FixedClock();
   private follow = new FlightCamera();
   private keys!: Keyboard;
@@ -30,15 +33,15 @@ export class FlightScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', () => { if (document.hidden) { this.paused = true; this.clock.reset(); } });
   }
   update(_time: number, delta: number): void {
-    if (this.keys.restart()) { this.ship = createShip(); this.clock.reset(); this.follow.reset(this.ship); this.paused = false; }
+    if (this.keys.restart()) { this.simulation = createWorld(); this.keys.release(); this.clock.reset(); this.follow.reset(this.ship); this.paused = false; }
     if (this.keys.pause()) { this.paused = !this.paused; this.clock.reset(); }
     if (!this.paused) {
-      const input = this.keys.read(); this.clock.advance(delta / 1000, dt => stepShip(this.ship, input, dt));
+      const input = this.keys.read(); this.clock.advance(delta / 1000, dt => stepWorld(this.simulation, input, dt));
       this.follow.update(this.ship, Math.min(delta / 1000, 0.1));
     }
     this.draw();
     this.hudTime += delta;
-    if (this.hudTime > 50) { this.hud.update(this.ship, this.paused); this.hudTime = 0; }
+    if (this.hudTime > 50) { this.hud.update(this.simulation, this.paused); this.hudTime = 0; }
   }
   private draw(): void {
     const { width, height } = this.scale;
@@ -68,6 +71,7 @@ export class FlightScene extends Phaser.Scene {
     }
     // Pad beacon remains visible at orbital zoom.
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -607, 16 / this.follow.zoom);
+    drawMining(g, this.simulation, this.follow.zoom);
     const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
     const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
     const p = (x: number, y: number) => new Phaser.Geom.Point(s.position.x + (right.x * x + n.x * y) * visibilityScale, s.position.y + (right.y * x + n.y * y) * visibilityScale);
@@ -80,12 +84,18 @@ export class FlightScene extends Phaser.Scene {
       g.fillStyle(0xffbb73); g.fillPoints([p(-3, -6), p(3, -6), p(0, -16 - Math.sin(this.time.now / 45) * 3)], true);
     }
     // Radar shows the complete moon and the direction home at every altitude.
-    const mx = width - 92, my = height - 178, radius = 48;
+    const mx = width > 560 ? width - 380 : width - 92, my = height - 178, radius = 22;
     const m = this.map; m.fillStyle(0x0a1724, 0.9); m.fillCircle(mx, my, 68);
+    m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
     m.lineStyle(1, 0x3b5969); m.strokeCircle(mx, my, radius);
     m.fillStyle(0x73f3cf); m.fillRect(mx - 3, my - radius - 2, 6, 4);
     const angle = localAngle(s.position); const direction = heading(angle);
     const distance = Math.min(61, Math.hypot(s.position.x, s.position.y) / WORLD.radius * radius);
     m.fillStyle(0xffcf94); m.fillCircle(mx + direction.x * distance, my + direction.y * distance, 3);
+    for (const rock of this.simulation.asteroids) {
+      const distance = Math.hypot(rock.position.x, rock.position.y);
+      const scale = Math.min(radius / WORLD.radius, 61 / distance);
+      m.fillStyle(RESOURCE_INFO[rock.resource].color, 0.8); m.fillCircle(mx + rock.position.x * scale, my + rock.position.y * scale, 1.5);
+    }
   }
 }

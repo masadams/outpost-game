@@ -24,3 +24,25 @@ test('launch, coast, pause, restart and resize in a real browser', async ({ page
   await expect.poll(async () => page.locator('canvas').evaluate(c => c.clientWidth)).toBe(900);
   expect(errors).toEqual([]);
 });
+
+test('mines the starter deposit, collects ore and resets the complete sortie', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/'); const hud = page.locator('#hud');
+  await expect(hud).toHaveAttribute('data-state', 'landed');
+  await expect(hud).toHaveAttribute('data-asteroids', '15');
+  await page.keyboard.down('w'); await page.keyboard.down('Space'); await page.keyboard.down('c');
+  await expect(hud).toHaveAttribute('data-mining', 'active');
+  await expect.poll(async () => Number(await hud.getAttribute('data-cargo')), { timeout: 15000 }).toBeGreaterThan(0);
+  await page.keyboard.up('w'); await page.keyboard.up('Space'); await page.keyboard.up('c');
+  await expect(hud).toHaveAttribute('data-mining', 'idle');
+  await expect(page.locator('.mining')).toContainText('ORE SECURED');
+  await page.screenshot({ path: 'docs/screenshots/mining-cargo.png' });
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  const cargo = await hud.getAttribute('data-cargo'); const pickups = await hud.getAttribute('data-pickups');
+  await page.waitForTimeout(300);
+  expect(await hud.getAttribute('data-cargo')).toBe(cargo); expect(await hud.getAttribute('data-pickups')).toBe(pickups);
+  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-state', 'landed');
+  await expect(hud).toHaveAttribute('data-cargo', '0.00'); await expect(hud).toHaveAttribute('data-depot', '0.00');
+  await expect(hud).toHaveAttribute('data-asteroids', '15'); await expect(hud).toHaveAttribute('data-pickups', '0');
+  expect(errors).toEqual([]);
+});

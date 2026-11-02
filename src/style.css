@@ -21,5 +21,12 @@ footer b, .landing-guide { font-size: 10px; letter-spacing: 1px; color: #92b2c2;
 footer p { margin: 10px 0 0; font-size: 11px; line-height: 2; color: #819bab; }
 kbd { color: #d7e6e8; font-family: inherit; }
 .landing-guide { text-align: right; line-height: 1.9; }
+.mining { position: absolute; right: 34px; top: 218px; width: 260px; padding: 16px; border: 1px solid #29404e; background: #0a1724e8; font-size: 11px; }
+.cargo-meter { height: 3px; background: #29404e; margin: 10px 0 14px; }
+.cargo-meter i { display: block; height: 100%; background: #73f3cf; }
+.resource { display: flex; justify-content: space-between; color: #a8bbc9; line-height: 1.9; }
+.objective { color: #73f3cf; line-height: 1.6; margin: 12px 0; }
+.target { padding: 12px 0; border-top: 1px solid #29404e; line-height: 1.7; }
+@media (max-width: 1100px) { .mining { top: 230px; width: 220px; right: 16px; font-size: 10px; padding: 12px; } .mining .resource { line-height: 1.5; } .mining .target { padding: 6px 0; } .mining .objective { margin: 7px 0; } }
 @media (max-width: 800px) { #hud { padding: 16px; } .instruments div { padding: 10px; min-width: 86px; } .mission { display: none; } strong { font-size: 17px; } .status { top: 195px; } footer { left: 16px; right: 16px; } }
-@media (max-width: 560px) { .instruments { flex-wrap: wrap; max-width: 280px; } .status { top: 270px; } .landing-guide { display: none; } }
+@media (max-width: 560px) { .instruments { flex-wrap: wrap; max-width: 280px; } .status { top: 270px; } .landing-guide { display: none; } .mining { display: none; } }

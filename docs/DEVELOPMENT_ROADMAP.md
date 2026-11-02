@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Task 001 implementation is ready on the feature branch, pending review and merge. Phase 2 has not started.
+**Status:** Task 001 flight and the requested next iteration, Task 002 mining/cargo, are implemented on stacked feature branches pending review and merge. Review Task 001 first; neither PR is merged automatically.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -23,7 +23,7 @@ Review note: the Task 001 PR implements bootstrap, module architecture and CI. C
 
 ## Phase 1 — Planetary flight (Codex Task 001)
 
-Review note: the Task 001 PR implements all items below. Local verification covers build, typecheck, 24 simulation/camera tests (including full orbit and launch-to-space/return-to-pad), plus Chromium keyboard/resize checks with screenshots. Human flight-feel review and hosted CI results remain review steps. Checkboxes remain open until merge.
+Review note: the Task 001 PR implements all items below. Local verification covers build, typecheck, 24 simulation/camera tests (including full orbit and launch-to-space/return-to-pad), plus Chromium keyboard/resize checks with screenshots. Hosted CI passed on flight PR #2; human flight-feel review remains pending. Checkboxes remain open until merge.
 **Dependencies:** Phase 0 bootstrap.
 - [ ] Implement one circular moon in a persistent 2D Cartesian world.
 - [ ] Implement fixed-step physics, radial gravity, ship thrust/rotation/inertia and fuel.
@@ -35,6 +35,8 @@ Review note: the Task 001 PR implements all items below. Local verification cove
 **Exit:** Take off, fly around moon, land on original pad without scene transitions.
 
 ## Phase 2 — Space environment and mining
+
+Review note: [Task 002](../CODEX_TASK_002.md) implements the items below as a separate PR stacked on flight PR #2. All 36 unit tests pass, including a complete launch/mine/collect/land/unload simulation with mass conservation. Chromium checks cover actual mining/tractor input and complete reset, alongside existing flight controls. The full browser return flight and human flight/mining feel remain review steps. Keep boxes open until review and merge; the next-iteration request advances implementation without merging Task 001.
 **Dependencies:** Phase 1.
 - [ ] Spawn and simulate asteroid fields at appropriate levels of detail.
 - [ ] Implement mining laser and destructible/fracturing asteroid bodies.
@@ -126,7 +128,7 @@ Review note: the Task 001 PR implements all items below. Local verification cove
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review **Codex Task 001** implementation, screenshots, test results and flight/landing feel. After merge, mark verified Phase 0/1 items complete. Do not start Phase 2 before flight feel and landing are reviewed.
+Review **Task 001** flight/landing first, then the stacked **Task 002** mining/cargo implementation and evidence. After merge, mark verified items complete. Do not start Phase 3 before these loops are reviewed.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.
