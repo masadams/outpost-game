@@ -2,7 +2,7 @@
 
 A single-player, retro-inspired 2D spaceflight, asteroid mining, combat and colony-building game. Target balance: **60% action / 40% construction**.
 
-**Status:** Playtest alpha 0.4. Atmospheric flight is merged through PR #7. Defence is open in PR #8; this next branch stacks Phase 6 ship combat on it for separate review. It adds opt-in hostile drones, finite ship weapons, heat/energy, supplied repair/rearm/recovery and version-4 saves. The required graphics/UX/UI overhaul remains Phase 9, with its initial technical audit started after the combat slice.
+**Status:** Playtest alpha 0.5. Phases 0–6, including defence/combat, are merged through PR #9. This pre-automation presentation pass adds a contextual operations dock, a clear central flight area, bottom instruments and a visual-direction foundation. Phase 7 automation follows review; the full Phase 9 graphics/UX/UI overhaul remains required.
 
 ## Play locally
 
@@ -30,6 +30,7 @@ Open the local Vite URL in a modern desktop browser. Click the game if keyboard 
 | G / U | Toggle nearby turret automation / repair nearby building |
 | Shift / Z | Fire ship combat weapon / switch cannon or missile |
 | O / Backspace | Start opt-in hostile patrol above 200 m / recover a wreck using supplies |
+| I / Esc | Toggle Cargo / close operations panel (Esc closes help first) |
 | K / L | Save / load browser checkpoint |
 | H / M | Quick-start guide / sound mute |
 | J | Toggle current coast trajectory |
@@ -37,6 +38,8 @@ Open the local Vite URL in a modern desktop browser. Click the game if keyboard 
 | 0 | Restore automatic zoom |
 | P | Pause / resume |
 | R | Reset runtime sandbox, including colony; keep saved checkpoint |
+
+Top-left **Cargo / Colony / Combat / Defence** buttons open one operations dock on the right. Relevant panels open on context transitions; closing/browsing stays in effect until the next transition. **I** toggles Cargo; **Esc** closes the panel and returns focus to the game. Panels and zoom can be inspected while paused; opening a panel does not pause. Bottom instruments, weapon state, warnings and radar remain available with the dock closed. See [the visual direction and layout references](docs/PRESENTATION_DIRECTION.md).
 
 The game also pauses when its window loses focus or the tab is hidden. Press P to resume; keys are released on pause to avoid queued actions. Flight controls rotate the ship in world space even as the camera reorients.
 
@@ -77,7 +80,7 @@ The finite starter kit contains **28 alloy, 14 wire, 8 components, 4 water and 2
 5. Fuel processors turn **1 water + 0.25 oxygen into 1.25 fuel** in 3 powered seconds. Return to the landed ship and E unloads/refuels from colony tanks, up to tank capacity. Fuel never appears without feedstock. Built repair/fuel stations also transfer fuel within 80 m of a landed ship, use 2 kJ per service, and spend alloy on hull repair and oxygen on suit refill.
 6. Add **batteries** for 200 kJ each (base capacitor 20 kJ), **storage** for 200 kg extra ore and 100 kg extra room per manufactured product (base 400 kg ore / 100 kg each product), and **repair/fuel stations** for away-from-home suit service. X removes a nearby facility while B is open, refunding up to 75% scaled by remaining hull; removing essential storage is blocked, and excess battery charge is discarded.
 
-The left colony ledger shows generation/demand, energy, material stocks and machine status. Scroll the panel to reach all controls. The grid and inventories form a single global bus in this prototype; solar output is constant. Production machines receive power in placement order, followed by turrets in placement order. If total demand exceeds generation, batteries buffer the deficit and machines wait rather than generating free output. Storage and batteries are passive capacities with no power switch. Facilities remain non-solid surface markers, but meteor impacts damage them and wrecks stop operating.
+The Colony panel shows generation/demand, energy, material stocks and machine status. Scroll the panel to reach all controls. The grid and inventories form a single global bus in this prototype; solar output is constant. Production machines receive power in placement order, followed by turrets in placement order. If total demand exceeds generation, batteries buffer the deficit and machines wait rather than generating free output. Storage and batteries are passive capacities with no power switch. Facilities remain non-solid surface markers, but meteor impacts damage them and wrecks stop operating.
 
 ![Colony production line](docs/screenshots/colony-production.png)
 
@@ -116,7 +119,7 @@ npm run test:preview
 
 `npm run preview` serves the production build. `dist/` can be hosted on any static HTTP server. `test:browser` checks the dev server; `test:preview` checks the built game. CI runs typecheck, unit tests, build and production Chromium checks, and uploads screenshots, results and the `outpost-playtest` static build artifact.
 
-The **137 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Eleven production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Additional checks cover ship combat victories/return/paid repair and rearm with both weapons, recoil and ammunition mass, drone behaviors, live combat saves and recovery, plus full defence victories for all weapon variants, impact/repair and scarcity, manual/automatic turret controls, active-drill checkpoint continuation, gravity/drag, orbital energy, collision/tractor momentum, trajectory accuracy, zoom and legacy saves. See the [atmosphere and trajectory](docs/screenshots/atmosphere-trajectory.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
+The **137 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Thirteen production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Layout checks cover viewport bounds/central clearance at 900×600, 1280×800 and 1920×1080, context/paused panel navigation, help/Escape and construction scrolling. Additional checks cover ship combat victories/return/paid repair and rearm with both weapons, recoil and ammunition mass, drone behaviors, live combat saves and recovery, plus full defence victories for all weapon variants, impact/repair and scarcity, manual/automatic turret controls, active-drill checkpoint continuation, gravity/drag, orbital energy, collision/tractor momentum, trajectory accuracy, zoom and legacy saves. See the [atmosphere and trajectory](docs/screenshots/atmosphere-trajectory.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
 
 ## Architecture and tuning
 
@@ -131,9 +134,9 @@ The **137 unit tests** cover flight, mining, suit/camera behavior, colony constr
 
 Collision uses a circular 7 m hull swept against the 1,800 m planet, then classifies pad contact by arc tolerance, speed, tilt and spin. Shared environmental integration applies inverse-square radial gravity, fuel-limited thrust and mass-dependent quadratic atmospheric drag. Gravity smoothly becomes linear inside the planet and reaches zero at its center. Drag reaches zero at 1,200 m; vacuum has no artificial linear damping. See [the physics model](docs/PHYSICS.md) for tuning and limitations. Phaser delta smoothing is disabled so the accumulator receives elapsed time even at low rendering rates. Catch-up is capped at 15 steps/250 ms; long stalls intentionally discard time. Angular damping stabilizes steering without changing linear inertia.
 
-Known limitations: a fixed non-rotating planet, no mutual object gravity, lift, wind or heating; simplified isotropic drag and collision radii; coast prediction excludes traffic/tools; smooth circular terrain; approximate ship/suit collision; suit collides with terrain and hostile projectiles, with no air steering, EVA or backpack; buildings are non-solid, with meteor blast damage and supplied repair. No flight autopilot, interpolation, wiring, day/night, offline production or advanced logistics. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Panels target desktop widths and are hidden below 560 px; mobile controls are out of scope. Phaser's roughly 1.31 MB minified JS bundle (~366 KB gzip) emits Vite's standard large-chunk warning.
+Known limitations: a fixed non-rotating planet, no mutual object gravity, lift, wind or heating; simplified isotropic drag and collision radii; coast prediction excludes traffic/tools; smooth circular terrain; approximate ship/suit collision; suit collides with terrain and hostile projectiles, with no air steering, EVA or backpack; buildings are non-solid, with meteor blast damage and supplied repair. No flight autopilot, interpolation, wiring, day/night, offline production or advanced logistics. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Layouts target desktop widths of at least 900 px; smaller fallback layouts and mobile controls are not validated release targets. Phaser's roughly 1.31 MB minified JS bundle (~367 KB gzip) emits Vite's standard large-chunk warning.
 
-Next: review defence and combat in dependency order, then human playtesting and the presentation/UX audit before automation interfaces. See [the pre-playtest review](docs/PLAYTEST_REVIEW.md). Further roadmap systems remain separate milestones.
+Next: review/playtest the presentation foundation, then Phase 7 automation/logistics. See [the pre-playtest review](docs/PLAYTEST_REVIEW.md). Further roadmap systems remain separate milestones.
 
 ## Start here
 - [Master development roadmap](docs/DEVELOPMENT_ROADMAP.md) — authoritative phases, task checkboxes, dependencies, exit criteria and progress.
@@ -142,6 +145,8 @@ Next: review defence and combat in dependency order, then human playtesting and 
 - [Codex Task 001](CODEX_TASK.md) — first playable planetary flight prototype specification.
 - [Codex Task 002](CODEX_TASK_002.md) — mining/cargo iteration scope and acceptance criteria.
 - [Codex Task 003](CODEX_TASK_003.md) — astronaut and surface interaction scope.
+- [Task 006A](CODEX_TASK_006A.md) — pre-automation presentation foundation.
+- [Visual direction](docs/PRESENTATION_DIRECTION.md) — palette, wireframes and live layout references.
 - [Codex Task 006](CODEX_TASK_006.md) — ship combat, supplied recovery and combat saves.
 - [Presentation audit](docs/PRESENTATION_AUDIT.md) — initial findings for the required graphics/UX/UI overhaul.
 - [Codex Task 005](CODEX_TASK_005.md) — planetary defence and building damage scope.
@@ -154,4 +159,4 @@ Launch from a small circular moon, fly in a continuous 2D world with radial grav
 ## Development workflow
 Implement one roadmap phase at a time on a feature branch. Open a PR with tests and playtest notes; update the roadmap and decision log. Do not merge automatically.
 
-Tasks 001–004 and the sound/help pass were reviewed and merged in dependency order for this playtest at the user's explicit request. PR #7 was subsequently merged at the user’s explicit request. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).
+Tasks 001–004 and the sound/help pass were reviewed and merged in dependency order for this playtest at the user's explicit request. PRs #7–#9 were subsequently merged at the user’s explicit requests. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).

@@ -1,3 +1,7 @@
+import { OperationsDock } from './OperationsDock';
+import { hudContext, type DockView } from './context';
+import { combatPanel } from './combat';
+import { defencePanel } from './defence';
 import type { ThreatPrediction } from '../sim/meteor';
 import { ATMOSPHERE, WORLD } from '../sim/config';
 import { telemetry, type Ship } from '../sim/physics';
@@ -16,25 +20,24 @@ export class Hud {
   private mining: HTMLElement;
   private colony: HTMLElement;
   private colonyMarkup = '';
+  private combatMarkup = '';
+  private defenceMarkup = '';
+  private dock = new OperationsDock();
   destroy(): void { this.root.remove(); }
+  toggleDock(view: DockView): void { this.dock.toggle(view); }
+  closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.4</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.5</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
-      <div class="status" role="status" aria-live="polite"></div>
-      <div id="threat-alert"></div><div id="combat-status"></div>
-      <aside class="mining" aria-label="Cargo and mining telemetry"></aside>
-      <aside class="colony-panel" aria-label="Colony construction and production"></aside>
-      <footer><div><b>FLIGHT / COLONY MANUAL</b><p><kbd>W / ↑</kbd> thrust &nbsp; <kbd>A D / ← →</kbd> rotate / walk<br><kbd>SPACE</kbd> mine / jump &nbsp; <kbd>C</kbd> tractor &nbsp; <kbd>E</kbd> unload / interact<br><kbd>F</kbd> board / exit &nbsp; <kbd>B</kbd> build &nbsp; <kbd>K / L</kbd> save / load &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>R</kbd> reset</p></div><div class="landing-guide">TOUCHDOWN ENVELOPE<br><small>Descent ≤ 6 m/s · Drift ≤ 4 m/s<br>Tilt ≤ 15° · Settle rotation before contact</small></div></footer>`;
-    document.body.append(this.root);
+      <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="threat-alert"></div></section>
+      <div id="combat-status"></div>
+      <footer><p class="context-hint"></p></footer>`;
+    this.root.append(this.dock.nav, this.dock.root); document.body.append(this.root);
     this.stats = this.root.querySelector('.instruments')!;
     this.status = this.root.querySelector('.status')!;
-    this.mining = this.root.querySelector('.mining')!;
-    this.colony = this.root.querySelector('.colony-panel')!;
-    this.colony.addEventListener('keydown', event => {
-      if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) event.stopPropagation();
-    });
-    this.colony.addEventListener('click', event => {
+    this.mining = this.dock.cargo; this.colony = this.dock.colony;
+    this.dock.root.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (!button || button.disabled) return;
       const action = actionFromButton(button);
@@ -45,6 +48,10 @@ export class Hud {
     });
   }
   update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
+    const context = hudContext(world); this.dock.update(context);
+    this.root.dataset.context = context.key;
+    this.root.querySelector('#hud-context')!.textContent = context.label;
+    this.root.querySelector('.context-hint')!.textContent = context.hint;
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
@@ -82,8 +89,11 @@ export class Hud {
     const hostiles = world.combat.enemies.length ? `${warning ? ' · ' : ''}${world.combat.enemies.length} HOSTILE${world.combat.enemies.every(d => d.state === 'retreat') ? ' · DISENGAGING' : world.combat.enemies.some(d => d.windup > 0) ? ' · DRONE AIMING' : ' · APPROACHING'}` : '';
     if (alert.textContent !== warning + hostiles) alert.textContent = warning + hostiles;
     this.updateMining(world);
-    const panel = colonyPanel(world, paused, threats);
+    const panel = colonyPanel(world, paused);
     if (this.colonyMarkup !== panel) { patchMarkup(this.colony, panel); this.colonyMarkup = panel; }
+    const combat = combatPanel(world, paused), defence = defencePanel(world, paused, threats);
+    if (combat !== this.combatMarkup) { patchMarkup(this.dock.combat, combat); this.combatMarkup = combat; }
+    if (defence !== this.defenceMarkup) { patchMarkup(this.dock.defence, defence); this.defenceMarkup = defence; }
     this.root.dataset.buildings = String(world.colony.buildings.length);
     this.root.dataset.buildOpen = String(world.colony.buildOpen);
     this.root.dataset.energy = world.colony.energy.toFixed(2);

@@ -1,9 +1,10 @@
+import { isolateControlKeys } from './controlKeys';
 export class Help {
   private dialog = document.createElement('dialog');
   constructor(private onToggle: (open: boolean) => void) {
     this.dialog.id = 'help'; this.dialog.setAttribute('aria-label', 'Outpost quick-start and controls');
-    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.4</span><button type="button">Return to game [H / Esc]</button></div>
-      <h2>Your first sortie</h2><p>Launch from the green pad, mine ore, land, then build a small working colony on the larger planet and its 1.2 km atmosphere.</p>
+    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.5</span><button type="button">Return to game [H / Esc]</button></div>
+      <h2>Find your controls</h2><p>Top-left buttons open Cargo, Colony, Combat or Defence in one operations panel. <b>I</b> toggles cargo; <b>Esc</b> closes the panel. Relevant panels open when you build, operate a turret, enter combat or open the depot. Closing a panel never pauses the world; <b>P</b> pauses. Telemetry and weapon state stay along the bottom so targets remain visible.</p><h2>Your first sortie</h2><p>Launch from the green pad, mine ore, land, then build a small working colony on the larger planet and its 1.2 km atmosphere.</p>
       <ol><li><b>Fly:</b> hold W / Up for about 6.5 seconds for a low atmospheric hop, then coast. Hold Space to clear the starter rock above home, or steer around it. A/D or arrows rotate. Gravity acts everywhere; air resistance fades to zero in space.</li>
       <li><b>Return:</b> keep the nose upright, pulse thrust early during descent. Touch down on green with descent ≤ 6 m/s, drift ≤ 4 m/s, tilt ≤ 15°. R recovers from a crash.</li>
       <li><b>Mine:</b> Space fires forward. Hold C to attract ore within 260 m. The starter iron sample is above home; ice is slightly right. Release thrust after the short launch burn so you can return.</li>
@@ -18,7 +19,7 @@ export class Help {
       <p><b>P</b> pauses · <b>H / Esc</b> closes this guide · <b>M</b> mutes · volume is in the top bar. Sound starts after your first click/key and stops on pause or focus loss.</p>
       <p class="help-note">First playtest: try flight, mining, walking, production and save/load. Buildings are non-solid but can take meteor damage, the power/material bus is global, and solar is constant. Hostile patrols and meteor drills are opt-in; advanced progression and the full graphics/UI overhaul are later milestones.</p>`;
     document.body.append(this.dialog);
-    this.dialog.addEventListener('keydown', event => { if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) event.stopPropagation(); });
+    isolateControlKeys(this.dialog);
     this.dialog.querySelector('button')!.addEventListener('click', () => this.close());
     this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.close(); });
   }

@@ -14,3 +14,7 @@ This is a technical audit of the playable combat slice and captured production-b
 | Accessibility/layout | Desktop prototype layouts and native keyboard controls exist; full text scaling, contrast, reduced motion and quality settings do not. | Validate 900×600, 1280×800 and 1920×1080, keyboard focus, scalable text, non-color cues and effect budgets on lower-powered hardware. |
 
 Before Phase 7 interface expansion, draft visual direction and contextual layout mockups around these findings. During the full Phase 9 overhaul, run human launch→mine→land→build→defend/combat→repair→save playtests, record task completion/confusion and resolve blocking findings. Establish measured frame-time/quality budgets and visual/input regressions. Do not mark the overhaul complete from screenshots or automated tests alone.
+
+## Alpha 0.5 follow-up
+
+The [presentation foundation](PRESENTATION_DIRECTION.md) now supplies visual-direction tokens, flight/construction/combat wireframes and live desktop references. The playable UI uses one contextual dock, bottom telemetry, a reserved central corridor, grouped notice flow and native keyboard/mouse navigation with help/pause checks. Planet shading/strata remain cached procedural graphics. These address the first hierarchy/occlusion/interaction findings; they do not complete human usability testing, final art, adaptive camera behavior or accessibility/performance options. Use this foundation for Phase 7 interfaces, then complete the broader Phase 9 checklist.

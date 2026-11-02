@@ -76,6 +76,7 @@ test('mines the starter deposit, collects ore and resets the complete sortie', a
   await expect.poll(async () => Number(await hud.getAttribute('data-cargo')), { timeout: 15000 }).toBeGreaterThan(0);
   await page.keyboard.up('w'); await page.keyboard.up('Space'); await page.keyboard.up('c');
   await expect(hud).toHaveAttribute('data-mining', 'idle');
+  await page.keyboard.press('i'); await expect(page.locator('.mining')).toBeVisible();
   await expect(page.locator('.mining')).toContainText('ORE SECURED');
   await page.screenshot({ path: 'docs/screenshots/mining-cargo.png' });
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');

@@ -8,9 +8,15 @@ export function createPlanet(scene: Phaser.Scene): Phaser.GameObjects.Image {
     const texture = scene.textures.createCanvas(key, size, size)!;
     const c = texture.context;
     c.translate(size / 2, size / 2); c.scale(size / (2 * extent), size / (2 * extent));
-    c.fillStyle = '#17282e'; c.strokeStyle = '#6a8b8b'; c.lineWidth = 2;
+    const shade = c.createRadialGradient(-WORLD.radius * 0.35, -WORLD.radius * 0.6, 0, 0, 0, WORLD.radius * 1.7);
+    shade.addColorStop(0, '#28434a'); shade.addColorStop(0.55, '#152c37'); shade.addColorStop(1, '#091721');
+    c.fillStyle = shade; c.strokeStyle = '#8eaeb0'; c.lineWidth = 2;
     c.beginPath(); c.arc(0, 0, WORLD.radius, 0, Math.PI * 2); c.fill(); c.stroke();
-    c.strokeStyle = '#30464b'; c.lineWidth = 1;
+    // Inset strata remain inside the true circular collision rim.
+    for (const [inset, color] of [[18, '#577177'], [42, '#344e59'], [78, '#263f4a']] as const) {
+      c.strokeStyle = color; c.lineWidth = 1; c.beginPath(); c.arc(0, 0, WORLD.radius - inset, 0, Math.PI * 2); c.stroke();
+    }
+    c.strokeStyle = '#385563'; c.lineWidth = 1;
     for (let i = 0; i < 100; i++) {
       const a = i * 2.399963, r = WORLD.radius - 40 - ((i * 137) % (WORLD.radius - 80));
       c.beginPath(); c.arc(Math.cos(a) * r, Math.sin(a) * r, 4 + i % 19, 0, Math.PI * 2); c.stroke();

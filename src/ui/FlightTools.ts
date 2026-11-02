@@ -1,3 +1,4 @@
+import { isolateControlKeys } from './controlKeys';
 import { ATMOSPHERE } from '../sim/config';
 import { airDensity, gravity } from '../sim/environment';
 import type { Ship } from '../sim/physics';
@@ -16,7 +17,7 @@ export class FlightTools {
     this.root.innerHTML = '<button type="button" data-view="trajectory" aria-pressed="true">Coast path [J]</button><button type="button" data-view="zoomOut" aria-label="Zoom out">−</button><button type="button" data-view="zoomIn" aria-label="Zoom in">+</button><button type="button" data-view="autoZoom">Auto [0]</button><span></span>';
     this.trajectoryButton = this.root.querySelector('button')!; this.value = this.root.querySelector('span')!;
     this.root.addEventListener('click', event => { const action = (event.target as HTMLElement).closest('button')?.dataset.view; if (action) onAction(action as ViewAction); });
-    this.root.addEventListener('keydown', event => { if (['Enter', ' ', 'ArrowLeft', 'ArrowRight'].includes(event.key)) event.stopPropagation(); });
+    isolateControlKeys(this.root);
     document.body.append(this.root, this.status);
   }
   update(ship: Ship, camera: FlightCamera, prediction: Trajectory | null): void {

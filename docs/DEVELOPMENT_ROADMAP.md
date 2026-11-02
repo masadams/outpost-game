@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–4, basic sound/help and atmospheric flight feedback are merged through PR #7. The user authorized merging #7 and continuing the roadmap. Phase 5 defence is open in PR #8. Phase 6 ship combat is implemented on a branch stacked on #8, pending separate review; Phase 7+ remain separate milestones. The initial technical presentation/UX audit is recorded, with human evaluation and the full overhaul still pending.
+**Status:** Phases 0–6 are implemented, tested and merged through PR #9 after explicit user authorization. The pre-automation presentation foundation is implemented on its own branch for review: visual direction, contextual panels and desktop layout checks. Phase 7 automation is next; the full Phase 9 overhaul remains required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -80,26 +80,30 @@ Merged in PR #5 after review and successful CI. Includes six facilities, preview
 
 ## Phase 5 — Planetary defence (Missile Command influence)
 
-Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) on `feat/planetary-defence`, pending review/merge; checkboxes stay open until merged. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
+Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) and merged after green CI and explicit user authorization. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
 **Dependencies:** Phases 1, 4.
-- [ ] Incoming meteors/asteroids with actual world trajectories.
-- [ ] Radar early warning and trajectory indicators.
-- [ ] Manually controlled surface laser turret powered by colony grid.
-- [ ] Automated targeting with range/energy/ammunition limits.
-- [ ] Missile and flak variants; fragment interception and residual danger.
-- [ ] Persistent building damage and repairs; optional later shields.
-- [ ] Intercept threats with ship as an alternative to turret defence.
+- [x] Incoming meteors/asteroids with actual world trajectories.
+- [x] Radar early warning and trajectory indicators.
+- [x] Manually controlled surface laser turret powered by colony grid.
+- [x] Automated targeting with range/energy/ammunition limits.
+- [x] Missile and flak variants; fragment interception and residual danger.
+- [x] Persistent building damage and repairs (shields remain optional later work).
+- [x] Intercept threats with ship as an alternative to turret defence.
 **Exit:** Defend base from a real incoming asteroid, with meaningful damage on failure.
 
 ## Phase 6 — Ship combat and threats
 
-Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) on `feat/ship-combat`, stacked on PR #8 until defence merges. Pending separate review/merge; checkboxes remain open. See [Task 006](../CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
+Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) and merged into main after PR #8, with green CI and explicit user authorization. See [Task 006](../CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
 **Dependencies:** Phases 1–2, 5.
-- [ ] Ship weapon systems, heat/energy/ammo balancing and hit feedback.
-- [ ] Enemy spacecraft/hostile drones with readable AI behaviours.
-- [ ] Combat damage, repair and death/recovery.
-- [ ] Threat escalation linked to exploration and colony development.
+- [x] Ship weapon systems, heat/energy/ammo balancing and hit feedback.
+- [x] Enemy spacecraft/hostile drones with readable AI behaviours.
+- [x] Combat damage, repair and death/recovery.
+- [x] Threat escalation linked to exploration and colony development.
 **Exit:** Complete a combat encounter and return to repair/rearm.
+
+## Pre-automation presentation foundation (Task 006A)
+
+Implemented on `feat/presentation-foundations`, pending review/merge. See [Task 006A](../CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
 
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
@@ -156,7 +160,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review Phase 5 defence and Phase 6 combat in dependency order, then playtest alpha 0.4 using [PLAYTEST.md](PLAYTEST.md). Evaluate combat/defence handling, scarcity, repairs/recovery and active saves. Use the initial presentation audit to develop visual direction and contextual layout mockups before automation interfaces; the full Phase 9 overhaul remains required before reliability playtesting.
+Review the presentation foundation and playtest alpha 0.5 using [PLAYTEST.md](PLAYTEST.md), especially panel discovery, construction scrolling, help/focus behavior and target visibility. Then proceed to Phase 7 automation/logistics using this layout foundation. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.
