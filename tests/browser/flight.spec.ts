@@ -1,0 +1,26 @@
+import { expect, test } from '@playwright/test';
+test('launch, coast, pause, restart and resize in a real browser', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/'); const hud = page.locator('#hud');
+  await expect(hud).toHaveAttribute('data-state', 'landed');
+  await page.screenshot({ path: 'docs/screenshots/launch-pad.png' });
+  await page.keyboard.down('w');
+  await expect.poll(async () => Number(await hud.getAttribute('data-altitude')), { timeout: 12000 }).toBeGreaterThan(100);
+  await page.keyboard.up('w');
+  await expect(hud).toHaveAttribute('data-state', 'flying');
+  await page.screenshot({ path: 'docs/screenshots/flight.png' });
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  const altitude = await hud.getAttribute('data-altitude'); const fuel = await hud.getAttribute('data-fuel');
+  await page.waitForTimeout(350); expect(await hud.getAttribute('data-altitude')).toBe(altitude);
+  expect(await hud.getAttribute('data-fuel')).toBe(fuel);
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'flying');
+  await page.keyboard.down('d');
+  await expect.poll(async () => Number(await hud.getAttribute('data-tilt'))).toBeGreaterThan(10);
+  await page.keyboard.up('d');
+  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-state', 'landed');
+  await expect(hud).toHaveAttribute('data-fuel', '240.00');
+  await expect(hud).toHaveAttribute('data-tilt', '0.0');
+  await page.setViewportSize({ width: 900, height: 600 });
+  await expect.poll(async () => page.locator('canvas').evaluate(c => c.clientWidth)).toBe(900);
+  expect(errors).toEqual([]);
+});

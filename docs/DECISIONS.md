@@ -25,6 +25,12 @@ This log distinguishes **decided** direction from ideas and unresolved choices. 
 | D-018 | GitHub PR workflow; do not auto-merge code | Reviewable development and handoff |
 | D-019 | No backend for initial prototype | Minimize setup and complexity |
 
+## Task 001 provisional tuning (pending flight review)
+
+The implementation follows D-003–D-008 and D-017 without revising them. Initial constants: moon radius 600 m, gravitational parameter 1,800,000 m³/s², softened core radius 120 m, dry mass 900 kg, fuel 240 kg, thrust 14 kN, burn rate 0.8 kg/s. The 7 m circular hull uses swept collision; the home pad spans ±30 m of surface arc. Safe landing requires hull clearance inside the pad, radial speed ≤6 m/s, drift ≤4 m/s, tilt ≤15°, spin ≤0.35 rad/s. Angular damping is allowed; free-flight linear drag is absent. The camera blends local to inertial orientation over 100–900 m altitude. These are tunable prototype values, not new permanent design commitments. Safe landings do not refuel/repair; R restores the test fixture. No optional landing gear or flight assist is introduced.
+
+Verification and screenshots are in the Task 001 PR and README. No later milestone was implemented.
+
 ## Open questions (not decisions)
 - Exact planet scale, gravity strength, thrust-to-weight ratio, orbit speeds and landing tolerances: tune through prototype playtesting.
 - Whether lateral thrusters, landing gear toggles or advanced flight assists improve controls.

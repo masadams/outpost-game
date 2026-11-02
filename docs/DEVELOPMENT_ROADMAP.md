@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Planning. No gameplay features have been implemented.  
+**Status:** Task 001 implementation is ready on the feature branch, pending review and merge. Phase 2 has not started.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -12,6 +12,8 @@
 - Milestone complete only when its acceptance criteria are demonstrated in a playable build.
 
 ## Phase 0 — Foundations and design
+
+Review note: the Task 001 PR implements bootstrap, module architecture and CI. Checkboxes remain open until merge, per the progress rule above.
 - [x] Record initial design vision and core decisions.
 - [x] Define Codex instructions and Task 001 specification.
 - [x] Establish master roadmap and decision log.
@@ -20,6 +22,8 @@
 **Exit:** Project installs, builds, typechecks and tests locally and in CI.
 
 ## Phase 1 — Planetary flight (Codex Task 001)
+
+Review note: the Task 001 PR implements all items below. Local verification covers build, typecheck, 24 simulation/camera tests (including full orbit and launch-to-space/return-to-pad), plus Chromium keyboard/resize checks with screenshots. Human flight-feel review and hosted CI results remain review steps. Checkboxes remain open until merge.
 **Dependencies:** Phase 0 bootstrap.
 - [ ] Implement one circular moon in a persistent 2D Cartesian world.
 - [ ] Implement fixed-step physics, radial gravity, ship thrust/rotation/inertia and fuel.
@@ -122,7 +126,7 @@
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-**Codex Task 001:** Implement CODEX_TASK.md, including Phase 0 bootstrap and Phase 1 flight prototype. Open a PR, attach evidence, and update this roadmap with verified completed items. Do not start Phase 2 before flight feel and landing are reviewed.
+Review **Codex Task 001** implementation, screenshots, test results and flight/landing feel. After merge, mark verified Phase 0/1 items complete. Do not start Phase 2 before flight feel and landing are reviewed.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

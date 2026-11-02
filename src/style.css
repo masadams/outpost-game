@@ -1,0 +1,25 @@
+:root { font-family: 'Courier New', monospace; color: #d7e6e8; background: #080f1c; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+canvas { display: block; }
+#hud { position: fixed; inset: 0; pointer-events: none; padding: 28px 34px; }
+header { display: flex; justify-content: space-between; align-items: center; }
+.eyebrow { font-size: 10px; letter-spacing: 2.5px; color: #7795ab; }
+h1 { margin: 5px 0 0; font-size: 32px; letter-spacing: 6px; font-weight: normal; }
+h1 span { color: #73f3cf; margin-left: 16px; }
+.mission { text-align: right; color: #73f3cf; font-size: 12px; line-height: 1.9; letter-spacing: 1px; }
+small { font-size: 11px; color: #819bab; letter-spacing: 0; }
+.instruments { display: flex; gap: 0; margin-top: 26px; width: fit-content; border: 1px solid #29404e; background: #0a1724e8; }
+.instruments div { padding: 13px 20px; min-width: 115px; border-right: 1px solid #29404e; }
+.instruments div:last-child { border: 0; }
+label { display: block; font-size: 9px; letter-spacing: 2px; color: #819bab; margin-bottom: 8px; }
+strong { font-weight: normal; font-size: 21px; }
+.status { position: absolute; top: 220px; font-size: 11px; letter-spacing: 1px; color: #73f3cf; border-left: 2px solid; padding: 8px 12px; background: #0a1724dd; }
+.status.danger { color: #ff8f75; }
+footer { position: absolute; bottom: 25px; left: 34px; right: 34px; display: flex; justify-content: space-between; align-items: end; }
+footer b, .landing-guide { font-size: 10px; letter-spacing: 1px; color: #92b2c2; }
+footer p { margin: 10px 0 0; font-size: 11px; line-height: 2; color: #819bab; }
+kbd { color: #d7e6e8; font-family: inherit; }
+.landing-guide { text-align: right; line-height: 1.9; }
+@media (max-width: 800px) { #hud { padding: 16px; } .instruments div { padding: 10px; min-width: 86px; } .mission { display: none; } strong { font-size: 17px; } .status { top: 195px; } footer { left: 16px; right: 16px; } }
+@media (max-width: 560px) { .instruments { flex-wrap: wrap; max-width: 280px; } .status { top: 270px; } .landing-guide { display: none; } }
