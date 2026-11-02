@@ -95,6 +95,7 @@ export class FlightScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (this.keys.mute()) this.audio.toggleMute();
     if (this.keys.help()) this.help.toggle();
+    if (this.keys.closePanel()) { if (this.help.isOpen) this.help.close(); else this.hud.closeDock(); }
     if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship); this.audio.reset(this.simulation); this.prediction = null; this.threats = []; }
     if (!this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
@@ -103,6 +104,7 @@ export class FlightScene extends Phaser.Scene {
     if (!this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
     if (!this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
     if (!this.help.isOpen) {
+      if (this.keys.inventory()) this.hud.toggleDock('cargo');
       if (this.keys.trajectory()) this.viewAction('trajectory');
       if (this.keys.zoomIn()) this.viewAction('zoomIn');
       if (this.keys.zoomOut()) this.viewAction('zoomOut');
@@ -178,7 +180,7 @@ export class FlightScene extends Phaser.Scene {
       g.fillStyle(0xffbb73); g.fillPoints([p(-3, -6), p(3, -6), p(0, -16 - Math.sin(this.time.now / 45) * 3)], true);
     }
     // Radar shows the complete moon and the direction home at every altitude.
-    const mx = width > 560 ? width - 380 : width - 92, my = height - 178, radius = 22;
+    const mx = width - 92, my = height - 100, radius = 22;
     const m = this.map; m.fillStyle(0x0a1724, 0.9); m.fillCircle(mx, my, 68);
     m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
     m.lineStyle(1, 0x3b5969); m.strokeCircle(mx, my, radius);

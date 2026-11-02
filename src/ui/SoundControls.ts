@@ -1,3 +1,4 @@
+import { isolateControlKeys } from './controlKeys';
 import type { GameAudio } from '../audio/GameAudio';
 export class SoundControls {
   private root = document.createElement('div');
@@ -7,7 +8,7 @@ export class SoundControls {
     this.root.id = 'sound-panel';
     this.root.innerHTML = '<button type="button" aria-label="Toggle sound mute" aria-pressed="false"></button><label>Vol <input aria-label="Sound volume" type="range" min="0" max="1" step="0.05"></label><button type="button" aria-label="Open quick-start guide">Help [H]</button>';
     document.body.append(this.root); this.button = this.root.querySelector('button')!;
-    this.root.addEventListener('keydown', event => { if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) event.stopPropagation(); });
+    isolateControlKeys(this.root);
     const slider = this.root.querySelector('input')!; slider.value = String(audio.preferences.volume);
     slider.addEventListener('input', () => { audio.setVolume(Number(slider.value)); this.update(); });
     this.button.addEventListener('pointerdown', () => { this.enabling = audio.status === 'locked'; });

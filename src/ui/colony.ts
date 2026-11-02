@@ -1,14 +1,11 @@
-import { combatPanel } from './combat';
 import { buildingHealth } from '../sim/buildingHealth';
 import { isTurret, WEAPONS } from '../sim/defenceConfig';
-import { defencePanel } from './defence';
-import type { ThreatPrediction } from '../sim/meteor';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, placementError, nearbyBuilding, recipeFor, type ColonyAction } from '../sim/colony';
 import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 
-export function colonyPanel(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): string {
+export function colonyPanel(world: WorldState, paused: boolean): string {
   const colony = world.colony, disabled = paused || world.playerMode !== 'astronaut' ? 'disabled' : '';
   const near = nearbyBuilding(world);
   const error = colony.buildOpen ? placementError(world) : null;
@@ -29,8 +26,6 @@ export function colonyPanel(world: WorldState, paused: boolean, threats: ThreatP
       ${near.kind === 'service' ? '<p>E: suit service / repair / refuel</p>' : ''}
       ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}</div>` : ''}
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
-    ${combatPanel(world, paused)}
-    ${defencePanel(world, paused, threats)}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {

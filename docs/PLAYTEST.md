@@ -1,4 +1,4 @@
-# Outpost alpha 0.4 — first playtest
+# Outpost alpha 0.5 — first playtest
 
 Start with the current flight/mining/surface/colony loop. Try the opt-in defence drill after the core loop. Try the new opt-in ship patrol after flight practice; automation and the full presentation overhaul remain separate phases.
 
@@ -8,7 +8,7 @@ From a checkout of this repository:
 
 ```sh
 git fetch origin
-git switch feat/ship-combat
+git switch feat/presentation-foundations
 git pull --ff-only
 npm ci
 npm run build
@@ -18,6 +18,10 @@ npm run preview
 Open the printed local URL in a desktop browser. The build is also available as the `outpost-playtest` artifact on successful CI runs and can be served by a static HTTP server. Opening the HTML directly from the filesystem is not supported.
 
 Press **H** for the in-game guide. It pauses and returns to your previous pause state. Sound unlocks on your first click/key; **M** mutes and the top bar controls volume. These preferences survive reload independently of your checkpoint. Pause and focus loss silence all sounds.
+
+## Interface checks
+
+Cargo/Colony/Combat/Defence open one right operations dock; I toggles Cargo and Esc closes the dock. Ordinary flight starts with details closed. Construction, depot, turret, threat and combat contexts choose a relevant panel. Try selecting/closing a panel, switching contexts, browsing while paused, H/Esc and keyboard Tab/Enter/Space. Warnings, telemetry, weapons and radar should remain readable. Resize to 900×600, 1280×800 and 1920×1080; scroll the construction palette and operate the last blueprint. Report blocked targets, obscured controls or confusing automatic panel choices. See the [direction/wireframes](PRESENTATION_DIRECTION.md).
 
 ## Suggested route (about 25–30 minutes)
 

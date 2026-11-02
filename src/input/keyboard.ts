@@ -6,15 +6,18 @@ export class Keyboard {
   private keys: Record<string, Phaser.Input.Keyboard.Key>;
   private pending = new Set<string>();
   private onBlur = (): void => this.release();
+  private onControlFocus = (event: FocusEvent): void => {
+    if (event.target instanceof HTMLElement && event.target.closest('button, input, select, textarea')) this.release();
+  };
   constructor(scene: Phaser.Scene) {
-    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE', true) as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE,I,ESC', true) as Record<string, Phaser.Input.Keyboard.Key>;
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
-    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'O', 'Z', 'SHIFT', 'BACKSPACE']) {
+    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'O', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
         if (!event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
     }
-    window.addEventListener('blur', this.onBlur);
+    window.addEventListener('blur', this.onBlur); document.addEventListener('focusin', this.onControlFocus);
   }
   release(): void { Object.values(this.keys).forEach(key => key.reset()); this.pending.clear(); }
   private consume(name: string): boolean {
@@ -35,6 +38,8 @@ export class Keyboard {
       mine: space, tractor: this.held('C'), unload: interact,
       board, jump: space || w || up, colonyActions: actions };
   }
+  inventory(): boolean { return this.pending.delete('I'); }
+  closePanel(): boolean { return this.pending.delete('ESC'); }
   restart(): boolean { return this.pending.delete('R'); }
   pause(): boolean { return this.pending.delete('P'); }
   save(): boolean { return this.pending.delete('K'); }
@@ -45,5 +50,5 @@ export class Keyboard {
   zoomIn(): boolean { return this.pending.delete('PLUS'); }
   zoomOut(): boolean { return this.pending.delete('MINUS'); }
   autoZoom(): boolean { return this.pending.delete('ZERO'); }
-  destroy(): void { window.removeEventListener('blur', this.onBlur); this.release(); }
+  destroy(): void { window.removeEventListener('blur', this.onBlur); document.removeEventListener('focusin', this.onControlFocus); this.release(); }
 }
