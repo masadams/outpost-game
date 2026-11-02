@@ -9,6 +9,10 @@ import { Hud } from '../ui/hud';
 import { FlightCamera } from './camera';
 import { drawMining } from './mining';
 import { drawSurface } from './surface';
+import { drawColony } from './colony';
+import type { ColonyAction } from '../sim/colony';
+import { notify } from '../sim/messages';
+import { readCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
 
 export class FlightScene extends Phaser.Scene {
   private simulation = createWorld();
@@ -23,10 +27,13 @@ export class FlightScene extends Phaser.Scene {
   private map!: Phaser.GameObjects.Graphics;
   private paused = false;
   private hudTime = 0;
+  private colonyActions: ColonyAction[] = [];
   private starPoints = Array.from({ length: 240 }, (_, i) => ({ x: ((i * 0.61803398875) % 1), y: ((i * i * 0.41421356237) % 1), bright: i % 7 === 0 }));
   constructor() { super('flight'); }
   create(): void {
-    this.keys = new Keyboard(this); this.hud = new Hud(); this.follow.reset(this.ship);
+    this.keys = new Keyboard(this); this.hud = new Hud(action => { if (!this.paused) this.colonyActions.push(action); });
+    this.loadCheckpoint(false);
+    this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship);
     this.stars = this.add.graphics();
     this.world = this.add.container(0, 0); this.art = this.add.graphics(); this.world.add(this.art);
     this.map = this.add.graphics();
@@ -34,16 +41,33 @@ export class FlightScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', () => { if (document.hidden) { this.paused = true; this.clock.reset(); } });
   }
   update(_time: number, delta: number): void {
-    if (this.keys.restart()) { this.simulation = createWorld(); this.keys.release(); this.clock.reset(); this.follow.reset(this.ship); this.paused = false; }
-    if (this.keys.pause()) { this.paused = !this.paused; this.keys.release(); this.clock.reset(); }
+    if (this.keys.restart()) { this.simulation = createWorld(); this.keys.release(); this.colonyActions = []; this.clock.reset(); this.follow.reset(this.ship); this.paused = false; }
+    if (this.keys.save()) {
+      try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
+      catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
+    }
+    if (this.keys.load()) this.loadCheckpoint(true);
+    if (this.keys.pause()) { this.paused = !this.paused; this.keys.release(); this.colonyActions = []; this.clock.reset(); }
     if (!this.paused) {
-      this.clock.advance(delta / 1000, dt => stepWorld(this.simulation, this.keys.read(), dt));
+      this.clock.advance(delta / 1000, dt => {
+        const input = this.keys.read();
+        stepWorld(this.simulation, { ...input, colonyActions: [...(input.colonyActions ?? []), ...this.colonyActions.splice(0)] }, dt);
+      });
       const onFoot = this.simulation.playerMode === 'astronaut';
       this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot);
     }
     this.draw();
     this.hudTime += delta;
     if (this.hudTime > 50) { this.hud.update(this.simulation, this.paused); this.hudTime = 0; }
+  }
+  private loadCheckpoint(requested: boolean): void {
+    try {
+      const saved = readCheckpoint(window.localStorage);
+      if (saved) {
+        this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
+        this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship);
+      } else if (requested) notify(this.simulation, 'NO CHECKPOINT · PRESS K TO SAVE');
+    } catch { notify(this.simulation, 'CHECKPOINT INVALID OR STORAGE UNAVAILABLE · CURRENT WORLD KEPT'); }
   }
   private draw(): void {
     const { width, height } = this.scale;
@@ -74,6 +98,7 @@ export class FlightScene extends Phaser.Scene {
     // Pad beacon remains visible at orbital zoom.
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -607, 16 / this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
+    drawColony(g, this.simulation);
     drawSurface(g, this.simulation);
     const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
     const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
