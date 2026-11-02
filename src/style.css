@@ -27,6 +27,10 @@ kbd { color: #d7e6e8; font-family: inherit; }
 .resource { display: flex; justify-content: space-between; color: #a8bbc9; line-height: 1.9; }
 .objective { color: #73f3cf; line-height: 1.6; margin: 12px 0; }
 .target { padding: 12px 0; border-top: 1px solid #29404e; line-height: 1.7; }
+.surface-panel { border-top: 1px solid #29404e; margin-top: 12px; padding-top: 12px; line-height: 1.6; }
+.surface-panel p { margin: 9px 0; }
+#hud[data-mode="astronaut"] .landing-guide { display: none; }
+@media (max-height: 680px) { #hud[data-mode="astronaut"] .mining { top: 205px; padding: 10px; } #hud[data-mode="astronaut"] .surface-panel { line-height: 1.3; margin-top: 6px; padding-top: 6px; } #hud[data-mode="astronaut"] .surface-panel small { display: none; } }
 @media (max-width: 1100px) { .mining { top: 230px; width: 220px; right: 16px; font-size: 10px; padding: 12px; } .mining .resource { line-height: 1.5; } .mining .target { padding: 6px 0; } .mining .objective { margin: 7px 0; } }
 @media (max-width: 800px) { #hud { padding: 16px; } .instruments div { padding: 10px; min-width: 86px; } .mission { display: none; } strong { font-size: 17px; } .status { top: 195px; } footer { left: 16px; right: 16px; } }
 @media (max-width: 560px) { .instruments { flex-wrap: wrap; max-width: 280px; } .status { top: 270px; } .landing-guide { display: none; } .mining { display: none; } }

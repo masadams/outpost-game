@@ -20,10 +20,10 @@ export function gravity(position: Vec): Vec {
   const denominator = Math.max(length(position), WORLD.minimumRadius) ** 3;
   return { x: -WORLD.mu * position.x / denominator, y: -WORLD.mu * position.y / denominator };
 }
-export function telemetry(ship: Ship) {
+export function telemetry(ship: Pick<Ship, 'position' | 'velocity' | 'angle'>, bodyRadius: number = WORLD.shipRadius) {
   const radius = length(ship.position);
   const normal = radius > 0 ? { x: ship.position.x / radius, y: ship.position.y / radius } : { x: 0, y: -1 };
-  return { altitude: Math.max(0, radius - WORLD.radius - WORLD.shipRadius),
+  return { altitude: Math.max(0, radius - WORLD.radius - bodyRadius),
     radial: dot(ship.velocity, normal), tangential: dot(ship.velocity, { x: -normal.y, y: normal.x }),
     speed: length(ship.velocity), tilt: Math.abs(wrap(ship.angle - localAngle(ship.position))) };
 }
