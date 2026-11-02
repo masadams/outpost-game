@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Task 001 flight and the requested next iteration, Task 002 mining/cargo, are implemented on stacked feature branches pending review and merge. Review Task 001 first; neither PR is merged automatically.
+**Status:** Tasks 001–003 (flight, mining/cargo, astronaut/surface interactions) are implemented on stacked feature branches pending review and merge. The continuing iteration request advances implementation, without merging earlier work. Review in dependency order; no automatic merges.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -36,7 +36,7 @@ Review note: the Task 001 PR implements all items below. Local verification cove
 
 ## Phase 2 — Space environment and mining
 
-Review note: [Task 002](../CODEX_TASK_002.md) implements the items below as a separate PR stacked on flight PR #2. All 36 unit tests pass, including a complete launch/mine/collect/land/unload simulation with mass conservation. Chromium checks cover actual mining/tractor input and complete reset, alongside existing flight controls. The full browser return flight and human flight/mining feel remain review steps. Keep boxes open until review and merge; the next-iteration request advances implementation without merging Task 001.
+Review note: [Task 002](../CODEX_TASK_002.md) implements the items below as PR #3 stacked on flight PR #2. All 36 unit tests and hosted CI passed, including a complete launch/mine/collect/land/unload simulation with mass conservation. Chromium checks cover actual mining/tractor input and complete reset, alongside flight controls. The full browser return flight and human feel remain review steps. Keep boxes open until review and merge.
 **Dependencies:** Phase 1.
 - [ ] Spawn and simulate asteroid fields at appropriate levels of detail.
 - [ ] Implement mining laser and destructible/fracturing asteroid bodies.
@@ -48,6 +48,8 @@ Review note: [Task 002](../CODEX_TASK_002.md) implements the items below as a se
 **Exit:** Launch, mine an asteroid, collect ore, return and unload.
 
 ## Phase 3 — Astronaut and surface interactions
+
+Review note: [Task 003](../CODEX_TASK_003.md) implements all items below on a branch stacked on mining PR #3. Adds terrain walking/jumping, airlock, depot/service points, oxygen/health, iron-funded hull repair and camera/HUD transitions. Verification includes 52 unit tests and three Chromium control checks, with a surface screenshot. Suit collision is limited to terrain; fixed terminals are interaction markers. Human feel and merge remain pending; checkboxes stay open per the progress rule.
 **Dependencies:** Phase 1, Phase 2 unload interface.
 - [ ] Seamlessly enter/exit landed ship.
 - [ ] Implement local-gravity walking, jumping, collision and camera transitions.
@@ -128,7 +130,7 @@ Review note: [Task 002](../CODEX_TASK_002.md) implements the items below as a se
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review **Task 001** flight/landing first, then the stacked **Task 002** mining/cargo implementation and evidence. After merge, mark verified items complete. Do not start Phase 3 before these loops are reviewed.
+Review **Task 001** flight, **Task 002** mining and **Task 003** surface interactions in order. After merge, mark verified items complete. Review these loops before advancing to Phase 4 construction/economy.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

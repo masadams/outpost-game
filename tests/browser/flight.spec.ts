@@ -25,6 +25,46 @@ test('launch, coast, pause, restart and resize in a real browser', async ({ page
   expect(errors).toEqual([]);
 });
 
+test('exits, walks and jumps to the depot, services the suit, then boards and launches', async ({ page }) => {
+  test.setTimeout(45000);
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/'); const hud = page.locator('#hud');
+  await expect(hud).toHaveAttribute('data-mode', 'ship');
+  await page.keyboard.press('f'); await expect(hud).toHaveAttribute('data-mode', 'astronaut');
+  await expect(hud).toHaveAttribute('data-grounded', 'true');
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  const pausedOxygen = await hud.getAttribute('data-oxygen');
+  await page.waitForTimeout(200); expect(await hud.getAttribute('data-oxygen')).toBe(pausedOxygen);
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'landed');
+  await page.keyboard.down('d');
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 8000, intervals: [100] }).toBeGreaterThan(0.083);
+  await page.keyboard.up('d');
+  // Brake on the surface before opening the depot.
+  await page.waitForTimeout(450);
+  await page.keyboard.press('e'); await expect(hud).toHaveAttribute('data-depot-open', 'true');
+  await expect(page.locator('.surface-panel')).toContainText('DEPOT OPEN');
+  await page.screenshot({ path: 'docs/screenshots/surface-depot.png' });
+  await page.keyboard.down('Space'); await expect(hud).toHaveAttribute('data-grounded', 'false');
+  await page.keyboard.up('Space');
+  await expect.poll(async () => Number(await hud.getAttribute('data-altitude'))).toBeGreaterThan(5);
+  await expect(hud).toHaveAttribute('data-grounded', 'true', { timeout: 8000 });
+  await page.keyboard.down('a');
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 12000, intervals: [100] }).toBeLessThan(-0.083);
+  await page.keyboard.up('a'); await page.waitForTimeout(450);
+  await page.keyboard.press('e');
+  await expect.poll(async () => Number(await hud.getAttribute('data-oxygen'))).toBeGreaterThan(179);
+  await expect(page.locator('.status')).toContainText('SUIT RESTORED');
+  await page.keyboard.down('d');
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 8000, intervals: [100] }).toBeGreaterThan(-0.02);
+  await page.keyboard.up('d'); await page.keyboard.press('f');
+  await expect(hud).toHaveAttribute('data-mode', 'ship');
+  await page.keyboard.down('w'); await expect(hud).toHaveAttribute('data-state', 'flying');
+  await page.keyboard.up('w');
+  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-mode', 'ship');
+  await expect(hud).toHaveAttribute('data-oxygen', '180.00');
+  expect(errors).toEqual([]);
+});
+
 test('mines the starter deposit, collects ore and resets the complete sortie', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/'); const hud = page.locator('#hud');

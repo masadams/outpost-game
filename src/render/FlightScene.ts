@@ -8,6 +8,7 @@ import { RESOURCE_INFO } from '../sim/resources';
 import { Hud } from '../ui/hud';
 import { FlightCamera } from './camera';
 import { drawMining } from './mining';
+import { drawSurface } from './surface';
 
 export class FlightScene extends Phaser.Scene {
   private simulation = createWorld();
@@ -34,10 +35,11 @@ export class FlightScene extends Phaser.Scene {
   }
   update(_time: number, delta: number): void {
     if (this.keys.restart()) { this.simulation = createWorld(); this.keys.release(); this.clock.reset(); this.follow.reset(this.ship); this.paused = false; }
-    if (this.keys.pause()) { this.paused = !this.paused; this.clock.reset(); }
+    if (this.keys.pause()) { this.paused = !this.paused; this.keys.release(); this.clock.reset(); }
     if (!this.paused) {
-      const input = this.keys.read(); this.clock.advance(delta / 1000, dt => stepWorld(this.simulation, input, dt));
-      this.follow.update(this.ship, Math.min(delta / 1000, 0.1));
+      this.clock.advance(delta / 1000, dt => stepWorld(this.simulation, this.keys.read(), dt));
+      const onFoot = this.simulation.playerMode === 'astronaut';
+      this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot);
     }
     this.draw();
     this.hudTime += delta;
@@ -72,6 +74,7 @@ export class FlightScene extends Phaser.Scene {
     // Pad beacon remains visible at orbital zoom.
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -607, 16 / this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
+    drawSurface(g, this.simulation);
     const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
     const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
     const p = (x: number, y: number) => new Phaser.Geom.Point(s.position.x + (right.x * x + n.x * y) * visibilityScale, s.position.y + (right.y * x + n.y * y) * visibilityScale);
@@ -92,6 +95,10 @@ export class FlightScene extends Phaser.Scene {
     const angle = localAngle(s.position); const direction = heading(angle);
     const distance = Math.min(61, Math.hypot(s.position.x, s.position.y) / WORLD.radius * radius);
     m.fillStyle(0xffcf94); m.fillCircle(mx + direction.x * distance, my + direction.y * distance, 3);
+    if (this.simulation.playerMode === 'astronaut') {
+      const p = this.simulation.astronaut.position;
+      m.fillStyle(0xe0eff2); m.fillCircle(mx + p.x / WORLD.radius * radius, my + p.y / WORLD.radius * radius, 2);
+    }
     for (const rock of this.simulation.asteroids) {
       const distance = Math.hypot(rock.position.x, rock.position.y);
       const scale = Math.min(radius / WORLD.radius, 61 / distance);

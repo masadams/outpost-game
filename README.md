@@ -2,7 +2,7 @@
 
 A single-player, retro-inspired 2D spaceflight, asteroid mining, combat and colony-building game. Target balance: **60% action / 40% construction**.
 
-**Status:** Task 001 planetary flight plus Task 002 mining/cargo implemented on feature branches, pending review. Task 002 is stacked on [flight PR #2](https://github.com/masadams/outpost-game/pull/2); review/merge that first. No combat, astronaut or colony construction yet.
+**Status:** Flight, mining/cargo and astronaut/surface interactions are implemented on stacked feature branches, pending review. Review [flight PR #2](https://github.com/masadams/outpost-game/pull/2), then [mining PR #3](https://github.com/masadams/outpost-game/pull/3), then Task 003 surface work. No combat or colony construction yet. Nothing is merged automatically.
 
 ## Play locally
 
@@ -17,15 +17,16 @@ Open the local Vite URL in a modern desktop browser. Click the game if keyboard 
 
 | Key | Action |
 |---|---|
-| W / Up | Main engine (hold) |
-| A / Left, D / Right | Rotate counterclockwise / clockwise |
-| Space | Fire forward mining laser (hold) |
+| W / Up | Main engine in ship; jump on foot |
+| A / Left, D / Right | Rotate in ship; walk left / right on foot |
+| Space | Fire mining laser in ship; jump on foot |
 | C | Tractor nearby ore (hold) |
-| E | Unload cargo while safely landed |
+| E | Unload while piloting a landed ship; interact with nearby surface terminal on foot |
+| F | Leave landed ship / board within 20 m |
 | P | Pause / resume |
-| R | Restore ship, field, ore, depot, camera and clock |
+| R | Restore ship, astronaut, field, ore, depot, camera and clock |
 
-The game also pauses when its window loses focus or the tab is hidden. Press P to resume. Controls rotate the ship in world space even as the camera reorients.
+The game also pauses when its window loses focus or the tab is hidden. Press P to resume; keys are released on pause to avoid queued actions. Flight controls rotate the ship in world space even as the camera reorients.
 
 For a first return flight, launch vertically for about **6.5 seconds**, then coast. Keep the nose upright. Watch radial velocity: positive means climbing, negative means descending. Use short thrust pulses on descent, starting early to keep descent under 30 m/s, then reduce it below 6 m/s near the pad. Thrust is an acceleration, so releasing W preserves momentum. Sustained burns can escape the moon; turn around and burn to return, or press R to practice again.
 
@@ -39,6 +40,16 @@ For other deposits, steer by the nearest-deposit bearing and colored radar blips
 
 ![Mining cargo HUD](docs/screenshots/mining-cargo.png)
 
+## Explore the surface
+
+Press **F** on the home pad to leave the ship. Use **A/D** or the arrows to walk around the curved moon. Press **Space** (or W/Up) to jump; release before jumping again. Ground motion accelerates and brakes, while airborne motion retains momentum under radial gravity. The camera smoothly moves to the astronaut and zooms closer. Ship engines and tools are disabled while the pilot is outside; asteroids and ore keep moving.
+
+The amber **cargo depot** is about 54 m right of the pad. Walk beside it, stand on the ground and press **E** to open the inventory and transfer the landed ship's hold into storage. Press E again to close, or walk away. The blue **service point** is about 54 m left of the pad. E there restores suit oxygen/health and repairs the landed ship using stored iron at **1 kg per 10 hull points**, up to available iron and missing hull. Suit servicing is free in this prototype; fuel production is not implemented.
+
+The suit has **180 seconds of oxygen**. Return to the ship (F within 20 m) or use the service point before it runs out. At zero oxygen, health drains at 5 points/second. Falls above 14 m/s also cause damage; ordinary jumps are safe. A lost suit requires R to restart the entire sortie. Boarding refills oxygen; suit health stays damaged until serviced. You can walk through ship/station art; terrain is the suit's collision surface in this milestone.
+
+![Surface depot](docs/screenshots/surface-depot.png)
+
 ## Verification
 
 ```sh
@@ -51,21 +62,21 @@ npm run test:browser
 
 `npm run preview` serves the production build. `dist/` can be hosted on any static server. CI runs typecheck, unit tests, build and Chromium checks, and uploads screenshots and test artifacts.
 
-The 36-test unit suite covers flight physics, fuel, frame-rate independence, landing, full orbit, return flight and camera behavior, plus laser occlusion/range/target order, fracture mass/momentum conservation, tractor range/force, partial-stack capacity, cargo mass, all-resource unloading, moving-body collisions, deterministic field reset and mining timing. An end-to-end simulation test launches, mines, collects, lands and unloads while checking total ore across field, pickups, hold and depot. Two Chromium checks exercise actual keyboard flight/mining/collection, pause/resume, complete reset, responsive canvas and page errors, and capture [the pad](docs/screenshots/launch-pad.png), [flight](docs/screenshots/flight.png) and [cargo](docs/screenshots/mining-cargo.png). The full return/unload loop is verified in simulation; browser automation covers the outbound mining leg.
+The 52-test unit suite covers flight/mining invariants, return/landing and ore conservation, plus surface movement in all quadrants, jump/release/landing, swept hard falls, oxygen, frame-rate independence, boarding range/state/debouncing, unoccupied ship controls, depot access, repair costs, suit recovery and smooth camera transitions. Scenario tests cover a full mining return/delivery and walking to unload, boarding and relaunching. Three Chromium checks exercise keyboard flight/mining and a complete surface route: exit, walk to depot, open it, jump/land, walk to service, restore oxygen, return to board and launch. Screenshots capture [the pad](docs/screenshots/launch-pad.png), [flight](docs/screenshots/flight.png), [cargo](docs/screenshots/mining-cargo.png) and [surface depot](docs/screenshots/surface-depot.png). The full mining return/unload loop is verified in simulation; browser automation covers its outbound leg and surface controls. Other browsers and human feel remain for review.
 
 ## Architecture and tuning
 
-- `src/sim/`: pure TypeScript state, Cartesian vectors in meters, time in seconds, 60 Hz accumulator and physics. No Phaser or DOM imports. `WORLD` in `config.ts` contains flight/landing constants; `MINING` in `mining.ts` contains mining constants. Total ship mass is dry hull plus fuel plus cargo. `world.ts` owns field/ship/depot and update order; `bodies.ts` handles physical bodies; `resources.ts` defines typed inventories; `mining.ts` owns raycast, fracture and collection.
-- `src/input/`: keyboard sampling and focus-safe key release.
+- `src/sim/`: pure TypeScript state, Cartesian meters and seconds, 60 Hz accumulator; no Phaser/DOM imports. `world.ts` owns pilot mode, suit, ship, field, depot and button-edge state. `astronaut.ts` contains suit movement/safety (`SUIT` tuning); `surface.ts` owns boarding and stations; `cargo.ts` shares inventory transfer without simulation module cycles. Flight, bodies, mining and typed resources remain separate. Total ship mass is dry hull plus fuel plus cargo.
+- `src/input/`: keyboard sampling per physics step, retaining short F/E/Space presses until consumed, and focus/pause-safe release.
 - `src/render/`: Phaser scene, procedural world/ship/stars/radar and a smoothed follow frame. Local-up rotation blends into the inertial frame between 100 and 900 m altitude; zoom follows altitude continuously. A transformed world container renders the camera frame, keeping HUD/radar in screen coordinates.
 - `src/ui/`: DOM telemetry and controls, outside world transforms.
 - `tests/`: simulation/camera regressions and real Chromium smoke test.
 
 Collision uses a circular 7 m hull swept against the 600 m moon, then classifies pad contact by arc tolerance, speed, tilt and spin. Semi-implicit Euler integration applies radial gravity and fuel-limited thrust with no linear drag. Phaser delta smoothing is disabled so the accumulator receives elapsed time even at low rendering rates. Catch-up is capped at 15 steps/250 ms; long stalls intentionally discard time. Angular damping stabilizes steering without changing linear inertia.
 
-Known limitations: circular smooth collision rim (geological markings are decorative); approximate circular hull rather than leg-by-leg contact; no audio, saves, autopilot or refuelling; no interpolation between physics steps; flight tuning remains subject to human review. The static stars are decorative. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; small ore interacts with gravity/surface/tractor and passes through rocks. At most 30 fragments or 120 pickups derive from this field, so all bodies stay simulated without a distant-body approximation. Fast ship/rock contacts are swept, while rock/rock contacts use discrete separation. Deposits that fall to the moon remain there, and depot inventory is not persisted across resets/reloads. The cargo panel targets desktop widths and is hidden below 560 px; mobile controls are out of scope. Phaser produces a roughly 1.2 MB minified JS bundle (about 340 KB gzip); Vite reports its standard large-chunk warning. Chromium is automated; other browsers have not been checked.
+Known limitations: circular smooth collision rim (geology is decorative); approximate circular ship/suit collision; suit collides with terrain only, with no air steering, EVA or backpack; fixed stations have no solid collision or production. No audio, saves, autopilot, refuelling or physics-step interpolation. Static stars are decorative. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. At most 30 fragments or 120 pickups derive from this field. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Deposits remain on the moon if they fall; depot inventory is reset on R/reload. The cargo/surface panel targets desktop widths and is hidden below 560 px; mobile controls are out of scope. Phaser produces a roughly 1.23 MB minified JS bundle (about 343 KB gzip), with Vite's standard large-chunk warning.
 
-Next recommendation: review flight/mining feel, then add the roadmap's astronaut/surface interactions and explicit depot access. Colony construction, refinement and fuel processing remain later milestones.
+Next recommendation: review flight, mining and surface loops, then implement Phase 4 surface construction and economy. Refinement, power and fuel production remain for that milestone.
 
 ## Start here
 - [Master development roadmap](docs/DEVELOPMENT_ROADMAP.md) — authoritative phases, task checkboxes, dependencies, exit criteria and progress.
@@ -73,6 +84,7 @@ Next recommendation: review flight/mining feel, then add the roadmap's astronaut
 - [Game design](docs/GAME_DESIGN.md) — gameplay vision, mechanics and core loop.
 - [Codex Task 001](CODEX_TASK.md) — first playable planetary flight prototype specification.
 - [Codex Task 002](CODEX_TASK_002.md) — mining/cargo iteration scope and acceptance criteria.
+- [Codex Task 003](CODEX_TASK_003.md) — astronaut and surface interaction scope.
 - [Agent instructions](AGENTS.md) — technical architecture, coding and testing conventions.
 
 ## Core experience
@@ -81,4 +93,4 @@ Launch from a small circular moon, fly in a continuous 2D world with radial grav
 ## Development workflow
 Implement one roadmap phase at a time on a feature branch. Open a PR with tests and playtest notes; update the roadmap and decision log. Do not merge automatically.
 
-Review Task 001 first, then its stacked Task 002 mining/cargo PR. Neither is merged automatically.
+Review Task 001, then Task 002, then Task 003 in dependency order. No automatic merges.

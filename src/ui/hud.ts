@@ -3,6 +3,8 @@ import { telemetry, type Ship } from '../sim/physics';
 import { localAngle, wrap } from '../sim/math';
 import { CARGO_CAPACITY, inventoryMass, RESOURCES, RESOURCE_INFO } from '../sim/resources';
 import type { WorldState } from '../sim/world';
+import { SUIT } from '../sim/astronaut';
+import { surfacePanel } from './surface';
 export class Hud {
   private root = document.createElement('div');
   private stats: HTMLElement;
@@ -10,11 +12,11 @@ export class Hud {
   private mining: HTMLElement;
   constructor() {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div><span class="eyebrow">RESOURCE PROVING GROUND / 002</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Launch → mine → collect → unload</small></div></header>
+    this.root.innerHTML = `<header><div><span class="eyebrow">SURFACE PROVING GROUND / 003</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Fly → mine → land → explore on foot</small></div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <div class="status" role="status" aria-live="polite"></div>
       <aside class="mining" aria-label="Cargo and mining telemetry"></aside>
-      <footer><div><b>FLIGHT / MINING MANUAL</b><p><kbd>W / ↑</kbd> thrust &nbsp; <kbd>A D / ← →</kbd> rotate<br><kbd>SPACE</kbd> mine &nbsp; <kbd>C</kbd> tractor &nbsp; <kbd>E</kbd> unload on pad<br><kbd>P</kbd> pause &nbsp; <kbd>R</kbd> reset entire sortie</p></div><div class="landing-guide">TOUCHDOWN ENVELOPE<br><small>Descent ≤ 6 m/s · Drift ≤ 4 m/s<br>Tilt ≤ 15° · Settle rotation before contact</small></div></footer>`;
+      <footer><div><b>FLIGHT / SURFACE MANUAL</b><p><kbd>W / ↑</kbd> thrust &nbsp; <kbd>A D / ← →</kbd> rotate / walk<br><kbd>SPACE</kbd> mine / jump &nbsp; <kbd>C</kbd> tractor &nbsp; <kbd>E</kbd> unload / interact<br><kbd>F</kbd> board / exit landed ship &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>R</kbd> reset</p></div><div class="landing-guide">TOUCHDOWN ENVELOPE<br><small>Descent ≤ 6 m/s · Drift ≤ 4 m/s<br>Tilt ≤ 15° · Settle rotation before contact</small></div></footer>`;
     document.body.append(this.root);
     this.stats = this.root.querySelector('.instruments')!;
     this.status = this.root.querySelector('.status')!;
@@ -22,21 +24,32 @@ export class Hud {
   }
   update(world: WorldState, paused: boolean): void {
     const ship: Ship = world.ship;
-    const t = telemetry(ship);
+    const onFoot = world.playerMode === 'astronaut';
+    const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
     this.stats.innerHTML = [ ['ALTITUDE', `${t.altitude.toFixed(0)}<small> m</small>`],
       ['RADIAL', `${t.radial.toFixed(1)}<small> m/s</small>`], ['DRIFT', `${t.tangential.toFixed(1)}<small> m/s</small>`],
-      ['SPEED', `${t.speed.toFixed(1)}<small> m/s</small>`], ['FUEL', `${(ship.fuel / WORLD.fuelCapacity * 100).toFixed(0)}<small> %</small>`],
-      ['HULL', `${ship.hull.toFixed(0)}<small> %</small>`], ['TILT', `${(t.tilt * 180 / Math.PI).toFixed(0)}<small> °</small>`] ].map(([label, value]) => `<div><label>${label}</label><strong>${value}</strong></div>`).join('');
-    const message = paused ? 'PAUSED · P TO RESUME' : ship.state === 'crashed' ? 'HULL LOST · R TO RESTART' :
+      ['SPEED', `${t.speed.toFixed(1)}<small> m/s</small>`],
+      [onFoot ? 'OXYGEN' : 'FUEL', `${((onFoot ? world.astronaut.oxygen / SUIT.oxygen : ship.fuel / WORLD.fuelCapacity) * 100).toFixed(0)}<small> %</small>`],
+      [onFoot ? 'SUIT' : 'HULL', `${(onFoot ? world.astronaut.health : ship.hull).toFixed(0)}<small> %</small>`],
+      [onFoot ? 'FOOTING' : 'TILT', onFoot ? world.astronaut.grounded ? 'GROUND' : 'AIR' : `${(t.tilt * 180 / Math.PI).toFixed(0)}<small> °</small>`] ].map(([label, value]) => `<div><label>${label}</label><strong>${value}</strong></div>`).join('');
+    const message = paused ? 'PAUSED · P TO RESUME' : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · R TO RESTART' :
+      !onFoot && ship.state === 'crashed' ? 'HULL LOST · R TO RESTART' : world.notice.time > 0 ? world.notice.message :
+      onFoot ? (world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : 'ON FOOT · A/D WALK · SPACE JUMP · F BOARD') :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
       ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : t.altitude > 900 ? 'OPEN SPACE · INERTIAL FRAME' : 'FREE FLIGHT · LOCAL GRAVITY';
     if (this.status.textContent !== message) this.status.textContent = message;
-    this.status.classList.toggle('danger', ship.state === 'crashed' || ship.impact > 0);
+    this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;
     this.root.dataset.altitude = t.altitude.toFixed(1);
     this.root.dataset.fuel = ship.fuel.toFixed(2);
     this.root.dataset.tilt = (t.tilt * 180 / Math.PI).toFixed(1);
+    this.root.dataset.mode = world.playerMode;
+    this.root.dataset.grounded = String(world.astronaut.grounded);
+    this.root.dataset.oxygen = world.astronaut.oxygen.toFixed(2);
+    this.root.dataset.suitHealth = world.astronaut.health.toFixed(1);
+    this.root.dataset.surfaceAngle = localAngle(world.astronaut.position).toFixed(4);
+    this.root.dataset.depotOpen = String(world.depotOpen);
     this.updateMining(world);
   }
   private updateMining(world: WorldState): void {
@@ -53,8 +66,8 @@ export class Hud {
     this.mining.innerHTML = `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${CARGO_CAPACITY} kg</small></strong>
       <div class="cargo-meter"><i style="width:${cargo / CARGO_CAPACITY * 100}%"></i></div>
       ${RESOURCES.map(type => `<div class="resource"><span>${RESOURCE_INFO[type].label}</span><span>${world.ship.cargo[type].toFixed(1)} / ${world.depot[type].toFixed(1)}</span></div>`).join('')}
-      <p class="objective">${objective}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser 450 m</small>` : 'Field depleted'}</div>
-      <small>${cargo >= CARGO_CAPACITY ? 'HOLD FULL · return and unload' : world.tractorActive ? 'TRACTOR ACTIVE · 260 m' : 'C: tractor · SPACE: laser'}</small>`;
+      ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${objective}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser 450 m</small>` : 'Field depleted'}</div>
+      <small>${cargo >= CARGO_CAPACITY ? 'HOLD FULL · return and unload' : world.tractorActive ? 'TRACTOR ACTIVE · 260 m' : 'C: tractor · SPACE: laser'}</small>`}`;
     this.root.dataset.cargo = cargo.toFixed(2); this.root.dataset.depot = stored.toFixed(2);
     this.root.dataset.asteroids = String(world.asteroids.length); this.root.dataset.pickups = String(world.pickups.length);
     this.root.dataset.mining = world.beam ? 'active' : 'idle';
