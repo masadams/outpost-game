@@ -1,4 +1,4 @@
-# Alpha 0.3 physics model
+# Alpha 0.4 physics model
 
 The fixed planet supplies the same continuous radial gravity to the ship, airborne suit, asteroids, fragments, incoming meteors and ore. Outside its 1,800 m radius, acceleration is `−mu * position / distance³`, with `mu = 16,200,000 m³/s²`. Surface gravity is 5 m/s². Inside the radius, a uniform-density model makes acceleration proportional to position and zero at the center. The surface contact constraint supports landed bodies and grounded walking.
 
@@ -18,7 +18,7 @@ Wheel/−/+ selects manual zoom from 0.035× to 5×; 0 restores automatic zoom. 
 
 ## Measured practice flights
 
-In the ship-only simulation with a clear flight path, a 6.5-second vertical burn peaks at roughly 467 m. With early descent braking (target at most 30 m/s, reducing toward 2 m/s near ground), the simulation returns safely in about 50 seconds, entirely in atmosphere. A 10-second burn peaks at roughly 1,718 m and returns in about 130 seconds, with about 74 seconds in atmosphere. In the live world, clear the starter deposit with Space or steer around it first. These are repeatable simulation profiles, not a promise that arbitrary manual braking gives the same result. At 1,600 m altitude circular vacuum speed is about 69 m/s. A low atmospheric orbit decays.
+In the ship-only simulation with a clear flight path, a 6.5-second vertical burn peaks at roughly 459 m. With early descent braking (target at most 30 m/s, reducing toward 2 m/s near ground), the simulation returns safely in about 49 seconds, entirely in atmosphere. A 10-second burn peaks at roughly 1,671 m and returns in about 127 seconds, with about 74 seconds in atmosphere. In the live world, clear the starter deposit with Space or steer around it first. These are repeatable simulation profiles, not a promise that arbitrary manual braking gives the same result. At 1,600 m altitude circular vacuum speed is about 69 m/s. A low atmospheric orbit decays.
 
 ## Checkpoint compatibility and verification
 
@@ -29,3 +29,7 @@ Tests check inverse-square/exterior and finite/interior gravity, shared vacuum a
 ## Defence additions
 
 Incoming meteors use the same quadratic drag and gravity, with swept terminal terrain impacts rather than mineral-body bounce. The 120-second meteor predictor calls that same step and excludes interception/ship contacts. Impact damage is an arcade radial blast scaled from contact kinetic energy; weapons inject energy and may disperse matter into non-collectible dust. Flak/missiles use shared environment integration and swept relative contacts; missiles add bounded guidance acceleration without a detailed propellant model. Weapon energy/ammunition are consumed from colony stocks. See [DEFENCE.md](DEFENCE.md). Current checkpoints use version 3 for active defence and damage; the version-1/2 migrations described above remain supported.
+
+## Ship combat additions
+
+Ship mass now includes the finite magazines (initially 6.5 kg). Fired projectiles inherit ship velocity; recoil preserves launch momentum using the remaining ship mass. Cannon/missile round masses match ammunition material costs. Gravity/drag remain shared, and first projectile contacts are swept against relative actor movement and terrain. Ship/drone contacts reuse the ship/rock impulse solver. Drones have finite fuel/ammo and bounded vectoring thrusters independent of gun attitude; missiles have bounded guidance, without detailed propellant or thermal simulation. Capacitor generation and radiative cooling are tuned gameplay budgets, not a closed thermochemical model. Both weapon variants have tested normal-input fight/return/paid-service profiles. Current checkpoints use version 4 and preserve earlier migrations. See [COMBAT.md](COMBAT.md).

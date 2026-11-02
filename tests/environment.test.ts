@@ -1,3 +1,4 @@
+import { shipMass } from '../src/sim/shipMass';
 import { describe, expect, it } from 'vitest';
 import { ATMOSPHERE, STEP, WORLD } from '../src/sim/config';
 import { airDensity, applyAirDrag, gravity } from '../src/sim/environment';
@@ -54,7 +55,7 @@ describe('contact and powered interaction invariants', () => {
   it('gives the ship the equal/opposite tractor impulse and conserves capture momentum', () => {
     const ship = createShip(); ship.state = 'flying'; ship.position.y -= 100;
     const pickup = { id: 1, mass: 10, radius: 2, resource: 'iron' as const, position: { x: 100, y: ship.position.y }, velocity: { x: 20, y: 0 } };
-    const mass = WORLD.dryMass + ship.fuel;
+    const mass = shipMass(ship);
     tractor(ship, pickup, STEP);
     expect(ship.velocity.x * mass + pickup.velocity.x * pickup.mass).toBeCloseTo(200, 8);
     pickup.position = { ...ship.position }; tractor(ship, pickup, STEP);
@@ -64,7 +65,7 @@ describe('contact and powered interaction invariants', () => {
     const y = -WORLD.radius - ATMOSPHERE.height - 1000, ship = createShip(); ship.state = 'flying';
     ship.position = { x: -20, y }; ship.velocity = { x: 10, y: 2 };
     const rock: Asteroid = { id: 1, position: { x: 0, y }, velocity: { x: -1, y: -0.5 }, radius: 16, mass: 40, resource: 'iron', stage: 0, health: 1, maxHealth: 1 };
-    const mass = WORLD.dryMass + ship.fuel;
+    const mass = shipMass(ship);
     const before = { x: ship.velocity.x * mass + rock.velocity.x * rock.mass, y: ship.velocity.y * mass + rock.velocity.y * rock.mass };
     const energy = () => mass * dot(ship.velocity, ship.velocity) / 2 + rock.mass * dot(rock.velocity, rock.velocity) / 2;
     const initialEnergy = energy(); collideShip(ship, rock, { x: -24, y }, { ...rock.position });

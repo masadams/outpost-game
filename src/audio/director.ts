@@ -7,7 +7,7 @@ export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup'
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
-  return { threats: world.defence.meteors.length, shots: world.defence.shots, impacts: world.defence.impacts,
+  return { combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: { ...world.astronaut.position }, cargo: inventoryMass(world.ship.cargo), unloaded: world.unloaded,
@@ -29,6 +29,7 @@ export class AudioDirector {
     if ((next.state === 'crashed' && prev.state !== 'crashed') || (next.suitHealth === 0 && prev.suitHealth > 0)) cues.push('crash');
     else if (next.hull < prev.hull || next.suitHealth < prev.suitHealth - 1) cues.push('impact');
     if (next.shots > prev.shots) cues.push('shot');
+    if (next.combatKills > prev.combatKills) cues.push('fracture');
     if (next.impacts > prev.impacts || (next.buildingHull < prev.buildingHull && next.buildings.size === prev.buildings.size)) cues.push('impact');
     if (prev.state === 'landed' && next.state === 'flying') cues.push('launch');
     if (prev.state === 'flying' && next.state === 'landed') cues.push('land');

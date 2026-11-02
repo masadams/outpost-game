@@ -1,3 +1,4 @@
+import { combatPanel } from './combat';
 import { buildingHealth } from '../sim/buildingHealth';
 import { isTurret, WEAPONS } from '../sim/defenceConfig';
 import { defencePanel } from './defence';
@@ -28,6 +29,7 @@ export function colonyPanel(world: WorldState, paused: boolean, threats: ThreatP
       ${near.kind === 'service' ? '<p>E: suit service / repair / refuel</p>' : ''}
       ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}</div>` : ''}
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
+    ${combatPanel(world, paused)}
     ${defencePanel(world, paused, threats)}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
@@ -35,6 +37,6 @@ export function actionFromButton(button: HTMLElement): ColonyAction | null {
   const { colony, select, shift } = button.dataset;
   if (select && BUILD_TYPES.includes(select as BuildType)) return { type: 'select', kind: select as BuildType };
   if (shift === '-32' || shift === '32') return { type: 'shift', delta: Number(shift) };
-  if (colony && ['toggleBuild', 'place', 'demolish', 'toggleMachine', 'cycleRecipe', 'startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding'].includes(colony)) return { type: colony } as ColonyAction;
+  if (colony && ['toggleBuild', 'place', 'demolish', 'toggleMachine', 'cycleRecipe', 'startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding', 'startEncounter', 'cycleWeapon', 'recoverShip'].includes(colony)) return { type: colony } as ColonyAction;
   return null;
 }

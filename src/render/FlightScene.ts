@@ -1,3 +1,4 @@
+import { drawCombat, drawCombatRadar } from './combat';
 import { predictMeteor, type ThreatPrediction } from '../sim/meteor';
 import { drawDefence, drawThreatRadar } from './defence';
 import Phaser from 'phaser';
@@ -164,6 +165,7 @@ export class FlightScene extends Phaser.Scene {
     drawColony(g, this.simulation);
     drawDefence(g, this.simulation, this.threats, this.follow.zoom);
     drawSurface(g, this.simulation);
+    drawCombat(g, this.simulation, this.follow.zoom);
     const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
     const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
     const p = (x: number, y: number) => new Phaser.Geom.Point(s.position.x + (right.x * x + n.x * y) * visibilityScale, s.position.y + (right.y * x + n.y * y) * visibilityScale);
@@ -189,6 +191,7 @@ export class FlightScene extends Phaser.Scene {
       const p = this.simulation.astronaut.position;
       m.fillStyle(0xe0eff2); m.fillCircle(mx + p.x / WORLD.radius * radius, my + p.y / WORLD.radius * radius, 2);
     }
+    drawCombatRadar(m, this.simulation, mx, my, radius);
     drawThreatRadar(m, this.simulation, mx, my, radius);
     for (const rock of this.simulation.asteroids) {
       const distance = Math.hypot(rock.position.x, rock.position.y);

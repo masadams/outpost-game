@@ -1,3 +1,4 @@
+import { resupplyArmament } from './combatSupply';
 import { applyDefenceAction } from './defence';
 import { isTurret } from './defenceConfig';
 import { SUIT } from './astronaut';
@@ -54,6 +55,7 @@ export function interactSurface(world: WorldState): void {
     const repair = canRepair ? Math.min(100 - world.ship.hull, world.depot.iron * 10) : 0;
     world.ship.hull += repair; world.depot.iron = Math.max(0, world.depot.iron - repair / 10);
     const fuel = refuelShip(world, stationPosition(station.angle));
+    if (canRepair) resupplyArmament(world);
     notify(world, fuel > 0 ? `SUIT RESTORED · FUEL +${fuel.toFixed(1)} kg` : repair > 0 ? `SUIT RESTORED · HULL +${repair.toFixed(0)}%` : 'SUIT RESTORED · HULL REPAIR: 1 kg IRON / 10%');
   }
 }
