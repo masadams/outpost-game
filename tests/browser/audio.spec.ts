@@ -20,6 +20,10 @@ test('audio unlocks after input, produces a signal, silences on pause/mute and p
   await expect(sound).toHaveAttribute('data-status', 'locked');
   await page.keyboard.down('w'); await expect(sound).toHaveAttribute('data-status', 'on');
   await expect.poll(rms).toBeGreaterThan(0.00005);
+  await page.keyboard.press('m'); await expect(sound).toHaveAttribute('data-status', 'muted');
+  await expect.poll(rms).toBeLessThan(0.00001);
+  await page.keyboard.press('m'); await expect(sound).toHaveAttribute('data-status', 'on');
+  await expect.poll(rms).toBeGreaterThan(0.00005);
   await page.keyboard.up('w'); await page.keyboard.press('p');
   await expect(sound).toHaveAttribute('data-audible', 'false'); await expect(sound).toHaveAttribute('data-loops', '0');
   await expect.poll(rms).toBeLessThan(0.00001);
