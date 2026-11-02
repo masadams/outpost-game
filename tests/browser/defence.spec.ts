@@ -14,13 +14,14 @@ test('builds and controls a turret, defends an opt-in drill, then saves the reso
   await page.keyboard.press('b'); await page.keyboard.down('d');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(145);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
-  await page.keyboard.press('e'); await expect(panel).toHaveAttribute('data-controlled', '2');
+  await page.getByRole('button', { name: 'Control turret [E]', exact: true }).click();
+  await expect(panel).toHaveAttribute('data-controlled', '2');
   const position = await hud.getAttribute('data-surface-angle');
   await page.keyboard.down('d');
   await expect.poll(async () => Number(await page.locator('.machine').getAttribute('data-aim'))).toBeGreaterThan(0.15);
   await page.keyboard.up('d'); await page.keyboard.down('Space');
   await expect.poll(async () => Number(await panel.getAttribute('data-shots'))).toBeGreaterThan(0);
-  await page.keyboard.up('Space'); expect(await hud.getAttribute('data-surface-angle')).toBe(position);
+  await page.keyboard.up('Space'); await expect(panel).toHaveAttribute('data-controlled', '2'); expect(await hud.getAttribute('data-surface-angle')).toBe(position);
   await expect(hud).toHaveAttribute('data-grounded', 'true');
   await page.keyboard.press('g'); await page.keyboard.press('e'); await expect(panel).toHaveAttribute('data-controlled', '');
   await expect(page.getByRole('button', { name: 'Auto defence [G]: on', exact: true })).toBeAttached();

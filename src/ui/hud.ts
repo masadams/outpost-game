@@ -31,10 +31,17 @@ export class Hud {
     this.status = this.root.querySelector('.status')!;
     this.mining = this.root.querySelector('.mining')!;
     this.colony = this.root.querySelector('.colony-panel')!;
+    this.colony.addEventListener('keydown', event => {
+      if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) event.stopPropagation();
+    });
     this.colony.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (!button || button.disabled) return;
-      const action = actionFromButton(button); if (action) onColonyAction(action);
+      const action = actionFromButton(button);
+      if (action) {
+        if (event.detail > 0 || action.type === 'controlTurret') button.blur();
+        onColonyAction(action);
+      }
     });
   }
   update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
