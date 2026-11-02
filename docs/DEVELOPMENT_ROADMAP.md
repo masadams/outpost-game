@@ -110,7 +110,7 @@ Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and me
 
 The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implemented the first slice in merged [PR #11](https://github.com/masadams/outpost-game/pull/11): ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). [Task 007B](../CODEX_TASK_007B.md) adds opt-in refinery scheduling next, with desired-stock targets, fair recipe rotation, cycle preservation and version-6 checkpoints. See [automation rules](AUTOMATION.md). Neither slice completes Phase 7.
 - [x] Finite planetary deposits and powered surface rigs connected to colony storage.
-- [ ] Opt-in refinery scheduling with configurable stock targets (Task 007B implemented on `feat/production-scheduling`; awaiting review/merge).
+- [ ] Opt-in refinery scheduling with configurable stock targets (Task 007B implemented in [PR #12](https://github.com/masadams/outpost-game/pull/12); awaiting review/merge).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
 - [ ] Mining drones or asteroid towing, with costs and vulnerability.
 - [ ] Priority controls for power, storage and defensive ammunition.
