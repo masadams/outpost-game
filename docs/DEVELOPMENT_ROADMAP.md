@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–4 have been implemented, tested, reviewed and merged as PRs #2–#5 after explicit user authorization. PR #6 adds basic procedural sound and H help. Alpha 0.2 implements the first flight feedback below for review; defence and further systems are deferred.
+**Status:** Phases 0–4, basic sound/help and atmospheric flight feedback are merged through PR #7. The user authorized merging #7 and continuing the roadmap. Phase 5 planetary defence is implemented on its feature branch pending review; Phase 6+ remain separate milestones.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -13,13 +13,11 @@
 
 ## Current feedback iteration — alpha 0.2
 
-Implemented in [PR #7](https://github.com/masadams/outpost-game/pull/7) on `feat/atmospheric-flight-trajectory`, pending review/merge (checkboxes remain open until merged):
-- [ ] Larger 1.8 km planet and 1.2 km atmosphere with shared gravity/drag for dynamic bodies.
-- [ ] Controls-released coast prediction and velocity arrow, J toggle, manual zoom and 0 auto.
-- [ ] Preserve legacy checkpoint progress on the larger planet; load paused.
-- [ ] Verify physics invariants and production browser playtest routes; document tuning/limits.
-
-No Phase 5 defence/combat work is included. Continue human handling/camera feedback first.
+Merged in [PR #7](https://github.com/masadams/outpost-game/pull/7) after green CI and explicit user authorization:
+- [x] Larger 1.8 km planet and 1.2 km atmosphere with shared gravity/drag for dynamic bodies.
+- [x] Controls-released coast prediction and velocity arrow, J toggle, manual zoom and 0 auto.
+- [x] Preserve legacy checkpoint progress on the larger planet; load paused.
+- [x] Verify physics invariants and production browser playtest routes; document tuning/limits.
 
 ## Phase 0 — Foundations and design
 
@@ -81,6 +79,8 @@ Merged in PR #5 after review and successful CI. Includes six facilities, preview
 **Exit:** Mine resources, refine them, build functioning facilities and refuel ship.
 
 ## Phase 5 — Planetary defence (Missile Command influence)
+
+Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) on `feat/planetary-defence`, pending review/merge; checkboxes stay open until merged. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
 **Dependencies:** Phases 1, 4.
 - [ ] Incoming meteors/asteroids with actual world trajectories.
 - [ ] Radar early warning and trajectory indicators.
@@ -116,16 +116,26 @@ Merged in PR #5 after review and successful CI. Includes six facilities, preview
 - [ ] Balance toward 60% action / 40% building.
 **Exit:** Engaging multi-session progression with clear short- and long-term goals.
 
-## Phase 9 — UI, art and audio
+## Phase 9 — Graphics, UX and UI overhaul; audio polish
 
-Playtest pass: original procedural flight/mining/surface/colony cues, M mute, persistent volume, focus/pause silence and H quick-start help are included. Full art/audio polish, music, broader accessibility and subjective mix approval remain in this later milestone.
-**Dependencies:** Playable core loop.
-- [ ] Cohesive early-DOS-inspired pixel art with modern particles/lighting.
-- [ ] Readable ship/base/build HUD and accessibility options.
-- [ ] Distinctive flight, mining, impact, construction and alarm sound effects.
-- [ ] Music and audio mix responsive to gameplay; pause/settings/controls.
-- [ ] Performance budgets and scalability for low-powered hardware.
-**Exit:** Consistent, readable and performant presentation.
+Explicitly requested by the user. This is a full presentation and interaction overhaul of the playable prototype. Begin the visual direction and UX audit after Phase 6, before automation/logistics adds more interface complexity; complete the overhaul here before Phase 10 reliability playtesting and release preparation. Keep fixes for blocking readability/input issues in the intervening milestones.
+
+The existing procedural sound, mute/volume controls and H guide provide the baseline. Preserve the continuous world and established retro visual direction while replacing prototype presentation where needed.
+
+**Dependencies:** Playable flight/mining/colony/defence/combat loop; final implementation incorporates Phase 7–8 systems.
+- [ ] Audit the full launch→mine→land→build→defend/combat→repair→save loop; record confusing actions, panel clutter, camera problems and missing feedback.
+- [ ] Establish a cohesive visual system with mockups, typography, palette, icons, spacing and reusable UI components.
+- [ ] Overhaul ship, astronaut, planet/surface, atmosphere, asteroid and colony visuals with readable silhouettes, animation, particles, lighting and impact/weapon effects.
+- [ ] Redesign the HUD around flight, on-foot, construction and turret contexts; prioritize relevant telemetry, warnings, targeting and trajectory information without overlapping panels.
+- [ ] Rework construction placement, inventory/production management, targeting and interaction prompts so available actions, costs, failures and outcomes are clear.
+- [ ] Improve onboarding, objectives, pause/settings screens, control discovery and keyboard/mouse focus behavior; include configurable controls.
+- [ ] Refine camera framing, zoom and transitions; provide reduced-motion/effect options, scalable text/UI, contrast and cues that do not rely on color alone.
+- [ ] Validate desktop layouts at 900×600, 1280×800 and 1920×1080, including resized windows and long/expanded panels. Mobile controls remain a separate release-phase investigation.
+- [ ] Polish distinctive sound effects and the mix; add gameplay-responsive music with independent volume controls and accessibility options.
+- [ ] Set and measure frame-time/effect budgets, offer graphics quality settings, and verify readability/performance on representative lower-powered hardware.
+- [ ] Add appropriate visual/input regressions and run human usability playtests across the full loop; resolve blocking findings and capture updated screenshots.
+
+**Exit:** A coherent visual style and context-sensitive interface cover every playable system; the full loop has been usability-tested, controls and feedback are discoverable, supported desktop layouts have no overlapping/obscured controls, accessibility options work, and measured performance meets the documented budgets.
 
 ## Phase 10 — Saves, reliability and content
 **Dependencies:** Core mechanics stable.
@@ -144,7 +154,7 @@ Playtest pass: original procedural flight/mining/surface/colony cues, M mute, pe
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Human playtest of alpha 0.1 using [PLAYTEST.md](PLAYTEST.md). Gather feedback on handling, landing, camera, mining, construction, checkpoints and sound before adding Phase 5 defence or other systems.
+Review the Phase 5 implementation and playtest alpha 0.3 using [PLAYTEST.md](PLAYTEST.md). Check defence handling, danger, scarcity, repairs and active saves alongside the existing loop before starting Phase 6 ship combat. After Phase 6, begin the Phase 9 visual-direction/UX audit before adding automation interfaces; the full graphics, UX and UI overhaul is a required milestone before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

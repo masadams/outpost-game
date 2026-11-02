@@ -1,6 +1,6 @@
-# Alpha 0.2 physics model
+# Alpha 0.3 physics model
 
-The fixed planet supplies the same continuous radial gravity to the ship, airborne suit, asteroids, fragments and ore. Outside its 1,800 m radius, acceleration is `−mu * position / distance³`, with `mu = 16,200,000 m³/s²`. Surface gravity is 5 m/s². Inside the radius, a uniform-density model makes acceleration proportional to position and zero at the center. The surface contact constraint supports landed bodies and grounded walking.
+The fixed planet supplies the same continuous radial gravity to the ship, airborne suit, asteroids, fragments, incoming meteors and ore. Outside its 1,800 m radius, acceleration is `−mu * position / distance³`, with `mu = 16,200,000 m³/s²`. Surface gravity is 5 m/s². Inside the radius, a uniform-density model makes acceleration proportional to position and zero at the center. The surface contact constraint supports landed bodies and grounded walking.
 
 This is a deliberately tuned arcade world, not an astronomical planet-density or atmosphere-retention model. The planet does not move or rotate. Objects do not gravitationally attract one another; they interact through contacts, mining, capture and the powered tractor. Colony facilities are supported surface markers, without rigid-body dynamics.
 
@@ -25,3 +25,7 @@ In the ship-only simulation with a clear flight path, a 6.5-second vertical burn
 Version-1 worlds used a 600 m radius. Loading one preserves altitude and local radial/tangential velocity, reorients ship attitude, and preserves signed surface arc distances from home for actors and buildings. Supplies, asteroid IDs/depletion and production state remain intact. Signed arc mapping has a far-side seam and cannot preserve every pairwise distance around the whole circumference. New gravity/air change old trajectories. The load pauses for inspection; storage is untouched until K writes version 2 with its environment metadata. New saves do not migrate twice.
 
 Tests check inverse-square/exterior and finite/interior gravity, shared vacuum acceleration, density continuity, drag dissipation, a full orbit's bounded energy error and angular momentum, tractor/capture and nonfatal collision momentum, exact coast prediction, touchdown timing, surface sweeps and legacy save preservation. Full mining-return regression still uses ordinary control inputs. Production browser checks cover the actual controls, audio, zoom, migration and prior gameplay loop. Other browsers and human handling/mix judgments remain playtest work.
+
+## Defence additions
+
+Incoming meteors use the same quadratic drag and gravity, with swept terminal terrain impacts rather than mineral-body bounce. The 120-second meteor predictor calls that same step and excludes interception/ship contacts. Impact damage is an arcade radial blast scaled from contact kinetic energy; weapons inject energy and may disperse matter into non-collectible dust. Flak/missiles use shared environment integration and swept relative contacts; missiles add bounded guidance acceleration without a detailed propellant model. Weapon energy/ammunition are consumed from colony stocks. See [DEFENCE.md](DEFENCE.md). Current checkpoints use version 3 for active defence and damage; the version-1/2 migrations described above remain supported.

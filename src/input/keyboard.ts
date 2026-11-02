@@ -7,9 +7,9 @@ export class Keyboard {
   private pending = new Set<string>();
   private onBlur = (): void => this.release();
   constructor(scene: Phaser.Scene) {
-    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO', true) as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO', true) as Record<string, Phaser.Input.Keyboard.Key>;
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
-    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO']) {
+    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
         if (!event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
@@ -27,8 +27,8 @@ export class Keyboard {
     const w = this.consume('W'), up = this.consume('UP');
     const actions: ColonyAction[] = [];
     const commands: Array<[string, ColonyAction]> = [['B', { type: 'toggleBuild' }], ['Q', { type: 'shift', delta: -32 }], ['T', { type: 'shift', delta: 32 }],
-      ['ENTER', { type: 'place' }], ['X', { type: 'demolish' }], ['V', { type: 'cycleRecipe' }]];
-    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'].forEach((key, i) => commands.push([key, { type: 'select', kind: BUILD_TYPES[i] }]));
+      ['N', { type: 'startWave' }], ['G', { type: 'toggleAuto' }], ['U', { type: 'repairBuilding' }], ['ENTER', { type: 'place' }], ['X', { type: 'demolish' }], ['V', { type: 'cycleRecipe' }]];
+    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'].forEach((key, i) => commands.push([key, { type: 'select', kind: BUILD_TYPES[i] }]));
     for (const [key, action] of commands) if (this.pending.delete(key)) actions.push(action);
     return { thrust: w || up,
       turn: Number(this.held('D') || this.held('RIGHT')) - Number(this.held('A') || this.held('LEFT')),

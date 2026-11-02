@@ -67,3 +67,10 @@ kbd { color: #d7e6e8; font-family: inherit; }
 @media (max-width: 1100px) { .mining { top: 230px; width: 220px; right: 16px; font-size: 10px; padding: 12px; } .mining .resource { line-height: 1.5; } .mining .target { padding: 6px 0; } .mining .objective { margin: 7px 0; } }
 @media (max-width: 800px) { #hud { padding: 16px; } .instruments div { padding: 10px; min-width: 86px; } .mission { display: none; } strong { font-size: 17px; } .status { top: 195px; } footer { left: 16px; right: 16px; } }
 @media (max-width: 560px) { .instruments { flex-wrap: wrap; max-width: 280px; } .status { top: 270px; } .landing-guide { display: none; } .mining { display: none; } }
+
+.defence-panel { border-top: 1px solid #63473b; margin-top: 10px; padding-top: 12px; line-height: 1.7; }
+.defence-panel .warning, .warning { color: #ffb47c; }
+.defence-panel small { font-size: 9px; display: block; line-height: 1.6; }
+
+#threat-alert { position: absolute; top: 250px; left: 34px; color: #ffb47c; font-size: 10px; background: #201815dc; }
+@media (max-width: 800px) { #threat-alert { left: 16px; top: 222px; } }

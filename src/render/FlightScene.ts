@@ -1,3 +1,5 @@
+import { predictMeteor, type ThreatPrediction } from '../sim/meteor';
+import { drawDefence, drawThreatRadar } from './defence';
 import Phaser from 'phaser';
 import { Keyboard } from '../input/keyboard';
 import { FixedClock } from '../sim/clock';
@@ -45,6 +47,8 @@ export class FlightScene extends Phaser.Scene {
   private flightTools!: FlightTools;
   private prediction: Trajectory | null = null;
   private predictionTime = 0;
+  private threats: ThreatPrediction[] = [];
+  private threatTime = 0;
   private starPoints = Array.from({ length: 240 }, (_, i) => ({ x: ((i * 0.61803398875) % 1), y: ((i * i * 0.41421356237) % 1), bright: i % 7 === 0 }));
   constructor() { super('flight'); }
   create(): void {
@@ -79,7 +83,7 @@ export class FlightScene extends Phaser.Scene {
   }
   private viewAction(action: ViewAction): void {
     if (this.help.isOpen) return;
-    if (action === 'trajectory') { this.flightTools.trajectory = !this.flightTools.trajectory; this.prediction = null; }
+    if (action === 'trajectory') { this.flightTools.trajectory = !this.flightTools.trajectory; this.prediction = null; this.threats = []; }
     else if (action === 'autoZoom') this.follow.autoZoom();
     else this.follow.zoomBy(action === 'zoomIn' ? 1.25 : 0.8);
   }
@@ -90,7 +94,7 @@ export class FlightScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (this.keys.mute()) this.audio.toggleMute();
     if (this.keys.help()) this.help.toggle();
-    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship); this.audio.reset(this.simulation); this.prediction = null; }
+    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship); this.audio.reset(this.simulation); this.prediction = null; this.threats = []; }
     if (!this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
       catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
@@ -115,12 +119,16 @@ export class FlightScene extends Phaser.Scene {
     if (this.flightTools.trajectory && (this.prediction === null || (!this.paused && this.predictionTime >= 0.2))) {
       this.prediction = predictCoast(this.ship); this.predictionTime = 0;
     }
+    this.threatTime += delta / 1000;
+    if ((!this.paused && this.threatTime >= 0.5) || this.threats.length !== Math.min(12, this.simulation.defence.meteors.length)) {
+      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => predictMeteor(m)); this.threatTime = 0;
+    }
     this.flightTools.update(this.ship, this.follow, this.prediction);
     this.audio.update(this.simulation, this.paused, delta / 1000);
     this.soundControls.update();
     this.draw();
     this.hudTime += delta;
-    if (this.hudTime > 50) { this.hud.update(this.simulation, this.paused); this.hudTime = 0; }
+    if (this.hudTime > 50) { this.hud.update(this.simulation, this.paused, this.threats); this.hudTime = 0; }
   }
   private loadCheckpoint(requested: boolean): void {
     try {
@@ -129,7 +137,7 @@ export class FlightScene extends Phaser.Scene {
         this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
         this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship);
         this.audio.reset(saved); this.audio.silence();
-        this.prediction = null;
+        this.prediction = null; this.threats = [];
       } else if (requested) notify(this.simulation, 'NO CHECKPOINT · PRESS K TO SAVE');
     } catch { notify(this.simulation, 'CHECKPOINT INVALID OR STORAGE UNAVAILABLE · CURRENT WORLD KEPT'); }
   }
@@ -154,6 +162,7 @@ export class FlightScene extends Phaser.Scene {
     if (this.flightTools.trajectory) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
     drawColony(g, this.simulation);
+    drawDefence(g, this.simulation, this.threats, this.follow.zoom);
     drawSurface(g, this.simulation);
     const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
     const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
@@ -180,6 +189,7 @@ export class FlightScene extends Phaser.Scene {
       const p = this.simulation.astronaut.position;
       m.fillStyle(0xe0eff2); m.fillCircle(mx + p.x / WORLD.radius * radius, my + p.y / WORLD.radius * radius, 2);
     }
+    drawThreatRadar(m, this.simulation, mx, my, radius);
     for (const rock of this.simulation.asteroids) {
       const distance = Math.hypot(rock.position.x, rock.position.y);
       const scale = Math.min(radius / WORLD.radius, 61 / distance);

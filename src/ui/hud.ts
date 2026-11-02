@@ -1,3 +1,4 @@
+import type { ThreatPrediction } from '../sim/meteor';
 import { ATMOSPHERE, WORLD } from '../sim/config';
 import { telemetry, type Ship } from '../sim/physics';
 import { localAngle, wrap } from '../sim/math';
@@ -18,9 +19,10 @@ export class Hud {
   destroy(): void { this.root.remove(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.2</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
+    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.3</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <div class="status" role="status" aria-live="polite"></div>
+      <div id="threat-alert"></div>
       <aside class="mining" aria-label="Cargo and mining telemetry"></aside>
       <aside class="colony-panel" aria-label="Colony construction and production"></aside>
       <footer><div><b>FLIGHT / COLONY MANUAL</b><p><kbd>W / ↑</kbd> thrust &nbsp; <kbd>A D / ← →</kbd> rotate / walk<br><kbd>SPACE</kbd> mine / jump &nbsp; <kbd>C</kbd> tractor &nbsp; <kbd>E</kbd> unload / interact<br><kbd>F</kbd> board / exit &nbsp; <kbd>B</kbd> build &nbsp; <kbd>K / L</kbd> save / load &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>R</kbd> reset</p></div><div class="landing-guide">TOUCHDOWN ENVELOPE<br><small>Descent ≤ 6 m/s · Drift ≤ 4 m/s<br>Tilt ≤ 15° · Settle rotation before contact</small></div></footer>`;
@@ -29,13 +31,20 @@ export class Hud {
     this.status = this.root.querySelector('.status')!;
     this.mining = this.root.querySelector('.mining')!;
     this.colony = this.root.querySelector('.colony-panel')!;
+    this.colony.addEventListener('keydown', event => {
+      if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) event.stopPropagation();
+    });
     this.colony.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (!button || button.disabled) return;
-      const action = actionFromButton(button); if (action) onColonyAction(action);
+      const action = actionFromButton(button);
+      if (action) {
+        if (event.detail > 0 || action.type === 'controlTurret') button.blur();
+        onColonyAction(action);
+      }
     });
   }
-  update(world: WorldState, paused: boolean): void {
+  update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
@@ -47,6 +56,7 @@ export class Hud {
       [onFoot ? 'FOOTING' : 'TILT', onFoot ? world.astronaut.grounded ? 'GROUND' : 'AIR' : `${(t.tilt * 180 / Math.PI).toFixed(0)}<small> °</small>`] ].map(([label, value]) => `<div><label>${label}</label><strong>${value}</strong></div>`).join('');
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · R TO RESTART' :
       !onFoot && ship.state === 'crashed' ? 'HULL LOST · R TO RESTART' : world.notice.time > 0 ? world.notice.message :
+      world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
       onFoot ? (world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : 'ON FOOT · A/D WALK · SPACE JUMP · F BOARD') :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
@@ -63,8 +73,12 @@ export class Hud {
     this.root.dataset.suitHealth = world.astronaut.health.toFixed(1);
     this.root.dataset.surfaceAngle = localAngle(world.astronaut.position).toFixed(4);
     this.root.dataset.depotOpen = String(world.depotOpen);
+    const incoming = threats.filter(t => t.impact).sort((a, b) => a.seconds - b.seconds)[0];
+    const alert = this.root.querySelector('#threat-alert')!;
+    const warning = world.defence.meteors.length ? `⚠ ${world.defence.meteors.length} INCOMING${incoming ? ` · IMPACT ${incoming.seconds.toFixed(0)} s` : ''}` : '';
+    if (alert.textContent !== warning) alert.textContent = warning;
     this.updateMining(world);
-    const panel = colonyPanel(world, paused);
+    const panel = colonyPanel(world, paused, threats);
     if (this.colonyMarkup !== panel) { patchMarkup(this.colony, panel); this.colonyMarkup = panel; }
     this.root.dataset.buildings = String(world.colony.buildings.length);
     this.root.dataset.buildOpen = String(world.colony.buildOpen);
