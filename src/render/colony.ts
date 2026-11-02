@@ -20,6 +20,10 @@ export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState): v
     g.lineStyle(1, color, entry.active ? 0.95 : 0.4); g.strokePoints(outline, true);
     if (entry.kind === 'solar') {
       g.lineStyle(1, color); for (const x of [-8, -4, 0, 4, 8]) { const a = p(x, 4), b = p(x, 11); g.lineBetween(a.x, a.y, b.x, b.y); }
+    } else if (entry.kind === 'miningRig') {
+      const tower = [p(-8, 1), p(0, 29), p(8, 1)]; g.strokePoints(tower, false);
+      for (const height of [7, 14, 21]) { const a = p(-5, height), b = p(5, height); g.lineBetween(a.x, a.y, b.x, b.y); }
+      const drillTop = p(0, 19), drillBottom = p(0, -5); g.lineStyle(2, color); g.lineBetween(drillTop.x, drillTop.y, drillBottom.x, drillBottom.y);
     } else if (entry.kind === 'refinery') {
       const chimney = [p(-width + 2, 13), p(-width + 2, 21), p(-width + 5, 21), p(-width + 5, 13)]; g.strokePoints(chimney, true);
     } else {

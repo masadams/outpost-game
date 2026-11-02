@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6 are implemented, tested and merged through PR #9 after explicit user authorization. The pre-automation presentation foundation is implemented on its own branch for review: visual direction, contextual panels and desktop layout checks. Phase 7 automation is next; the full Phase 9 overhaul remains required.
+**Status:** Phases 0–6 and the pre-automation presentation foundation are merged through PR #10. The first Phase 7 slice implements finite planetary mining for review. Scheduling, logistics, drones/towing and priority controls remain future work; the full Phase 9 overhaul remains required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -103,10 +103,13 @@ Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) and merg
 
 ## Pre-automation presentation foundation (Task 006A)
 
-Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) on `feat/presentation-foundations`, pending review/merge. See [Task 006A](../CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
+Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and merged into main. See [Task 006A](../CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
 
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
+
+The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implements the first slice on `feat/planetary-mining` for review: ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). This does not complete Phase 7.
+- [ ] Finite planetary deposits and powered surface rigs connected to colony storage (implemented; awaiting review/merge).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
 - [ ] Mining drones or asteroid towing, with costs and vulnerability.
 - [ ] Priority controls for power, storage and defensive ammunition.
@@ -160,7 +163,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review the presentation foundation and playtest alpha 0.5 using [PLAYTEST.md](PLAYTEST.md), especially panel discovery, construction scrolling, help/focus behavior and target visibility. Then proceed to Phase 7 automation/logistics using this layout foundation. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Review planetary mining and playtest alpha 0.6 using [PLAYTEST.md](PLAYTEST.md), especially seam discovery, footprint placement, finite reserves and power/storage feedback. Then continue Phase 7 scheduling and logistics using the merged layout foundation. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

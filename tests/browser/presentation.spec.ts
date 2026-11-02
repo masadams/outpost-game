@@ -43,9 +43,9 @@ test('uses contextual panels with pause-safe mouse/keyboard navigation and reada
   await page.getByRole('button', { name: 'Cargo [I]', exact: true }).focus(); await page.keyboard.press('Space');
   await expect(dock).toHaveAttribute('data-panel', 'cargo'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-context', 'construction');
-  await expect(page.locator('.build-palette button')).toHaveCount(9);
+  await expect(page.locator('.build-palette button')).toHaveCount(10);
   expect(await dock.evaluate(e => e.scrollHeight > e.clientHeight)).toBe(true);
-  const last = page.locator('[data-select="missile"]'); await last.click(); await expect(last).toHaveClass(/selected/);
+  const last = page.locator('[data-select="miningRig"]'); await last.click(); await expect(last).toHaveClass(/selected/);
   await page.keyboard.press('Escape'); await expect(dock).toBeHidden();
   await page.getByRole('button', { name: 'Colony', exact: true }).click(); await expect(dock).toBeVisible();
   expect(errors).toEqual([]);

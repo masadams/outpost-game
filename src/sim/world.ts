@@ -1,3 +1,4 @@
+import { createSurfaceDeposits, type SurfaceDeposit } from './geology';
 import { createCombat, type CombatState, type CombatAction } from './combatConfig';
 import { applyCombatAction, isCombatAction, stepCombat } from './combat';
 import { serviceCombatAtPad } from './combatSupply';
@@ -23,7 +24,7 @@ export interface WorldState {
   beam: Beam | null; tractorActive: boolean; nextId: number; unloaded: number;
   playerMode: 'ship' | 'astronaut'; astronaut: Astronaut; depotOpen: boolean;
   buttons: { board: boolean; interact: boolean }; notice: { message: string; time: number };
-  colony: Colony; defence: DefenceState; combat: CombatState;
+  surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; combat: CombatState;
 }
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
@@ -38,7 +39,7 @@ export function createWorld(): WorldState {
   asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
   asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
   return { ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
-    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, colony: createColony(), defence: createDefence(), combat: createCombat() };
+    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), combat: createCombat() };
 }
 export function stepWorld(world: WorldState, input: WorldControls, dt: number): void {
   world.notice.time = Math.max(0, world.notice.time - dt);
