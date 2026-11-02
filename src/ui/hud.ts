@@ -15,9 +15,10 @@ export class Hud {
   private mining: HTMLElement;
   private colony: HTMLElement;
   private colonyMarkup = '';
+  destroy(): void { this.root.remove(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div><span class="eyebrow">COLONY PROVING GROUND / 004</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
+    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.1</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <div class="status" role="status" aria-live="polite"></div>
       <aside class="mining" aria-label="Cargo and mining telemetry"></aside>
