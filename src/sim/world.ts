@@ -1,5 +1,5 @@
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
-import { WORLD } from './config';
+import { ATMOSPHERE, WORLD } from './config';
 import { heading } from './math';
 import { fireLaser, fracture, tractor, type Beam } from './mining';
 import { createShip, stepShip, type Controls, type Ship } from './physics';
@@ -23,15 +23,15 @@ export interface WorldState {
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
   for (let i = 0; i < 15; i++) {
-    const radius = 1100 + (i % 3) * 160, n = heading(i * 2.399963);
+    const radius = WORLD.radius + ATMOSPHERE.height + 400 + (i % 3) * 200, n = heading(i * 2.399963);
     const speed = Math.sqrt(WORLD.mu / radius);
     asteroids.push({ id: i + 1, position: { x: n.x * radius, y: n.y * radius },
       velocity: { x: -n.y * speed, y: n.x * speed }, radius: 16 + i % 4 * 3,
       mass: 40 + i % 4 * 8, resource: RESOURCES[i % RESOURCES.length], stage: 0, health: 1, maxHealth: 1 });
   }
   // A radial iron sample above home makes the first sortie accessible without orbital rendezvous.
-  asteroids[0].position = { x: 0, y: -1040 }; asteroids[0].velocity = { x: 0, y: 0 };
-  asteroids[2].position = { x: 95, y: -1070 }; asteroids[2].velocity = { x: 0, y: 0 };
+  asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
+  asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
   return { ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
     playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, colony: createColony() };
 }

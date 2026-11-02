@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createAstronaut, stepAstronaut, suitAltitude, SUIT } from '../src/sim/astronaut';
 import { FixedClock } from '../src/sim/clock';
-import { STEP, WORLD } from '../src/sim/config';
+import { ATMOSPHERE, STEP, WORLD } from '../src/sim/config';
 import { dot, heading, length, localAngle } from '../src/sim/math';
 import { inventoryMass } from '../src/sim/resources';
 import { boardOrExit, interactSurface, stationPosition, STATIONS } from '../src/sim/surface';
@@ -34,7 +34,7 @@ describe('astronaut physics and safety', () => {
     expect(suit.grounded).toBe(false);
   });
   it('sweeps a hard fall against the surface and damages the suit', () => {
-    const suit = createAstronaut(); suit.grounded = false; suit.position.y = -1000; suit.velocity.y = 120000;
+    const suit = createAstronaut(); suit.grounded = false; suit.position.y = -WORLD.radius - ATMOSPHERE.height - 1000; suit.velocity.y = 600000;
     stepAstronaut(suit, { move: 0, jump: false }, STEP);
     expect(length(suit.position)).toBeCloseTo(WORLD.radius + SUIT.radius); expect(suit.health).toBe(0);
     expect(suit.velocity).toEqual({ x: 0, y: 0 });

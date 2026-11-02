@@ -1,4 +1,4 @@
-import { WORLD } from '../sim/config';
+import { ATMOSPHERE, WORLD } from '../sim/config';
 import { telemetry, type Ship } from '../sim/physics';
 import { localAngle, wrap } from '../sim/math';
 import { CARGO_CAPACITY, inventoryMass, RESOURCES, RESOURCE_INFO } from '../sim/resources';
@@ -18,7 +18,7 @@ export class Hud {
   destroy(): void { this.root.remove(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.1</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
+    this.root.innerHTML = `<header><div><span class="eyebrow">PLAYTEST ALPHA / 0.2</span><h1>OUTPOST<span>✦</span></h1></div><div class="mission">SELENE · OUTPOST ALPHA<br><small>Mine → refine → build → refuel</small></div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <div class="status" role="status" aria-live="polite"></div>
       <aside class="mining" aria-label="Cargo and mining telemetry"></aside>
@@ -50,7 +50,7 @@ export class Hud {
       onFoot ? (world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : 'ON FOOT · A/D WALK · SPACE JUMP · F BOARD') :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
-      ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : t.altitude > 900 ? 'OPEN SPACE · INERTIAL FRAME' : 'FREE FLIGHT · LOCAL GRAVITY';
+      ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : t.altitude > ATMOSPHERE.height ? 'OPEN SPACE · RADIAL GRAVITY' : 'ATMOSPHERIC FLIGHT · GRAVITY + DRAG';
     if (this.status.textContent !== message) this.status.textContent = message;
     this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;

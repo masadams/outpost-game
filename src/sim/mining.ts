@@ -65,4 +65,7 @@ export function tractor(ship: Ship, pickup: Pickup, dt: number): void {
   const change = { x: (desired.x - pickup.velocity.x) * gain, y: (desired.y - pickup.velocity.y) * gain };
   const scale = Math.min(1, MINING.tractorAcceleration * dt / Math.max(length(change), 1e-9));
   pickup.velocity.x += change.x * scale; pickup.velocity.y += change.y * scale;
+  const shipMass = WORLD.dryMass + ship.fuel + inventoryMass(ship.cargo);
+  ship.velocity.x -= change.x * scale * pickup.mass / shipMass;
+  ship.velocity.y -= change.y * scale * pickup.mass / shipMass;
 }

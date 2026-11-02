@@ -2,7 +2,9 @@ import { expect, it } from 'vitest';
 import { decodeCheckpoint, encodeCheckpoint, readCheckpoint, writeCheckpoint, SAVE_KEY } from '../src/persistence/checkpoint';
 import { createWorld } from '../src/sim/world';
 import { stepColony } from '../src/sim/colony';
-import { STEP } from '../src/sim/config';
+import { STEP, WORLD } from '../src/sim/config';
+import { legacyCheckpoint } from './fixtures/legacyCheckpoint';
+import { length, localAngle } from '../src/sim/math';
 
 it('round-trips buildings, stock, machine progress, ship, crew and the finite field', () => {
   const world = createWorld(); world.colony.buildings = [
@@ -20,8 +22,25 @@ it('clears held controls on load and does not mutate the saved source world', ()
   const loaded = decodeCheckpoint(encodeCheckpoint(world));
   expect(loaded.buttons.board).toBe(false); expect(loaded.astronaut.jumpHeld).toBe(false); expect(world.buttons.board).toBe(true);
 });
-it.each(['{', JSON.stringify({ version: 2, world: createWorld() }), JSON.stringify({ version: 1, world: {} }), ' '.repeat(1_000_001)])('rejects broken, unsupported or oversized checkpoints', text => {
+it.each(['{', JSON.stringify({ version: 999, world: createWorld() }), JSON.stringify({ version: 1, world: {} }), ' '.repeat(1_000_001)])('rejects broken, unsupported or oversized checkpoints', text => {
   expect(() => decodeCheckpoint(text)).toThrow();
+});
+it('migrates the old small moon while preserving surface arc distances, resources and depleted deposits', () => {
+  const legacy = legacyCheckpoint(), loaded = decodeCheckpoint(JSON.stringify(legacy));
+  expect(length(loaded.ship.position)).toBeCloseTo(WORLD.radius + 7);
+  expect(localAngle(loaded.astronaut.position) * WORLD.radius).toBeCloseTo(12);
+  expect(loaded.colony.buildings[0].angle * WORLD.radius).toBeCloseTo(120);
+  expect(loaded.depot).toEqual(legacy.world.depot); expect(loaded.ship.cargo).toEqual(legacy.world.ship.cargo);
+  expect(loaded.colony.products).toEqual(legacy.world.colony.products); expect(loaded.ship.fuel).toBe(150);
+  expect(loaded.asteroids.map(b => b.id)).toEqual(legacy.world.asteroids.map(b => b.id));
+  expect(length(loaded.asteroids[0].position) - WORLD.radius).toBeCloseTo(440);
+  expect(loaded.notice.message).toContain('MIGRATED');
+  const text = encodeCheckpoint(loaded); expect(JSON.parse(text).version).toBe(2);
+  expect(decodeCheckpoint(text).ship.position).toEqual(loaded.ship.position); // No double scaling.
+});
+it('rejects a newer envelope with an incompatible planet instead of silently moving the world', () => {
+  const envelope = JSON.parse(encodeCheckpoint(createWorld())); envelope.environment.radius = 600;
+  expect(() => decodeCheckpoint(JSON.stringify(envelope))).toThrow('incompatible');
 });
 it('rejects invalid building kinds, duplicate IDs, overflow and non-finite values', () => {
   const valid = JSON.parse(encodeCheckpoint(createWorld()));

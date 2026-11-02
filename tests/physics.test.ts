@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock } from '../src/sim/clock';
-import { STEP, WORLD } from '../src/sim/config';
+import { ATMOSPHERE, STEP, WORLD } from '../src/sim/config';
 import { length } from '../src/sim/math';
 import { createShip, gravity, IDLE, safeLanding, stepShip, surfaceHit, telemetry } from '../src/sim/physics';
 
 describe('radial gravity', () => {
-  it.each([[600, 0], [0, -600], [-600, 0], [0, 600]])('points inward at (%s,%s)', (x, y) => {
+  it.each([[WORLD.radius, 0], [0, -WORLD.radius], [-WORLD.radius, 0], [0, WORLD.radius]])('points inward at (%s,%s)', (x, y) => {
     const g = gravity({ x, y }); expect(g.x * x + g.y * y).toBeLessThan(0);
     expect(g.x * y - g.y * x).toBeCloseTo(0);
     expect(length(g)).toBeCloseTo(5);
   });
   it('falls with inverse square distance and remains finite at the core', () => {
-    expect(length(gravity({ x: 1200, y: 0 }))).toBeCloseTo(1.25);
+    expect(length(gravity({ x: WORLD.radius * 2, y: 0 }))).toBeCloseTo(1.25);
     expect(gravity({ x: 0, y: 0 })).toEqual({ x: -0, y: -0 });
     expect(Number.isFinite(gravity({ x: 0.001, y: 0 }).x)).toBe(true);
   });
@@ -26,7 +26,7 @@ describe('thrust, rotation and clock', () => {
     expect(createShip().state).toBe('landed');
   });
   it('retains tangential inertia in free flight', () => {
-    const ship = createShip(); ship.state = 'flying'; ship.position = { x: 0, y: -2000 }; ship.velocity.x = 100;
+    const ship = createShip(); ship.state = 'flying'; ship.position = { x: 0, y: -WORLD.radius - ATMOSPHERE.height - 1000 }; ship.velocity.x = 100;
     stepShip(ship, IDLE, STEP);
     expect(ship.velocity.x).toBe(100); expect(ship.velocity.y).toBeGreaterThan(0);
   });
@@ -38,7 +38,7 @@ describe('thrust, rotation and clock', () => {
     expect(ship.thrusting).toBe(false); expect(ship.velocity.y).toBeGreaterThan(vy);
   });
   it('damps angular velocity without damping linear velocity', () => {
-    const ship = createShip(); ship.state = 'flying'; ship.position.y = -2000;
+    const ship = createShip(); ship.state = 'flying'; ship.position.y = -WORLD.radius - ATMOSPHERE.height - 1000;
     stepShip(ship, { thrust: false, turn: 1 }, STEP); expect(ship.angularVelocity).toBeGreaterThan(0);
     const spin = ship.angularVelocity; stepShip(ship, IDLE, STEP); expect(ship.angularVelocity).toBeLessThan(spin);
   });
@@ -65,8 +65,8 @@ describe('landing and collision', () => {
   });
   it('catches a segment that crosses the entire moon', () => {
     expect(surfaceHit({ x: 0, y: -1000 }, { x: 0, y: 1000 }, 607)).toBeCloseTo(0.1965);
-    const ship = createShip(); ship.state = 'flying'; ship.position.y = -1000; ship.velocity.y = 120000;
-    stepShip(ship, IDLE, STEP); expect(ship.state).toBe('crashed'); expect(length(ship.position)).toBeCloseTo(607);
+    const ship = createShip(); ship.state = 'flying'; ship.position.y = -WORLD.radius - ATMOSPHERE.height - 1000; ship.velocity.y = 600000;
+    stepShip(ship, IDLE, STEP); expect(ship.state).toBe('crashed'); expect(length(ship.position)).toBeCloseTo(WORLD.radius + WORLD.shipRadius);
   });
   it('locks a safe landing without contact jitter and allows relaunch', () => {
     const ship = createShip(); ship.state = 'flying'; ship.position.y -= 0.02; ship.velocity.y = 2;
@@ -78,22 +78,23 @@ describe('landing and collision', () => {
   it('damages a moderate impact and crashes a hard impact', () => {
     const ship = createShip(); ship.state = 'flying'; ship.position.y -= 0.01; ship.velocity.y = 8;
     stepShip(ship, IDLE, STEP); expect(ship.hull).toBeLessThan(100); expect(ship.state).toBe('flying'); expect(ship.velocity.y).toBeLessThan(0);
-    ship.position.y = -607.01; ship.velocity.y = 40;
+    ship.position.y = -WORLD.radius - WORLD.shipRadius - 0.01; ship.velocity.y = 40;
     stepShip(ship, IDLE, STEP); expect(ship.state).toBe('crashed'); expect(ship.hull).toBe(0);
   });
   it('does not accept a touchdown beyond the pad or with excess tilt', () => {
     for (const mode of ['terrain', 'tilted']) {
       const ship = createShip(); ship.state = 'flying';
-      if (mode === 'terrain') { ship.position = { x: 607.01, y: 0 }; ship.angle = Math.PI / 2; ship.velocity = { x: -1, y: 0 }; }
+      if (mode === 'terrain') { ship.position = { x: WORLD.radius + WORLD.shipRadius + 0.01, y: 0 }; ship.angle = Math.PI / 2; ship.velocity = { x: -1, y: 0 }; }
       else { ship.position.y -= 0.01; ship.angle = 0.5; ship.velocity.y = 1; }
       stepShip(ship, IDLE, STEP); expect(ship.state).not.toBe('landed'); expect(ship.hull).toBeLessThan(100);
     }
   });
   it('supports a full orbit without surface penetration or arbitrary drag', () => {
-    const ship = createShip(); ship.state = 'flying'; ship.position = { x: 0, y: -1000 }; ship.velocity = { x: Math.sqrt(WORLD.mu / 1000), y: 0 };
-    const period = 2 * Math.PI * Math.sqrt(1000 ** 3 / WORLD.mu);
+    const radius = WORLD.radius + ATMOSPHERE.height + 500;
+    const ship = createShip(); ship.state = 'flying'; ship.position = { x: 0, y: -radius }; ship.velocity = { x: Math.sqrt(WORLD.mu / radius), y: 0 };
+    const period = 2 * Math.PI * Math.sqrt(radius ** 3 / WORLD.mu);
     for (let i = 0; i < period / STEP; i++) stepShip(ship, IDLE, STEP);
-    expect(ship.position.x).toBeCloseTo(0, -1); expect(ship.position.y).toBeCloseTo(-1000, -1);
+    expect(ship.position.x).toBeCloseTo(0, -1); expect(ship.position.y).toBeCloseTo(-radius, -1);
     expect(ship.hull).toBe(100); expect(ship.fuel).toBe(WORLD.fuelCapacity);
   });
   it('completes launch, ballistic coast, powered descent and landing on the original pad', () => {
@@ -101,9 +102,9 @@ describe('landing and collision', () => {
     for (let i = 0; i < 24000 && ship.landings === 0 && ship.state !== 'crashed'; i++) {
       const t = telemetry(ship); maxAltitude = Math.max(maxAltitude, t.altitude);
       const targetDescent = -Math.min(30, Math.max(2, t.altitude * 0.3));
-      const thrust = i < 390 || (t.radial < targetDescent);
+      const thrust = i < 600 || (t.radial < targetDescent);
       stepShip(ship, { thrust, turn: 0 }, STEP);
     }
-    expect(maxAltitude).toBeGreaterThan(900); expect(ship.landings).toBe(1); expect(ship.hull).toBe(100);
+    expect(maxAltitude).toBeGreaterThan(ATMOSPHERE.height); expect(ship.landings).toBe(1); expect(ship.hull).toBe(100);
   });
 });

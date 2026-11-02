@@ -2,6 +2,11 @@
 * { box-sizing: border-box; }
 body { margin: 0; overflow: hidden; }
 canvas { display: block; }
+#flight-tools { position: fixed; top: 86px; left: 34px; display: flex; gap: 4px; align-items: center; font-size: 10px; color: #92b2c2; }
+#flight-tools button { font: inherit; padding: 5px 7px; border: 1px solid #345267; background: #142838; color: #d7e6e8; cursor: pointer; }
+#flight-tools button[aria-pressed="true"] { color: #73f3cf; border-color: #4b9588; }
+#flight-status { position: fixed; top: 198px; left: 34px; font-size: 10px; color: #a6c7df; background: #0a1724b0; padding: 3px 6px; }
+@media (max-width: 800px) { #flight-tools { left: 16px; top: 84px; font-size: 9px; } #flight-tools button { padding: 5px 4px; } #flight-status { left: 16px; top: 175px; font-size: 9px; } }
 #sound-panel { position: fixed; top: 84px; right: 34px; display: flex; align-items: center; gap: 8px; color: #92b2c2; font-size: 10px; }
 #sound-panel button, #help button { background: #142838; border: 1px solid #345267; color: #d7e6e8; padding: 6px 9px; cursor: pointer; font: inherit; }
 #sound-panel > button:first-child { width: 100px; }
