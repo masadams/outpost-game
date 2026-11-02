@@ -8,13 +8,17 @@ import { unloadCargo } from './cargo';
 export { unloadCargo } from './cargo';
 import { createAstronaut, stepAstronaut, SUIT, type Astronaut } from './astronaut';
 import { boardOrExit, interactSurface, nearbyStation } from './surface';
+import { createColony, applyColonyAction, stepColony, type Colony, type ColonyAction } from './colony';
+import { refuelShip } from './colonyService';
+import { notify } from './messages';
 
-export interface WorldControls extends Controls { mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean }
+export interface WorldControls extends Controls { mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
 export interface WorldState {
   ship: Ship; asteroids: Asteroid[]; pickups: Pickup[]; depot: Inventory;
   beam: Beam | null; tractorActive: boolean; nextId: number; unloaded: number;
   playerMode: 'ship' | 'astronaut'; astronaut: Astronaut; depotOpen: boolean;
   buttons: { board: boolean; interact: boolean }; notice: { message: string; time: number };
+  colony: Colony;
 }
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
@@ -27,12 +31,14 @@ export function createWorld(): WorldState {
   }
   // A radial iron sample above home makes the first sortie accessible without orbital rendezvous.
   asteroids[0].position = { x: 0, y: -1040 }; asteroids[0].velocity = { x: 0, y: 0 };
+  asteroids[2].position = { x: 95, y: -1070 }; asteroids[2].velocity = { x: 0, y: 0 };
   return { ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
-    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 } };
+    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, colony: createColony() };
 }
 export function stepWorld(world: WorldState, input: WorldControls, dt: number): void {
   world.notice.time = Math.max(0, world.notice.time - dt);
   if (input.board && !world.buttons.board) boardOrExit(world);
+  for (const action of input.colonyActions ?? []) applyColonyAction(world, action);
   const interact = !!input.unload && !world.buttons.interact;
   world.buttons = { board: !!input.board, interact: !!input.unload };
   const piloting = world.playerMode === 'ship';
@@ -63,5 +69,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   world.tractorActive = piloting && !!input.tractor && world.ship.state === 'flying';
   if (world.tractorActive) for (const pickup of world.pickups) tractor(world.ship, pickup, dt);
   world.pickups = world.pickups.filter(pickup => pickup.mass > 1e-9);
-  if (piloting && input.unload) unloadCargo(world);
+  if (piloting && input.unload) {
+    unloadCargo(world);
+    const fuel = refuelShip(world, world.ship.position);
+    if (fuel > 0) notify(world, `FUEL TRANSFERRED · +${fuel.toFixed(1)} kg`);
+  }
+  stepColony(world, dt);
 }

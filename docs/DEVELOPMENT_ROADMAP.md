@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Tasks 001–003 (flight, mining/cargo, astronaut/surface interactions) are implemented on stacked feature branches pending review and merge. The continuing iteration request advances implementation, without merging earlier work. Review in dependency order; no automatic merges.
+**Status:** Tasks 001–004 (flight, mining, surface interactions, colony construction/economy) are implemented on stacked feature branches pending review and merge. The continuing iteration request advances implementation without merging earlier work. Review in dependency order; no automatic merges.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -49,7 +49,7 @@ Review note: [Task 002](../CODEX_TASK_002.md) implements the items below as PR #
 
 ## Phase 3 — Astronaut and surface interactions
 
-Review note: [Task 003](../CODEX_TASK_003.md) implements all items below on a branch stacked on mining PR #3. Adds terrain walking/jumping, airlock, depot/service points, oxygen/health, iron-funded hull repair and camera/HUD transitions. Verification includes 52 unit tests and three Chromium control checks, with a surface screenshot. Suit collision is limited to terrain; fixed terminals are interaction markers. Human feel and merge remain pending; checkboxes stay open per the progress rule.
+Review note: [Task 003](../CODEX_TASK_003.md) implements all items below as PR #4 stacked on mining PR #3. Its 52 unit tests, three Chromium checks and hosted CI passed. Suit collision is limited to terrain; fixed terminals are interaction markers. Human feel and merge remain pending; checkboxes stay open per the progress rule.
 **Dependencies:** Phase 1, Phase 2 unload interface.
 - [ ] Seamlessly enter/exit landed ship.
 - [ ] Implement local-gravity walking, jumping, collision and camera transitions.
@@ -58,6 +58,8 @@ Review note: [Task 003](../CODEX_TASK_003.md) implements all items below on a br
 **Exit:** Land, leave ship, move around planet surface and interact with cargo.
 
 ## Phase 4 — Colony construction and economy
+
+Review note: [Task 004](../CODEX_TASK_004.md) implements the items below on a branch stacked on surface PR #4. Includes six facilities, preview/palette, costs/salvage, power/batteries, capped inventory, selectable refining, ice/fuel production, refuelling and bounded versioned full-world checkpoints. Verification covers 73 unit tests and five Chromium checks with a production screenshot. The global power/material bus, constant solar output and manual local checkpoint are deliberate prototype simplifications. Review and merge remain pending; boxes stay open until then.
 **Dependencies:** Phases 2–3.
 - [ ] Surface-anchored building placement around a curved planet.
 - [ ] Construct storage, refinery, generator/solar array, fuel processor and repair station.
@@ -130,7 +132,7 @@ Review note: [Task 003](../CODEX_TASK_003.md) implements all items below on a br
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review **Task 001** flight, **Task 002** mining and **Task 003** surface interactions in order. After merge, mark verified items complete. Review these loops before advancing to Phase 4 construction/economy.
+Review **Tasks 001–004** in order and assess flight, mining, surface controls and the colony production loop. After merge, mark verified items complete. Next milestone after review is Phase 5 planetary defence.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

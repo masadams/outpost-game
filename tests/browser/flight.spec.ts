@@ -86,3 +86,44 @@ test('mines the starter deposit, collects ore and resets the complete sortie', a
   await expect(hud).toHaveAttribute('data-asteroids', '15'); await expect(hud).toHaveAttribute('data-pickups', '0');
   expect(errors).toEqual([]);
 });
+
+test('constructs a powered production line and preserves its world checkpoint across reset/reload', async ({ page }) => {
+  test.setTimeout(45000);
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/'); const hud = page.locator('#hud');
+  await expect(hud).toHaveAttribute('data-mode', 'ship');
+  await page.keyboard.press('f'); await expect(hud).toHaveAttribute('data-mode', 'astronaut');
+  await page.keyboard.down('d');
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')), { timeout: 10000, intervals: [100] }).toBeGreaterThan(0.16);
+  await page.keyboard.up('d'); await page.waitForTimeout(450);
+  await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-build-open', 'true');
+  await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
+  await page.keyboard.press('t');
+  await page.locator('[data-select="refinery"]').click();
+  await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.keyboard.press('t'); await page.keyboard.press('5'); await page.keyboard.press('Enter');
+  await expect(hud).toHaveAttribute('data-buildings', '3');
+  await expect.poll(async () => Number(await hud.getAttribute('data-fuel-stock')), { timeout: 8000, intervals: [100] }).toBeGreaterThan(1);
+  await page.locator('.colony-panel').evaluate(element => { element.scrollTop = 0; });
+  await page.screenshot({ path: 'docs/screenshots/colony-production.png' });
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  const fuel = await hud.getAttribute('data-fuel-stock');
+  await page.waitForTimeout(250); expect(await hud.getAttribute('data-fuel-stock')).toBe(fuel);
+  await page.keyboard.press('k');
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('outpost.checkpoint.v1'))).not.toBeNull();
+  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-buildings', '0');
+  await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-buildings', '3');
+  await expect(hud).toHaveAttribute('data-fuel-stock', fuel!); await expect(hud).toHaveAttribute('data-state', 'paused');
+  await page.reload(); await expect(hud).toHaveAttribute('data-buildings', '3');
+  await expect(hud).toHaveAttribute('data-mode', 'astronaut'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  expect(errors).toEqual([]);
+});
+
+test('keeps a playable world when a stored checkpoint is corrupt', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => localStorage.setItem('outpost.checkpoint.v1', '{broken'));
+  await page.goto('/'); await expect(page.locator('#hud')).toHaveAttribute('data-state', 'landed');
+  await expect(page.locator('.status')).toContainText('CHECKPOINT INVALID');
+  await page.keyboard.down('w'); await expect(page.locator('#hud')).toHaveAttribute('data-state', 'flying'); await page.keyboard.up('w');
+  expect(errors).toEqual([]);
+});
