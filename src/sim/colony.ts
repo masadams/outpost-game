@@ -1,3 +1,5 @@
+import type { DefenceAction } from './defenceConfig';
+import { operational, buildingHealth } from './buildingHealth';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
 import { WORLD } from './config';
 import { clamp, localAngle, wrap } from './math';
@@ -7,23 +9,24 @@ import { notify } from './messages';
 import type { WorldState } from './world';
 
 export interface Building {
+  health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked';
 }
 export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
   return { buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
     energy: 0, generation: 0, demand: 0, buildOpen: false, selected: 'solar', offset: 24, nextId: 1 };
 }
-export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage').length * 200;
-export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage').length * 100;
-export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery').length * 200;
+export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).length * 200;
+export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).length * 100;
+export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).length * 200;
 export const previewAngle = (world: WorldState): number => wrap(localAngle(world.astronaut.position) + world.colony.offset / WORLD.radius);
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world)): string | null {
   if (world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0) return 'Stand on the surface to build';
@@ -51,7 +54,7 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     const error = placementError(world); if (error) { notify(world, error); return; }
     const blueprint = BLUEPRINTS[colony.selected];
     for (const product of PRODUCTS) colony.products[product] = Math.max(0, colony.products[product] - (blueprint.cost[product] ?? 0));
-    colony.buildings.push({ id: colony.nextId++, kind: colony.selected, angle: previewAngle(world), enabled: true, progress: 0, recipe: 0, status: 'idle' });
+    colony.buildings.push({ id: colony.nextId++, kind: colony.selected, health: 100, angle: previewAngle(world), enabled: true, progress: 0, recipe: 0, status: 'idle' });
     notify(world, `${blueprint.label.toUpperCase()} BUILT`); return;
   }
   const building = nearbyBuilding(world);
@@ -59,13 +62,15 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
   if (action.type === 'demolish') {
     if (!colony.buildOpen) return;
     const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
-    if (inventoryMass(world.depot) > oreCapacity(remaining) || PRODUCTS.some(p => colony.products[p] + (BLUEPRINTS[building.kind].cost[p] ?? 0) * 0.75 > productCapacity(remaining))) {
+    if (inventoryMass(world.depot) > oreCapacity(remaining) || PRODUCTS.some(p => colony.products[p] + (BLUEPRINTS[building.kind].cost[p] ?? 0) * 0.75 * buildingHealth(building) / 100 > productCapacity(remaining))) {
       notify(world, 'NOT ENOUGH STORAGE AFTER DEMOLITION'); return;
     }
     colony.buildings = remaining.buildings;
-    for (const p of PRODUCTS) colony.products[p] += (BLUEPRINTS[building.kind].cost[p] ?? 0) * 0.75;
+    if (world.defence.controlled === building.id) world.defence.controlled = null;
+    for (const p of PRODUCTS) colony.products[p] += (BLUEPRINTS[building.kind].cost[p] ?? 0) * 0.75 * buildingHealth(building) / 100;
     colony.energy = Math.min(colony.energy, energyCapacity(colony));
-    notify(world, 'FACILITY REMOVED · 75% MATERIALS RECOVERED');
+    notify(world, 'FACILITY REMOVED · SALVAGE SCALES WITH REMAINING HULL');
+  } else if (!operational(building)) { notify(world, 'FACILITY WRECKED · U TO REPAIR');
   } else if (action.type === 'cycleRecipe' && building.kind === 'refinery') {
     building.recipe = (building.recipe + 1) % REFINERY_RECIPES.length; building.progress = 0;
     notify(world, REFINERY_RECIPES[building.recipe].label);
@@ -79,11 +84,12 @@ export function recipeFor(building: Building): Recipe | null {
 }
 export function stepColony(world: WorldState, dt: number): void {
   const colony = world.colony;
-  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled).length * 8;
+  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b)).length * 8;
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
   for (const building of colony.buildings) {
-    building.status = building.enabled ? 'idle' : 'disabled';
+    building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
+    if (!operational(building)) continue;
     if (!building.enabled) continue;
     const recipe = recipeFor(building); if (!recipe) continue;
     if (Object.entries(recipe.raw).some(([r, quantity]) => world.depot[r as keyof typeof world.depot] + 1e-9 < quantity) ||

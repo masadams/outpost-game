@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–4 have been implemented, tested, reviewed and merged as PRs #2–#5 after explicit user authorization. PR #6 adds basic procedural sound and H help. Alpha 0.2 implements the first flight feedback below for review; defence and further systems are deferred.
+**Status:** Phases 0–4, basic sound/help and atmospheric flight feedback are merged through PR #7. The user authorized merging #7 and continuing the roadmap. Phase 5 planetary defence is implemented on its feature branch pending review; Phase 6+ remain separate milestones.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -13,13 +13,11 @@
 
 ## Current feedback iteration — alpha 0.2
 
-Implemented in [PR #7](https://github.com/masadams/outpost-game/pull/7) on `feat/atmospheric-flight-trajectory`, pending review/merge (checkboxes remain open until merged):
-- [ ] Larger 1.8 km planet and 1.2 km atmosphere with shared gravity/drag for dynamic bodies.
-- [ ] Controls-released coast prediction and velocity arrow, J toggle, manual zoom and 0 auto.
-- [ ] Preserve legacy checkpoint progress on the larger planet; load paused.
-- [ ] Verify physics invariants and production browser playtest routes; document tuning/limits.
-
-No Phase 5 defence/combat work is included. Continue human handling/camera feedback first.
+Merged in [PR #7](https://github.com/masadams/outpost-game/pull/7) after green CI and explicit user authorization:
+- [x] Larger 1.8 km planet and 1.2 km atmosphere with shared gravity/drag for dynamic bodies.
+- [x] Controls-released coast prediction and velocity arrow, J toggle, manual zoom and 0 auto.
+- [x] Preserve legacy checkpoint progress on the larger planet; load paused.
+- [x] Verify physics invariants and production browser playtest routes; document tuning/limits.
 
 ## Phase 0 — Foundations and design
 
@@ -81,6 +79,8 @@ Merged in PR #5 after review and successful CI. Includes six facilities, preview
 **Exit:** Mine resources, refine them, build functioning facilities and refuel ship.
 
 ## Phase 5 — Planetary defence (Missile Command influence)
+
+Implemented on `feat/planetary-defence`, pending PR review/merge; checkboxes stay open until merged. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
 **Dependencies:** Phases 1, 4.
 - [ ] Incoming meteors/asteroids with actual world trajectories.
 - [ ] Radar early warning and trajectory indicators.
@@ -144,7 +144,7 @@ Playtest pass: original procedural flight/mining/surface/colony cues, M mute, pe
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Human playtest of alpha 0.1 using [PLAYTEST.md](PLAYTEST.md). Gather feedback on handling, landing, camera, mining, construction, checkpoints and sound before adding Phase 5 defence or other systems.
+Review the Phase 5 implementation and playtest alpha 0.3 using [PLAYTEST.md](PLAYTEST.md). Check defence handling, danger, scarcity, repairs and active saves alongside the existing loop before starting Phase 6 ship combat.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

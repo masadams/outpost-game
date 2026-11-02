@@ -41,7 +41,7 @@ test('loads a legacy checkpoint onto the larger planet without losing its base o
   await expect(hud).toHaveAttribute('data-cargo', '6.00'); await expect(hud).toHaveAttribute('data-depot', '12.00');
   await expect(hud).toHaveAttribute('data-altitude', '0.0'); await expect(page.locator('.status')).toContainText('MIGRATED');
   await page.keyboard.press('k');
-  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!).version)).toBe(2);
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!).version)).toBe(3);
   const savedRadius = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!).environment.radius);
   expect(savedRadius).toBe(WORLD.radius);
 });

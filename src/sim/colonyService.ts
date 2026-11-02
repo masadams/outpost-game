@@ -1,3 +1,4 @@
+import { operational } from './buildingHealth';
 import { SUIT } from './astronaut';
 import { WORLD } from './config';
 import { notify } from './messages';
@@ -13,7 +14,7 @@ export function refuelShip(world: WorldState, at: Vec): number {
   return fuel;
 }
 export function serviceAtBuilding(world: WorldState, building: Building): void {
-  if (!building.enabled || world.colony.energy < 2) { notify(world, 'SERVICE NEEDS 2 kJ OF STORED POWER'); return; }
+  if (!operational(building) || !building.enabled || world.colony.energy < 2) { notify(world, 'SERVICE NEEDS 2 kJ OF STORED POWER'); return; }
   world.colony.energy -= 2;
   const products = world.colony.products;
   const oxygen = Math.min((SUIT.oxygen - world.astronaut.oxygen) / SUIT.oxygen, products.oxygen);

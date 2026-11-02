@@ -17,8 +17,8 @@ export function build(world: WorldState, kind: BuildType, arc: number): void {
 }
 function run(world: WorldState, seconds: number): void { for (let i = 0; i < Math.round(seconds / STEP); i++) stepColony(world, STEP); }
 describe('surface construction', () => {
-  it('builds each facility once, deducts costs, and anchors to the surface arc', () => {
-    const world = createWorld(); BUILD_TYPES.forEach((kind, i) => build(world, kind, 120 + i * 40));
+  it('builds each original utility facility once, deducts costs, and anchors to the surface arc', () => {
+    const world = createWorld(); BUILD_TYPES.slice(0, 6).forEach((kind, i) => build(world, kind, 120 + i * 40));
     expect(world.colony.buildings).toHaveLength(6); expect(new Set(world.colony.buildings.map(b => b.id)).size).toBe(6);
     expect(world.colony.products.alloy).toBe(0); expect(world.colony.products.wire).toBe(2);
     expect(world.colony.buildings[0].angle * WORLD.radius).toBeCloseTo(120);

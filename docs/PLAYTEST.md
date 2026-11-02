@@ -1,13 +1,15 @@
-# Outpost alpha 0.2 — first playtest
+# Outpost alpha 0.3 — first playtest
 
-Start with the current flight/mining/surface/colony loop. Defence, combat and further systems should wait for feedback on this slice.
+Start with the current flight/mining/surface/colony loop. Try the opt-in defence drill after the core loop. Ship combat and later systems remain separate phases.
 
 ## Run the build under review
 
 From a checkout of this repository:
 
 ```sh
-git switch feat/atmospheric-flight-trajectory
+git fetch origin
+git switch feat/planetary-defence
+git pull --ff-only
 npm ci
 npm run build
 npm run preview
@@ -17,19 +19,20 @@ Open the printed local URL in a desktop browser. The build is also available as 
 
 Press **H** for the in-game guide. It pauses and returns to your previous pause state. Sound unlocks on your first click/key; **M** mutes and the top bar controls volume. These preferences survive reload independently of your checkpoint. Pause and focus loss silence all sounds.
 
-## Suggested route (about 15–20 minutes)
+## Suggested route (about 20–25 minutes)
 
 1. **Flight:** hold Space during launch to clear the starter deposit above home, or steer around it. Launch vertically for roughly 6.5 seconds, then coast. The 1.8 km planet has 1.2 km of atmosphere. This low hop stays atmospheric; a 10-second vertical burn reaches above it. Try rotation and inertia. Toggle J to compare the coast prediction to your actual path. Release thrust before comparing; the path excludes rocks/tools. Try wheel/−/+ and 0 auto zoom while flying and paused. Return using short thrust pulses; aim for radial descent ≤6 m/s, drift ≤4 m/s and tilt ≤15° at the green pad. R resets a failed attempt.
 2. **Mining:** repeat the short launch while holding Space/C. Mine the starter iron sample above home, collect ore, return and E to unload. The blue ice sample is nearby to the right. Avoid holding thrust until pickup finishes; that can reach escape speed.
 3. **Surface:** F exits a landed ship. Walk/jump to the depot on the right, use E, visit the emergency service point on the left, then return and F to board. Check camera orientation, prompts and oxygen readability.
 4. **Colony:** exit and walk past the depot. B opens construction; Enter places solar, T shifts the preview, 4/Enter places refinery, T then 5/Enter places fuel processing. Try an invalid site, a battery/storage building and demolition. Check power shortages, V recipe selection and the initial water/oxygen becoming fuel. Mine/unload ice for ongoing production; E in the landed ship transfers available fuel.
 5. **Checkpoint:** old alpha-0.1 checkpoints migrate onto the larger planet paused, preserving the base, cargo and depleted deposits. Check the result before K overwrites the old slot. K saves the entire current world. Make a change, L restores paused, and P resumes. Reload should restore the same checkpoint without resetting mined deposits. R resets runtime progress but keeps the checkpoint. There is no autosave.
-6. **Sound/help:** compare thrust, mining, impacts, touchdown, airlock, footsteps, construction and warnings. Check mute/volume persistence and silence on pause or tab/window switching. Use H without leaving the game.
+6. **Defence:** save with K first. On a fresh runtime build solar around 120 m, T/7/Enter for a laser turret 32 m farther along. Walk near the turret, E to control, A/D to aim and Space to fire. E releases. G enables automation nearby. N starts a meteor drill with real damage. Zoom out, check orange warning paths/impact markers and let automation intercept the parent and fragments. Try 8 flak or 9 missile on later attempts, with enough alloy/components/energy. Disable defence for an impact, stand near the damaged facility and U to repair with alloy. Save/reload both a live drill and its aftermath. L restores the pre-drill checkpoint paused if needed.
+7. **Sound/help:** compare thrust, mining, impacts, touchdown, airlock, footsteps, construction and warnings. Check mute/volume persistence and silence on pause or tab/window switching. Use H without leaving the game.
 
 ## Useful feedback
 
 Report the browser/OS, steps, expected versus actual behavior, and a screenshot or short capture when helpful. Include visible altitude/velocities/fuel/hull, whether you were piloting/on foot, and which facilities were running.
 
-The priorities are handling, landing difficulty, camera comfort, readable UI, mining rendezvous, discoverable construction, and whether sound cues are useful or tiring. Automated tests measure audio output and silence; subjective mix quality still needs human listening.
+The priorities are defence readability/difficulty, power/ammo scarcity, repair recovery, handling, landing difficulty, camera comfort, readable UI, mining rendezvous, discoverable construction, and whether sound cues are useful or tiring. Automated tests measure audio output and silence; subjective mix quality still needs human listening.
 
-Known prototype limits: non-solid undamaged buildings, terrain-only suit collision, a global power/material bus, constant solar, a finite field, one manual local checkpoint, and no offline production. Keep your checkpoint on the same browser/origin. No public hosting, multiplayer or cloud save is configured.
+Known prototype limits: non-solid buildings with blast damage, terrain-only suit collision, a global power/material bus, constant solar, a finite field, one manual local checkpoint, and no offline production. Keep your checkpoint on the same browser/origin. No public hosting, multiplayer or cloud save is configured.

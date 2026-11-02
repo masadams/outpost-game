@@ -1,3 +1,5 @@
+import { applyDefenceAction } from './defence';
+import { isTurret } from './defenceConfig';
 import { SUIT } from './astronaut';
 import { WORLD } from './config';
 import { heading, localAngle, type Vec } from './math';
@@ -35,7 +37,8 @@ export function interactSurface(world: WorldState): void {
   const station = nearbyStation(world);
   const building = nearbyBuilding(world);
   if (!station && building && world.astronaut.grounded) {
-    if (building.kind === 'service') serviceAtBuilding(world, building);
+    if (isTurret(building.kind)) applyDefenceAction(world, { type: 'controlTurret' });
+    else if (building.kind === 'service') serviceAtBuilding(world, building);
     else applyColonyAction(world, { type: 'toggleMachine' });
     return;
   }

@@ -1,3 +1,4 @@
+import { operational } from '../sim/buildingHealth';
 import Phaser from 'phaser';
 import { BLUEPRINTS } from '../sim/colonyConfig';
 import { placementError, previewAngle } from '../sim/colony';
@@ -7,7 +8,7 @@ import type { WorldState } from '../sim/world';
 
 export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState): void {
   const colony = world.colony;
-  const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled }));
+  const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled && operational(b) }));
   if (colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world) });
   for (const entry of entries) {
     const blueprint = BLUEPRINTS[entry.kind], n = heading(entry.angle), tangent = { x: -n.y, y: n.x };
