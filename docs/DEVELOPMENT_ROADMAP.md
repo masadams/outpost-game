@@ -93,7 +93,7 @@ Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) on `feat
 
 ## Phase 6 — Ship combat and threats
 
-Implemented on `feat/ship-combat`, stacked on PR #8 until defence merges. Pending separate review/merge; checkboxes remain open. See [Task 006](../CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
+Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) on `feat/ship-combat`, stacked on PR #8 until defence merges. Pending separate review/merge; checkboxes remain open. See [Task 006](../CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
 **Dependencies:** Phases 1–2, 5.
 - [ ] Ship weapon systems, heat/energy/ammo balancing and hit feedback.
 - [ ] Enemy spacecraft/hostile drones with readable AI behaviours.
