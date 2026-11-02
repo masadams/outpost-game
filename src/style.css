@@ -2,6 +2,18 @@
 * { box-sizing: border-box; }
 body { margin: 0; overflow: hidden; }
 canvas { display: block; }
+#sound-panel { position: fixed; top: 84px; right: 34px; display: flex; align-items: center; gap: 8px; color: #92b2c2; font-size: 10px; }
+#sound-panel button, #help button { background: #142838; border: 1px solid #345267; color: #d7e6e8; padding: 6px 9px; cursor: pointer; font: inherit; }
+#sound-panel > button:first-child { width: 100px; }
+#sound-panel label { display: flex; align-items: center; gap: 4px; margin: 0; letter-spacing: 0; }
+#sound-panel input { width: 65px; accent-color: #73f3cf; }
+#help { background: #0a1724; color: #d7e6e8; border: 1px solid #73f3cf; max-width: 700px; width: calc(100% - 40px); max-height: 90vh; padding: 24px; font-size: 12px; line-height: 1.7; }
+#help::backdrop { background: #030812dc; }
+#help h2 { font-size: 18px; color: #73f3cf; font-weight: normal; }
+#help li { padding: 5px 0; }
+.help-title { display: flex; justify-content: space-between; gap: 15px; align-items: center; }
+.help-note { color: #92b2c2; border-top: 1px solid #29404e; padding-top: 12px; }
+@media (max-width: 800px) { #sound-panel { right: 16px; top: 82px; } }
 #hud { position: fixed; inset: 0; pointer-events: none; padding: 28px 34px; }
 header { display: flex; justify-content: space-between; align-items: center; }
 .eyebrow { font-size: 10px; letter-spacing: 2.5px; color: #7795ab; }

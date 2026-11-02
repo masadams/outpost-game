@@ -2,7 +2,7 @@
 
 A single-player, retro-inspired 2D spaceflight, asteroid mining, combat and colony-building game. Target balance: **60% action / 40% construction**.
 
-**Status:** Flight, mining, surface exploration and colony construction/economy are implemented on stacked feature branches pending review. Review [flight #2](https://github.com/masadams/outpost-game/pull/2), [mining #3](https://github.com/masadams/outpost-game/pull/3), [surface #4](https://github.com/masadams/outpost-game/pull/4), then the colony PR. No defence/combat yet; no automatic merges.
+**Status:** Playtest alpha 0.1. Flight, mining, surface exploration and colony construction/economy have been reviewed and merged through PRs #2–#5 after explicit user authorization. This playtest pass adds procedural audio, sound controls and the H quick-start guide. Human handling/balance/audio feedback comes next; defence/combat remain deferred.
 
 ## Play locally
 
@@ -27,10 +27,13 @@ Open the local Vite URL in a modern desktop browser. Click the game if keyboard 
 | Q / T / Enter | Shift preview left/right 32 m / place |
 | X / V | Demolish nearby facility (palette open) / cycle nearby refinery recipe |
 | K / L | Save / load browser checkpoint |
+| H / M | Quick-start guide / sound mute |
 | P | Pause / resume |
 | R | Reset runtime sandbox, including colony; keep saved checkpoint |
 
 The game also pauses when its window loses focus or the tab is hidden. Press P to resume; keys are released on pause to avoid queued actions. Flight controls rotate the ship in world space even as the camera reorients.
+
+The **H** guide includes a first-sortie and construction walkthrough, pauses safely, and returns to your previous pause state when closed. **M** mutes; the top bar controls volume. Sound starts only after your first click/key, and uses original procedural engine/mining/tractor/machinery loops plus landing, impact, pickup, airlock, footstep, construction and warning cues. All audio silences on pause/focus loss. Sound preferences persist separately from your world checkpoint; no external sound assets or music are used. See [the playtest route](docs/PLAYTEST.md).
 
 For a first return flight, launch vertically for about **6.5 seconds**, then coast. Keep the nose upright. Watch radial velocity: positive means climbing, negative means descending. Use short thrust pulses on descent, starting early to keep descent under 30 m/s, then reduce it below 6 m/s near the pad. Thrust is an acceleration, so releasing W preserves momentum. Sustained burns can escape the moon; turn around and burn to return, or press R to practice again.
 
@@ -83,17 +86,19 @@ npm run typecheck
 npm run test
 npx playwright install chromium
 npm run test:browser
+npm run test:preview
 ```
 
-`npm run preview` serves the production build. `dist/` can be hosted on any static server. CI runs typecheck, unit tests, build and Chromium checks, and uploads screenshots and test artifacts.
+`npm run preview` serves the production build. `dist/` can be hosted on any static HTTP server. `test:browser` checks the dev server; `test:preview` checks the built game. CI runs typecheck, unit tests, build and production Chromium checks, and uploads screenshots, results and the `outpost-playtest` static build artifact.
 
-The **73 unit tests** cover flight, mining, suit/camera behavior and colony construction/power/storage/recipes/refuelling/checkpoints. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. Checkpoint tests round-trip the finite field and mid-cycle production, and reject corrupt versions/shapes, duplicate IDs and overflows. **Five Chromium checks** cover flight, surface route/oxygen pause, mining, mouse/keyboard construction and fuel production, save/reset/load/reload, and corrupt-save recovery. Screenshots show the pad, flight, cargo, surface depot and colony. Full mining return remains a simulation check; other browsers and human feel remain for review.
+The **84 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Seven production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
 
 ## Architecture and tuning
 
 - `src/sim/`: pure TypeScript state, Cartesian meters and seconds, 60 Hz accumulator; no Phaser/DOM imports. `world.ts` owns pilot mode, suit, ship, field, depot and button-edge state. `astronaut.ts` contains suit movement/safety (`SUIT` tuning); `surface.ts` owns boarding and stations; `cargo.ts` shares inventory transfer without simulation module cycles. Flight, bodies, mining and typed resources remain separate. Total ship mass is dry hull plus fuel plus cargo.
 - `src/sim/colonyConfig.ts`, `colony.ts`, `colonyService.ts`: blueprints/recipes, placement/production/power and supplied service/refuelling. `stations.ts` and `messages.ts` share home geometry/feedback without runtime module cycles.
 - `src/persistence/`: versioned full-world snapshot encoding, bounded validation and storage adapters; browser storage is accessed only by the scene.
+- `src/audio/`: pure state-to-cue director, guarded preferences and a procedural Web Audio mixer. Phaser's unused sound manager is disabled; audio never mutates simulation state.
 - `src/input/`: keyboard sampling per physics step, retaining short F/E/Space presses until consumed, and focus/pause-safe release.
 - `src/render/`: Phaser scene, procedural world/ship/stars/radar and a smoothed follow frame. Local-up rotation blends into the inertial frame between 100 and 900 m altitude; zoom follows altitude continuously. A transformed world container renders the camera frame, keeping HUD/radar in screen coordinates.
 - `src/ui/`: DOM telemetry and controls, outside world transforms.
@@ -101,9 +106,9 @@ The **73 unit tests** cover flight, mining, suit/camera behavior and colony cons
 
 Collision uses a circular 7 m hull swept against the 600 m moon, then classifies pad contact by arc tolerance, speed, tilt and spin. Semi-implicit Euler integration applies radial gravity and fuel-limited thrust with no linear drag. Phaser delta smoothing is disabled so the accumulator receives elapsed time even at low rendering rates. Catch-up is capped at 15 steps/250 ms; long stalls intentionally discard time. Angular damping stabilizes steering without changing linear inertia.
 
-Known limitations: smooth circular terrain; approximate ship/suit collision; suit collides with terrain only, with no air steering, EVA or backpack; buildings are non-solid and have no damage. No audio, autopilot, interpolation, wiring, day/night, offline production or advanced automation. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Panels target desktop widths and are hidden below 560 px; mobile controls are out of scope. Phaser's roughly 1.25 MB minified JS bundle (~347 KB gzip) emits Vite's standard large-chunk warning.
+Known limitations: smooth circular terrain; approximate ship/suit collision; suit collides with terrain only, with no air steering, EVA or backpack; buildings are non-solid and have no damage. No autopilot, interpolation, wiring, day/night, offline production or advanced automation. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Panels target desktop widths and are hidden below 560 px; mobile controls are out of scope. Phaser's roughly 1.26 MB minified JS bundle (~352 KB gzip) emits Vite's standard large-chunk warning.
 
-Next recommendation after review: Phase 5 planetary defence, incoming physical meteors, interception and persistent structure damage.
+Next: human playtesting of the current slice before Phase 5 planetary defence. See [the pre-playtest review](docs/PLAYTEST_REVIEW.md). No further systems are needed before this first playtest.
 
 ## Start here
 - [Master development roadmap](docs/DEVELOPMENT_ROADMAP.md) — authoritative phases, task checkboxes, dependencies, exit criteria and progress.
@@ -121,4 +126,4 @@ Launch from a small circular moon, fly in a continuous 2D world with radial grav
 ## Development workflow
 Implement one roadmap phase at a time on a feature branch. Open a PR with tests and playtest notes; update the roadmap and decision log. Do not merge automatically.
 
-Review Tasks 001–004 in dependency order. No automatic merges.
+Tasks 001–004 were reviewed and merged in dependency order for this playtest at the user's explicit request. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).
