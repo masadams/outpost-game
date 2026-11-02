@@ -111,3 +111,7 @@ footer p { margin: 0; line-height: 1.5; }
 .ground-survey { border-block: 1px solid var(--edge); padding-block: 12px; margin-block: 12px; }
 .ground-survey p { margin: 8px 0; }
 .rig-output { color: var(--mint); }
+.schedule-controls { border-top: 1px solid var(--edge); padding-top: 10px; margin-top: 10px; }
+.stock-target { display: grid; grid-template-columns: 1fr 30px 36px 30px; gap: 6px; align-items: center; margin-block: 6px; }
+.stock-target button { padding: 6px; margin: 0; }
+.stock-target b { text-align: center; }

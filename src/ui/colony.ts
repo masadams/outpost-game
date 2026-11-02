@@ -1,4 +1,6 @@
 import { geologyPanel, rigDetails } from './geology';
+import { schedulingPanel } from './scheduling';
+import { SCHEDULE_PRODUCTS, type ScheduleProduct } from '../sim/scheduling';
 import { buildingHealth } from '../sim/buildingHealth';
 import { isTurret, WEAPONS } from '../sim/defenceConfig';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType } from '../sim/colonyConfig';
@@ -27,14 +29,16 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
       <button ${disabled || buildingHealth(near) >= 100 ? 'disabled' : ''} data-colony="repairBuilding">Repair nearby [U] · 1 alloy / 10 hull</button>
       ${near.kind === 'service' ? '<p>E: suit service / repair / refuel</p>' : ''}
       ${rigDetails(world, near)}
-      ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}</div>` : ''}
+      ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}
+      ${schedulingPanel(near, disabled || buildingHealth(near) <= 0 ? 'disabled' : '')}</div>` : ''}
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
-  const { colony, select, shift } = button.dataset;
+  const { colony, select, shift, target, delta } = button.dataset;
+  if (target && SCHEDULE_PRODUCTS.includes(target as ScheduleProduct) && (delta === '-5' || delta === '5')) return { type: 'adjustTarget', product: target as ScheduleProduct, delta: Number(delta) as -5 | 5 };
   if (select && BUILD_TYPES.includes(select as BuildType)) return { type: 'select', kind: select as BuildType };
   if (shift === '-32' || shift === '32') return { type: 'shift', delta: Number(shift) };
-  if (colony && ['toggleBuild', 'place', 'demolish', 'toggleMachine', 'cycleRecipe', 'startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding', 'startEncounter', 'cycleWeapon', 'recoverShip'].includes(colony)) return { type: colony } as ColonyAction;
+  if (colony && ['toggleSchedule', 'toggleBuild', 'place', 'demolish', 'toggleMachine', 'cycleRecipe', 'startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding', 'startEncounter', 'cycleWeapon', 'recoverShip'].includes(colony)) return { type: colony } as ColonyAction;
   return null;
 }
