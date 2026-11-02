@@ -29,7 +29,11 @@ This log distinguishes **decided** direction from ideas and unresolved choices. 
 
 The implementation follows D-003–D-008 and D-017 without revising them. Initial constants: moon radius 600 m, gravitational parameter 1,800,000 m³/s², softened core radius 120 m, dry mass 900 kg, fuel 240 kg, thrust 14 kN, burn rate 0.8 kg/s. The 7 m circular hull uses swept collision; the home pad spans ±30 m of surface arc. Safe landing requires hull clearance inside the pad, radial speed ≤6 m/s, drift ≤4 m/s, tilt ≤15°, spin ≤0.35 rad/s. Angular damping is allowed; free-flight linear drag is absent. The camera blends local to inertial orientation over 100–900 m altitude. These are tunable prototype values, not new permanent design commitments. Safe landings do not refuel/repair; R restores the test fixture. No optional landing gear or flight assist is introduced.
 
-Verification and screenshots are in the Task 001 PR and README. No later milestone was implemented.
+Verification and screenshots are in the Task 001 PR and README.
+
+## Task 002 prototype choices (pending review)
+
+The next-iteration request adds the roadmap's mining/cargo loop on a branch stacked on flight PR #2. Existing flight/design decisions remain in force. Manual equipment uses Space for a 450 m forward laser and C for a powered 260 m tractor; these are provisional controls and tuning. Parents split once into two mineable fragments, then ore; resource mass and fracture momentum are conserved. A 120 kg hold accepts partial stacks, contributes to thrust mass, and unloads via E only in the safe landed state. Ore capture combines momentum with the ship. All five planned resources are represented. One radial starter sample supports a short first sortie; other deposits start in orbit. The bounded field is fully simulated, with no respawn or valuable-ore expiry. Depot totals are a temporary unload interface, not a colony economy or save system. Reset intentionally clears field, hold and depot. No astronaut, construction or combat systems are added. Review flight first and mining second; automatic merging remains prohibited.
 
 ## Open questions (not decisions)
 - Exact planet scale, gravity strength, thrust-to-weight ratio, orbit speeds and landing tolerances: tune through prototype playtesting.
