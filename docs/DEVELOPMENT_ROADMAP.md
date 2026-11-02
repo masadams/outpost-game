@@ -103,7 +103,7 @@ Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) and merg
 
 ## Pre-automation presentation foundation (Task 006A)
 
-Implemented on `feat/presentation-foundations`, pending review/merge. See [Task 006A](../CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
+Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) on `feat/presentation-foundations`, pending review/merge. See [Task 006A](../CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
 
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
