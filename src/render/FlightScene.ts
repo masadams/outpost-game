@@ -1,3 +1,4 @@
+import { drawGeology } from './geology';
 import { drawCombat, drawCombatRadar } from './combat';
 import { predictMeteor, type ThreatPrediction } from '../sim/meteor';
 import { drawDefence, drawThreatRadar } from './defence';
@@ -164,6 +165,7 @@ export class FlightScene extends Phaser.Scene {
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -WORLD.radius - WORLD.shipRadius, 16 / this.follow.zoom);
     if (this.flightTools.trajectory) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
+    drawGeology(g, this.simulation, this.follow.zoom);
     drawColony(g, this.simulation);
     drawDefence(g, this.simulation, this.threats, this.follow.zoom);
     drawSurface(g, this.simulation);

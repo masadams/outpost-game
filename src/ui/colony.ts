@@ -1,3 +1,4 @@
+import { geologyPanel, rigDetails } from './geology';
 import { buildingHealth } from '../sim/buildingHealth';
 import { isTurret, WEAPONS } from '../sim/defenceConfig';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType } from '../sim/colonyConfig';
@@ -13,6 +14,7 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     <div class="resource"><span>Supply / demand</span><span>${colony.generation.toFixed(0)} / ${colony.demand.toFixed(0)} kW</span></div>
     <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
     <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
+    ${geologyPanel(world)}
     <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div>
     <button ${disabled} data-colony="toggleBuild">${colony.buildOpen ? 'Close build palette [B]' : 'Build palette [B] · on foot'}</button>
     ${colony.buildOpen ? `<div class="build-palette">${BUILD_TYPES.map((kind, i) => `<button ${disabled} class="${kind === colony.selected ? 'selected' : ''}" data-select="${kind}">${i + 1}. ${BLUEPRINTS[kind].label}<small>${Object.entries(BLUEPRINTS[kind].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</small></button>`).join('')}</div>
@@ -24,6 +26,7 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
       ${isTurret(near.kind) ? `<p>${WEAPONS[near.kind].range} m · ${WEAPONS[near.kind].energy} kJ/shot${WEAPONS[near.kind].alloy ? ` · ${WEAPONS[near.kind].alloy} alloy${WEAPONS[near.kind].components ? ` + ${WEAPONS[near.kind].components} components` : ''}` : ''}</p><button ${disabled} data-colony="controlTurret">${world.defence.controlled === near.id ? 'Release turret' : 'Control turret'} [E]</button><button ${disabled} data-colony="toggleAuto">Auto defence [G]: ${near.turret?.automatic ? 'on' : 'off'}</button>` : ''}
       <button ${disabled || buildingHealth(near) >= 100 ? 'disabled' : ''} data-colony="repairBuilding">Repair nearby [U] · 1 alloy / 10 hull</button>
       ${near.kind === 'service' ? '<p>E: suit service / repair / refuel</p>' : ''}
+      ${rigDetails(world, near)}
       ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}</div>` : ''}
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;

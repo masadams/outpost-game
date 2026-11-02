@@ -1,6 +1,6 @@
-# Outpost alpha 0.5 — first playtest
+# Outpost alpha 0.6 — first playtest
 
-Start with the current flight/mining/surface/colony loop. Try the opt-in defence drill after the core loop. Try the new opt-in ship patrol after flight practice; automation and the full presentation overhaul remain separate phases.
+Start with the current flight/mining/surface/colony loop. Try the opt-in defence drill after the core loop. Try the new opt-in ship patrol after flight practice; try the finite planetary mining rig next; scheduling/logistics and the full presentation overhaul remain later work.
 
 ## Run the build under review
 
@@ -8,7 +8,7 @@ From a checkout of this repository:
 
 ```sh
 git fetch origin
-git switch feat/presentation-foundations
+git switch feat/planetary-mining
 git pull --ff-only
 npm ci
 npm run build
@@ -29,10 +29,11 @@ Cargo/Colony/Combat/Defence open one right operations dock; I toggles Cargo and 
 2. **Mining:** repeat the short launch while holding Space/C. Mine the starter iron sample above home, collect ore, return and E to unload. The blue ice sample is nearby to the right. Avoid holding thrust until pickup finishes; that can reach escape speed.
 3. **Surface:** F exits a landed ship. Walk/jump to the depot on the right, use E, visit the emergency service point on the left, then return and F to board. Check camera orientation, prompts and oxygen readability.
 4. **Colony:** exit and walk past the depot. B opens construction; Enter places solar, T shifts the preview, 4/Enter places refinery, T then 5/Enter places fuel processing. Try an invalid site, a battery/storage building and demolition. Check power shortages, V recipe selection and the initial water/oxygen becoming fuel. Mine/unload ice for ongoing production; E in the landed ship transfers available fuel.
-5. **Checkpoint:** old alpha-0.1 checkpoints migrate onto the larger planet paused, preserving the base, cargo and depleted deposits. Check the result before K overwrites the old slot. K saves the entire current world. Make a change, L restores paused, and P resumes. Reload should restore the same checkpoint without resetting mined deposits. R resets runtime progress but keeps the checkpoint. There is no autosave.
-6. **Defence:** save with K first. On a fresh runtime build solar around 120 m, T/7/Enter for a laser turret 32 m farther along. Walk near the turret, E to control, A/D to aim and Space to fire. E releases. G enables automation nearby. N starts a meteor drill with real damage. Zoom out, check orange warning paths/impact markers and let automation intercept the parent and fragments. Try 8 flak or 9 missile on later attempts, with enough alloy/components/energy. Disable defence for an impact, stand near the damaged facility and U to repair with alloy. Save/reload both a live drill and its aftermath. L restores the pre-drill checkpoint paused if needed.
-7. **Ship combat:** K saves first. Launch upright above 200 m, using Space to clear the starter deposit, then O starts a patrol. Release mining; Shift fires cannon, Z switches missiles. Watch heat, charge, finite magazines, aiming lines and named drone states. Dodge with normal rotation/thrust. Defeat the drone, brake to a safe landing and E pays to repair/rearm from colony stocks. On another attempt, let the ship be lost; Backspace charges 8 alloy + 2 components, preserves colony/depletion and loses cargo. Try saving/reloading a live encounter and its aftermath. Land or leave the engagement to disengage. Patrol size grows with deliveries, exploration and facilities, capped at three.
-8. **Sound/help:** compare thrust, mining, impacts, touchdown, airlock, footsteps, construction and warnings. Check mute/volume persistence and silence on pause or tab/window switching. Use H without leaving the game.
+5. **Planetary mining:** on a fresh runtime, F exits; walk right to about 100 m. B/Enter places solar near 125 m; T shifts right 32 m. Click Mining rig in the palette, then Enter. Watch iron arrive in shared storage every two seconds and the surface survey reserve fall. Close B, approach the rig, and E disables/enables extraction. Save with K, reset with R and restore with L: reserve, ore and cycle progress must survive. Repeat on the ice seam 180 m left of home, adding generation/refinery/fuel processing for ongoing refuelling. See [locations and limits](PLANETARY_MINING.md).
+6. **Checkpoint:** old alpha-0.1 checkpoints migrate onto the larger planet paused, preserving the base, cargo and depleted deposits. Check the result before K overwrites the old slot. K saves the entire current world. Make a change, L restores paused, and P resumes. Reload should restore the same checkpoint without resetting mined deposits. R resets runtime progress but keeps the checkpoint. There is no autosave.
+7. **Defence:** save with K first. On a fresh runtime build solar around 120 m, T/7/Enter for a laser turret 32 m farther along. Walk near the turret, E to control, A/D to aim and Space to fire. E releases. G enables automation nearby. N starts a meteor drill with real damage. Zoom out, check orange warning paths/impact markers and let automation intercept the parent and fragments. Try 8 flak or 9 missile on later attempts, with enough alloy/components/energy. Disable defence for an impact, stand near the damaged facility and U to repair with alloy. Save/reload both a live drill and its aftermath. L restores the pre-drill checkpoint paused if needed.
+8. **Ship combat:** K saves first. Launch upright above 200 m, using Space to clear the starter deposit, then O starts a patrol. Release mining; Shift fires cannon, Z switches missiles. Watch heat, charge, finite magazines, aiming lines and named drone states. Dodge with normal rotation/thrust. Defeat the drone, brake to a safe landing and E pays to repair/rearm from colony stocks. On another attempt, let the ship be lost; Backspace charges 8 alloy + 2 components, preserves colony/depletion and loses cargo. Try saving/reloading a live encounter and its aftermath. Land or leave the engagement to disengage. Patrol size grows with deliveries, exploration and facilities, capped at three.
+9. **Sound/help:** compare thrust, mining, impacts, touchdown, airlock, footsteps, construction and warnings. Check mute/volume persistence and silence on pause or tab/window switching. Use H without leaving the game.
 
 ## Useful feedback
 

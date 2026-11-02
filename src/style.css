@@ -107,3 +107,7 @@ footer p { margin: 0; line-height: 1.5; }
 .notices #threat-alert { position: static; max-width: none; margin-top: 8px; }
 @media (max-width: 800px) { .notices { top: 152px; left: 16px; } }
 @media (max-width: 560px) { .notices { top: 190px; width: 40vw; } }
+
+.ground-survey { border-block: 1px solid var(--edge); padding-block: 12px; margin-block: 12px; }
+.ground-survey p { margin: 8px 0; }
+.rig-output { color: var(--mint); }

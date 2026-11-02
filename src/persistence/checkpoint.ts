@@ -1,3 +1,5 @@
+import { createSurfaceDeposits } from '../sim/geology';
+import { validGeology } from './validateGeology';
 import { createArmament, createCombat } from '../sim/combatConfig';
 import { validCombat } from './validateCombat';
 import { createDefence } from '../sim/defenceConfig';
@@ -32,7 +34,7 @@ function validWorld(value: unknown): value is WorldState {
   if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked'].includes(b.status))) return false;
+    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted'].includes(b.status))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
   if (!PRODUCTS.every(p => number(colony.products[p], 0, productCapacity(colony))) || !number(colony.energy, 0, energyCapacity(colony)) || inventoryMass(world.depot) > oreCapacity(colony) + 1e-6) return false;
   const sample = template.asteroids[0];
@@ -44,22 +46,23 @@ function validWorld(value: unknown): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validGeology(world) && validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 4, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
+  return JSON.stringify({ version: 5, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || ![1, 2, 3, 4].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2, 3, 4, 5].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
   if (envelope.version !== 1 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
   if ((envelope.version as number) < 3) envelope.world.defence = createDefence();
-  if (envelope.version !== 4) {
+  if ((envelope.version as number) < 4) {
     if (!object(envelope.world.ship)) throw new Error('Checkpoint ship is invalid');
     envelope.world.ship.armament = createArmament(); envelope.world.combat = createCombat();
   }
+  if ((envelope.version as number) < 5) envelope.world.surfaceDeposits = createSurfaceDeposits();
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
   world.combat.flashes = [];

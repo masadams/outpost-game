@@ -2,7 +2,7 @@
 
 A single-player, retro-inspired 2D spaceflight, asteroid mining, combat and colony-building game. Target balance: **60% action / 40% construction**.
 
-**Status:** Playtest alpha 0.5. Phases 0–6, including defence/combat, are merged through PR #9. This pre-automation presentation pass adds a contextual operations dock, a clear central flight area, bottom instruments and a visual-direction foundation. Phase 7 automation follows review; the full Phase 9 graphics/UX/UI overhaul remains required.
+**Status:** Playtest alpha 0.6. Phases 0–6 and the contextual presentation foundation are merged through PR #10. The first Phase 7 slice adds finite planetary deposits and powered mining rigs connected to the existing refinery/fuel economy. Scheduling, logistics and the full Phase 9 graphics/UX/UI overhaul remain planned.
 
 ## Play locally
 
@@ -23,7 +23,7 @@ Open the local Vite URL in a modern desktop browser. Click the game if keyboard 
 | C | Tractor nearby ore (hold) |
 | E | Unload while piloting a landed ship; interact with nearby surface terminal on foot |
 | F | Leave landed ship / board within 20 m |
-| B / 1–9 | Toggle build palette / choose facility (on foot) |
+| B / 1–9 | Toggle build palette / choose facility (on foot); select Mining rig using its palette button |
 | Q / T / Enter | Shift preview left/right 32 m / place |
 | X / V | Demolish nearby facility (palette open) / cycle nearby refinery recipe |
 | N | Start opt-in defence drill (real damage) |
@@ -71,7 +71,7 @@ The suit has **180 seconds of oxygen**. Return to the ship (F within 20 m) or us
 
 ## Build a colony and refuel
 
-The finite starter kit contains **28 alloy, 14 wire, 8 components, 4 water and 2 oxygen**. Raw ore still comes from mining; the kit never replenishes unless the runtime is reset. Blueprint buttons show exact material costs.
+The finite starter kit contains **28 alloy, 14 wire, 8 components, 4 water and 2 oxygen**. Raw ore comes from asteroid mining or finite surface rigs; the kit never replenishes unless the runtime is reset. Blueprint buttons show exact material costs.
 
 1. Leave the ship with F. Walk right past the depot to about 100 m from the pad. Press B: the preview follows the rim 24 m ahead. Green means a valid affordable site; red explains a blocked site. Keep the pad, home terminals and other facilities clear.
 2. Enter builds the selected **solar array**. T shifts the preview 32 m right; choose **4** and Enter for a **refinery**. T again, **5**, Enter builds a **fuel processor**. Mouse palette/placement buttons provide the same actions. Build within 96 m of the crew; walk farther to extend the colony.
@@ -83,6 +83,16 @@ The finite starter kit contains **28 alloy, 14 wire, 8 components, 4 water and 2
 The Colony panel shows generation/demand, energy, material stocks and machine status. Scroll the panel to reach all controls. The grid and inventories form a single global bus in this prototype; solar output is constant. Production machines receive power in placement order, followed by turrets in placement order. If total demand exceeds generation, batteries buffer the deficit and machines wait rather than generating free output. Storage and batteries are passive capacities with no power switch. Facilities remain non-solid surface markers, but meteor impacts damage them and wrecks stop operating.
 
 ![Colony production line](docs/screenshots/colony-production.png)
+
+## Mine the planet
+
+Colored seams and distinct resource symbols mark ten finite surface deposits. Leave the ship and open Colony for the nearest seam's bearing and remaining reserve. On a fresh runtime, walk right to about **100 m**, B/Enter builds solar near 125 m, then T moves the preview another 32 m. Click **Mining rig** in the palette and Enter places it on the iron seam centered at 160 m. The rig costs **8 alloy + 3 wire + 2 components** and requires its entire 24 m footprint inside a seam. The tenth blueprint uses its button/native keyboard focus; **0** still restores automatic zoom.
+
+Each powered rig consumes **6 kW** to deliver **0.5 kg every 2 seconds** into shared ore storage. Walk within 18 m and E to stop/resume it. Full storage, no power, disabling or wrecking stops extraction; exhausted seams never refill through repair, demolition or loading. Additional rigs share the same reserve. Refineries accept this ore normally: surface iron becomes alloy, and ice can become water/oxygen, fuel and ship refuelling. Add generation for simultaneous machinery; one 8 kW solar cannot continuously cover a 6 kW rig plus a 4 kW refinery.
+
+This provides slow background supply while you fly, with finite deposits and construction costs. It adds no terrain excavation, drones, wiring or offline production. See [deposit locations, tuning and limits](docs/PLANETARY_MINING.md).
+
+![Powered planetary mining rig](docs/screenshots/planetary-mining.png)
 
 ## Defend the colony
 
@@ -104,7 +114,7 @@ Save with **K**, launch above 200 m (clear the starter rock with Space), then **
 
 **K** writes one local browser checkpoint. **L** restores it, and page startup automatically loads an existing checkpoint **paused**; press P to resume. Saves include the entire world: facility placement, production timers, energy, raw/manufactured inventories, depleted asteroid field, ship and suit. Thus loading does not recreate already-mined ore. R starts a fresh runtime sandbox while keeping the last checkpoint; L recovers it. Saving the new runtime with K deliberately replaces that checkpoint.
 
-Saves are local to the browser/origin and are not cloud synced. There is no autosave or offline production. Version-1 checkpoints migrate to the larger planet, preserving altitude, local heading, signed surface distance from home, inventories, facilities and depleted deposits. They load paused; old orbital paths change with the environment. Version-2 worlds gain peaceful defence state without changing planetary coordinates. Version-3 worlds gain peaceful combat state and a finite starter armament. K writes version 4 using the existing slot, including active drones/projectiles, weapons/heat/ammo, recovery costs, threats, turret settings and building damage. Loading releases manual turret control. Unsupported future formats are rejected. Invalid checkpoints and storage failures leave the live world playable, with feedback. The versioned bounded loader rejects malformed data; a mature save/backup/migration system remains a later roadmap phase.
+Saves are local to the browser/origin and are not cloud synced. There is no autosave or offline production. Version-1 checkpoints migrate to the larger planet, preserving altitude, local heading, signed surface distance from home, inventories, facilities and depleted deposits. They load paused; old orbital paths change with the environment. Version-2 worlds gain peaceful defence state without changing planetary coordinates. Version-3 worlds gain peaceful combat state and a finite starter armament. Version-4 worlds gain fresh surface deposits while keeping their existing progress. K writes version 5 using the existing slot, including surface reserves, rig bindings and partial extraction cycles, alongside active drones/projectiles, weapons/heat/ammo, recovery costs, threats, turret settings and building damage. Loading releases manual turret control. Unsupported future formats are rejected. Invalid checkpoints and storage failures leave the live world playable, with feedback. The versioned bounded loader rejects malformed data; a mature save/backup/migration system remains a later roadmap phase.
 
 ## Verification
 
@@ -119,12 +129,12 @@ npm run test:preview
 
 `npm run preview` serves the production build. `dist/` can be hosted on any static HTTP server. `test:browser` checks the dev server; `test:preview` checks the built game. CI runs typecheck, unit tests, build and production Chromium checks, and uploads screenshots, results and the `outpost-playtest` static build artifact.
 
-The **137 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Thirteen production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Layout checks cover viewport bounds/central clearance at 900×600, 1280×800 and 1920×1080, context/paused panel navigation, help/Escape and construction scrolling. Additional checks cover ship combat victories/return/paid repair and rearm with both weapons, recoil and ammunition mass, drone behaviors, live combat saves and recovery, plus full defence victories for all weapon variants, impact/repair and scarcity, manual/automatic turret controls, active-drill checkpoint continuation, gravity/drag, orbital energy, collision/tractor momentum, trajectory accuracy, zoom and legacy saves. See the [atmosphere and trajectory](docs/screenshots/atmosphere-trajectory.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
+Surface-mining regressions cover finite/shared reserves, power/storage pauses, destruction/repair/rebuild, iron and ice mass-conserving processing, frame-rate independence and legacy save migration. A production browser route builds a powered rig, toggles extraction and restores its depleted reserve across reset/reload. The **152 unit tests** cover flight, mining, suit/camera behavior, colony construction/power/storage/recipes/refuelling/checkpoints and audio event selection/preferences. Scenarios cover mining return/delivery, depot walking/relaunch, and unloaded ice → water/oxygen → fuel → ship refuel with recipe mass conservation. **Fourteen production Chromium checks** cover flight, surface controls, mining, construction/production/checkpoint restoration, corrupt saves, actual Web Audio output/silence/preferences, and help/pause/modified shortcut behavior. Screenshots include the [quick-start guide](docs/screenshots/playtest-guide.png). Layout checks cover viewport bounds/central clearance at 900×600, 1280×800 and 1920×1080, context/paused panel navigation, help/Escape and construction scrolling. Additional checks cover ship combat victories/return/paid repair and rearm with both weapons, recoil and ammunition mass, drone behaviors, live combat saves and recovery, plus full defence victories for all weapon variants, impact/repair and scarcity, manual/automatic turret controls, active-drill checkpoint continuation, gravity/drag, orbital energy, collision/tractor momentum, trajectory accuracy, zoom and legacy saves. See the [atmosphere and trajectory](docs/screenshots/atmosphere-trajectory.png). Full mining return is also verified in simulation; other browsers, human feel and subjective sound balance remain for the playtest.
 
 ## Architecture and tuning
 
 - `src/sim/`: pure TypeScript state, Cartesian meters and seconds, 60 Hz accumulator; no Phaser/DOM imports. `world.ts` owns pilot mode, suit, ship, field, depot and button-edge state. `astronaut.ts` contains suit movement/safety (`SUIT` tuning); `surface.ts` owns boarding and stations; `cargo.ts` shares inventory transfer without simulation module cycles. Flight, bodies, mining and typed resources remain separate. Total ship mass is dry hull plus fuel, cargo and ammunition. Combat state and projectile/AI modules remain independent of rendering.
-- `src/sim/colonyConfig.ts`, `colony.ts`, `colonyService.ts`: blueprints/recipes, placement/production/power and supplied service/refuelling. `stations.ts` and `messages.ts` share home geometry/feedback without runtime module cycles.
+- `src/sim/colonyConfig.ts`, `colony.ts`, `colonyService.ts`, `geology.ts`, `surfaceExtraction.ts`: blueprints/recipes, placement/production/power and supplied service/refuelling. `stations.ts` and `messages.ts` share home geometry/feedback without runtime module cycles.
 - `src/persistence/`: versioned full-world snapshot encoding, bounded validation and storage adapters; browser storage is accessed only by the scene.
 - `src/audio/`: pure state-to-cue director, guarded preferences and a procedural Web Audio mixer. Phaser's unused sound manager is disabled; audio never mutates simulation state.
 - `src/input/`: keyboard sampling per physics step, retaining short F/E/Space presses until consumed, and focus/pause-safe release.
@@ -136,7 +146,7 @@ Collision uses a circular 7 m hull swept against the 1,800 m planet, then classi
 
 Known limitations: a fixed non-rotating planet, no mutual object gravity, lift, wind or heating; simplified isotropic drag and collision radii; coast prediction excludes traffic/tools; smooth circular terrain; approximate ship/suit collision; suit collides with terrain and hostile projectiles, with no air steering, EVA or backpack; buildings are non-solid, with meteor blast damage and supplied repair. No flight autopilot, interpolation, wiring, day/night, offline production or advanced logistics. The finite 15-deposit field does not respawn. Fragments interact with rocks/ship/surface; ore interacts with gravity/surface/tractor and passes through rocks. Ship/rock contacts are swept; rock/rock contacts use discrete separation. Layouts target desktop widths of at least 900 px; smaller fallback layouts and mobile controls are not validated release targets. Phaser's roughly 1.31 MB minified JS bundle (~367 KB gzip) emits Vite's standard large-chunk warning.
 
-Next: review/playtest the presentation foundation, then Phase 7 automation/logistics. See [the pre-playtest review](docs/PLAYTEST_REVIEW.md). Further roadmap systems remain separate milestones.
+Next: review/playtest planetary mining, then continue Phase 7 scheduling and logistics. See [the pre-playtest review](docs/PLAYTEST_REVIEW.md). Further roadmap systems remain separate milestones.
 
 ## Start here
 - [Master development roadmap](docs/DEVELOPMENT_ROADMAP.md) — authoritative phases, task checkboxes, dependencies, exit criteria and progress.
@@ -145,6 +155,7 @@ Next: review/playtest the presentation foundation, then Phase 7 automation/logis
 - [Codex Task 001](CODEX_TASK.md) — first playable planetary flight prototype specification.
 - [Codex Task 002](CODEX_TASK_002.md) — mining/cargo iteration scope and acceptance criteria.
 - [Codex Task 003](CODEX_TASK_003.md) — astronaut and surface interaction scope.
+- [Task 007A](CODEX_TASK_007A.md) — finite planetary deposits and powered extraction.
 - [Task 006A](CODEX_TASK_006A.md) — pre-automation presentation foundation.
 - [Visual direction](docs/PRESENTATION_DIRECTION.md) — palette, wireframes and live layout references.
 - [Codex Task 006](CODEX_TASK_006.md) — ship combat, supplied recovery and combat saves.
@@ -159,4 +170,4 @@ Launch from a small circular moon, fly in a continuous 2D world with radial grav
 ## Development workflow
 Implement one roadmap phase at a time on a feature branch. Open a PR with tests and playtest notes; update the roadmap and decision log. Do not merge automatically.
 
-Tasks 001–004 and the sound/help pass were reviewed and merged in dependency order for this playtest at the user's explicit request. PRs #7–#9 were subsequently merged at the user’s explicit requests. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).
+Tasks 001–004 and the sound/help pass were reviewed and merged in dependency order for this playtest at the user's explicit request. PRs #7–#9 were subsequently merged at the user’s explicit requests; the presentation foundation #10 is also merged. Further milestone PRs remain review-only unless separately authorized. See [the playtest route](docs/PLAYTEST.md) and [review notes](docs/PLAYTEST_REVIEW.md).

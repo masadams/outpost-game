@@ -1,3 +1,5 @@
+import { depositAt } from './geology';
+import { stepMiningRig } from './surfaceExtraction';
 import type { CombatAction } from './combatConfig';
 import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
@@ -10,9 +12,9 @@ import { notify } from './messages';
 import type { WorldState } from './world';
 
 export interface Building {
-  health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
+  depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted';
 }
 export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
@@ -37,6 +39,11 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   if (Math.abs(wrap(angle)) * WORLD.radius < 36 + width) return 'Keep the landing pad clear';
   if (STATIONS.some(s => Math.abs(wrap(angle - s.angle)) * WORLD.radius < width + 13)) return 'Keep the home terminals clear';
   if (world.colony.buildings.some(b => Math.abs(wrap(angle - b.angle)) * WORLD.radius < width + BLUEPRINTS[b.kind].halfWidth + 4)) return 'Facilities overlap';
+  if (kind === 'miningRig') {
+    const d = depositAt(world.surfaceDeposits, angle, width);
+    if (!d) return 'Place the whole rig footprint on a marked surface deposit';
+    if (d.remaining <= 1e-9) return 'Deposit exhausted · prospect another seam';
+  }
   if (PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Insufficient fabrication materials';
   return null;
 }
@@ -55,7 +62,7 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     const error = placementError(world); if (error) { notify(world, error); return; }
     const blueprint = BLUEPRINTS[colony.selected];
     for (const product of PRODUCTS) colony.products[product] = Math.max(0, colony.products[product] - (blueprint.cost[product] ?? 0));
-    colony.buildings.push({ id: colony.nextId++, kind: colony.selected, health: 100, angle: previewAngle(world), enabled: true, progress: 0, recipe: 0, status: 'idle' });
+    colony.buildings.push({ id: colony.nextId++, kind: colony.selected, ...(colony.selected === 'miningRig' ? { depositId: depositAt(world.surfaceDeposits, previewAngle(world), blueprint.halfWidth)!.id } : {}), health: 100, angle: previewAngle(world), enabled: true, progress: 0, recipe: 0, status: 'idle' });
     notify(world, `${blueprint.label.toUpperCase()} BUILT`); return;
   }
   const building = nearbyBuilding(world);
@@ -92,6 +99,7 @@ export function stepColony(world: WorldState, dt: number): void {
     building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
     if (!operational(building)) continue;
     if (!building.enabled) continue;
+    if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
     const recipe = recipeFor(building); if (!recipe) continue;
     if (Object.entries(recipe.raw).some(([r, quantity]) => world.depot[r as keyof typeof world.depot] + 1e-9 < quantity) ||
       Object.entries(recipe.input).some(([p, quantity]) => colony.products[p as keyof ProductInventory] + 1e-9 < quantity)) { building.status = 'no feedstock'; continue; }

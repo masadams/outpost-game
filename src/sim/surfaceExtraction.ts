@@ -1,0 +1,20 @@
+import { RIG, rigDeposit } from './geology';
+import { inventoryMass } from './resources';
+import type { WorldState } from './world';
+import type { Building } from './colony';
+
+/** Shares a finite seam between all rigs; ore is debited only when it reaches storage. */
+export function stepMiningRig(world: WorldState, building: Building, dt: number, capacity: number): void {
+  const deposit = rigDeposit(world.surfaceDeposits, building), colony = world.colony;
+  if (!deposit) { building.status = 'no deposit'; return; }
+  if (deposit.remaining <= 1e-9) { building.status = 'depleted'; building.progress = 0; return; }
+  const room = capacity - inventoryMass(world.depot);
+  if (room <= 1e-9) { building.status = 'output full'; return; }
+  colony.demand += RIG.power;
+  if (colony.energy + 1e-9 < RIG.power * dt) { building.status = 'no power'; return; }
+  colony.energy = Math.max(0, colony.energy - RIG.power * dt); building.progress += dt; building.status = 'running';
+  if (building.progress + 1e-9 < RIG.seconds) return;
+  const amount = Math.min(RIG.yield, deposit.remaining, room);
+  building.progress = 0; deposit.remaining = Math.max(0, deposit.remaining - amount); world.depot[deposit.resource] += amount;
+  if (deposit.remaining <= 1e-9) building.status = 'depleted';
+}
