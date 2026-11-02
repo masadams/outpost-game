@@ -108,7 +108,7 @@ Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and me
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
 
-The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implements the first slice on `feat/planetary-mining` for review: ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). This does not complete Phase 7.
+The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implements the first slice in [PR #11](https://github.com/masadams/outpost-game/pull/11) on `feat/planetary-mining` for review: ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). This does not complete Phase 7.
 - [ ] Finite planetary deposits and powered surface rigs connected to colony storage (implemented; awaiting review/merge).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
 - [ ] Mining drones or asteroid towing, with costs and vulnerability.
