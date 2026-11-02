@@ -13,7 +13,7 @@
 
 ## Current feedback iteration — alpha 0.2
 
-Implemented on `feat/atmospheric-flight-trajectory`, pending review/merge (checkboxes remain open until merged):
+Implemented in [PR #7](https://github.com/masadams/outpost-game/pull/7) on `feat/atmospheric-flight-trajectory`, pending review/merge (checkboxes remain open until merged):
 - [ ] Larger 1.8 km planet and 1.2 km atmosphere with shared gravity/drag for dynamic bodies.
 - [ ] Controls-released coast prediction and velocity arrow, J toggle, manual zoom and 0 auto.
 - [ ] Preserve legacy checkpoint progress on the larger planet; load paused.
