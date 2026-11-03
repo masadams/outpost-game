@@ -1,3 +1,6 @@
+import { isProgressionAction } from './progressionConfig';
+import { applyResearch } from './research';
+import { applyEquipment } from './equipment';
 import { createExploration, isExplorationAction, type ExplorationState } from './explorationConfig';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
 import { applyCommandAction } from './command';
@@ -14,7 +17,7 @@ import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, res
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
 import { heading } from './math';
-import { fireLaser, fracture, tractor, type Beam } from './mining';
+import { fireLaser, fracture, tractor, powerTractor, type Beam } from './mining';
 import { createShip, stepShip, type Controls, type Ship } from './physics';
 import { emptyInventory, RESOURCES, type Inventory } from './resources';
 import { unloadCargo } from './cargo';
@@ -55,7 +58,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   world.notice.time = Math.max(0, world.notice.time - dt);
   if (input.board && !world.buttons.board) { world.defence.controlled = null; boardOrExit(world); }
   for (const action of input.colonyActions ?? []) {
-    if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(world, action); else if (isTowAction(action)) applyTowAction(world, action); else if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
+    if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(world, action); else applyResearch(world, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(world, action); else if (isTowAction(action)) applyTowAction(world, action); else if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(world, action);
   stepTow(world, dt);
@@ -84,7 +87,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepSites(world, dt, startShip);
   world.beam = piloting && input.mine ? fireLaser(world.ship, [...world.asteroids, ...world.defence.meteors, ...world.exploration.sites], dt) : null;
   resolveMinedRocks(world);
-  world.tractorActive = piloting && !!input.tractor && world.ship.state === 'flying';
+  world.tractorActive = piloting && !!input.tractor && world.ship.state === 'flying' && powerTractor(world.ship, dt);
   if (world.tractorActive) for (const pickup of world.pickups) tractor(world.ship, pickup, dt);
   world.pickups = world.pickups.filter(pickup => pickup.mass > 1e-9);
   if (piloting && interact && world.ship.state === 'flying') applyExplorationAction(world, { type: 'visitSite' });

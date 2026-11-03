@@ -1,3 +1,5 @@
+import { createResearch, type ResearchState, type ProgressionAction } from './progressionConfig';
+import { stepResearch } from './research';
 import type { ExplorationAction } from './explorationConfig';
 import { createCommand, type CommandState, type CommandAction } from './commandConfig';
 import { completedBuilding, stepConstruction } from './construction';
@@ -28,20 +30,21 @@ export interface Building {
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'research staffed';
 }
 export interface Colony {
+  research: ResearchState;
   command: CommandState;
   oxygenUsed: number;
   policy?: ColonyPolicy;
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
-  return { command: createCommand(), oxygenUsed: 0, buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
+  return { research: createResearch(), command: createCommand(), oxygenUsed: 0, buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
     energy: 0, generation: 0, demand: 0, buildOpen: false, selected: 'solar', offset: 24, nextId: 1 };
 }
 export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).length * 200;
@@ -137,11 +140,13 @@ export function stepColony(world: WorldState, dt: number): void {
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
   stepHabitats(world, dt);
+  let researchStaffed = false;
   for (const building of orderedBuildings(colony)) {
     if (isHabitat(building.kind)) continue;
     building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
     if (!operational(building)) continue;
     if (!building.enabled) continue;
+    if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
     if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
     if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;
     const recipe = recipeFor(building); if (!recipe) continue;

@@ -1,3 +1,4 @@
+import { cargoCapacity, miningStats, tractorStats } from '../sim/shipStats';
 import { NavigationPanel } from './Navigation';
 import { CommandConsole } from './CommandConsole';
 import { habitatSource } from '../sim/habitats';
@@ -14,7 +15,7 @@ import type { ThreatPrediction } from '../sim/meteor';
 import { ATMOSPHERE, WORLD } from '../sim/config';
 import { telemetry, type Ship } from '../sim/physics';
 import { localAngle, wrap } from '../sim/math';
-import { CARGO_CAPACITY, inventoryMass, RESOURCES, RESOURCE_INFO } from '../sim/resources';
+import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 import { SUIT } from '../sim/astronaut';
 import { surfacePanel } from './surface';
@@ -42,7 +43,7 @@ export class Hud {
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
     this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.12</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.13</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
@@ -130,11 +131,11 @@ export class Hud {
     const bearing = delta ? wrap(localAngle(delta) - world.ship.angle) * 180 / Math.PI : 0;
     const objective = cargo > 0 ? (world.ship.state === 'landed' ? 'PRESS E TO UNLOAD' : 'ORE SECURED · return to green pad') :
       stored > 0 ? 'DELIVERY CONFIRMED · launch for more' : 'Mine fragments, then hold C nearby';
-    patchMarkup(this.mining, `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${CARGO_CAPACITY} kg</small></strong>
-      <div class="cargo-meter"><i style="width:${cargo / CARGO_CAPACITY * 100}%"></i></div>
+    patchMarkup(this.mining, `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${cargoCapacity(world.ship)} kg</small></strong>
+      <div class="cargo-meter"><i style="width:${cargo / cargoCapacity(world.ship) * 100}%"></i></div>
       ${RESOURCES.map(type => `<div class="resource"><span>${RESOURCE_INFO[type].label}</span><span>${world.ship.cargo[type].toFixed(1)} / ${world.depot[type].toFixed(1)}</span></div>`).join('')}
-      ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${objective}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser 450 m</small>` : 'Field depleted'}</div>
-      <small>${cargo >= CARGO_CAPACITY ? 'HOLD FULL · return and unload' : world.tractorActive ? 'TRACTOR ACTIVE · 260 m' : 'C: tractor · SPACE: laser'}</small>`}${towingPanel(world, this.root.dataset.state === 'paused')}`);
+      ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${objective}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser ${miningStats(world.ship).range} m</small>` : 'Field depleted'}</div>
+      <small>${cargo >= cargoCapacity(world.ship) ? 'HOLD FULL · return and unload' : world.tractorActive ? `TRACTOR ACTIVE · ${tractorStats(world.ship).range} m` : 'C: tractor · SPACE: laser'}</small>`}${towingPanel(world, this.root.dataset.state === 'paused')}`);
     this.root.dataset.cargo = cargo.toFixed(2); this.root.dataset.depot = stored.toFixed(2);
     this.root.dataset.asteroids = String(world.asteroids.length); this.root.dataset.pickups = String(world.pickups.length);
     this.root.dataset.mining = world.beam ? 'active' : 'idle';

@@ -1,3 +1,4 @@
+import { fuelCapacity } from '../sim/shipStats';
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { habitatSource } from '../sim/habitats';
 import { flightSafety, type FlightMetric, type InstrumentSafety } from '../sim/flightSafety';
@@ -16,7 +17,7 @@ export function instrumentMarkup(world: WorldState): string {
   const rows: Array<[FlightMetric | 'oxygen' | 'suit' | 'footing', string, string]> = [
     ['altitude', 'ALTITUDE', `${t.altitude.toFixed(0)}<small> m</small>`], ['radial', 'RADIAL', `${t.radial.toFixed(1)}<small> m/s</small>`],
     ['drift', 'DRIFT', `${t.tangential.toFixed(1)}<small> m/s</small>`], ['speed', 'SPEED', `${t.speed.toFixed(1)}<small> m/s</small>`],
-    [onFoot ? 'oxygen' : 'fuel', onFoot ? habitat ? 'HABITAT AIR' : 'SUIT AIR' : 'FUEL', `${(onFoot && habitat ? habitatPercent : (onFoot ? world.astronaut.oxygen / SUIT.oxygen : ship.fuel / WORLD.fuelCapacity) * 100).toFixed(0)}<small> %</small>`],
+    [onFoot ? 'oxygen' : 'fuel', onFoot ? habitat ? 'HABITAT AIR' : 'SUIT AIR' : 'FUEL', `${(onFoot && habitat ? habitatPercent : (onFoot ? world.astronaut.oxygen / SUIT.oxygen : ship.fuel / fuelCapacity(ship)) * 100).toFixed(0)}<small> %</small>`],
     [onFoot ? 'suit' : 'hull', onFoot ? 'SUIT' : 'HULL', `${(onFoot ? world.astronaut.health : ship.hull).toFixed(0)}<small> %</small>`],
     [onFoot ? 'footing' : 'tilt', onFoot ? 'FOOTING' : 'TILT', onFoot ? world.astronaut.grounded ? 'GROUND' : 'AIR' : `${(t.tilt * 180 / Math.PI).toFixed(0)}<small> °</small>`],
   ];

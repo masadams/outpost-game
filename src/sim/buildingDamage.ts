@@ -1,3 +1,4 @@
+import { damageFactor } from './shipStats';
 import { BLUEPRINTS, PRODUCTS } from './colonyConfig';
 import { HABITATS, isHabitat } from './habitatConfig';
 import { ventHabitat } from './habitats';
@@ -33,7 +34,7 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
   const at = { x: n.x * WORLD.radius, y: n.y * WORLD.radius };
   const distanceShip = Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y);
   if (distanceShip < radius) {
-    world.ship.hull = Math.max(0, world.ship.hull - damage * (1 - distanceShip / radius)); world.ship.impact = 1;
+    world.ship.hull = Math.max(0, world.ship.hull - damage * (1 - distanceShip / radius) * damageFactor(world.ship)); world.ship.impact = 1;
     if (world.ship.hull === 0) { world.ship.state = 'crashed'; world.ship.velocity = { x: 0, y: 0 }; world.ship.thrusting = false; }
   }
   if (world.playerMode === 'astronaut') {

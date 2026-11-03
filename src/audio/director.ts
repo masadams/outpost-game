@@ -11,7 +11,7 @@ export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup'
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
-  return { surveys: world.exploration.surveyed.length, salvage: world.exploration.salvaged, habitat: !!habitatSource(world), space: flightRegion(world.ship.position) === 'space', towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
+  return { research: world.colony.research.completed.length, equipment: world.ship.equipment.length, surveys: world.exploration.surveyed.length, salvage: world.exploration.salvaged, habitat: !!habitatSource(world), space: flightRegion(world.ship.position) === 'space', towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: { ...world.astronaut.position }, cargo: inventoryMass(world.ship.cargo), unloaded: world.unloaded,
@@ -36,6 +36,9 @@ export class AudioDirector {
     if (!onFoot && prev.mode === 'ship' && next.state === 'flying' && prev.state === 'flying' && next.space !== prev.space && this.regionCooldown <= 1e-9) {
       cues.push(next.space ? 'atmosphereExit' : 'atmosphereEntry'); this.regionCooldown = 6;
     }
+    if (next.research > prev.research) cues.push('production');
+    if (next.equipment > prev.equipment) cues.push('build');
+    if (next.equipment < prev.equipment) cues.push('demolish');
     if (next.towRig && !prev.towRig) cues.push('build');
     if (next.towTarget !== null && next.towTarget !== prev.towTarget) cues.push('towLatch');
     if (next.towBreaks > prev.towBreaks) cues.push('towSnap');

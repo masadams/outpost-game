@@ -1,6 +1,6 @@
 # Ship upgrades, habitats and shield domes — development schedule
 
-Ship upgrades were already listed broadly in Phase 8. This makes the categories and building milestones explicit in response to the user's request. Except for the first towing utility module, the systems below are **planned, not playable yet**. Sizes and rates are provisional tuning, not implemented specifications.
+Ship upgrades were already listed broadly in Phase 8. This makes the categories and building milestones explicit in response to the user's request. The tow rig and habitats are merged; Command #17 and neighborhood #18 are open for review. Ship progression/research is now implemented on `feat/ship-progression`; [actual costs, effects and playtest](PROGRESSION.md) supersede the earlier provisional equipment list. Shields, nearby worlds and the full presentation overhaul remain planned.
 
 ## Order and dependencies
 
@@ -10,7 +10,7 @@ Ship upgrades were already listed broadly in Phase 8. This makes the categories 
 | Implemented for review: Phase 7.5 / Task 007F | Oxygen habitat domes and life-support coverage | Power, ice → oxygen supply, surface placement, suit safety |
 | Phase 7.75 | Central Command console, remote facilities, power allocation, queues and economy | Habitat/building foundation |
 | Phase 7.9 | Nearby belts, destinations and navigation | Towing and Command |
-| Phase 8.1 | Ship upgrade fabrication and progression | Stable logistics/economy and supplied service |
+| Implemented for review: Phase 8.1 / Task 008 | Paid lab research, eight module upgrades and fabrication | Stable logistics/economy and supplied service |
 | Phase 8.2 | Powered shield domes and defence progression | Building damage, meteors/projectiles, power priorities |
 | Phase 8.5 | Nearby planets/moons and consistent cross-world flight | Navigation, ship range and body-relative colonies |
 | Phase 9 | Full graphics/UX/UI overhaul across these systems | Playable upgraded ship and colony loop |

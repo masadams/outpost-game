@@ -1,3 +1,4 @@
+import { fuelCapacity } from './shipStats';
 import { resupplyArmament } from './combatSupply';
 import { operational } from './buildingHealth';
 import { availableProduct } from './colonyPolicy';
@@ -11,8 +12,8 @@ import type { WorldState } from './world';
 
 export function refuelShip(world: WorldState, at: Vec): number {
   if (world.ship.state !== 'landed' || Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y) > 80) return 0;
-  const fuel = Math.min(WORLD.fuelCapacity - world.ship.fuel, world.colony.products.fuel);
-  world.ship.fuel = Math.min(WORLD.fuelCapacity, world.ship.fuel + fuel); world.colony.products.fuel = Math.max(0, world.colony.products.fuel - fuel);
+  const fuel = Math.min(fuelCapacity(world.ship) - world.ship.fuel, world.colony.products.fuel);
+  world.ship.fuel = Math.min(fuelCapacity(world.ship), world.ship.fuel + fuel); world.colony.products.fuel = Math.max(0, world.colony.products.fuel - fuel);
   return fuel;
 }
 export function serviceAtBuilding(world: WorldState, building: Building, crewPresent = true): void {

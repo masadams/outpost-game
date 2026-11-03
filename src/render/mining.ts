@@ -1,3 +1,4 @@
+import { tractorStats } from '../sim/shipStats';
 import Phaser from 'phaser';
 import { MINING } from '../sim/mining';
 import { RESOURCE_INFO } from '../sim/resources';
@@ -25,9 +26,9 @@ export function drawMining(g: Phaser.GameObjects.Graphics, world: WorldState, zo
     g.fillRect(ore.position.x - size, ore.position.y - size, size * 2, size * 2);
   }
   if (world.tractorActive) {
-    g.lineStyle(1 / zoom, 0x73f3cf, 0.2); g.strokeCircle(world.ship.position.x, world.ship.position.y, MINING.tractorRange);
+    g.lineStyle(1 / zoom, 0x73f3cf, 0.2); g.strokeCircle(world.ship.position.x, world.ship.position.y, tractorStats(world.ship).range);
     for (const ore of world.pickups) {
-      if (Phaser.Math.Distance.BetweenPoints(world.ship.position, ore.position) > MINING.tractorRange) continue;
+      if (Phaser.Math.Distance.BetweenPoints(world.ship.position, ore.position) > tractorStats(world.ship).range) continue;
       g.lineStyle(1 / zoom, 0x73f3cf, 0.4); g.lineBetween(world.ship.position.x, world.ship.position.y, ore.position.x, ore.position.y);
     }
   }

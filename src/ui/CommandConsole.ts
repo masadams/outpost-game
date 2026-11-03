@@ -1,3 +1,4 @@
+import { progressionPanel, progressionAction } from './progression';
 import { orderError } from '../sim/construction';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type ProductInventory, type BuildType } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity, recipeFor, type ColonyAction } from '../sim/colony';
@@ -31,6 +32,7 @@ export class CommandConsole {
       const d = button.dataset, id = Number(d.id);
       if (d.locate) { this.selected = Number(d.locate); return; }
       if (this.paused) return;
+      const progress = progressionAction(button); if (progress) { this.issue(progress); if (e.detail > 0) button.blur(); return; }
       let action: CommandAction | undefined;
       if (d.remote) action = { type: 'remote', id, operation: d.remote as RemoteOperation };
       if (d.move && this.world) {
@@ -99,6 +101,7 @@ export class CommandConsole {
       <p>Commit ${Object.entries(BLUEPRINTS[this.blueprint].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</p><p class="command-site-status">${siteError ?? 'Site clear · ghost preview in world'}</p>
       <label for="command-site">Site · metres along surface from home</label><input ${disabled} id="command-site" type="number" min="-1000" max="1000" step="1" value="${this.site}"><button ${disabled || siteError ? 'disabled' : ''} data-enqueue="true">Queue paid construction</button>
       ${c.command.queue.map(o => `<article class="command-order" data-order="${o.id}"><p>#${o.id} ${BLUEPRINTS[o.kind].label} · ${Math.round(o.angle * WORLD.radius)} m<br>${escapeText(o.status)}<br>Unworked refund: ${Object.entries(BLUEPRINTS[o.kind].cost).map(([p, q]) => `${fmt(q * Math.max(0, 1 - o.progress / CONSTRUCTION_SECONDS))} ${p}`).join(' · ')}</p><progress aria-label="Order ${o.id} progress" max="${CONSTRUCTION_SECONDS}" value="${o.progress}"></progress><button ${disabled} data-order="pause" data-id="${o.id}">${o.paused ? 'Resume' : 'Pause'} order ${o.id}</button><button ${disabled} data-order="cancel" data-id="${o.id}">Cancel order ${o.id}</button></article>`).join('')}</details>
+      ${progressionPanel(w, paused)}
       <details data-preserve-open><summary>Economy · stocks and observed flow</summary><p>Ore ${fmt(inventoryMass(w.depot))} / ${oreCapacity(c)} kg · products ${productCapacity(c)} kg each</p><small>Net stock change / simulated second; includes deliveries, construction, refunds and habitat transfers. No offline production. — means sampling.</small><table><thead><tr><th>Stock</th><th>kg</th><th>usable</th><th>kg/s</th></tr></thead><tbody>${stockRows}</tbody></table><p>Protected energy ${policy.energyReserve} kJ · delivery room ${policy.deliveryReserve} kg<br>Habitat oxygen spent ${fmt(c.oxygenUsed)} kg</p><small>Set reserves in Colony → Resource priorities.</small></details>`);
     const slider = this.root.querySelector<HTMLInputElement>('#command-limit');
     if (slider && document.activeElement !== slider && selected) slider.value = String(selected.dispatch?.limit ?? 100);

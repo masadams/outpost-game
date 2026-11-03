@@ -1,4 +1,4 @@
-# Outpost alpha 0.12 — first playtest
+# Outpost alpha 0.13 — first playtest
 
 Start with flight, asteroid mining, surface exploration and construction. Then try finite planetary mining and automatic refinery targets. Save before the opt-in defence drill or ship patrol. Then try protected power, delivery room and turret-material reserves. Mobile logistics and the full presentation overhaul remain later work.
 
@@ -8,7 +8,7 @@ From a checkout of this repository:
 
 ```sh
 git fetch origin
-git switch feat/neighborhood-discovery
+git switch feat/ship-progression
 git pull --ff-only
 npm ci
 npm run build
@@ -54,16 +54,21 @@ Known prototype limits: non-solid buildings with blast damage, terrain/small-arm
 The initial [graphics/UX/UI audit](PRESENTATION_AUDIT.md) records prototype issues; human usability testing and the full Phase 9 overhaul remain pending.
 
 
-## Oxygen habitats — alpha 0.12
+## Oxygen habitats — alpha 0.13
 
 Follow [the habitat route](HABITATS.md#playtest). Confirm the source changes to HABITAT AIR, the suit reserve holds, disabling/exit resumes consumption, charged backup visibly exhausts, and K/reload preserves buffers while paused. Habitat air offers no fall/combat protection. Small/large palette buttons remain reachable with keyboard focus. The central Command console is the next milestone.
 
 
-## Central Command — alpha 0.12
+## Central Command — alpha 0.13
 
 Follow [the Command route](COMMAND.md#playtest): remote operation from ship/surface, power scarcity and ordering with drag/native controls, paid queue work/refunds, selected dial/focus stability and checkpoint continuation. Landing warnings #14, towing #15 and habitats #16 are merged. Nearby-space discovery is next.
 
 
-## Nearby-space discovery — alpha 0.12
+## Nearby-space discovery — alpha 0.13
 
 Follow [the neighborhood route](NEIGHBORHOOD.md#playtest): live chart and target/home selection, slow physical rendezvous, survey manifests, finite salvage/fuel, normal return delivery and checkpoint depletion. Command #17 remains open and this slice follows it. Ship progression/research is the next milestone.
+
+
+## Ship progression — alpha 0.13
+
+Follow [the research/equipment route](PROGRESSION.md#saves-and-playtest): build/power a lab, pay samples, pause/save active work, fabricate at home and verify real capacities/mass/tool budgets. Tank removal must return existing fuel, while full stock/excess cargo blocks unsafe removal. Recovery preserves modules without free refill. Shields are next; broader balancing and the full graphics/UX/UI overhaul remain scheduled.

@@ -98,7 +98,7 @@ describe('finite nearby-space discovery', () => {
     expect(audio.update(w, 1, true).cues).toEqual([]);
   });
   it('round trips depleted stocks, surveyed manifests, selection and moving bodies in version 11', () => {
-    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(11);
+    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(12);
     const loaded = decodeCheckpoint(text); expect(loaded.exploration).toEqual(w.exploration); expect(loaded.asteroids).toEqual(w.asteroids); seedNeighborhood(loaded); expect(loaded.asteroids).toHaveLength(27); expect(loaded.exploration.sites.find(t => t.key === s.key)?.stock).toEqual(s.stock);
   });
   it('migrates real v10 saves by adding only new sectors once and preserving old depleted IDs', () => {

@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6 and the mining/scheduling/reserve foundations are merged through #13; landing feedback #14, towing #15 and oxygen habitats #16 are now merged with user authorization. Phase 7.75 Central Command is implemented for review on `feat/command-console`. Phase 7.9 nearby-space discovery is implemented for review on `feat/neighborhood-discovery`; ship progression is next, followed by shields, nearby worlds and the still-required full Phase 9 overhaul.
+**Status:** Phases 0–6 and the mining/scheduling/reserve foundations are merged through #13; landing feedback #14, towing #15 and oxygen habitats #16 are now merged with user authorization. Phase 7.75 Central Command is implemented for review on `feat/command-console`. Phase 7.9 nearby-space discovery is implemented for review on `feat/neighborhood-discovery`; Phase 8.1 ship progression/research is implemented for review on `feat/ship-progression`, followed next by shields and nearby worlds and the still-required full Phase 9 overhaul.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -145,7 +145,7 @@ Implemented on `feat/command-console`; see [Task 007G](../CODEX_TASK_007G.md) an
 - [x] Drag-and-drop ordering/dials with native keyboard alternatives, stable focus and pause-safe planning/execution.
 - [x] Validated supplied construction/work queue, progress/cancellation and explicit executor/refund rules.
 - [x] Economy ledger with usable/reserved stock, actual rates, bottlenecks and recipe flows.
-- [ ] Integrate real research when Phase 8 ships; navigation is now available through Nav in Task 007H, with no inert research controls in Command.
+- [ ] Merge/review Task 008 real lab research in Command; navigation is available through Nav in Task 007H. Both are implemented without inert placeholder controls.
 - [x] Persist priorities/budgets/orders, and test scarcity, damage, cancellation and input parity.
 **Exit:** Direct the installed colony from ship or surface without visiting every machine, with understandable power/material consequences.
 
@@ -162,7 +162,7 @@ Implemented on `feat/neighborhood-discovery`; see [Task 007H](../CODEX_TASK_007H
 ## Phase 8 — Progression and balancing
 **Dependencies:** Phases 2–7, life support, Command and neighborhood discovery.
 - [ ] Technology/unlock progression for ship, mining, energy and defences.
-- [ ] Phase 8.1: explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
+- [ ] Review/merge Phase 8.1 / [Task 008](../CODEX_TASK_008.md), implemented on `feat/ship-progression`; see [actual progression/playtest](PROGRESSION.md). Includes powered labs and paid prerequisite research plus explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
 - [ ] Phase 8.2: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
 - [ ] Meaningful tradeoffs: cargo mass vs manoeuvrability; fuel vs range; power vs defence.
 - [ ] Resource scarcity, hazards, escalating events and recovery loops.
@@ -219,7 +219,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Landing feedback #14, towing #15 and habitats #16 are merged. Review/playtest Task 007G Central Command using [COMMAND.md](COMMAND.md), review/playtest Task 007H nearby-space discovery, then implement ship progression/research → shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
+Landing feedback #14, towing #15 and habitats #16 are merged. Review/playtest Task 007G Central Command using [COMMAND.md](COMMAND.md), review/playtest Task 007H nearby-space discovery, review/playtest Task 008 ship progression/research, then implement shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

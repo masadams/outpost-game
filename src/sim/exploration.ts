@@ -1,7 +1,8 @@
+import { fuelCapacity, cargoCapacity } from './shipStats';
 import { moveBody, separateBodies, collideShip, type Asteroid } from './bodies';
 import { BELTS, BELT_IDS, SITE_IDS, SITE_INFO, EXPLORATION, DESTINATIONS, type Site, type Destination } from './explorationConfig';
 import { WORLD } from './config';
-import { emptyInventory, inventoryMass, CARGO_CAPACITY, RESOURCES } from './resources';
+import { emptyInventory, inventoryMass, RESOURCES } from './resources';
 import { heading, length, dot, wrap, localAngle, type Vec } from './math';
 import { rayCircle } from './mining';
 import { shipMass } from './shipMass';
@@ -70,12 +71,12 @@ export function applyExplorationAction(w: WorldState, a: ExplorationAction): voi
   if (site.key === 'cache') {
     let accepted = 0;
     for (const r of RESOURCES) {
-      const amount = Math.min(site.stock[r], CARGO_CAPACITY - inventoryMass(w.ship.cargo)); if (amount <= 0) continue;
+      const amount = Math.min(site.stock[r], cargoCapacity(w.ship) - inventoryMass(w.ship.cargo)); if (amount <= 0) continue;
       transferMomentum(w, site, amount); w.ship.cargo[r] += amount; site.stock[r] -= amount; accepted += amount;
     }
     w.exploration.salvaged += accepted; notify(w, accepted ? `SALVAGE +${accepted.toFixed(1)} kg · RETURN AND UNLOAD AT HOME` : inventoryMass(site.stock) ? 'HOLD FULL · UNLOAD BEFORE RECOVERING MORE' : 'CACHE EMPTY · NO RESPAWN');
   } else if (site.key === 'tender') {
-    const amount = Math.min(site.fuel, WORLD.fuelCapacity - w.ship.fuel);
+    const amount = Math.min(site.fuel, fuelCapacity(w.ship) - w.ship.fuel);
     transferMomentum(w, site, amount); w.ship.fuel += amount; site.fuel = Math.max(0, site.fuel - amount); w.exploration.refuelled += amount;
     notify(w, amount ? `TENDER TRANSFER +${amount.toFixed(1)} kg FUEL · FINITE STOCK` : site.fuel ? 'SHIP TANK FULL' : 'TENDER EMPTY · NO RESUPPLY');
   } else notify(w, 'FROST ARC SURVEYED · LIVE ORE MANIFEST REVEALED');

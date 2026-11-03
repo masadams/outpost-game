@@ -1,3 +1,4 @@
+import { damageFactor } from './shipStats';
 import { shipMass } from './shipMass';
 import { WORLD } from './config';
 import { dot, heading, length, type Vec } from './math';
@@ -62,6 +63,6 @@ export function collideShip(ship: Ship, rock: Asteroid, startShip: Vec, startRoc
   const impulse = -(1 + 0.25) * inward / (1 / mass + 1 / rock.mass);
   ship.velocity.x += n.x * impulse / mass; ship.velocity.y += n.y * impulse / mass;
   rock.velocity.x -= n.x * impulse / rock.mass; rock.velocity.y -= n.y * impulse / rock.mass;
-  ship.hull = Math.max(0, ship.hull - Math.max(1, (speed - 2) * 3)); ship.impact = 1;
+  ship.hull = Math.max(0, ship.hull - Math.max(1, (speed - 2) * 3) * damageFactor(ship)); ship.impact = 1;
   if (ship.hull <= 0) { ship.state = 'crashed'; ship.thrusting = false; ship.velocity = { x: 0, y: 0 }; }
 }

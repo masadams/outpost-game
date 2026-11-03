@@ -4,7 +4,7 @@ import { HABITATS, HABITAT } from './habitatConfig';
 export const PRODUCTS = ['alloy', 'wire', 'components', 'water', 'oxygen', 'fuel'] as const;
 export type Product = typeof PRODUCTS[number];
 export type ProductInventory = Record<Product, number>;
-export const BUILD_TYPES = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'service', 'laser', 'flak', 'missile', 'miningRig', 'habitatSmall', 'habitatLarge'] as const;
+export const BUILD_TYPES = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'service', 'laser', 'flak', 'missile', 'miningRig', 'habitatSmall', 'habitatLarge', 'researchLab'] as const;
 export type BuildType = typeof BUILD_TYPES[number];
 export interface Blueprint { label: string; cost: Partial<ProductInventory>; halfWidth: number; color: number }
 export const BLUEPRINTS: Record<BuildType, Blueprint> = {
@@ -18,6 +18,7 @@ export const BLUEPRINTS: Record<BuildType, Blueprint> = {
   flak: { label: 'Flak turret', cost: { alloy: 8, wire: 3, components: 2 }, halfWidth: 10, color: 0xffcf79 },
   missile: { label: 'Missile turret', cost: { alloy: 10, wire: 4, components: 3 }, halfWidth: 10, color: 0xe1adff },
   miningRig: { label: 'Mining rig', cost: { alloy: 8, wire: 3, components: 2 }, halfWidth: 12, color: 0x8ce9dd },
+  researchLab: { label: 'Research lab', cost: { alloy: 6, wire: 3, components: 2 }, halfWidth: 10, color: 0xb9b2ff },
   habitatSmall: { label: HABITATS.habitatSmall.label, cost: HABITATS.habitatSmall.cost, halfWidth: HABITAT.foundationHalfWidth, color: 0x86e0ff },
   habitatLarge: { label: HABITATS.habitatLarge.label, cost: HABITATS.habitatLarge.cost, halfWidth: HABITAT.foundationHalfWidth, color: 0x86e0ff },
 };

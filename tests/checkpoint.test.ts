@@ -37,7 +37,7 @@ it('migrates the old small moon while preserving surface arc distances, resource
   expect(length(loaded.exploration.sites[0].position) - WORLD.radius).toBeCloseTo(1450); // New sectors seed after reprojection.
   expect(length(loaded.asteroids[0].position) - WORLD.radius).toBeCloseTo(440);
   expect(loaded.notice.message).toContain('MIGRATED');
-  const text = encodeCheckpoint(loaded); expect(JSON.parse(text).version).toBe(11);
+  const text = encodeCheckpoint(loaded); expect(JSON.parse(text).version).toBe(12);
   expect(decodeCheckpoint(text).ship.position).toEqual(loaded.ship.position); // No double scaling.
 });
 it('rejects a newer envelope with an incompatible planet instead of silently moving the world', () => {
