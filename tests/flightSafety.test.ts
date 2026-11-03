@@ -87,4 +87,12 @@ describe('flight alarm priority and cadence', () => {
     w.ship.velocity.y = 20; expect(d.update(w, 0.2, false).cues).toEqual([]);
     expect(d.update(w, 2.1, false).cues).toEqual(['landingWarning']);
   });
+  it('keeps separate repeat limits when low fuel and landing urgency alternate', () => {
+    const w = createWorld(); w.ship = approach(80, -20); w.ship.fuel = 10; const d = new AudioDirector(); d.reset(w);
+    expect(d.update(w, 0, false).cues).toEqual(['landingWarning']);
+    w.ship.velocity.y = -2; expect(d.update(w, 0.2, false).cues).toEqual(['fuelWarning']);
+    w.ship.velocity.y = 20; expect(d.update(w, 0.2, false).cues).toEqual([]);
+    w.ship.velocity.y = -2; expect(d.update(w, 0.2, false).cues).toEqual([]);
+    w.ship.velocity.y = 20; expect(d.update(w, 1.9, false).cues).toEqual(['landingWarning']);
+  });
 });

@@ -18,9 +18,9 @@ function snapshot(world: WorldState) {
 export class AudioDirector {
   private previous: ReturnType<typeof snapshot> | null = null;
   private footDistance = 0;
-  private warningCooldown = 0;
-  private warningKey = '';
-  reset(world: WorldState): void { this.previous = snapshot(world); this.footDistance = 0; this.warningCooldown = 0; this.warningKey = ''; }
+  private alarmTime = 0;
+  private lastAlarm = new Map<string, number>();
+  reset(world: WorldState): void { this.previous = snapshot(world); this.footDistance = 0; this.alarmTime = 0; this.lastAlarm.clear(); }
   update(world: WorldState, seconds: number, paused: boolean): SoundFrame {
     const next = snapshot(world), prev = this.previous; this.previous = next;
     if (!prev || paused) { this.footDistance = 0; return silent(); }
@@ -64,9 +64,11 @@ export class AudioDirector {
     const generic = alive && (next.threats > 0 || (onFoot ? next.oxygen < 30 : next.state === 'flying' && next.hull < 25));
     const fuelFirst = fuel && (fuelLevel === 'critical' || !generic);
     const key = landing ? 'landing' : fuelFirst ? `fuel-${fuelLevel}` : generic ? 'generic' : '';
-    this.warningCooldown = key && this.warningKey && key !== this.warningKey ? 0 : Math.max(0, this.warningCooldown - Math.max(0, seconds));
-    if (key && this.warningCooldown <= 1e-9) { cues.push(landing ? 'landingWarning' : fuelFirst ? 'fuelWarning' : 'warning'); this.warningCooldown = landing ? 2.5 : fuelFirst && fuelLevel === 'critical' ? 4 : 8; }
-    this.warningKey = key;
+    this.alarmTime += Math.max(0, seconds);
+    const interval = landing ? 2.5 : fuelFirst && fuelLevel === 'critical' ? 4 : 8, last = this.lastAlarm.get(key);
+    if (key && (last === undefined || this.alarmTime - last + 1e-9 >= interval)) {
+      cues.push(landing ? 'landingWarning' : fuelFirst ? 'fuelWarning' : 'warning'); this.lastAlarm.set(key, this.alarmTime);
+    }
     return { cues, engine: alive && !onFoot && world.ship.thrusting,
       mining: alive && !!world.beam, tractor: alive && world.tractorActive, machinery: alive && machinery };
   }
