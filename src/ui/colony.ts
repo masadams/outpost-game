@@ -43,6 +43,6 @@ export function actionFromButton(button: HTMLElement): ColonyAction | null {
   if (target && SCHEDULE_PRODUCTS.includes(target as ScheduleProduct) && (delta === '-5' || delta === '5')) return { type: 'adjustTarget', product: target as ScheduleProduct, delta: Number(delta) as -5 | 5 };
   if (select && BUILD_TYPES.includes(select as BuildType)) return { type: 'select', kind: select as BuildType };
   if (shift === '-32' || shift === '32') return { type: 'shift', delta: Number(shift) };
-  if (colony && ['toggleSchedule', 'toggleBuild', 'place', 'demolish', 'toggleMachine', 'cycleRecipe', 'startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding', 'startEncounter', 'cycleWeapon', 'recoverShip'].includes(colony)) return { type: colony } as ColonyAction;
+  if (colony && ['toggleTow', 'installTowRig', 'toggleSchedule', 'toggleBuild', 'place', 'demolish', 'toggleMachine', 'cycleRecipe', 'startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding', 'startEncounter', 'cycleWeapon', 'recoverShip'].includes(colony)) return { type: colony } as ColonyAction;
   return null;
 }

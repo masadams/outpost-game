@@ -33,3 +33,10 @@ Incoming meteors use the same quadratic drag and gravity, with swept terminal te
 ## Ship combat additions
 
 Ship mass now includes the finite magazines (initially 6.5 kg). Fired projectiles inherit ship velocity; recoil preserves launch momentum using the remaining ship mass. Cannon/missile round masses match ammunition material costs. Gravity/drag remain shared, and first projectile contacts are swept against relative actor movement and terrain. Ship/drone contacts reuse the ship/rock impulse solver. Drones have finite fuel/ammo and bounded vectoring thrusters independent of gun attitude; missiles have bounded guidance, without detailed propellant or thermal simulation. Capacitor generation and radiative cooling are tuned gameplay budgets, not a closed thermochemical model. Both weapon variants have tested normal-input fight/return/paid-service profiles. Current checkpoints use version 4 and preserve earlier migrations. See [COMBAT.md](COMBAT.md).
+
+
+## Towing utility module
+
+The supplied 25 kg rig contributes to actual ship mass. A towed asteroid remains a separate body with its own gravity, drag and contacts. The fixed-length, centre-to-centre cable is a tension-only 90 N/m spring with 80 N/(m/s) relative damping. It adds no initial latch impulse, pushes neither slack cable nor target, and applies equal/opposite impulses during free flight. The damping dissipates mechanical energy; a landed ship transfers the opposing impulse into its planet anchor. This is a translational point-coupler model with no cable-induced rotational torque.
+
+The link breaks above 6,000 N, beyond 35 m extension, on planet occlusion, ship impact/crash or target loss. Cable mass/spooling is abstracted into the installed equipment; cable collision with other rocks/buildings, reeling and autonomous hauling are excluded. Detaching preserves both velocities. Normal mining/tractor/unload still accounts for all ore. Because the coast predictor integrates only one ship, its path is suspended while a target is attached. See [TOWING.md](TOWING.md) for limits and verification.

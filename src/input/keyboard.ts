@@ -10,9 +10,9 @@ export class Keyboard {
     if (event.target instanceof HTMLElement && event.target.closest('button, input, select, textarea, summary')) this.release();
   };
   constructor(scene: Phaser.Scene) {
-    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE,I,ESC', true) as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE,I,ESC,Y', true) as Record<string, Phaser.Input.Keyboard.Key>;
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
-    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'O', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC']) {
+    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'O', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC', 'Y']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
         if (!event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
@@ -30,7 +30,7 @@ export class Keyboard {
     const w = this.consume('W'), up = this.consume('UP');
     const actions: ColonyAction[] = [];
     const commands: Array<[string, ColonyAction]> = [['B', { type: 'toggleBuild' }], ['Q', { type: 'shift', delta: -32 }], ['T', { type: 'shift', delta: 32 }],
-      ['O', { type: 'startEncounter' }], ['Z', { type: 'cycleWeapon' }], ['BACKSPACE', { type: 'recoverShip' }], ['N', { type: 'startWave' }], ['G', { type: 'toggleAuto' }], ['U', { type: 'repairBuilding' }], ['ENTER', { type: 'place' }], ['X', { type: 'demolish' }], ['V', { type: 'cycleRecipe' }]];
+      ['Y', { type: 'toggleTow' }], ['O', { type: 'startEncounter' }], ['Z', { type: 'cycleWeapon' }], ['BACKSPACE', { type: 'recoverShip' }], ['N', { type: 'startWave' }], ['G', { type: 'toggleAuto' }], ['U', { type: 'repairBuilding' }], ['ENTER', { type: 'place' }], ['X', { type: 'demolish' }], ['V', { type: 'cycleRecipe' }]];
     ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'].forEach((key, i) => commands.push([key, { type: 'select', kind: BUILD_TYPES[i] }]));
     for (const [key, action] of commands) if (this.pending.delete(key)) actions.push(action);
     return { thrust: w || up, combatFire: this.consume('SHIFT'),

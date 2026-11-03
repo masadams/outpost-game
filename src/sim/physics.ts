@@ -10,13 +10,14 @@ export interface Controls { thrust: boolean; turn: number }
 export const IDLE: Controls = { thrust: false, turn: 0 };
 export type FlightState = 'landed' | 'flying' | 'crashed';
 export interface Ship {
+  towRig: boolean;
   position: Vec; velocity: Vec; angle: number; angularVelocity: number;
   fuel: number; hull: number; state: FlightState; thrusting: boolean;
   impact: number; landings: number;
   cargo: Inventory; armament: Armament;
 }
 export function createShip(): Ship {
-  return { position: { x: 0, y: -WORLD.radius - WORLD.shipRadius },
+  return { towRig: false, position: { x: 0, y: -WORLD.radius - WORLD.shipRadius },
     velocity: { x: 0, y: 0 }, angle: 0, angularVelocity: 0,
     fuel: WORLD.fuelCapacity, hull: 100, state: 'landed', thrusting: false, impact: 0, landings: 0, cargo: emptyInventory(), armament: createArmament() };
 }

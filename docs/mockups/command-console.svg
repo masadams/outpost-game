@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820">
+<title>Outpost planned Command console concept</title>
+<desc>Concept wireframe with system power flow, priority cards, economy meters and build/research queues. Not a playable interface.</desc>
+<defs><style>text{font-family:monospace;fill:#d9e8ed;font-size:14px}.small{font-size:11px;fill:#9bb4c5}.mint{fill:#8ce9dd}.amber{fill:#f3d779}.edge{fill:#0b202d;stroke:#304b5d}.wire{fill:none;stroke:#8ce9dd;stroke-width:2}.muted{fill:#102535;stroke:#557485}</style></defs>
+<rect width="1280" height="820" fill="#06101a"/>
+<text x="28" y="30" class="small">OUTPOST · COMMAND CONCEPT · PLANNED PHASE 7.75 · ILLUSTRATIVE VALUES</text>
+<text x="28" y="67" style="font-size:25px" class="mint">COLONY SYSTEMS</text>
+<text x="895" y="64" class="small">FLIGHT WARNINGS / LIFE SUPPORT STAY VISIBLE</text>
+<g class="edge"><rect x="24" y="94" width="1232" height="46"/><rect x="24" y="160" width="286" height="328"/><rect x="330" y="160" width="596" height="328"/><rect x="946" y="160" width="310" height="596"/><rect x="24" y="508" width="902" height="248"/></g>
+<text x="44" y="122" class="mint">OVERVIEW</text><text x="183" y="122">POWER</text><text x="283" y="122">OPERATIONS</text><text x="443" y="122">ECONOMY</text><text x="581" y="122">CONSTRUCTION</text><text x="766" y="122">RESEARCH</text><text x="920" y="122">NAVIGATION</text>
+<text x="44" y="189" class="small">GRID HEALTH</text>
+<text x="44" y="225">GENERATION</text><text x="216" y="225" class="mint">24 kW</text>
+<rect x="44" y="241" width="244" height="14" fill="#183241"/><rect x="44" y="241" width="203" height="14" fill="#8ce9dd"/>
+<text x="44" y="288">ALLOCATED</text><text x="216" y="288">18 kW</text>
+<text x="44" y="320">HEADROOM</text><text x="216" y="320" class="mint">6 kW</text>
+<circle cx="100" cy="393" r="43" fill="none" stroke="#304b5d" stroke-width="12"/><path d="M100 350 A43 43 0 1 1 59 406" fill="none" stroke="#8ce9dd" stroke-width="12"/>
+<text x="80" y="399">78%</text><text x="166" y="381">BATTERY</text><text x="166" y="406" class="small">172 / 220 kJ</text><text x="166" y="431" class="small">RESERVE 20 kJ</text>
+<text x="350" y="189" class="small">POWER FLOW · REQUESTED / DELIVERED</text>
+<g class="muted"><rect x="350" y="218" width="130" height="58"/><rect x="350" y="336" width="130" height="58"/><rect x="534" y="265" width="108" height="84"/><rect x="704" y="214" width="198" height="54"/><rect x="704" y="305" width="198" height="54"/><rect x="704" y="396" width="198" height="54"/></g>
+<text x="369" y="242">SOLAR BANK</text><text x="369" y="261" class="small">24 kW available</text><text x="370" y="361">BATTERIES</text><text x="370" y="382" class="small">charge / buffer</text>
+<path class="wire" d="M480 247 H508 V290 H534 M480 365 H508 V323 H534 M642 306 H674 V241 H704 M674 306 V332 H704 M674 332 V423 H704"/>
+<text x="557" y="298" class="mint">BUS</text><text x="549" y="324" class="small">dispatch</text>
+<text x="720" y="238">HABITAT AIR</text><text x="720" y="258" class="small">essential · 4 / 4 kW</text>
+<text x="720" y="329">DEFENCE</text><text x="720" y="349" class="small">burst-ready · charge OK</text>
+<text x="720" y="420">INDUSTRY</text><text x="720" y="440" class="small">requested 10 / supplied 10</text>
+<text x="44" y="538" class="small">FACILITY PRIORITY · DRAG GRIP OR USE UP / DOWN · SET A RATED POWER CAP</text>
+<g class="muted"><rect x="44" y="554" width="862" height="51"/><rect x="44" y="614" width="862" height="51"/><rect x="44" y="674" width="862" height="51"/></g>
+<text x="58" y="585">⋮⋮ 1  HABITAT 01</text><text x="58" y="645">⋮⋮ 2  LASER 01</text><text x="58" y="705">⋮⋮ 3  REFINERY 01</text>
+<text x="292" y="585" class="mint">SUPPLIED</text><text x="292" y="645" class="mint">READY</text><text x="292" y="705" class="amber">WAITING FOR ORE</text>
+<g stroke="#557485" stroke-width="5"><path d="M488 580 H690"/><path d="M488 640 H690"/><path d="M488 700 H690"/></g>
+<g fill="#8ce9dd"><circle cx="620" cy="580" r="8"/><circle cx="665" cy="640" r="8"/><circle cx="578" cy="700" r="8"/></g>
+<text x="714" y="585">4 kW</text><text x="714" y="645">BURST</text><text x="714" y="705">4 kW</text>
+<text x="807" y="585">↑ ↓  ON</text><text x="807" y="645">↑ ↓  ON</text><text x="807" y="705">↑ ↓  ON</text>
+<text x="967" y="189" class="small">WORK AND ECONOMY</text><text x="967" y="226" class="mint">BUILD QUEUE</text>
+<text x="967" y="257">1. HABITAT FOUNDATION</text><rect x="967" y="273" width="267" height="10" fill="#183241"/><rect x="967" y="273" width="160" height="10" fill="#8ce9dd"/>
+<text x="967" y="307" class="small">work 60% · supplies committed</text><text x="967" y="339">2. STORAGE · QUEUED</text><text x="967" y="365" class="small">inspect / pause / cancel</text>
+<path d="M967 389 H1234" stroke="#304b5d"/><text x="967" y="422" class="mint">ECONOMY SNAPSHOT</text>
+<text x="967" y="454">ALLOY    42 kg  +2/min</text><text x="967" y="484">OXYGEN   12 kg  −1/min</text><text x="967" y="514">FUEL     18 kg  +3/min</text><text x="967" y="547" class="small">reserved / usable / capacity</text>
+<path d="M967 574 H1234" stroke="#304b5d"/><text x="967" y="607" class="mint">RESEARCH / NAVIGATION</text>
+<text x="967" y="637" class="small">SURVEY OPTICS · LAB REQUIRED</text><text x="967" y="667" class="small">ICE BELT · 2.4 km</text><text x="967" y="699" class="small">HOME RETURN ROUTE · AVAILABLE</text>
+<text x="28" y="791" class="small">DESIGN TARGET: REMOTE MANAGEMENT · CLEAR BUDGETS · NO FREE POWER OR MATERIALS · KEYBOARD / MOUSE PARITY</text>
+</svg>

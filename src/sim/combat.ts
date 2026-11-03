@@ -6,6 +6,7 @@ import { WORLD } from './config';
 import { inventoryMass } from './resources';
 import { notify } from './messages';
 import { availableProduct } from './colonyPolicy';
+import { releaseTow } from './towing';
 import { stepDrone } from './drones';
 import { stepCombatProjectiles, type CombatStarts } from './combatProjectiles';
 import { collideShip, type Asteroid } from './bodies';
@@ -29,9 +30,10 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     if (stock.alloy < 8 || stock.components < 2) { notify(world, 'RECOVERY NEEDS 8 ALLOY + 2 COMPONENTS · L LOADS CHECKPOINT · R RESETS'); return; }
     if (availableProduct(world.colony, 'alloy') < 8 || availableProduct(world.colony, 'components') < 2) { notify(world, 'RECOVERY MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN COLONY'); return; }
     stock.alloy -= 8; stock.components -= 2; c.lostCargo += inventoryMass(s.cargo); c.recoveries++;
+    releaseTow(world, true);
     c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
     const recovered = createShip(); recovered.hull = 30; recovered.fuel = Math.min(s.fuel, 20);
-    recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false };
+    recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig;
     world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { x: 0, y: 0 }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
     world.defence.controlled = null; world.colony.buildOpen = false; world.depotOpen = false;
     notify(world, 'RECOVERED AT HOME · CARGO LOST · HULL 30 · E USES SUPPLIES TO SERVICE'); return;

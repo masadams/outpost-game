@@ -1,4 +1,6 @@
 import { createSurfaceDeposits, type SurfaceDeposit } from './geology';
+import { createTowing, type TowingState } from './towingConfig';
+import { applyTowAction, isTowAction, resolveTow, stepTow } from './towing';
 import { createCombat, type CombatState, type CombatAction } from './combatConfig';
 import { applyCombatAction, isCombatAction, stepCombat } from './combat';
 import { serviceCombatAtPad } from './combatSupply';
@@ -20,6 +22,7 @@ import { notify } from './messages';
 
 export interface WorldControls extends Controls { combatFire?: boolean; combatActions?: CombatAction[]; mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
 export interface WorldState {
+  towing: TowingState;
   ship: Ship; asteroids: Asteroid[]; pickups: Pickup[]; depot: Inventory;
   beam: Beam | null; tractorActive: boolean; nextId: number; unloaded: number;
   playerMode: 'ship' | 'astronaut'; astronaut: Astronaut; depotOpen: boolean;
@@ -38,16 +41,17 @@ export function createWorld(): WorldState {
   // A radial iron sample above home makes the first sortie accessible without orbital rendezvous.
   asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
   asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
-  return { ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
+  return { towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
     playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), combat: createCombat() };
 }
 export function stepWorld(world: WorldState, input: WorldControls, dt: number): void {
   world.notice.time = Math.max(0, world.notice.time - dt);
   if (input.board && !world.buttons.board) { world.defence.controlled = null; boardOrExit(world); }
   for (const action of input.colonyActions ?? []) {
-    if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
+    if (isTowAction(action)) applyTowAction(world, action); else if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(world, action);
+  stepTow(world, dt);
   const interact = !!input.unload && !world.buttons.interact;
   world.buttons = { board: !!input.board, interact: !!input.unload };
   const piloting = world.playerMode === 'ship';
@@ -86,6 +90,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });
   resolveDefenceHits(world);
   if (world.asteroids.some(rock => rock.health <= 0)) resolveMinedRocks(world);
+  resolveTow(world);
 }
 
 function resolveMinedRocks(world: WorldState): void {
