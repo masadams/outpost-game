@@ -1,3 +1,5 @@
+import { pursuitAcceleration } from './guidance';
+import { relative } from './celestial';
 import { allColonies, sitePosition, colonyPlanet } from './localWorld';
 import { STATIC_SYSTEM, clearTerrain, terrainHit } from './celestial';
 import { orderedBuildings } from './power';
@@ -26,7 +28,7 @@ function targetFor(world: WorldState, b: Building) {
   const at = turretPosition(b, world), range = WEAPONS[b.kind].range;
   return world.defence.meteors.filter(m => Math.hypot(m.position.x - at.x, m.position.y - at.y) <= range && lineOfSight(at, m.position, world.system) &&
     Math.abs(wrap(localAngle({ x: m.position.x - at.x, y: m.position.y - at.y }) - b.angle)) <= 1.4)
-    .sort((a, c) => length(a.position) - length(c.position) || a.id - c.id)[0];
+    .sort((a, c) => length(relative(a.position, colonyPlanet(world))) - length(relative(c.position, colonyPlanet(world))) || a.id - c.id)[0];
 }
 function blast(world: WorldState, at: Vec, radius: number, damage: number): void {
   for (const m of world.defence.meteors) if (Math.hypot(m.position.x - at.x, m.position.y - at.y) <= radius + m.radius && lineOfSight(at, m.position, world.system)) m.health -= damage;
@@ -44,7 +46,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     if (manual) state.aim = clamp(state.aim + turn * 1.1 * dt, -1.4, 1.4);
     else if (state.automatic && target) {
       const flight = spec.speed ? Math.min(6, Math.hypot(target.position.x - at.x, target.position.y - at.y) / spec.speed) : 0;
-      const desired = clamp(wrap(localAngle({ x: target.position.x + target.velocity.x * flight - at.x, y: target.position.y + target.velocity.y * flight - at.y }) - b.angle), -1.4, 1.4);
+      const desired = clamp(wrap(localAngle({ x: target.position.x + (target.velocity.x - colonyPlanet(site).velocity.x) * flight - at.x, y: target.position.y + (target.velocity.y - colonyPlanet(site).velocity.y) * flight - at.y }) - b.angle), -1.4, 1.4);
       state.aim += clamp(wrap(desired - state.aim), -1.5 * dt, 1.5 * dt);
       if (Math.abs(desired - state.aim) > 0.06) continue;
     }
@@ -71,7 +73,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
       defence.beams.push({ start: at, end: { x: at.x + direction.x * distance, y: at.y + direction.y * distance }, life: 0.13 });
     } else {
       const targetDistance = target ? Math.hypot(target.position.x - at.x, target.position.y - at.y) : 550;
-      defence.projectiles.push({ id: site.nextId++, kind: b.kind, position: at,
+      defence.projectiles.push({ id: site.nextId++, kind: b.kind, position: at, frameVelocity: { ...colonyPlanet(site).velocity },
         velocity: { x: colonyPlanet(site).velocity.x + direction.x * spec.speed, y: colonyPlanet(site).velocity.y + direction.y * spec.speed }, targetId: target?.id ?? null,
         life: b.kind === 'missile' ? 20 : 8, fuse: b.kind === 'flak' ? clamp(targetDistance / spec.speed, 0.3, 5) : 20 });
     }
@@ -81,13 +83,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
   for (const p of defence.projectiles) {
     const spec = WEAPONS[p.kind], start = { ...p.position }, acceleration = { x: 0, y: 0 };
     const target = defence.meteors.find(m => m.id === p.targetId && m.health > 0);
-    if (p.kind === 'missile' && target) {
-      const delta = { x: target.position.x - p.position.x, y: target.position.y - p.position.y }, distance = length(delta);
-      if (distance > 0) {
-        acceleration.x = clamp((delta.x / distance * spec.speed - p.velocity.x) * 3, -100, 100);
-        acceleration.y = clamp((delta.y / distance * spec.speed - p.velocity.y) * 3, -100, 100);
-      }
-    }
+    if (p.kind === 'missile' && target) Object.assign(acceleration, pursuitAcceleration(p.position, p.velocity, target.position, spec.speed, 100, p.frameVelocity));
     // Ammunition mass comes from the stock consumed at launch; both variants share a tuned ballistic coefficient.
     const mass = spec.alloy + spec.components;
     p.velocity = integrateVelocity(start, p.velocity, acceleration, mass, mass * 0.00125, dt, world.system);

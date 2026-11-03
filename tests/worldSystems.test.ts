@@ -1,3 +1,6 @@
+import { pursuitAcceleration } from '../src/sim/guidance';
+import { stepWeapons } from '../src/sim/weapons';
+import { ORBIT_RATE } from '../src/sim/celestial';
 import { predictCoast } from '../src/sim/trajectory';
 import { describe, it, expect } from 'vitest';
 import { createWorld, stepWorld } from '../src/sim/world';
@@ -9,7 +12,7 @@ import { applyCommandAction } from '../src/sim/command';
 import { applyResearch } from '../src/sim/research';
 import { transferFreight } from '../src/sim/freight';
 import { applyTowAction } from '../src/sim/towing';
-import { applyCombatAction } from '../src/sim/combat';
+import { applyCombatAction, stepCombat } from '../src/sim/combat';
 import { stepCombatProjectiles } from '../src/sim/combatProjectiles';
 import { stepDefence } from '../src/sim/defence';
 import { advanceMeteor } from '../src/sim/meteor';
@@ -44,6 +47,24 @@ describe('all actors and defenses in moving frames', () => {
     const prediction = predictCoast(w.ship, 30, w.system); expect(prediction.contact).not.toBeNull();
     for (let i = 0; i < Math.round(prediction.seconds / STEP); i++) { stepShip(w.ship, idle, STEP, w.system); w.system.time += STEP; }
     expect(w.ship.position.x).toBeCloseTo(prediction.contact!.position.x, 6); expect(w.ship.position.y).toBeCloseTo(prediction.contact!.position.y, 6);
+  });
+  it('keeps missile steering invariant under a common launcher/target velocity boost', () => {
+    const p = { x: 4, y: 8 }, t = { x: 100, y: -90 }, v = { x: 124, y: -96 }, reference = { x: 20, y: 10 }, boost = { x: 41, y: -12 };
+    const a = pursuitAcceleration(p, v, t, 150, 100, reference), b = pursuitAcceleration(p, { x: v.x + boost.x, y: v.y + boost.y }, t, 150, 100, { x: reference.x + boost.x, y: reference.y + boost.y });
+    expect(Math.abs(a.x)).toBeLessThan(50); expect(Math.abs(a.y)).toBeLessThan(50); expect(b.x).toBeCloseTo(a.x); expect(b.y).toBeCloseTo(a.y);
+  });
+  it('aims and launches automatic moon missiles relative to the moving turret, not the map origin', () => {
+    const { w, site } = fixture(); w.system.time = Math.PI / (2 * ORBIT_RATE); const p = colonyPlanet(site);
+    const turret = completedBuilding(1001, 'missile', 0, site); turret.turret = { aim: 0, cooldown: 0, automatic: true }; site.colony.buildings = [turret]; site.colony.nextId = 1002; site.colony.energy = 20; site.colony.products.alloy = 10; site.colony.products.components = 5;
+    const m = { id: w.nextId++, position: surfacePosition(p, 0, 500), velocity: { x: p.velocity.x, y: p.velocity.y + 100 }, radius: 2, mass: 100, resource: 'iron' as const, stage: 0, health: 1, maxHealth: 1 }; w.defence.meteors = [m];
+    stepWeapons(w, false, 0, STEP, new Map([[m.id, { ...m.position }]]));
+    expect(w.defence.shots).toBe(1); expect(turret.turret.aim).toBeCloseTo(0); expect(w.defence.projectiles[0].frameVelocity).toEqual(p.velocity);
+  });
+  it('snapshots and restores the ship missile launch frame before recoil', () => {
+    const { w, p } = fixture(); w.ship.state = 'flying'; w.ship.ground = undefined; w.ship.position = surfacePosition(p, 0, 300); w.ship.armament.selected = 'missile';
+    const velocity = { ...w.ship.velocity }; stepCombat(w, true, STEP, { ship: w.ship.position, suit: w.astronaut.position, rocks: new Map(), meteors: new Map() });
+    expect(w.combat.projectiles[0].frameVelocity).toEqual(velocity); expect(w.ship.velocity).not.toEqual(velocity);
+    expect(decodeCheckpoint(encodeCheckpoint(w)).combat.projectiles[0].frameVelocity).toEqual(velocity);
   });
   it('keeps a dry drone ballistic under the same gravity rather than freezing its far-field motion', () => {
     const { w, p } = fixture(); w.ship.state = 'flying';
@@ -119,7 +140,7 @@ describe('remote operations and scarcity', () => {
     const unrelated = createWorld(); for (let i = 0; i < 120; i++) { stepWorld(w, idle, STEP); run(unrelated, 2); }
     expect(encodeCheckpoint(w)).toBe(encodeCheckpoint(copy));
   });
-  it.each(['time', 'body', 'freight', 'capacity', 'moon stocks', 'moon seam', 'research', 'attachment', 'view metadata'])('rejects malformed current %s state', field => {
+  it.each(['time', 'body', 'freight', 'capacity', 'moon stocks', 'moon seam', 'research', 'attachment', 'view metadata', 'missile frame'])('rejects malformed current %s state', field => {
     const { w } = fixture(), data = JSON.parse(encodeCheckpoint(w));
     if (field === 'time') data.world.system.time = -1;
     if (field === 'body') data.world.ship.ground = 'unknown';
@@ -128,6 +149,7 @@ describe('remote operations and scarcity', () => {
     if (field === 'moon stocks') data.world.moon.colony.products.alloy = 101;
     if (field === 'moon seam') data.world.moon.surfaceDeposits[0].remaining = 181;
     if (field === 'research') data.world.moon.colony.research.completed = ['materials'];
+    if (field === 'missile frame') { data.world.combat.projectiles = [{ id: data.world.nextId++, owner: 'ship', kind: 'missile', position: data.world.ship.position, velocity: data.world.ship.velocity, life: 12, targetId: null, frameVelocity: { x: null, y: 0 } }]; }
     if (field === 'view metadata') data.world.rootWorld = {};
     if (field === 'attachment') data.world.ship.position.x = 0;
     expect(() => decodeCheckpoint(JSON.stringify(data))).toThrow();

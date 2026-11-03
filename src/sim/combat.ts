@@ -66,7 +66,7 @@ function fireShip(world: WorldState): void {
   a[a.selected]--; a.energy = Math.max(0, a.energy - energy); a.heat = Math.min(100, a.heat + heat); a.cooldown = spec.interval;
   if (a.heat >= 100) a.overheated = true;
   c.shots++;
-  c.projectiles.push({ id: world.nextId++, owner: 'ship', kind: a.selected, damage, position: at, velocity: { x: s.velocity.x + n.x * spec.speed, y: s.velocity.y + n.y * spec.speed }, life: spec.life, targetId: target?.id ?? null });
+  c.projectiles.push({ id: world.nextId++, owner: 'ship', kind: a.selected, frameVelocity: { ...s.velocity }, damage, position: at, velocity: { x: s.velocity.x + n.x * spec.speed, y: s.velocity.y + n.y * spec.speed }, life: spec.life, targetId: target?.id ?? null });
   const mass = shipMass(s); s.velocity.x -= n.x * spec.mass * spec.speed / mass; s.velocity.y -= n.y * spec.mass * spec.speed / mass;
 }
 export function stepCombat(world: WorldState, fire: boolean, dt: number, starts: Omit<CombatStarts, 'enemies'>): void {

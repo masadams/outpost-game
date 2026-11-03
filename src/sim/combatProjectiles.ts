@@ -1,9 +1,10 @@
+import { pursuitAcceleration } from './guidance';
 import { terrainHit } from './celestial';
 import { firstShieldHit, absorbShield } from './shields';
 import { damageFactor } from './shipStats';
 import { SHIP_WEAPONS, type CombatProjectile, type Drone } from './combatConfig';
 import { integrateVelocity } from './environment';
-import { clamp, length, type Vec } from './math';
+import { type Vec } from './math';
 import { WORLD } from './config';
 import { surfaceHit } from './physics';
 import { SUIT } from './astronaut';
@@ -29,10 +30,7 @@ export function stepCombatProjectiles(world: WorldState, dt: number, starts: Com
     let start = { ...p.position };
     const acceleration = { x: 0, y: 0 };
     const target = p.owner === 'ship' && p.kind === 'missile' ? c.enemies.find(d => d.id === p.targetId && d.hull > 0) : null;
-    if (target) {
-      const delta = { x: target.position.x - start.x, y: target.position.y - start.y }, distance = length(delta);
-      if (distance > 0) { acceleration.x = clamp((delta.x / distance * spec.speed - p.velocity.x) * 3, -80, 80); acceleration.y = clamp((delta.y / distance * spec.speed - p.velocity.y) * 3, -80, 80); }
-    }
+    if (target) Object.assign(acceleration, pursuitAcceleration(start, p.velocity, target.position, spec.speed, 80, p.frameVelocity));
     p.velocity = integrateVelocity(start, p.velocity, acceleration, spec.mass, spec.mass * 0.00125, dt, world.system);
     p.position = { x: start.x + p.velocity.x * dt, y: start.y + p.velocity.y * dt }; p.life = Math.max(0, p.life - dt);
     let elapsed = 0, stopped = false;

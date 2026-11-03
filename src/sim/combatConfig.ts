@@ -13,7 +13,7 @@ export interface Drone {
   cooldown: number; windup: number; retreatTime: number; state: 'approach' | 'attack' | 'retreat';
 }
 export const droneMass = (d: Drone): number => 160 + d.fuel + d.ammo * 0.1;
-export interface CombatProjectile { shieldScale?: number; damage?: number; id: number; owner: 'ship' | 'enemy'; kind: ShipWeapon; position: Vec; velocity: Vec; life: number; targetId: number | null }
+export interface CombatProjectile { frameVelocity?: Vec; shieldScale?: number; damage?: number; id: number; owner: 'ship' | 'enemy'; kind: ShipWeapon; position: Vec; velocity: Vec; life: number; targetId: number | null }
 export interface CombatFlash { position: Vec; life: number }
 export interface CombatState {
   enemies: Drone[]; projectiles: CombatProjectile[]; flashes: CombatFlash[];
