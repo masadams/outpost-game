@@ -1,3 +1,4 @@
+import { CommandConsole } from './CommandConsole';
 import { habitatSource } from '../sim/habitats';
 import { habitatNotice } from './habitats';
 import { OperationsDock } from './OperationsDock';
@@ -28,13 +29,17 @@ export class Hud {
   private colonyMarkup = '';
   private combatMarkup = '';
   private defenceMarkup = '';
+  private command: CommandConsole;
+  get selectedBuildingId(): number | null { return this.dock.root.dataset.panel === 'command' ? this.command.selected : null; }
+  get buildPreview() { return this.dock.root.dataset.panel === 'command' ? this.command.preview : null; }
   private dock = new OperationsDock();
   destroy(): void { this.root.remove(); }
   toggleDock(view: DockView): void { this.dock.toggle(view); }
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
+    this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.10</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.11</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
@@ -99,6 +104,7 @@ export class Hud {
     const hostiles = world.combat.enemies.length ? `${warning ? ' · ' : ''}${world.combat.enemies.length} HOSTILE${world.combat.enemies.every(d => d.state === 'retreat') ? ' · DISENGAGING' : world.combat.enemies.some(d => d.windup > 0) ? ' · DRONE AIMING' : ' · APPROACHING'}` : '';
     if (alert.textContent !== warning + hostiles) alert.textContent = warning + hostiles;
     this.updateMining(world);
+    if (!this.dock.command.hidden) this.command.update(world, paused);
     const panel = colonyPanel(world, paused);
     if (this.colonyMarkup !== panel) { patchMarkup(this.colony, panel); this.colonyMarkup = panel; }
     const combat = combatPanel(world, paused), defence = defencePanel(world, paused, threats);

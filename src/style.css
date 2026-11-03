@@ -151,3 +151,24 @@ footer p { margin: 0; line-height: 1.5; }
   #hud[data-mode="ship"] .instruments > div { padding-inline: 6px; }
   .instrument-status { font-size: 7px; letter-spacing: 0; }
 }
+
+#command-console { font-size: 10px; line-height: 1.6; }
+#command-console details { border-top: 1px solid var(--edge); padding-block: 10px; }
+#command-console summary { cursor: pointer; color: var(--mint); padding-block: 4px; }
+#command-console h3 { color: var(--mint); font-size: 11px; font-weight: normal; }
+#command-console button { font-size: 10px; padding: 6px; }
+#command-console input, #command-console select { width: 100%; color: #d9e8ed; background: #102535; border: 1px solid var(--edge); padding: 6px; font: inherit; margin-bottom: 8px; }
+#command-console input[type=range] { padding: 0; accent-color: var(--mint); }
+#command-console select option { background: #102535; }
+.command-flow { display: grid; text-align: center; border: 1px solid var(--edge); padding: 10px; background: #102535; color: var(--mint); }
+.command-flow meter, .command-order progress { width: 100%; accent-color: var(--mint); }
+.command-alert { color: var(--amber); border-left: 2px solid; padding-left: 8px; }
+.command-row { display: grid; grid-template-columns: minmax(0, 1fr) 28px 28px; gap: 4px; margin-block: 5px; }
+.command-row.selected { border-left: 2px solid var(--mint); }
+.command-row button { min-width: 0; overflow-wrap: anywhere; }
+.command-map { display: flex; flex-wrap: wrap; gap: 4px; margin-block: 8px; }
+.command-machine, .command-order { border: 1px solid var(--edge); padding: 8px; margin-block: 10px; }
+.command-target { display: grid; grid-template-columns: 1fr 30px 30px; gap: 4px; margin-block: 4px; }
+#command-console table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 10px; }
+#command-console th, #command-console td { text-align: right; padding: 3px; border-bottom: 1px solid var(--edge); }
+#command-console th:first-child { text-align: left; overflow-wrap: anywhere; }

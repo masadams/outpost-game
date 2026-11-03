@@ -9,6 +9,9 @@ export class Keyboard {
   private onControlFocus = (event: FocusEvent): void => {
     if (event.target instanceof HTMLElement && event.target.closest('button, input, select, textarea, summary')) this.release();
   };
+  private onCommandPointer = (event: Event): void => {
+    if (event.target instanceof HTMLElement && event.target.closest('#command-console')) this.release();
+  };
   constructor(scene: Phaser.Scene) {
     this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE,I,ESC,Y', true) as Record<string, Phaser.Input.Keyboard.Key>;
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
@@ -17,7 +20,7 @@ export class Keyboard {
         if (!event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
     }
-    window.addEventListener('blur', this.onBlur); document.addEventListener('focusin', this.onControlFocus);
+    window.addEventListener('blur', this.onBlur); document.addEventListener('focusin', this.onControlFocus); document.addEventListener('pointerdown', this.onCommandPointer); document.addEventListener('dragstart', this.onCommandPointer);
   }
   release(): void { Object.values(this.keys).forEach(key => key.reset()); this.pending.clear(); }
   private consume(name: string): boolean {
@@ -50,5 +53,5 @@ export class Keyboard {
   zoomIn(): boolean { return this.pending.delete('PLUS'); }
   zoomOut(): boolean { return this.pending.delete('MINUS'); }
   autoZoom(): boolean { return this.pending.delete('ZERO'); }
-  destroy(): void { window.removeEventListener('blur', this.onBlur); document.removeEventListener('focusin', this.onControlFocus); this.release(); }
+  destroy(): void { window.removeEventListener('blur', this.onBlur); document.removeEventListener('focusin', this.onControlFocus); document.removeEventListener('pointerdown', this.onCommandPointer); document.removeEventListener('dragstart', this.onCommandPointer); this.release(); }
 }

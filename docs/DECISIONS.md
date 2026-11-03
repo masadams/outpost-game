@@ -2,6 +2,12 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Central Command — Task 007G
+
+On `feat/command-console`, routine facility operations address IDs directly from ship or surface. Continuous power caps scale real work/energy, solar output is capped, and habitat caps use only paid finite backup. Explicit essential/industry/burst classes preserve life-support and reserve behavior; stable priorities apply within each class. Turret/service burst costs remain explicit. A 16-order/48-total paid construction queue reserves future footprints; one stationary living crew within 96 m executes 8 s work per order. Cancel returns only unworked materials if storage fits. The existing direct manual build route remains compatible; queued work never teleports or grants drones. Service range is physical, so a serviced ship never heals distant crew. Version-10 saves retain orders/dispatch/time and migrate v1–9. Selection, drag and rate samples are transient. Single selection and disabled edits while paused are deliberate boundaries. See [actual model and playtest](COMMAND.md).
+
+Landing warnings #14, towing #15 and habitats #16 were merged in order after green CI and explicit user authorization. Central Command follows those merged commits; neighborhood exploration is next.
+
 ## Habitat implementation — Task 007F
 
 On `feat/oxygen-habitats`, 40 m / 160 m domes use 20 m / 45 m elliptical roofs over the curved surface. The large span replaces the provisional 80 m so both footings can clear home terminals. Real oxygen stock fills 1 kg / 4 kg buffers; real 2 kW / 4 kW life support and separately charged ten-second backups replace free grace timers. Crew air pauses suit depletion without refill/healing; leaks, depletion, wrecks and demolition consume/vent finite supplies. Overlap pays one crew source by ID. Essential life support may use reserved energy; backup charging may not. Version-9 saves retain buffers and migrate v1–8. This is life support; shields remain a later milestone. Details and rationale: [HABITATS.md](HABITATS.md). Central Command follows this slice.

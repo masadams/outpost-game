@@ -15,13 +15,13 @@ export function refuelShip(world: WorldState, at: Vec): number {
   world.ship.fuel = Math.min(WORLD.fuelCapacity, world.ship.fuel + fuel); world.colony.products.fuel = Math.max(0, world.colony.products.fuel - fuel);
   return fuel;
 }
-export function serviceAtBuilding(world: WorldState, building: Building): void {
+export function serviceAtBuilding(world: WorldState, building: Building, crewPresent = true): void {
   if (!operational(building) || !building.enabled || world.colony.energy < 2) { notify(world, 'SERVICE NEEDS 2 kJ OF STORED POWER'); return; }
   world.colony.energy -= 2;
   const products = world.colony.products;
-  const oxygen = Math.min((SUIT.oxygen - world.astronaut.oxygen) / SUIT.oxygen, products.oxygen);
+  const oxygen = crewPresent ? Math.min((SUIT.oxygen - world.astronaut.oxygen) / SUIT.oxygen, products.oxygen) : 0;
   world.astronaut.oxygen += oxygen * SUIT.oxygen; products.oxygen = Math.max(0, products.oxygen - oxygen);
-  world.astronaut.health = 100;
+  if (crewPresent) world.astronaut.health = 100;
   const at = stationPosition(building.angle);
   const near = world.ship.state === 'landed' && Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y) <= 80;
   const repair = near ? Math.min(100 - world.ship.hull, availableProduct(world.colony, 'alloy') * 10) : 0;

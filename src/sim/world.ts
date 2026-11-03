@@ -1,3 +1,5 @@
+import { applyCommandAction } from './command';
+import { isCommandAction } from './commandConfig';
 import { createSurfaceDeposits, type SurfaceDeposit } from './geology';
 import { consumeHabitatAir } from './habitats';
 import { createTowing, type TowingState } from './towingConfig';
@@ -49,7 +51,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   world.notice.time = Math.max(0, world.notice.time - dt);
   if (input.board && !world.buttons.board) { world.defence.controlled = null; boardOrExit(world); }
   for (const action of input.colonyActions ?? []) {
-    if (isTowAction(action)) applyTowAction(world, action); else if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
+    if (isCommandAction(action)) applyCommandAction(world, action); else if (isTowAction(action)) applyTowAction(world, action); else if (isCombatAction(action)) applyCombatAction(world, action); else if (isDefenceAction(action)) applyDefenceAction(world, action); else applyColonyAction(world, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(world, action);
   stepTow(world, dt);

@@ -1,0 +1,60 @@
+import { expect, test } from '@playwright/test';
+import { createWorld } from '../../src/sim/world';
+import { encodeCheckpoint } from '../../src/persistence/checkpoint';
+import { WORLD } from '../../src/sim/config';
+import { stationPosition } from '../../src/sim/stations';
+
+test('directs distant facilities from ship with power dials, drag priorities, native controls and persisted state', async ({ page }) => {
+  test.setTimeout(60000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  const w = createWorld(); w.asteroids = []; w.depot.iron = 10;
+  w.colony.buildings = ['solar', 'refinery', 'refinery'].map((kind, i) => ({ id: i + 1, kind: kind as 'solar' | 'refinery', angle: (120 + i * 40) / WORLD.radius, enabled: true, health: 100, progress: 0, recipe: 0, status: 'idle' })); w.colony.nextId = 4;
+  await page.addInitScript(text => { if (!sessionStorage.getItem('command-fixture')) { localStorage.setItem('outpost.checkpoint.v1', text); sessionStorage.setItem('command-fixture', 'yes'); } }, encodeCheckpoint(w));
+  await page.goto('/'); const hud = page.locator('#hud'), console = page.locator('#command-console');
+  await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Command', exact: true }).click();
+  await expect(console).toBeVisible(); await expect(console).toContainText('PAUSED');
+  await page.getByRole('button', { name: 'Select facility 2', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Disable selected', exact: true })).toBeDisabled();
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'landed');
+  await page.getByRole('button', { name: 'Disable selected', exact: true }).click(); await expect(page.getByRole('button', { name: 'Enable selected', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Next selected recipe', exact: true }).click(); await expect(console).toContainText('Copper → wire');
+  const slider = page.getByRole('slider', { name: 'Selected facility power limit' }); await slider.focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowRight');
+  await expect(slider).toHaveValue('10'); await expect(hud).toHaveAttribute('data-mode', 'ship'); await expect(hud).toHaveAttribute('data-tilt', '0.0');
+  await page.getByRole('button', { name: 'Select facility 3', exact: true }).click(); await expect(slider).toHaveValue('100');
+  await page.getByRole('button', { name: 'Select facility 2', exact: true }).click(); await expect(slider).toHaveValue('10');
+  const transfer = await page.evaluateHandle(() => new DataTransfer());
+  await page.locator('[data-facility="3"]').dispatchEvent('dragstart', { dataTransfer: transfer });
+  await page.locator('[data-facility="2"]').dispatchEvent('dragover', { dataTransfer: transfer });
+  await page.locator('[data-facility="2"]').dispatchEvent('drop', { dataTransfer: transfer });
+  await expect.poll(() => page.locator('.command-row').evaluateAll(rows => rows.map(r => r.getAttribute('data-facility')))).toEqual(['1', '3', '2']);
+  await page.getByRole('button', { name: 'Raise facility 2 priority', exact: true }).focus(); await page.keyboard.press('Enter');
+  await expect.poll(() => page.locator('.command-row').evaluateAll(rows => rows.map(r => r.getAttribute('data-facility')))).toEqual(['1', '2', '3']);
+  await expect(page.getByRole('button', { name: 'Raise facility 2 priority', exact: true })).toBeFocused();
+  await console.locator('.command-machine').scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/screenshots/command-power.png' });
+  await console.getByText('Economy · stocks and observed flow', { exact: true }).click(); await expect(console.locator('table')).toContainText('usable');
+  await page.keyboard.press('p'); await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
+  expect(saved.version).toBe(10); expect(saved.world.colony.buildings[1].dispatch.limit).toBe(10); expect(saved.world.colony.buildings[1].enabled).toBe(false);
+  expect(saved.world.astronaut.position).toEqual(w.ship.position); // Cabin follows the unmoved landed ship.
+  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Command', exact: true }).click(); await expect(console).toBeVisible();
+  await page.getByRole('button', { name: 'Select facility 2', exact: true }).click(); await expect(slider).toHaveValue('10'); expect(errors).toEqual([]);
+});
+
+test('queues paid construction, needs a real worker, supports cancellation and restores unfinished work', async ({ page }) => {
+  test.setTimeout(70000); const w = createWorld(); w.asteroids = []; w.playerMode = 'astronaut'; w.astronaut.position = stationPosition(120 / WORLD.radius);
+  await page.addInitScript(text => { if (!sessionStorage.getItem('queue-fixture')) { localStorage.setItem('outpost.checkpoint.v1', text); sessionStorage.setItem('queue-fixture', 'yes'); } }, encodeCheckpoint(w));
+  await page.goto('/'); const hud = page.locator('#hud'), console = page.locator('#command-console'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  await page.getByRole('button', { name: 'Command', exact: true }).click(); await console.getByText('Construction queue · 0', { exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Queue paid construction', exact: true })).toBeDisabled(); await page.keyboard.press('p');
+  await page.getByRole('button', { name: 'Queue paid construction', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1); await expect(console).toContainText('crew building');
+  await page.getByRole('button', { name: 'Pause order 1', exact: true }).click(); await page.keyboard.press('p'); await page.keyboard.press('k');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
+  expect(saved.world.colony.products.alloy).toBe(24); expect(saved.world.colony.command.queue[0].paused).toBe(true); expect(saved.world.colony.command.queue[0].progress).toBeGreaterThan(0);
+  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Command', exact: true }).click();
+  await console.getByText('Construction queue · 1', { exact: true }).click(); await page.keyboard.press('p'); await page.getByRole('button', { name: 'Resume order 1', exact: true }).click();
+  await expect(hud).toHaveAttribute('data-buildings', '1', { timeout: 18000 }); await expect(console.locator('.command-order')).toHaveCount(0);
+  await console.locator('#command-site').fill('160'); await console.locator('#command-site').press('Tab'); await console.locator('#command-blueprint').selectOption('battery');
+  await page.getByRole('button', { name: 'Queue paid construction', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Cancel order 2', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(0);
+  await console.locator('summary').filter({ hasText: 'Facilities' }).click(); await page.locator('#operations-dock').evaluate(el => el.scrollTop = 0); await page.screenshot({ path: 'docs/screenshots/command-console.png' });
+  await page.keyboard.press('p'); await page.keyboard.press('k'); const after = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
+  expect(after.world.colony.products.alloy).toBeGreaterThan(23); expect(after.world.colony.products.alloy).toBeLessThanOrEqual(24);
+});

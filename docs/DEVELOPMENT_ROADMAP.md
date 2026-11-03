@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6, presentation foundations, planetary mining, scheduling and resource priorities are merged through PR #13. Landing feedback PR #14 is green and open against main. Task 007E implements paid physical asteroid towing and clearer atmosphere/space cues, stacked for review. Command, neighborhood discovery and multi-world milestones are now explicit. Oxygen habitats are implemented for review in Phase 7.5; explicit ship progression and shield domes follow in Phase 8. The full Phase 9 overhaul remains required.
+**Status:** Phases 0–6 and the mining/scheduling/reserve foundations are merged through #13; landing feedback #14, towing #15 and oxygen habitats #16 are now merged with user authorization. Phase 7.75 Central Command is implemented for review on `feat/command-console`. Nearby-space discovery is next, followed by ship progression, shields, nearby worlds and the still-required full Phase 9 overhaul.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -125,9 +125,9 @@ The user requested color-coded landing telemetry, warning lights/pulsing and low
 
 [Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) on `feat/asteroid-towing`, stacked on PR #14 for review. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
 
-## Phase 7.5 — Habitat domes and life support (Task 007F, implemented for review)
+## Phase 7.5 — Habitat domes and life support (Task 007F, merged #16)
 
-Implemented on `feat/oxygen-habitats`. See [Task 007F](../CODEX_TASK_007F.md) and [the habitat model/playtest](HABITATS.md). Explicitly requested by the user. Follow towing before the wider Phase 8 progression work. See [the upgrade/dome schedule](UPGRADES_AND_DOMES.md).
+Merged in [PR #16](https://github.com/masadams/outpost-game/pull/16) with green CI and user authorization. See [Task 007F](../CODEX_TASK_007F.md) and [the habitat model/playtest](HABITATS.md). Explicitly requested by the user. Follow towing before the wider Phase 8 progression work. See [the upgrade/dome schedule](UPGRADES_AND_DOMES.md).
 - [x] Define small/large surface coverage and ceiling heights, 40 m / 160 m spans; tune costs, oxygen buffers and kg/s demand.
 - [x] Place dome coverage over existing colony areas with valid foundations and curved-surface geometry.
 - [x] Powered, supplied breathable zones pause suit oxygen depletion only while crew is inside and air is available.
@@ -136,17 +136,17 @@ Implemented on `feat/oxygen-habitats`. See [Task 007F](../CODEX_TASK_007F.md) an
 - [x] Show habitat/suit-air source, coverage, buffer/demand and failure feedback; save, pause and test all transitions.
 **Exit:** Crew can work inside a supplied dome without draining suit air, and loses that benefit predictably when supply/coverage fails.
 
-## Phase 7.75 — Central Command console
+## Phase 7.75 — Central Command console (Task 007G, implemented for review)
 
-Requested by the user to replace walking between facilities for routine control. Follow habitat buildings, before adding more progression/economy complexity. See [the functional plan](COMMAND_AND_EXPLORATION.md) and [concept wireframe](mockups/command-console.svg).
-- [ ] Cohesive spacecraft-style overview, colony selection/map and persistent critical warnings.
-- [ ] Remote facility enable/disable, recipes/targets, turret automation and supplied service management.
-- [ ] Power flow diagram, generation/demand/storage/capacity meters, actual versus requested allocation, per-facility caps and dispatch priorities.
-- [ ] Drag-and-drop ordering/dials with native keyboard alternatives, stable focus and pause-safe planning/execution.
-- [ ] Validated supplied construction/work queue, progress/cancellation and explicit executor/refund rules.
-- [ ] Economy ledger with usable/reserved stock, actual rates, bottlenecks and recipe flows.
-- [ ] Integrate real research and navigation as their milestones ship; no inert placeholder controls.
-- [ ] Persist priorities/budgets/orders, and test scarcity, damage, cancellation and input parity.
+Implemented on `feat/command-console`; see [Task 007G](../CODEX_TASK_007G.md) and [model/playtest](COMMAND.md). Requested by the user to replace walking between facilities for routine control. Follow habitat buildings, before adding more progression/economy complexity. See [the functional plan](COMMAND_AND_EXPLORATION.md) and [concept wireframe](mockups/command-console.svg).
+- [x] Cohesive spacecraft-style overview, colony selection/map and persistent critical warnings.
+- [x] Remote facility enable/disable, recipes/targets, turret automation and supplied service management.
+- [x] Power flow diagram, generation/demand/storage/capacity meters, actual versus requested allocation, per-facility caps and dispatch priorities.
+- [x] Drag-and-drop ordering/dials with native keyboard alternatives, stable focus and pause-safe planning/execution.
+- [x] Validated supplied construction/work queue, progress/cancellation and explicit executor/refund rules.
+- [x] Economy ledger with usable/reserved stock, actual rates, bottlenecks and recipe flows.
+- [x] Integrate real research and navigation as their milestones ship; no inert placeholder controls.
+- [x] Persist priorities/budgets/orders, and test scarcity, damage, cancellation and input parity.
 **Exit:** Direct the installed colony from ship or surface without visiting every machine, with understandable power/material consequences.
 
 ## Phase 7.9 — Nearby belts, destinations and discovery
@@ -219,7 +219,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review landing feedback PR #14 and the towing slice, then playtest alpha 0.10 using [PLAYTEST.md](PLAYTEST.md), especially latch eligibility, hauling, cable strain and return/mining flow. Review habitats, then implement Command console → nearby belts/destinations → ship progression/shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Landing feedback #14, towing #15 and habitats #16 are merged. Review/playtest Task 007G Central Command using [COMMAND.md](COMMAND.md), then implement nearby belts/destinations → ship progression/shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

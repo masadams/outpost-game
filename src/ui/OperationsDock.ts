@@ -1,13 +1,14 @@
 import { isolateControlKeys } from './controlKeys';
 import type { DockView, HudContext } from './context';
 
-const labels: Record<DockView, string> = { cargo: 'Cargo', colony: 'Colony', combat: 'Combat', defence: 'Defence' };
+const labels: Record<DockView, string> = { cargo: 'Cargo', colony: 'Colony', combat: 'Combat', defence: 'Defence', command: 'Command' };
 export class OperationsDock {
   readonly nav = document.createElement('nav');
   readonly root = document.createElement('aside');
   readonly cargo = document.createElement('section');
   readonly colony = document.createElement('section');
   readonly combat = document.createElement('section');
+  readonly command = document.createElement('section');
   readonly defence = document.createElement('section');
   private heading = document.createElement('span');
   private contextKey = '';
@@ -22,7 +23,7 @@ export class OperationsDock {
     this.cargo.className = 'mining'; this.cargo.setAttribute('aria-label', 'Cargo and mining telemetry');
     this.colony.className = 'colony-panel'; this.colony.setAttribute('aria-label', 'Colony construction and production');
     this.combat.id = 'combat-content'; this.defence.id = 'defence-content';
-    this.root.append(this.cargo, this.colony, this.combat, this.defence);
+    this.root.append(this.cargo, this.colony, this.combat, this.defence, this.command);
     this.nav.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (button?.dataset.panel) { this.toggle(button.dataset.panel as DockView); if (event.detail > 0) button.blur(); }
@@ -42,7 +43,7 @@ export class OperationsDock {
   private render(): void {
     this.root.hidden = this.view === null; this.root.dataset.panel = this.view ?? 'closed';
     this.heading.textContent = this.view ? labels[this.view].toUpperCase() : '';
-    const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence };
+    const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command };
     for (const [view, section] of Object.entries(sections)) section.hidden = view !== this.view;
     for (const button of Array.from(this.nav.querySelectorAll('button'))) {
       const selected = button.dataset.panel === this.view;

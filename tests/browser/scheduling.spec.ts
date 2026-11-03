@@ -40,7 +40,7 @@ test('automatically refines rig ore to stock targets, supports native controls a
   await page.waitForTimeout(750); await page.keyboard.press('p'); await page.keyboard.press('k');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(toggle).toBeDisabled();
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  const factory = saved.world.colony.buildings[2]; expect(saved.version).toBe(9);
+  const factory = saved.world.colony.buildings[2]; expect(saved.version).toBe(10);
   expect(factory.schedule.enabled).toBe(true); expect(factory.schedule.targets.alloy).toBe(15);
   expect(factory.progress).toBeGreaterThan(0); expect(factory.progress).toBeLessThan(2);
   await schedule.scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/screenshots/production-scheduling.png' });
