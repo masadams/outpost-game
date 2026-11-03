@@ -31,3 +31,6 @@ Build and prepare -> launch -> explore/fight/mine -> collect cargo -> return and
 3. Astronaut movement and building placement.
 4. Planetary defence and persistent damage.
 5. Combat, upgrades, save/load and polish.
+
+## Prototype progression
+The current goal journal records actual deliveries, industry, equipment, a moon work/return expedition, supplied habitat work, completed research and meteor interception. Goals may be tracked in any order and grant no materials or control of the ship. The starter-route budget explains finite local costs and shortages; wider economy/event/recovery tuning remains open. See PROGRESSION_GOALS.md.

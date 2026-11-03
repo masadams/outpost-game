@@ -30,6 +30,8 @@ export class CommandConsole {
   private world: WorldState | null = null;
   private requestedSelection: number|null=null;
   private selectionByKeyboard=false;
+  private requestedSection: { name: 'research'|'equipment'; keyboard: boolean } | null = null;
+  openSection(name: 'research'|'equipment', keyboard=false): void { this.body='home'; this.requestedSection={name,keyboard}; }
   private sampleTime = 0;
   private previous = new Map<string, number>();
   private rates = new Map<string, number>();
@@ -124,6 +126,7 @@ export class CommandConsole {
       const next = this.root.querySelector<HTMLButtonElement>(`[data-focus="${focused}"]`);
       if (next && document.activeElement !== next) (next.disabled ? this.root.querySelector<HTMLButtonElement>(`[data-focus="select-${next.dataset.id}"]`) : next)?.focus({ preventScroll: true });
     }
+    if(this.requestedSection){const request=this.requestedSection;const prefix=request.name==='research'?'Research':'Ship equipment';const section=Array.from(this.root.querySelectorAll<HTMLDetailsElement>('details')).find(d=>d.querySelector('summary')?.textContent?.startsWith(prefix));if(section){section.open=true;section.scrollIntoView({block:'start'});if(request.keyboard)section.querySelector('summary')?.focus({preventScroll:true});this.requestedSection=null;}}
     if(reveal){const card=this.root.querySelector<HTMLElement>('.command-machine');if(card){const details=card.closest('details');if(details)details.open=true;card.scrollIntoView({block:'start'});if(keyboard){const control=card.querySelector<HTMLButtonElement>('button:not(:disabled)');if(control)control.focus({preventScroll:true});else{card.tabIndex=-1;card.focus({preventScroll:true});}}}this.selectionByKeyboard=false;}
   }
 }

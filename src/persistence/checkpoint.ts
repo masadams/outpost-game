@@ -76,12 +76,12 @@ function validWorld(value: unknown, remote = true): value is WorldState {
 export function encodeCheckpoint(world: WorldState): string {
   world = world.rootWorld ?? world;
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 16, environment: { radius: WORLD.radius, model: 'binary-flight-1' }, world });
+  return JSON.stringify({ version: 17, environment: { radius: WORLD.radius, model: 'binary-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || envelope.version !== 16 || !object(envelope.world)) throw new Error('Checkpoint is incompatible with this development build · R starts a new world');
+  if (!object(envelope) || envelope.version !== 17 || !object(envelope.world)) throw new Error('Checkpoint is incompatible with this development build · R starts a new world');
   if (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'binary-flight-1') throw new Error('Checkpoint environment is incompatible');
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
