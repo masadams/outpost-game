@@ -119,7 +119,7 @@ The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_00
 
 ## Flight feedback before mobile logistics (Task 007D)
 
-The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](../CODEX_TASK_007D.md) is implemented on `feat/landing-warning-instruments`, stacked on open resource-priority PR #13. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Awaiting review/merge.
+The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](../CODEX_TASK_007D.md) is implemented in [PR #14](https://github.com/masadams/outpost-game/pull/14) on `feat/landing-warning-instruments`, stacked on open resource-priority PR #13. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Awaiting review/merge.
 
 ## Phase 8 — Progression and balancing
 **Dependencies:** Phases 2–7.
