@@ -1,3 +1,4 @@
+import type { ExplorationAction } from './explorationConfig';
 import { createCommand, type CommandState, type CommandAction } from './commandConfig';
 import { completedBuilding, stepConstruction } from './construction';
 import { orderedBuildings, powerFraction } from './power';
@@ -36,7 +37,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.

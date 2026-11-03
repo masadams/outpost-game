@@ -113,7 +113,7 @@ describe('supplied construction queue', () => {
   });
   it('preserves priorities, budgets, paid work and legacy progress with version 10 migration', () => {
     const w = fixture(); applyCommandAction(w, { type: 'powerLimit', id: 2, percent: 30 }); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); worker(w, 500); run(w, 2);
-    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(10); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
+    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(11); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
     const old = JSON.parse(text); old.version = 9; delete old.world.colony.command; const migrated = decodeCheckpoint(JSON.stringify(old)); expect(migrated.colony.command).toEqual(createCommand()); expect(migrated.depot).toEqual(w.depot);
   });
   it('rejects malformed priorities, limits, duplicate orders and invalid paid progress', () => {

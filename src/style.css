@@ -172,3 +172,13 @@ footer p { margin: 0; line-height: 1.5; }
 #command-console table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 10px; }
 #command-console th, #command-console td { text-align: right; padding: 3px; border-bottom: 1px solid var(--edge); }
 #command-console th:first-child { text-align: left; overflow-wrap: anywhere; }
+
+#navigation-guidance { position: absolute; left: 24px; bottom: 222px; max-width: min(44vw, 520px); padding: 4px 6px; background: #091925e8; color: #f3d779; font-size: 9px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#navigation-panel { font-size: 10px; line-height: 1.6; }
+#navigation-panel svg { display: block; width: 100%; max-height: 260px; border: 1px solid var(--edge); background: #06101a; }
+#navigation-panel h3 { color: var(--mint); font-size: 12px; }
+#navigation-panel button { font-size: 10px; padding: 7px; margin-block: 3px; }
+#navigation-panel article { border-top: 1px solid var(--edge); padding-block: 8px; }
+.nav-sites { display: grid; margin-block: 10px; }
+.nav-objective { color: var(--mint); border-left: 2px solid; padding-left: 8px; }
+#navigation-panel summary { cursor: pointer; color: var(--mint); padding-block: 7px; }

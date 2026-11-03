@@ -1,3 +1,5 @@
+import { applyExplorationAction } from '../sim/exploration';
+import { drawExploration, drawExplorationRadar } from './exploration';
 import { drawGeology } from './geology';
 import { drawTowing } from './towing';
 import { drawCombat, drawCombatRadar } from './combat';
@@ -55,7 +57,7 @@ export class FlightScene extends Phaser.Scene {
   private starPoints = Array.from({ length: 240 }, (_, i) => ({ x: ((i * 0.61803398875) % 1), y: ((i * i * 0.41421356237) % 1), bright: i % 7 === 0 }));
   constructor() { super('flight'); }
   create(): void {
-    this.keys = new Keyboard(this); this.hud = new Hud(action => { if (!this.paused) this.colonyActions.push(action); });
+    this.keys = new Keyboard(this); this.hud = new Hud(action => { if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if (!this.paused) this.colonyActions.push(action); });
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
@@ -166,6 +168,7 @@ export class FlightScene extends Phaser.Scene {
     // Pad beacon remains visible at orbital zoom.
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -WORLD.radius - WORLD.shipRadius, 16 / this.follow.zoom);
     if (this.flightTools.trajectory && this.simulation.towing.targetId === null) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
+    drawExploration(g, this.simulation, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
     drawTowing(g, this.simulation, this.follow.zoom);
     drawGeology(g, this.simulation, this.follow.zoom);
@@ -198,6 +201,7 @@ export class FlightScene extends Phaser.Scene {
       const p = this.simulation.astronaut.position;
       m.fillStyle(0xe0eff2); m.fillCircle(mx + p.x / WORLD.radius * radius, my + p.y / WORLD.radius * radius, 2);
     }
+    drawExplorationRadar(m, this.simulation, mx, my, radius / WORLD.radius);
     drawCombatRadar(m, this.simulation, mx, my, radius);
     drawThreatRadar(m, this.simulation, mx, my, radius);
     for (const rock of this.simulation.asteroids) {

@@ -42,7 +42,7 @@ export function fracture(rock: Asteroid, nextId: () => number): { rocks: Asteroi
   }
   return { rocks: [], ore: Array.from({ length: 4 }, (_, i) => {
     const n = heading(i * Math.PI / 2);
-    return { id: nextId(), resource: rock.resource, mass: rock.mass / 4, radius: 2,
+    return { id: nextId(), ...(rock.belt ? { belt: rock.belt } : {}), resource: rock.resource, mass: rock.mass / 4, radius: 2,
       position: { x: rock.position.x + n.x * 4, y: rock.position.y + n.y * 4 },
       velocity: { x: rock.velocity.x + n.x * 2, y: rock.velocity.y + n.y * 2 } };
   }) };

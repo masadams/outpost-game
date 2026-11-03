@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6 and the mining/scheduling/reserve foundations are merged through #13; landing feedback #14, towing #15 and oxygen habitats #16 are now merged with user authorization. Phase 7.75 Central Command is implemented for review on `feat/command-console`. Nearby-space discovery is next, followed by ship progression, shields, nearby worlds and the still-required full Phase 9 overhaul.
+**Status:** Phases 0–6 and the mining/scheduling/reserve foundations are merged through #13; landing feedback #14, towing #15 and oxygen habitats #16 are now merged with user authorization. Phase 7.75 Central Command is implemented for review on `feat/command-console`. Phase 7.9 nearby-space discovery is implemented for review on `feat/neighborhood-discovery`; ship progression is next, followed by shields, nearby worlds and the still-required full Phase 9 overhaul.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -145,18 +145,18 @@ Implemented on `feat/command-console`; see [Task 007G](../CODEX_TASK_007G.md) an
 - [x] Drag-and-drop ordering/dials with native keyboard alternatives, stable focus and pause-safe planning/execution.
 - [x] Validated supplied construction/work queue, progress/cancellation and explicit executor/refund rules.
 - [x] Economy ledger with usable/reserved stock, actual rates, bottlenecks and recipe flows.
-- [ ] Integrate real research and navigation when Phases 7.9/8 ship; deliberately deferred, with no inert placeholder controls in this console.
+- [ ] Integrate real research when Phase 8 ships; navigation is now available through Nav in Task 007H, with no inert research controls in Command.
 - [x] Persist priorities/budgets/orders, and test scarcity, damage, cancellation and input parity.
 **Exit:** Direct the installed colony from ship or surface without visiting every machine, with understandable power/material consequences.
 
-## Phase 7.9 — Nearby belts, destinations and discovery
+## Phase 7.9 — Nearby belts, destinations and discovery (Task 007H, implemented for review)
 
-Promoted from optional late expansion in response to the user's empty-neighborhood feedback. Improve the immediate neighborhood before wider ship progression; see [the exploration plan](COMMAND_AND_EXPLORATION.md).
-- [ ] Distinct finite resource belts/clusters with useful mining/towing opportunities and persistent depletion.
-- [ ] Survey beacons, derelict/salvage, docking/service or anomaly sites with meaningful supplied interactions.
-- [ ] Overview chart, destination selection, range/bearing/relative-motion markers and clear home-return navigation.
-- [ ] Short exploration objectives and procedural silhouette/density/landmark variation.
-- [ ] Measured simulation/body budgets and deterministic far-field behavior without freezing threats or granting respawns.
+Implemented on `feat/neighborhood-discovery`; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget measurements](NEIGHBORHOOD.md). Promoted from optional late expansion in response to the user's empty-neighborhood feedback. Improve the immediate neighborhood before wider ship progression; see [the exploration plan](COMMAND_AND_EXPLORATION.md).
+- [x] Distinct finite resource belts/clusters with useful mining/towing opportunities and persistent depletion.
+- [x] Survey beacons, derelict/salvage, docking/service or anomaly sites with meaningful supplied interactions.
+- [x] Overview chart, destination selection, range/bearing/relative-motion markers and clear home-return navigation.
+- [x] Short exploration objectives and procedural silhouette/density/landmark variation.
+- [x] Measured simulation/body budgets and deterministic far-field behavior without freezing threats or granting respawns.
 **Exit:** Navigate to a recognizable nearby opportunity, interact/mine and return with a meaningful result.
 
 ## Phase 8 — Progression and balancing
@@ -219,7 +219,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Landing feedback #14, towing #15 and habitats #16 are merged. Review/playtest Task 007G Central Command using [COMMAND.md](COMMAND.md), then implement nearby belts/destinations → ship progression/shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
+Landing feedback #14, towing #15 and habitats #16 are merged. Review/playtest Task 007G Central Command using [COMMAND.md](COMMAND.md), review/playtest Task 007H nearby-space discovery, then implement ship progression/research → shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.
