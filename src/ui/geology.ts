@@ -6,7 +6,7 @@ import { previewAngle, type Building } from '../sim/colony';
 import type { WorldState } from '../sim/world';
 
 export function geologyPanel(world: WorldState): string {
-  if (world.playerMode !== 'astronaut') return '<div class="ground-survey"><label>PLANETARY MINING</label><small>Leave the ship and inspect marked surface seams in the Colony panel.</small></div>';
+  if (world.playerMode !== 'astronaut') return '<div class="ground-survey"><label>PLANETARY MINING</label><small>Leave the ship and inspect marked surface seams in the Build panel.</small></div>';
   const crewAngle = localAngleAt(world, world.astronaut.position), selecting = world.colony.buildOpen && world.colony.selected === 'miningRig';
   const site = selecting ? previewAngle(world) : crewAngle;
   const nearest = [...world.surfaceDeposits].sort((a, b) => surfaceDistance(a.angle, site) - surfaceDistance(b.angle, site))[0];

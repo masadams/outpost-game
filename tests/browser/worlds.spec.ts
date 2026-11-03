@@ -36,7 +36,7 @@ async function fly(page: Page, id: BodyId, height: number, limit = 200, angle = 
   throw new Error(`Flight timeout ${id}/${height}: ${JSON.stringify(await telemetry(page))}`);
 }
 async function cargo(page: Page) {
-  await page.getByRole('button', { name: 'Cargo [I]', exact: true }).click({ force: true }); await advance(page, 100);
+  await page.getByRole('button', { name: 'Ship [I]', exact: true }).click({ force: true }); await advance(page, 100);
   const summary = page.locator('.mining summary').filter({ hasText: 'Manufactured freight' });
   if (!await summary.evaluate(el => (el.parentElement as HTMLDetailsElement).open)) await summary.click({ force: true });
 }
@@ -56,18 +56,18 @@ test('flies to the moving moon, builds supplied mining, saves both colonies, car
   await tap(page, 'm'); await tap(page, 'j');
   await cargo(page); await freight(page, 'Load', 'alloy', 3); await freight(page, 'Load', 'wire', 1); await freight(page, 'Load', 'components', 1);
   expect((await telemetry(page)).cargo).toBe(25); await tap(page, 'Escape');
-  await page.getByRole('button', { name: 'Nav', exact: true }).click({ force: true }); await advance(page, 100);
+  await page.getByRole('button', { name: 'Map', exact: true }).click({ force: true }); await advance(page, 100);
   await page.getByRole('button', { name: 'Nacre moon · land and work', exact: true }).click({ force: true }); await advance(page, 100); await expect(page.locator('#navigation-guidance')).toHaveAttribute('data-target', 'moon'); await tap(page, 'Escape');
   // The clock advances real fixed simulation/render steps; the test only reads HUD telemetry and presses normal keys.
   await page.keyboard.down('Space'); await page.keyboard.down('c'); await fly(page, 'home', 1500); await page.keyboard.up('Space'); await page.keyboard.up('c');
   await fly(page, 'moon', 150); await fly(page, 'moon', 7, 120); await expect(hud).toHaveAttribute('data-body', 'moon'); await expect(page.locator('#flight-region')).toHaveText('AIRLESS · VACUUM');
   await cargo(page); await freight(page, 'Unload', 'alloy', 3); await freight(page, 'Unload', 'wire', 1); await freight(page, 'Unload', 'components', 1); await tap(page, 'Escape');
   await tap(page, 'f'); await walk(page, 'd', 120); await tap(page, 'b');
-  await page.locator('[data-select="miningRig"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
-  await tap(page, 't'); await page.locator('[data-select="solar"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '2'); await tap(page, 'b');
+  await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
+  await tap(page, 't'); await page.getByLabel('Blueprint category', { exact: true }).selectOption('power'); await page.locator('[data-select="solar"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '2'); await tap(page, 'b');
   await advance(page, 8000); await tap(page, 'p'); await tap(page, 'k');
-  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(save.version).toBe(15); expect(save.world.objectives.completed).toContain('moonWork');expect(save.world.moon.depot.ice).toBeGreaterThan(0); expect(save.world.depot.ice).toBe(0); expect(save.world.moon.surfaceDeposits[0].remaining).toBeLessThan(180); expect(save.world.colony.buildings).toHaveLength(0);
-  await page.getByRole('button', { name: 'Command', exact: true }).click({ force: true }); await advance(page, 100);
+  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(save.version).toBe(16); expect(save.world.objectives.completed).toContain('moonWork');expect(save.world.moon.depot.ice).toBeGreaterThan(0); expect(save.world.depot.ice).toBe(0); expect(save.world.moon.surfaceDeposits[0].remaining).toBeLessThan(180); expect(save.world.colony.buildings).toHaveLength(0);
+  await page.getByRole('button', { name: 'Manage', exact: true }).click({ force: true }); await advance(page, 100);
   await expect(page.locator('#command-console')).toContainText('COMMAND · NACRE COLONY');
   await page.getByRole('combobox', { name: 'Command colony', exact: true }).selectOption('home'); await advance(page, 100); await expect(page.locator('#command-console')).toContainText('COMMAND · SELENE COLONY');
   await page.getByRole('combobox', { name: 'Command colony', exact: true }).selectOption('moon'); await advance(page, 100); await expect(page.locator('#command-console')).toContainText('Mining rig'); await page.screenshot({ path: 'docs/screenshots/moon-colony.png' });
@@ -98,7 +98,7 @@ test('shows surface-relative moon instruments and native local power controls at
     await expect(page.locator('[data-instrument="altitude"] strong')).toHaveText('0 m'); await expect(page.locator('[data-instrument="speed"] strong')).toHaveText('0.0 m/s');
     await expect(page.locator('#flight-region')).toHaveText('AIRLESS · VACUUM'); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
-  await page.getByRole('button', { name: 'Command', exact: true }).click(); await page.getByRole('button', { name: 'Select facility 1001', exact: true }).click();
+  await page.getByRole('button', { name: 'Manage', exact: true }).click(); await page.getByRole('button', { name: 'Select facility 1001', exact: true }).click();
   const slider = page.getByRole('slider', { name: 'Selected facility power limit' }); await expect(slider).toBeDisabled(); await page.keyboard.press('p'); await slider.focus(); await page.keyboard.press('Home');
   await expect(console.locator('[data-selected="1001"]')).toContainText('power limited'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   await page.keyboard.press('p'); await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));

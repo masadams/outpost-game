@@ -5,18 +5,18 @@ test('manages reserves from ship and surface, protects production/storage/materi
   // This full construction/hold/release/save route takes longer on software-rendered CI runners.
   test.setTimeout(120000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/'); const hud = page.locator('#hud'), policy = page.locator('.policy-controls');
-  await page.getByRole('button', { name: 'Colony', exact: true }).click();
+  await page.getByRole('button', { name: 'Build', exact: true }).click();
   await page.locator('.policy-controls summary').focus(); await page.keyboard.press('Enter');
   await expect(policy).toHaveAttribute('open', '');
   const powerUp = page.getByRole('button', { name: 'Raise Essential systems power reserve', exact: true });
   for (let i = 0; i < 4; i++) await powerUp.click();
   await expect(page.locator('[data-policy-value="energyReserve"]')).toHaveText('20');
   await expect(hud).toHaveAttribute('data-mode', 'ship'); await expect(policy).toHaveAttribute('open', '');
-  await page.keyboard.press('f'); await page.keyboard.down('d');
+  await page.keyboard.press('b');await page.keyboard.press('f'); await page.keyboard.down('d');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 10000, intervals: [100] }).toBeGreaterThan(96);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await page.keyboard.press('b'); await page.keyboard.press('Enter'); await page.keyboard.press('t');
-  await page.locator('[data-select="miningRig"]').click(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await page.keyboard.press('b'); await page.keyboard.down('d');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(145);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
@@ -37,7 +37,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   await expect(hud).toHaveAttribute('data-buildings', '2'); await page.keyboard.press('b');
   await page.keyboard.press('p'); await expect(componentsUp).toBeDisabled(); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(15); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
+  expect(saved.version).toBe(16); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/colony-priorities.png' });
   await page.keyboard.press('r'); await expect(page.locator('[data-policy-value="deliveryReserve"]')).toHaveText('0');

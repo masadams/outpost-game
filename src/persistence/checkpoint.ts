@@ -1,3 +1,4 @@
+import { validCrewOrder } from '../sim/crewOrders';
 import { validObjectives } from '../sim/objectives';
 import { planetAt, relative, relativeVelocity } from '../sim/celestial';
 import { colonyWorld } from '../sim/localWorld';
@@ -47,7 +48,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
     if (Math.abs(Math.hypot(r.x, r.y) - p.radius - WORLD.shipRadius) > .2 || Math.hypot(v.x, v.y) > .5) return false;
   }
   if (remote && (!object(world.moon) || JSON.stringify(world.moon.colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, 'moon'), false))) return false;
-  if (!validObjectives(world.objectives) || !validProgression(world)) return false;
+  if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;
   if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
   if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > cargoCapacity(world.ship) + 1e-6) return false;
@@ -75,12 +76,12 @@ function validWorld(value: unknown, remote = true): value is WorldState {
 export function encodeCheckpoint(world: WorldState): string {
   world = world.rootWorld ?? world;
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 15, environment: { radius: WORLD.radius, model: 'binary-flight-1' }, world });
+  return JSON.stringify({ version: 16, environment: { radius: WORLD.radius, model: 'binary-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || envelope.version !== 15 || !object(envelope.world)) throw new Error('Checkpoint is incompatible with this development build · R starts a new world');
+  if (!object(envelope) || envelope.version !== 16 || !object(envelope.world)) throw new Error('Checkpoint is incompatible with this development build · R starts a new world');
   if (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'binary-flight-1') throw new Error('Checkpoint environment is incompatible');
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;

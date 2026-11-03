@@ -1,3 +1,4 @@
+import type { CrewAction } from './crewOrders';
 import { loadManifest, type ManifestId } from './manifests';
 import { nearestPlanet, type BodyId } from './celestial';
 import { transferFreight, loadDepotOre } from './freight';
@@ -47,7 +48,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = ({ type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -75,7 +76,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
     if (d.remaining <= 1e-9) return 'Deposit exhausted · prospect another seam';
   }
   if (!options.paid && PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Insufficient fabrication materials';
-  if (!options.paid && PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Colony';
+  if (!options.paid && PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Build';
   return null;
 }
 export function nearbyBuilding(world: WorldState): Building | undefined {
@@ -94,11 +95,12 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     policy[action.field] = clamp(policy[action.field] + action.direction * POLICY_INFO[action.field].step, 0, MAX_RESERVE);
     return;
   }
+  if(action.type==='buildMode'){if(typeof action.open==='boolean')world.colony.buildOpen=action.open;return;}
+  if(action.type==='select'){if(BUILD_TYPES.includes(action.kind))world.colony.selected=action.kind;return;}
+  if(action.type==='shift'){if(Number.isFinite(action.delta))world.colony.offset=clamp(world.colony.offset+action.delta,-96,96);return;}
+  if(action.type==='toggleBuild'){world.colony.buildOpen=!world.colony.buildOpen;return;}
   if (world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0) { notify(world, 'LEAVE THE SHIP AND STAND ON THE SURFACE TO BUILD'); return; }
   const colony = world.colony;
-  if (action.type === 'toggleBuild') { colony.buildOpen = !colony.buildOpen; return; }
-  if (action.type === 'select') { if (BUILD_TYPES.includes(action.kind)) colony.selected = action.kind; return; }
-  if (action.type === 'shift') { colony.offset = clamp(colony.offset + action.delta, -96, 96); return; }
   if (action.type === 'place') {
     if (!colony.buildOpen) return;
     const error = placementError(world); if (error) { notify(world, error); return; }

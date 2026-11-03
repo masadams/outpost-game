@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Nearby worlds / Phase 8.5 merged in [PR #21](https://github.com/masadams/outpost-game/pull/21) after typecheck, 380 unit tests, build and all 33 production-browser scenarios passed on the final implementation commit. The complete supplied moon work/mining/return route is playable. The Phase 9 technical graphics, UX, UI and audio pass in [Task 011](../CODEX_TASK_011.md) is implemented for verification/review; wider progression/balance and human playtesting remain open.
+**Status:** Alpha 0.16 technical presentation merged in #22 after 390 unit tests and 39 production-browser scenarios passed in CI. The user reports that menus and routine walking still need improvement; [Task 012](../CODEX_TASK_012.md) implements a focused direct-control follow-up on `feat/direct-colony-controls`. Human review, representative GPU/hardware checks and wider balance/reliability/content/release work remain open.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
@@ -188,19 +188,20 @@ Explicitly requested by the user. This is a full presentation and interaction ov
 The existing procedural sound, mute/volume controls and H guide provide the baseline. Preserve the continuous world and established retro visual direction while replacing prototype presentation where needed.
 
 **Dependencies:** Playable flight/mining/colony/defence/combat loop; final implementation incorporates Phase 7–8 systems.
-- [ ] Audit the full launch→mine→land→build→defend/combat→repair→save loop; record confusing actions, panel clutter, camera problems and missing feedback.
-- [ ] Establish a cohesive visual system with mockups, typography, palette, icons, spacing and reusable UI components.
-- [ ] Overhaul ship, astronaut, planet/surface, atmosphere, asteroid and colony visuals with readable silhouettes, animation, particles, lighting and impact/weapon effects.
-- [ ] Redesign the HUD around flight, on-foot, construction and turret contexts; prioritize relevant telemetry, warnings, targeting and trajectory information without overlapping panels.
-- [ ] Rework construction placement, inventory/production management, targeting and interaction prompts so available actions, costs, failures and outcomes are clear.
-- [ ] Improve onboarding, objectives, pause/settings screens, control discovery and keyboard/mouse focus behavior; include configurable controls.
-- [ ] Refine camera framing, zoom and transitions; provide reduced-motion/effect options, scalable text/UI, contrast and cues that do not rely on color alone.
-- [ ] Validate desktop layouts at 900×600, 1280×800 and 1920×1080, including resized windows and long/expanded panels. Mobile controls remain a separate release-phase investigation.
-- [ ] Polish distinctive sound effects and the mix; add gameplay-responsive music with independent volume controls and accessibility options.
+- [x] Audit the full launch→mine→land→build→defend/combat→repair→save loop; record confusing actions, panel clutter, camera problems and missing feedback.
+- [x] Establish a cohesive visual system with mockups, typography, palette, icons, spacing and reusable UI components.
+- [x] Overhaul ship, astronaut, planet/surface, atmosphere, asteroid and colony visuals with readable silhouettes, animation, particles, lighting and impact/weapon effects.
+- [x] Redesign the HUD around flight, on-foot, construction and turret contexts; prioritize relevant telemetry, warnings, targeting and trajectory information without overlapping panels.
+- [x] Rework construction placement, inventory/production management, targeting and interaction prompts so available actions, costs, failures and outcomes are clear.
+- [x] Improve onboarding, objectives, pause/settings screens, control discovery and keyboard/mouse focus behavior; include configurable controls.
+- [x] Refine camera framing, zoom and transitions; provide reduced-motion/effect options, scalable text/UI, contrast and cues that do not rely on color alone.
+- [x] Validate desktop layouts at 900×600, 1280×800 and 1920×1080, including resized windows and long/expanded panels. Mobile controls remain a separate release-phase investigation.
+- [x] Polish distinctive sound effects and the mix; add gameplay-responsive music with independent volume controls and accessibility options.
 - [ ] Set and measure frame-time/effect budgets, offer graphics quality settings, and verify readability/performance on representative lower-powered hardware.
 - [ ] Add appropriate visual/input regressions and run human usability playtests across the full loop; resolve blocking findings and capture updated screenshots.
 
 **Exit:** A coherent visual style and context-sensitive interface cover every playable system; the full loop has been usability-tested, controls and feedback are discoverable, supported desktop layouts have no overlapping/obscured controls, accessibility options work, and measured performance meets the documented budgets.
+
 
 ## Phase 10 — Saves, reliability and content
 **Dependencies:** Core mechanics stable.
@@ -220,7 +221,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Finish full-suite verification, review and CI for [Task 011](../CODEX_TASK_011.md), using the [presentation model and review route](PRESENTATION.md). It implements body-specific procedural art, readable frame/warning instruments, native accessibility/settings/rebinding, supplied manifests, short objectives and bounded visual/audio work. Preserve real physics, local resources and manual flight; human evaluation and representative hardware checks remain open. Follow with wider objectives/balance and reliability/content work. Human handling/usability/art/audio evaluation remains required and is not replaced by automated regression.
+Verify and review [Task 012](../CODEX_TASK_012.md): four task-oriented entry points, categorized mouse construction and optional real crew walk/work orders in response to direct user feedback. Then complete human full-loop review, broader scarcity/objectives/economy balancing, current-format reliability/content and release preparation. The master plan has not ended; no legacy save migrations are required during this prototype phase.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

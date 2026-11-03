@@ -29,6 +29,7 @@ export class CommandConsole {
   private blueprint: BuildType = BUILD_TYPES[0];
   private world: WorldState | null = null;
   private requestedSelection: number|null=null;
+  private selectionByKeyboard=false;
   private sampleTime = 0;
   private previous = new Map<string, number>();
   private rates = new Map<string, number>();
@@ -37,7 +38,8 @@ export class CommandConsole {
     this.root.addEventListener('click', e => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button'); if (!button || button.disabled) return;
       const d = button.dataset, id = Number(d.id);
-      if (d.locate) { this.selected = Number(d.locate); return; }
+      if(d.section){const name={facilities:'Facilities',research:'Research',economy:'Economy'}[d.section as 'facilities'];const target=Array.from(this.root.querySelectorAll<HTMLDetailsElement>('details')).find(el=>el.querySelector('summary')?.textContent?.startsWith(name));if(target){target.open=true;target.scrollIntoView({block:'start'});if(e.detail===0)target.querySelector('summary')?.focus({preventScroll:true});}if(e.detail>0)button.blur();return;}
+      if (d.locate) { this.selected = Number(d.locate);this.requestedSelection=this.selected;this.selectionByKeyboard=e.detail===0;if(e.detail>0)button.blur();return; }
       if (this.paused) return;
       const progress = progressionAction(button); if (progress) { this.dispatch(progress); if (e.detail > 0) button.blur(); return; }
       let action: CommandAction | undefined;
@@ -76,7 +78,7 @@ export class CommandConsole {
       const k = e as KeyboardEvent; if (!['Escape', 'p', 'P', 'k', 'K', 'l', 'L', 'm', 'M', 'h', 'H'].includes(k.key)) k.stopPropagation();
     });
   }
-  selectFacility(body: BodyId,id:number):void {this.body=body;if(this.world)this.update(colonyWorld(this.world,body),this.paused);this.selected=id;this.requestedSelection=id;}
+  selectFacility(body: BodyId,id:number):void {this.body=body;if(this.world)this.update(colonyWorld(this.world,body),this.paused);this.selected=id;this.requestedSelection=id;this.selectionByKeyboard=false;}
   update(source: WorldState, paused: boolean): void {
     const w = this.body === 'local' ? source : colonyWorld(source, this.body);
     const focused = document.activeElement instanceof HTMLElement && this.root.contains(document.activeElement) ? document.activeElement.dataset.focus : undefined;
@@ -85,6 +87,7 @@ export class CommandConsole {
     const stocks = new Map<string, number>([...RESOURCES.map(r => [r, w.depot[r]] as [string, number]), ...PRODUCTS.map(p => [p, c.products[p]] as [string, number])]);
     if (this.world !== w || now < this.sampleTime) { this.rates.clear(); this.previous = stocks; this.sampleTime = now; this.selected = null; }
     if (now - this.sampleTime >= 1) { for (const [p, q] of stocks) this.rates.set(p, (q - (this.previous.get(p) ?? q)) / (now - this.sampleTime)); this.previous = stocks; this.sampleTime = now; }
+    const reveal=this.requestedSelection!==null,keyboard=this.selectionByKeyboard;
     this.world = w;
     if(this.requestedSelection!==null){this.selected=this.requestedSelection;this.requestedSelection=null;}
     if (!c.buildings.some(b => b.id === this.selected)) this.selected = c.buildings[0]?.id ?? null;
@@ -102,7 +105,7 @@ export class CommandConsole {
       ${recipe ? `<p>${recipe.label} · ${fmt(selected.progress)} / ${recipe.seconds} work s</p><small>Paid cycle progress is retained when throttled or starved; changing the manual recipe discards work.</small>` : ''}
       ${selected.kind === 'service' ? action('service', 'Request supplied service') + '<small>2 kJ + actual supplies. Crew within 18 m or landed ship within 80 m; no remote healing.</small>' : ''}${habitatDetails(selected)}${shieldDetails(selected)}</article>` : '<p>No facilities yet. Queue a supplied site below.</p>';
     const stockRows = [...stocks].map(([p, q]) => `<tr><th>${p}</th><td>${fmt(q)}</td><td>${PRODUCTS.includes(p as keyof ProductInventory) ? fmt(availableProduct(c, p as keyof ProductInventory)) : '—'}</td><td>${this.rates.has(p) ? `${(this.rates.get(p)! >= 0 ? '+' : '') + this.rates.get(p)!.toFixed(2)}` : '—'}</td></tr>`).join('');
-    patchMarkup(this.root, `<label>COMMAND · ${colonyPlanet(w).label.toUpperCase()} COLONY</label><label for="command-body">Colony view</label><select id="command-body" aria-label="Command colony"><option value="local" ${this.body === 'local' ? 'selected' : ''}>Nearby world</option><option value="home" ${this.body === 'home' ? 'selected' : ''}>Selene · home</option><option value="moon" ${this.body === 'moon' ? 'selected' : ''}>Nacre · moon</option></select><p class="command-mode">${paused ? 'PAUSED · inspect only · P to resume' : 'LIVE · remote operations · global grid'}</p>
+    patchMarkup(this.root, `<label>COMMAND · ${colonyPlanet(w).label.toUpperCase()} COLONY</label><label for="command-body">Colony view</label><select id="command-body" aria-label="Command colony"><option value="local" ${this.body === 'local' ? 'selected' : ''}>Nearby world</option><option value="home" ${this.body === 'home' ? 'selected' : ''}>Selene · home</option><option value="moon" ${this.body === 'moon' ? 'selected' : ''}>Nacre · moon</option></select><nav class="manage-sections" aria-label="Manage sections"><button data-section="facilities">Facilities</button><button data-section="research">Research</button><button data-section="economy">Economy</button></nav><p class="command-mode">${paused ? 'PAUSED · inspect only · P to resume' : 'LIVE · remote operations · global grid'}</p>
       <div class="command-flow"><span>SOLAR ${fmt(c.generation)} kW</span><b>↓</b><span>BUS ${fmt(c.energy)} / ${energyCapacity(c)} kJ</span><meter aria-label="Colony energy" min="0" max="${energyCapacity(c)}" value="${c.energy}"></meter><b>↓</b><span>LOAD ${fmt(c.demand)} kW · ${remaining}</span></div>
       <small>Life support → shield upkeep → backup and shield charging → priority industry → turret bursts. Charging uses spare unreserved charge. Requested load is conditional; time-to-shortfall is an estimate.</small>
       <p class="command-alert" role="status">${w.defence.meteors.length || w.combat.enemies.length ? 'THREATS ACTIVE · ' : ''}${warn.length ? `${warn.length} facility alerts · ${warn.slice(0, 3).map(b => `#${b.id} ${b.status}`).join(' · ')}` : 'Facilities nominal'}</p>
@@ -111,15 +114,16 @@ export class CommandConsole {
       <details data-preserve-open><summary>Construction queue · ${c.command.queue.length}</summary><small>8 s stationary crew work within 96 m per order. Materials commit now; unworked fraction is refunded on cancel if storage fits. Pause lets later orders run.</small>
       <label for="command-blueprint">Blueprint</label><select ${disabled} id="command-blueprint">${BUILD_TYPES.map(k => `<option ${k === this.blueprint ? 'selected' : ''} value="${k}">${BLUEPRINTS[k].label}</option>`).join('')}</select>
       <p>Commit ${Object.entries(BLUEPRINTS[this.blueprint].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</p><p class="command-site-status">${siteError ?? 'Site clear · ghost preview in world'}</p>
-      <label for="command-site">Site · metres along surface from home</label><input ${disabled} id="command-site" type="number" min="-1000" max="1000" step="1" value="${this.site}"><button ${disabled || siteError ? 'disabled' : ''} data-enqueue="true">Queue paid construction</button>
+      <label for="command-site">Site · metres along surface from this pad</label><input ${disabled} id="command-site" type="number" min="-1000" max="1000" step="1" value="${this.site}"><button ${disabled || siteError ? 'disabled' : ''} data-enqueue="true">Queue paid construction</button>
       ${c.command.queue.map(o => `<article class="command-order" data-order="${o.id}"><p>#${o.id} ${BLUEPRINTS[o.kind].label} · ${Math.round(o.angle * colonyPlanet(w).radius)} m<br>${escapeText(o.status)}<br>Unworked refund: ${Object.entries(BLUEPRINTS[o.kind].cost).map(([p, q]) => `${fmt(q * Math.max(0, 1 - o.progress / CONSTRUCTION_SECONDS))} ${p}`).join(' · ')}</p><progress aria-label="Order ${o.id} progress" max="${CONSTRUCTION_SECONDS}" value="${o.progress}"></progress><button ${disabled} data-order="pause" data-id="${o.id}">${o.paused ? 'Resume' : 'Pause'} order ${o.id}</button><button ${disabled} data-order="cancel" data-id="${o.id}">Cancel order ${o.id}</button></article>`).join('')}</details>
       ${progressionPanel(w, paused)}${shieldPanel(w, this.shieldAccents)}
-      <details data-preserve-open><summary>Economy · stocks and observed flow</summary><p>Ore ${fmt(inventoryMass(w.depot))} / ${oreCapacity(c)} kg · products ${productCapacity(c)} kg each</p><small>Net stock change / simulated second; includes deliveries, construction, refunds and habitat transfers. No offline production. — means sampling.</small><table><thead><tr><th>Stock</th><th>kg</th><th>usable</th><th>kg/s</th></tr></thead><tbody>${stockRows}</tbody></table><p>Protected energy ${policy.energyReserve} kJ · delivery room ${policy.deliveryReserve} kg<br>Habitat oxygen spent ${fmt(c.oxygenUsed)} kg</p><small>Set reserves in Colony → Resource priorities.</small></details>`);
+      <details data-preserve-open><summary>Economy · stocks and observed flow</summary><p>Ore ${fmt(inventoryMass(w.depot))} / ${oreCapacity(c)} kg · products ${productCapacity(c)} kg each</p><small>Net stock change / simulated second; includes deliveries, construction, refunds and habitat transfers. No offline production. — means sampling.</small><table><thead><tr><th>Stock</th><th>kg</th><th>usable</th><th>kg/s</th></tr></thead><tbody>${stockRows}</tbody></table><p>Protected energy ${policy.energyReserve} kJ · delivery room ${policy.deliveryReserve} kg<br>Habitat oxygen spent ${fmt(c.oxygenUsed)} kg</p><small>Set reserves in Build → Resource priorities.</small></details>`);
     const slider = this.root.querySelector<HTMLInputElement>('#command-limit');
     if (slider && document.activeElement !== slider && selected) slider.value = String(selected.dispatch?.limit ?? 100);
     if (focused) {
       const next = this.root.querySelector<HTMLButtonElement>(`[data-focus="${focused}"]`);
       if (next && document.activeElement !== next) (next.disabled ? this.root.querySelector<HTMLButtonElement>(`[data-focus="select-${next.dataset.id}"]`) : next)?.focus({ preventScroll: true });
     }
+    if(reveal){const card=this.root.querySelector<HTMLElement>('.command-machine');if(card){const details=card.closest('details');if(details)details.open=true;card.scrollIntoView({block:'start'});if(keyboard){const control=card.querySelector<HTMLButtonElement>('button:not(:disabled)');if(control)control.focus({preventScroll:true});else{card.tabIndex=-1;card.focus({preventScroll:true});}}}this.selectionByKeyboard=false;}
   }
 }

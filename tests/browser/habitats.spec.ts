@@ -13,9 +13,9 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   await page.keyboard.up('d'); await page.waitForTimeout(450); await page.keyboard.press('b'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '1');
   for (let i = 0; i < 4; i++) await page.keyboard.press('q');
-  await page.locator('[data-select="habitatLarge"]').focus(); await page.keyboard.press('Space');
+  await page.getByLabel('Blueprint category', { exact: true }).selectOption('crew'); await page.locator('[data-select="habitatLarge"]').focus(); await page.keyboard.press('Space');
   await expect(page.locator('.placement')).toContainText('Site clear');
-  await page.locator('[data-colony="place"]').focus(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.getByText('Nearby manual placement · Q/T/Enter',{exact:true}).click();await page.locator('[data-colony="place"]').focus(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await page.keyboard.press('b'); await page.keyboard.down('a');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 12000, intervals: [50] }).toBeLessThan(12);
   await page.keyboard.up('a'); await page.waitForTimeout(450);
@@ -27,7 +27,7 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   await page.getByRole('button', { name: 'Enable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText('HABITAT AIR');
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(15); expect(saved.world.colony.buildings[1].habitat.oxygen).toBeGreaterThan(.6);
+  expect(saved.version).toBe(16); expect(saved.world.colony.buildings[1].habitat.oxygen).toBeGreaterThan(.6);
   expect(saved.world.colony.products.oxygen).toBeLessThan(2); expect(saved.world.colony.oxygenUsed).toBeGreaterThan(0);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(oxygen).toContainText('HABITAT AIR');
   expect(await hud.getAttribute('data-oxygen')).toBe(saved.world.astronaut.oxygen.toFixed(2)); expect(errors).toEqual([]);

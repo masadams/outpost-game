@@ -48,6 +48,7 @@ export class Keyboard {
       mine: space, tractor: this.held('C'), unload: interact,
       board, jump: space || w || up, colonyActions: actions };
   }
+  planningActions():ColonyAction[]{const actions:ColonyAction[]=[];if(this.pending.delete('B'))actions.push({type:'toggleBuild'});if(this.pending.delete('Q'))actions.push({type:'shift',delta:-32});if(this.pending.delete('T'))actions.push({type:'shift',delta:32});['ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE'].forEach((key,i)=>{if(this.pending.delete(key))actions.push({type:'select',kind:BUILD_TYPES[i]});});return actions;}
   inventory(): boolean { return this.pending.delete('I'); }
   closePanel(): boolean { return this.pending.delete('ESC'); }
   restart(): boolean { return this.pending.delete('R'); }

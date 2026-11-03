@@ -3,7 +3,11 @@ import type { DockView, HudContext } from './context';
 
 const labels: Record<DockView, string> = { cargo: 'Cargo', colony: 'Colony', combat: 'Combat', defence: 'Defence', command: 'Command', navigation: 'Nav', objectives: 'Objectives' };
 export class OperationsDock {
+  onBuild: (()=>void)|null=null;
+  buildActive=false;
+  onLeaveBuild:(()=>void)|null=null;
   readonly nav = document.createElement('nav');
+  private shipTabs=document.createElement('nav');
   readonly root = document.createElement('aside');
   readonly cargo = document.createElement('section');
   readonly objectives = document.createElement('section');
@@ -19,27 +23,24 @@ export class OperationsDock {
   private view: DockView | null = null;
   constructor() {
     this.nav.className = 'dock-nav'; this.nav.setAttribute('aria-label', 'Operations panels');
-    this.nav.innerHTML = Object.entries(labels).filter(([view])=>view!=='objectives').map(([view, label]) => `<button type="button" data-panel="${view}" aria-controls="operations-dock" aria-expanded="false">${label}${view === 'cargo' ? ' [I]' : ''}</button>`).join('');
+    this.nav.innerHTML = `<button data-panel="cargo" aria-controls="operations-dock">Ship [I]</button><button data-panel="colony" aria-controls="operations-dock">Build</button><button data-panel="command" aria-controls="operations-dock">Manage</button><button data-panel="navigation" aria-controls="operations-dock">Map</button>`;
+    this.shipTabs.className='ship-tabs';this.shipTabs.setAttribute('aria-label','Ship systems');this.shipTabs.innerHTML='<button data-panel="cargo">Cargo</button><button data-panel="combat">Weapons</button><button data-panel="defence">Defence</button>';
+
     this.root.id = 'operations-dock'; this.root.setAttribute('aria-label', 'Operations'); this.root.hidden = true;
     const header = document.createElement('div'); header.className = 'dock-heading';
     const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close [Esc]'; close.setAttribute('aria-label', 'Close operations panel'); close.onclick = () => this.close();
-    header.append(this.heading, close); this.root.append(header);
+    header.append(this.heading, close); this.root.append(header,this.shipTabs);
     this.cargo.className = 'mining'; this.cargo.setAttribute('aria-label', 'Cargo and mining telemetry');
     this.colony.className = 'colony-panel'; this.colony.setAttribute('aria-label', 'Colony construction and production');
     this.combat.id = 'combat-content'; this.defence.id = 'defence-content';
     this.root.append(this.cargo, this.colony, this.combat, this.defence, this.command, this.navigation, this.objectives);
-    this.nav.addEventListener('click', event => {
-      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
-      if (button?.dataset.panel) { this.toggle(button.dataset.panel as DockView); if (event.detail > 0) button.blur(); }
-    });
+    const choose=(event:MouseEvent)=>{const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button[data-panel]');if(!button)return;const view=button.dataset.panel as DockView;if(view==='colony'&&this.view==='colony'&&!this.buildActive){this.onBuild?.();if(event.detail>0)button.blur();return;}if(this.shipTabs.contains(button))this.open(view);else this.toggle(view);if(view==='colony'&&this.view==='colony')this.onBuild?.();if(event.detail>0)button.blur();};
+    this.nav.addEventListener('click',choose);this.shipTabs.addEventListener('click',choose);
     isolateControlKeys(this.nav); isolateControlKeys(this.root);
   }
   update(context: HudContext, playerMode: string): void {
     if (context.key !== this.contextKey || playerMode !== this.playerMode) {
-      const alerts = ['defence', 'combat'];
-      const preserve = this.manual && playerMode === this.playerMode &&
-        (alerts.includes(context.key) || alerts.includes(this.contextKey)) &&
-        !['recovery', 'construction', 'turret', 'depot'].includes(context.key);
+      const preserve=this.manual&&playerMode===this.playerMode&&!['recovery','turret'].includes(context.key);
       this.contextKey = context.key; this.playerMode = playerMode;
       if (!preserve) { this.view = context.view; this.manual = false; }
       this.render();
@@ -54,12 +55,14 @@ export class OperationsDock {
     this.render();
   }
   private render(): void {
+    if(this.view!=='colony'&&this.buildActive){this.buildActive=false;this.onLeaveBuild?.();}
     this.root.hidden = this.view === null; this.root.dataset.panel = this.view ?? 'closed';
-    this.heading.textContent = this.view ? labels[this.view].toUpperCase() : '';
+    this.heading.textContent = this.view ? ({cargo:'Ship / Cargo',combat:'Ship / Weapons',defence:'Ship / Defence',colony:'Build',command:'Manage colony',navigation:'Map',objectives:'Objectives'} as const)[this.view] : '';
+    const ship=['cargo','combat','defence'].includes(this.view??'');this.shipTabs.hidden=!ship;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
     const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation, objectives: this.objectives };
     for (const [view, section] of Object.entries(sections)) section.hidden = view !== this.view;
     for (const button of Array.from(this.nav.querySelectorAll('button'))) {
-      const selected = button.dataset.panel === this.view;
+      const selected = button.dataset.panel === this.view || button.dataset.panel==='cargo'&&ship;
       button.setAttribute('aria-expanded', String(selected)); button.classList.toggle('selected', selected);
     }
   }

@@ -293,3 +293,19 @@ footer { left: 20px; font-size: 11px; }
 .policy-row { grid-template-columns:minmax(0,1fr) 32px 52px 32px; }
 .stock-target { grid-template-columns:minmax(0,1fr) 32px 52px 32px; }
 .command-row { grid-template-columns:minmax(0,1fr) 32px 32px; }
+/* Task-oriented entry points; ship combat and cargo share one group. */
+.dock-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.ship-tabs { display:flex; gap:4px; padding:8px 12px; border-bottom:1px solid var(--edge); background:#102432; }
+.ship-tabs button { flex:1; font-size:12px; padding:6px; }
+.build-flow { padding:10px; border:1px solid var(--mint); border-radius:5px; margin-block:10px; }
+.build-flow p { margin:8px 0; }.build-site { color:var(--amber); }
+#build-category { width:100%;padding:8px;background:#102535;color:#e3eff2;font:inherit;border:1px solid var(--edge); }
+#build-site { width:100%;padding:8px;color:#e3eff2;background:#102535;border:1px solid var(--edge);font:inherit; }
+#build-pointer-tip { position:fixed;z-index:3;width:240px;background:#091925f7;color:#ffc58c;border:1px solid #ffc58c;padding:8px;border-radius:4px;font-size:12px;line-height:1.5;pointer-events:none; }
+#crew-order-status { margin-top:6px;background:var(--panel);padding:6px;font-size:12px;color:var(--mint);pointer-events:auto; }
+#crew-order-status button { padding:4px;font-size:12px; }
+.manage-sections { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px; }
+#command-console .manage-sections button { font-size:12px;padding:6px 2px;text-align:center; }
+#command-console details, .command-machine { scroll-margin-top:56px; }
+
+#build-pointer-tip { max-height:140px;overflow:hidden; }

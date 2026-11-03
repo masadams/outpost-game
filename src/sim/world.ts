@@ -1,3 +1,4 @@
+import { applyCrewOrder, crewMove, type CrewOrder } from './crewOrders';
 import { createObjectives, observeObjectives, type ObjectiveState } from './objectives';
 import { planetAt, nearestPlanet, CELESTIAL, type SystemFrame, type BodyId } from './celestial';
 import { activeWorld, allColonies, colonyWorld } from './localWorld';
@@ -33,6 +34,7 @@ export function unloadCargo(world: WorldState): number { return unloadDepot(colo
 
 export interface WorldControls extends Controls { combatFire?: boolean; combatActions?: CombatAction[]; mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
 export interface WorldState {
+  crewOrder: CrewOrder|null;
   objectives: ObjectiveState;
   system: SystemFrame;
   moon: { colony: Colony; depot: Inventory; surfaceDeposits: SurfaceDeposit[] };
@@ -61,7 +63,7 @@ export function createWorld(): WorldState {
   const moon = { colony: createColony(), depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL.moon.radius) };
   for (const p of Object.keys(moon.colony.products) as (keyof typeof moon.colony.products)[]) moon.colony.products[p] = 0;
   moon.colony.nextId = 1001;
-  const world: WorldState = { objectives: createObjectives(), system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
+  const world: WorldState = { crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
     playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), combat: createCombat() };
   world.moon.colony.research = world.colony.research;
   seedNeighborhood(world);
@@ -72,9 +74,10 @@ export function createWorld(): WorldState {
 export function stepWorld(world: WorldState, input: WorldControls, dt: number): void {
   world.notice.time = Math.max(0, world.notice.time - dt);
   const local = activeWorld(world);
-  if (input.board && !world.buttons.board) { world.defence.controlled = null; boardOrExit(local); }
+  if (input.board && !world.buttons.board) { world.crewOrder=null; world.defence.controlled = null; boardOrExit(local); }
   for (const action of input.colonyActions ?? []) {
     const owner = action.body ? colonyWorld(world, action.body) : local;
+    if(action.type==='crewOrder'){applyCrewOrder(owner,action);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(local, action);
@@ -88,7 +91,8 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepShip(world.ship, piloting ? input : { thrust: false, turn: 0 }, dt, world.system);
   if (!piloting) {
     const controlling = !!controlledTurret(local);
-    stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn, jump: !controlling && !!input.jump }, dt, consumeHabitatAir(local, dt), world.system);
+    const automatic=crewMove(world,input.turn!==0||!!input.jump||!!input.board);
+    stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn || automatic, jump: !controlling && !!input.jump }, dt, consumeHabitatAir(local, dt), world.system);
     if (nearbyStation(local)?.kind !== 'depot') world.depotOpen = false;
     if (interact) interactSurface(local);
   } else {
@@ -122,6 +126,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   if (world.asteroids.some(rock => rock.health <= 0)) resolveMinedRocks(world);
   resolveTow(world); resolveSites(world);
   world.system.time += dt;
+  if(world.crewOrder&&(world.playerMode!=='astronaut'||!world.astronaut.grounded||world.astronaut.health<=0))world.crewOrder=null;
   observeObjectives(world);
 }
 
