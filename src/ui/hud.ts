@@ -1,5 +1,6 @@
 import { OperationsDock } from './OperationsDock';
 import { instrumentMarkup } from './instruments';
+import { towingPanel } from './towing';
 import { flightSafety } from '../sim/flightSafety';
 import { hudContext, type DockView } from './context';
 import { combatPanel } from './combat';
@@ -30,7 +31,7 @@ export class Hud {
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.8.1</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.9</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
@@ -53,7 +54,7 @@ export class Hud {
     const context = hudContext(world); this.dock.update(context);
     this.root.dataset.context = context.key;
     this.root.querySelector('#hud-context')!.textContent = context.label;
-    this.root.querySelector('.context-hint')!.textContent = context.hint;
+    this.root.querySelector('.context-hint')!.textContent = context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : '');
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
@@ -113,11 +114,11 @@ export class Hud {
     const bearing = delta ? wrap(localAngle(delta) - world.ship.angle) * 180 / Math.PI : 0;
     const objective = cargo > 0 ? (world.ship.state === 'landed' ? 'PRESS E TO UNLOAD' : 'ORE SECURED · return to green pad') :
       stored > 0 ? 'DELIVERY CONFIRMED · launch for more' : 'Mine fragments, then hold C nearby';
-    this.mining.innerHTML = `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${CARGO_CAPACITY} kg</small></strong>
+    patchMarkup(this.mining, `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${CARGO_CAPACITY} kg</small></strong>
       <div class="cargo-meter"><i style="width:${cargo / CARGO_CAPACITY * 100}%"></i></div>
       ${RESOURCES.map(type => `<div class="resource"><span>${RESOURCE_INFO[type].label}</span><span>${world.ship.cargo[type].toFixed(1)} / ${world.depot[type].toFixed(1)}</span></div>`).join('')}
       ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${objective}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser 450 m</small>` : 'Field depleted'}</div>
-      <small>${cargo >= CARGO_CAPACITY ? 'HOLD FULL · return and unload' : world.tractorActive ? 'TRACTOR ACTIVE · 260 m' : 'C: tractor · SPACE: laser'}</small>`}`;
+      <small>${cargo >= CARGO_CAPACITY ? 'HOLD FULL · return and unload' : world.tractorActive ? 'TRACTOR ACTIVE · 260 m' : 'C: tractor · SPACE: laser'}</small>`}${towingPanel(world, this.root.dataset.state === 'paused')}`);
     this.root.dataset.cargo = cargo.toFixed(2); this.root.dataset.depot = stored.toFixed(2);
     this.root.dataset.asteroids = String(world.asteroids.length); this.root.dataset.pickups = String(world.pickups.length);
     this.root.dataset.mining = world.beam ? 'active' : 'idle';

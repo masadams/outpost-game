@@ -1,4 +1,4 @@
-# Outpost alpha 0.8.1 — first playtest
+# Outpost alpha 0.9 — first playtest
 
 Start with flight, asteroid mining, surface exploration and construction. Then try finite planetary mining and automatic refinery targets. Save before the opt-in defence drill or ship patrol. Then try protected power, delivery room and turret-material reserves. Mobile logistics and the full presentation overhaul remain later work.
 
@@ -8,7 +8,7 @@ From a checkout of this repository:
 
 ```sh
 git fetch origin
-git switch feat/landing-warning-instruments
+git switch feat/asteroid-towing
 git pull --ff-only
 npm ci
 npm run build
@@ -24,6 +24,8 @@ Press **H** for the in-game guide. It pauses and returns to your previous pause 
 Cargo/Colony/Combat/Defence open one right operations dock; I toggles Cargo and Esc closes the dock. Ordinary flight starts with details closed. Construction, depot, turret, threat and combat contexts choose a relevant panel. Try selecting/closing a panel, switching contexts, browsing while paused, H/Esc and keyboard Tab/Enter/Space. Warnings, telemetry, weapons and radar should remain readable. Resize to 900×600, 1280×800 and 1920×1080; scroll the construction palette and operate the last blueprint. Report blocked targets, obscured controls or confusing automatic panel choices. See the [direction/wireframes](PRESENTATION_DIRECTION.md).
 
 The landing instruments now add color, symbols and text while descending/hovering near the surface. Compare radial/drift/tilt/spin to the touchdown limits, watch clearance/off-pad cues, and check that the warning clears during launch/ascent. Compare landing and low-fuel tones, mute and pause, and try the OS/browser reduced-motion preference. The low-fuel lights start at 15%, becoming critical at 5%; ship warning tones stay silent on foot or after landing/crashing. See [warning thresholds and limits](FLIGHT_WARNINGS.md). Human timing and sound-balance feedback is needed.
+
+For towing, open Cargo on the piloted home pad and fabricate the rig. Check the 16 alloy / 6 wire / 3 components cost and 25 kg equipment mass. In flight, match a nearby rock's velocity and Y to latch within 180 m. Check strain, gentle hauling, Y release, mining/collection and return/unload. Save/reload an active cable; coast prediction should explicitly suspend while attached and resume after release. See [TOWING.md](TOWING.md). Habitats, wider ship upgrades and shield domes are [scheduled separately](UPGRADES_AND_DOMES.md), not playable yet.
 
 ## Suggested route (about 25–30 minutes)
 

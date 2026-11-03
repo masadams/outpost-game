@@ -1,4 +1,6 @@
 import { createSurfaceDeposits } from '../sim/geology';
+import { createTowing } from '../sim/towingConfig';
+import { validTowing } from './validateTowing';
 import { validGeology } from './validateGeology';
 import { validSchedule } from '../sim/scheduling';
 import { validPolicy } from '../sim/colonyPolicy';
@@ -50,16 +52,16 @@ function validWorld(value: unknown): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validGeology(world) && validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 7, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
+  return JSON.stringify({ version: 8, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7, 8].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
   if (envelope.version !== 1 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
   if ((envelope.version as number) < 3) envelope.world.defence = createDefence();
   if ((envelope.version as number) < 4) {
@@ -67,6 +69,10 @@ export function decodeCheckpoint(text: string): WorldState {
     envelope.world.ship.armament = createArmament(); envelope.world.combat = createCombat();
   }
   if ((envelope.version as number) < 5) envelope.world.surfaceDeposits = createSurfaceDeposits();
+  if ((envelope.version as number) < 8) {
+    if (!object(envelope.world.ship)) throw new Error('Checkpoint ship is invalid');
+    envelope.world.ship.towRig = false; envelope.world.towing = createTowing();
+  }
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
   world.combat.flashes = [];

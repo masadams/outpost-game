@@ -1,4 +1,5 @@
 import { drawGeology } from './geology';
+import { drawTowing } from './towing';
 import { drawCombat, drawCombatRadar } from './combat';
 import { predictMeteor, type ThreatPrediction } from '../sim/meteor';
 import { drawDefence, drawThreatRadar } from './defence';
@@ -120,14 +121,15 @@ export class FlightScene extends Phaser.Scene {
     const onFoot = this.simulation.playerMode === 'astronaut';
     this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot);
     this.predictionTime += delta / 1000;
-    if (this.flightTools.trajectory && (this.prediction === null || (!this.paused && this.predictionTime >= 0.2))) {
+    if (this.simulation.towing.targetId !== null) this.prediction = null;
+    if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.paused && this.predictionTime >= 0.2))) {
       this.prediction = predictCoast(this.ship); this.predictionTime = 0;
     }
     this.threatTime += delta / 1000;
     if ((!this.paused && this.threatTime >= 0.5) || this.threats.length !== Math.min(12, this.simulation.defence.meteors.length)) {
       this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => predictMeteor(m)); this.threatTime = 0;
     }
-    this.flightTools.update(this.ship, this.follow, this.prediction);
+    this.flightTools.update(this.ship, this.follow, this.prediction, this.simulation.towing.targetId !== null);
     this.audio.update(this.simulation, this.paused, delta / 1000);
     this.soundControls.update();
     this.draw();
@@ -163,8 +165,9 @@ export class FlightScene extends Phaser.Scene {
     }
     // Pad beacon remains visible at orbital zoom.
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -WORLD.radius - WORLD.shipRadius, 16 / this.follow.zoom);
-    if (this.flightTools.trajectory) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
+    if (this.flightTools.trajectory && this.simulation.towing.targetId === null) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
+    drawTowing(g, this.simulation, this.follow.zoom);
     drawGeology(g, this.simulation, this.follow.zoom);
     drawColony(g, this.simulation);
     drawDefence(g, this.simulation, this.threats, this.follow.zoom);

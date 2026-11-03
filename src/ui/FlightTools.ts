@@ -20,17 +20,17 @@ export class FlightTools {
     isolateControlKeys(this.root);
     document.body.append(this.root, this.status);
   }
-  update(ship: Ship, camera: FlightCamera, prediction: Trajectory | null): void {
+  update(ship: Ship, camera: FlightCamera, prediction: Trajectory | null, towing = false): void {
     this.trajectoryButton.setAttribute('aria-pressed', String(this.trajectory));
     this.trajectoryButton.textContent = `Coast path [J] ${this.trajectory ? 'on' : 'off'}`;
     this.value.textContent = `${camera.mode} ${camera.zoom.toFixed(2)}×`;
     const density = airDensity(ship.position), g = gravity(ship.position);
-    const path = !this.trajectory ? 'path hidden' : ship.state !== 'flying' ? 'launch to predict' : !prediction?.points.length ? 'updating…' : prediction.contact ? `contact in ${prediction.contact.seconds.toFixed(1)} s` : 'no terrain contact in 180 s';
+    const path = towing ? 'tow active · prediction suspended' : !this.trajectory ? 'path hidden' : ship.state !== 'flying' ? 'launch to predict' : !prediction?.points.length ? 'updating…' : prediction.contact ? `contact in ${prediction.contact.seconds.toFixed(1)} s` : 'no terrain contact in 180 s';
     this.status.textContent = `${density > 0 ? `AIR ${(density / ATMOSPHERE.surfaceDensity * 100).toFixed(1)}%` : 'VACUUM'} · g ${Math.hypot(g.x, g.y).toFixed(2)} m/s² · Coast: ${path}`;
-    this.status.title = 'Coast prediction releases all controls and includes gravity and atmospheric drag. Moving objects and tools are not predicted.';
+    this.status.title = 'Coast prediction releases all controls and includes gravity and atmospheric drag. Moving objects and tools are not predicted; prediction is suspended while towing.';
     this.root.dataset.trajectory = String(this.trajectory); this.root.dataset.zoomMode = camera.mode; this.root.dataset.zoom = camera.zoom.toFixed(3);
     this.status.dataset.regime = density > 0 ? 'atmosphere' : 'vacuum';
-    this.root.dataset.predictionPoints = String(prediction?.points.length ?? 0);
+    this.root.dataset.predictionPoints = String(towing ? 0 : prediction?.points.length ?? 0);
   }
   destroy(): void { this.root.remove(); this.status.remove(); }
 }

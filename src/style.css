@@ -121,6 +121,7 @@ footer p { margin: 0; line-height: 1.5; }
 .policy-row button { padding: 6px; margin: 0; }
 .policy-row b { text-align: center; }
 .policy-row small { display: block; }
+.towing-panel { border-top: 1px solid var(--edge); margin-top: 12px; padding-top: 12px; }
 
 #hud[data-mode="ship"] .instruments { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 #hud[data-mode="ship"] .instruments strong { font-size: 22px; }
