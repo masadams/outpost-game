@@ -55,7 +55,7 @@ export class Hud {
   private lastBlueprint='';
   get pointerBuilding():boolean{return this.dock.root.dataset.panel==='colony'&&!!this.latestWorld?.colony.buildOpen;}
   get buildPointer():BuildDraft|null{return this.pointerDraft;}
-  setBuildPointer(w:WorldState,at:Vec,zoom:number):void{if(!this.pointerBuilding){this.pointerDraft=null;return;}const body=colonyPlanet(w),x=at.x-body.position.x,y=at.y-body.position.y,angle=Math.atan2(x,-y),error=Math.abs(Math.hypot(x,y)-body.radius)>Math.max(60,30/zoom)?'Point near this world’s surface':orderError(w,w.colony.selected,angle);this.pointerDraft={kind:w.colony.selected,angle,body:body.id,valid:!error,error};}
+  setBuildPointer(w:WorldState,at:Vec,zoom:number):void{if(!this.pointerBuilding){this.pointerDraft=null;return;}const body=colonyPlanet(w),x=at.x-body.position.x,y=at.y-body.position.y,angle=Math.atan2(x,-y),inputError=Math.abs(Math.hypot(x,y)-body.radius)>Math.max(60,30/zoom)?'Point near this world’s surface':null,error=inputError??orderError(w,w.colony.selected,angle);this.pointerDraft={kind:w.colony.selected,angle,body:body.id,valid:!error,error,inputError};}
   showBuildTip(x:number,y:number):void{const d=this.pointerDraft;this.pointerTip.hidden=!d||!this.pointerBuilding;if(!d)return;setText(this.pointerTip,`${BLUEPRINTS[d.kind].label} · ${Object.entries(BLUEPRINTS[d.kind].cost).map(([p,q])=>`${q} ${p}`).join(' / ')} · ${d.error??'Left click: paid work'} · Right click: finish`);this.pointerTip.style.left=`${Math.max(8,Math.min(innerWidth-248,x+16))}px`;this.pointerTip.style.top=`${Math.max(8,Math.min(innerHeight-148,y+16))}px`;}
   hideBuildTip():void{this.pointerTip.hidden=true;}
   clearBuildPointer():void{this.pointerDraft=null;this.hideBuildTip();}
@@ -70,7 +70,7 @@ export class Hud {
   constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
     this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
     this.dock.onBuild=()=>onColonyAction({type:'buildMode',open:true});this.dock.onLeaveBuild=()=>onColonyAction({type:'buildMode',open:false});
-    this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error};this.update(w,this.root.dataset.state==='paused');}
+    this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
     if(el.id==='build-category'){this.category=el.value as BuildCategory;if(this.latestWorld)this.update(this.latestWorld,this.root.dataset.state==='paused');}});
     this.dock.objectives.append(this.objectives.content);
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
@@ -97,7 +97,7 @@ export class Hud {
     });
   }
   update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
-    this.dock.buildActive=world.colony.buildOpen;this.latestWorld=world;if(this.pointerDraft){if(this.pointerDraft.body!==colonyPlanet(world).id)this.clearBuildPointer();else if(this.pointerDraft.kind!==world.colony.selected){const error=orderError(world,world.colony.selected,this.pointerDraft.angle);this.pointerDraft={...this.pointerDraft,kind:world.colony.selected,error,valid:!error};}}if(this.lastBlueprint!==world.colony.selected){this.lastBlueprint=world.colony.selected;if(this.category!=='all')this.category=categoryFor(world.colony.selected);}
+    this.dock.buildActive=world.colony.buildOpen;this.latestWorld=world;if(this.pointerDraft){if(this.pointerDraft.body!==colonyPlanet(world).id)this.clearBuildPointer();else{const error=this.pointerDraft.inputError??orderError(world,world.colony.selected,this.pointerDraft.angle);this.pointerDraft={...this.pointerDraft,kind:world.colony.selected,error,valid:!error};}}if(this.lastBlueprint!==world.colony.selected){this.lastBlueprint=world.colony.selected;if(this.category!=='all')this.category=categoryFor(world.colony.selected);}
     this.root.dataset.crewOrder=world.crewOrder?.type??'none';const crewBar=this.root.querySelector<HTMLElement>('#crew-order-status')!;crewBar.hidden=!world.crewOrder;crewBar.querySelector('span')!.textContent=world.crewOrder?`Crew: ${world.crewOrder.type==='walk'?'walking':'working queue'} · `:'';crewBar.querySelector('button')!.disabled=paused;
     const context = hudContext(world); this.dock.update(context, world.playerMode);
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;

@@ -3,7 +3,7 @@ import { colonyPlanet } from '../sim/localWorld';
 import { orderError } from '../sim/construction';
 import { previewAngle } from '../sim/colony';
 import type { WorldState } from '../sim/world';
-export interface BuildDraft {kind:WorldState['colony']['selected'];angle:number;valid:boolean;body:'home'|'moon';error:string|null}
+export interface BuildDraft {kind:WorldState['colony']['selected'];angle:number;valid:boolean;body:'home'|'moon';error:string|null;inputError?:string|null}
 export function buildFlow(w:WorldState,paused:boolean,draft?:BuildDraft|null):string {
  const body=colonyPlanet(w),angle=draft?.body===body.id?draft.angle:previewAngle(w),error=draft?.body===body.id?draft.error:orderError(w,w.colony.selected,angle),disabled=paused?'disabled':'';
  const order=w.crewOrder,canWork=w.playerMode==='astronaut'&&w.astronaut.grounded&&w.astronaut.health>0;
