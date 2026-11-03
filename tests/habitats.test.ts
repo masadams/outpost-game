@@ -101,14 +101,10 @@ describe('oxygen habitats', () => {
     expect(w.astronaut.health).toBeLessThan(100); expect(w.astronaut.grounded).toBe(true);
     const before = w.astronaut.health; damageColony(w, position(0, 0), 10, 20); expect(w.astronaut.health).toBeLessThan(before);
   });
-  it('round trips habitat gas, backup, usage and other equipment through version 9', () => {
+  it('round trips habitat gas, backup, usage and other equipment through the current format', () => {
     const { w, h } = fixture(); h.energy = 7; w.colony.oxygenUsed = 3; w.ship.towRig = true;
-    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(12); const loaded = decodeCheckpoint(text);
+    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(13); const loaded = decodeCheckpoint(text);
     expect(loaded.colony.buildings[0].habitat).toEqual(h); expect(loaded.colony.oxygenUsed).toBe(3); expect(loaded.ship.towRig).toBe(true);
-  });
-  it('migrates version 8 without creating free gas or erasing existing equipment', () => {
-    const w = createWorld(); w.ship.towRig = true; const save = JSON.parse(encodeCheckpoint(w)); save.version = 8; delete save.world.colony.oxygenUsed;
-    const loaded = decodeCheckpoint(JSON.stringify(save)); expect(loaded.colony.oxygenUsed).toBe(0); expect(loaded.ship.towRig).toBe(true); expect(loaded.colony.products.oxygen).toBe(2);
   });
   it.each(['oxygen', 'energy'] as const)('rejects invalid %s buffers', field => {
     const { w, h } = fixture(); const save = JSON.parse(encodeCheckpoint(w)); save.world.colony.buildings[0].habitat[field] = 999;

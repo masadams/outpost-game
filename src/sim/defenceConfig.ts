@@ -8,7 +8,7 @@ export const WEAPONS = {
 } as const;
 export type Weapon = keyof typeof WEAPONS;
 export const isTurret = (kind: string): kind is Weapon => kind === 'laser' || kind === 'flak' || kind === 'missile';
-export interface Meteor extends Asteroid {}
+export interface Meteor extends Asteroid { impactBudget?: number }
 export interface Projectile { id: number; kind: 'flak' | 'missile'; position: Vec; velocity: Vec; targetId: number | null; life: number; fuse: number }
 export interface DefenceBeam { start: Vec; end: Vec; life: number }
 export interface DefenceState {

@@ -1,3 +1,4 @@
+import { isShield, SHIELDS } from '../sim/shieldConfig';
 import type { WorldState } from '../sim/world';
 import type { ThreatPrediction } from '../sim/meteor';
 
@@ -9,6 +10,7 @@ export function defencePanel(world: WorldState, paused: boolean, threats: Threat
     <small>${d.intercepted} intercepts · ${d.impacts} impacts${d.lostStock ? ` · ${d.lostStock.toFixed(1)} kg stock lost` : ''}</small>
     <button ${paused || d.meteors.length || d.projectiles.length ? 'disabled' : ''} data-colony="startWave">Start defence drill [N] · real damage</button>
     ${d.controlled !== null ? '<p class="warning">TURRET CONTROL · A/D aim · Space fire · E release</p>' : ''}
-    <small>Save with K before a drill. Orange paths mark predicted impacts.</small>
+    ${world.colony.buildings.filter(b => isShield(b.kind)).map(b => `<p>Emitter #${b.id}: ${b.status} · ${(b.shield?.charge ?? 0).toFixed(0)} / ${isShield(b.kind) ? SHIELDS[b.kind].capacity : 0} SP</p>`).join('')}
+    <small>Save with K before a drill. Orange paths predict terrain impact without future turret/shield interception.</small>
   </div>`;
 }

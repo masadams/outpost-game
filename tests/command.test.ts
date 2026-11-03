@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyCommandAction } from '../src/sim/command';
 import { createWorld, stepWorld } from '../src/sim/world';
-import { createCommand } from '../src/sim/commandConfig';
 import { stepColony, placementError, type Building } from '../src/sim/colony';
 import { orderedBuildings } from '../src/sim/power';
 import { createHabitat } from '../src/sim/habitatConfig';
@@ -111,10 +110,9 @@ describe('supplied construction queue', () => {
     expect(orderedBuildings(w.colony).map(b => b.id)).toEqual([2, 4]);
     expect(() => encodeCheckpoint(w)).not.toThrow();
   });
-  it('preserves priorities, budgets, paid work and legacy progress with version 10 migration', () => {
+  it('preserves priorities, budgets and paid work through checkpoint continuation', () => {
     const w = fixture(); applyCommandAction(w, { type: 'powerLimit', id: 2, percent: 30 }); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); worker(w, 500); run(w, 2);
-    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(12); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
-    const old = JSON.parse(text); old.version = 9; delete old.world.colony.command; const migrated = decodeCheckpoint(JSON.stringify(old)); expect(migrated.colony.command).toEqual(createCommand()); expect(migrated.depot).toEqual(w.depot);
+    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(13); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
   });
   it('rejects malformed priorities, limits, duplicate orders and invalid paid progress', () => {
     const w = fixture(); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); const text = encodeCheckpoint(w);

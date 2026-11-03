@@ -62,7 +62,7 @@ Build a bounded first neighborhood, not an unbounded universe. Define body sizes
 - Sweep contacts against each body's terrain/pads. Surface walking, domes, building placement, docking and towing must consistently identify their parent body.
 - Blend local-up/camera/telemetry toward the relevant body without abrupt frame changes. Navigation must identify destination, reference frame, relative velocity, atmosphere and return route.
 - Preserve continuous flight between destinations, with explicit fuel/range/rescue tradeoffs. Add origin/precision management if distance warrants it.
-- Save world motion/time, body-local construction and depleted belts/sites. Migrate old home-world checkpoints without wiping progress.
+- Save world motion/time, body-local construction and depleted belts/sites. Current-version save/load must continue body motion and local progress; development saves may be reset, with legacy migrations deferred until closer to completion.
 - Test transfer, arrival, departure, landing and return, including save/load and coupled towing around different gravity sources.
 
 **Exit:** Fly to a nearby moon/planet, encounter a distinct resource or interaction, land/work and return in the same continuous game with consistent physics and persistence.

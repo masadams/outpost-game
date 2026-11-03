@@ -1,3 +1,4 @@
+import { isShield, createShield } from './shieldConfig';
 import { orderedBuildings } from './power';
 import { createHabitat, isHabitat } from './habitatConfig';
 import { depositAt } from './geology';
@@ -12,6 +13,7 @@ export function completedBuilding(id: number, kind: BuildType, angle: number, w:
   const configured = w.colony.buildings.some(b => b.dispatch !== undefined);
   if (configured) orderedBuildings(w.colony).forEach((b, rank) => { b.dispatch = { rank, limit: b.dispatch?.limit ?? 100 }; });
   return { ...(configured ? { dispatch: { rank: w.colony.buildings.length, limit: 100 } } : {}), id, kind, angle, health: 100, enabled: true, progress: 0, recipe: 0, status: 'idle',
+    ...(isShield(kind) ? { shield: createShield() } : {}),
     ...(isHabitat(kind) ? { habitat: createHabitat() } : {}),
     ...(kind === 'miningRig' ? { depositId: depositAt(w.surfaceDeposits, angle, BLUEPRINTS[kind].halfWidth)!.id } : {}) };
 }

@@ -1,3 +1,5 @@
+import { createShielding, isShield, type ShieldState, type ShieldLedger } from './shieldConfig';
+import { maintainShields, chargeShields, drainShield } from './shields';
 import { createResearch, type ResearchState, type ProgressionAction } from './progressionConfig';
 import { stepResearch } from './research';
 import type { ExplorationAction } from './explorationConfig';
@@ -7,7 +9,7 @@ import { orderedBuildings, powerFraction } from './power';
 import { depositAt } from './geology';
 import { foundationSites } from './colonyPlacement';
 import { isHabitat, type HabitatState } from './habitatConfig';
-import { stepHabitats, ventHabitat } from './habitats';
+import { stepHabitats, chargeHabitats, ventHabitat } from './habitats';
 import type { TowAction } from './towingConfig';
 import { stepMiningRig } from './surfaceExtraction';
 import { availableProduct, createPolicy, industrialPowerBlock, MAX_RESERVE, POLICY_FIELDS, POLICY_INFO, type ColonyPolicy, type PolicyAction } from './colonyPolicy';
@@ -27,12 +29,14 @@ export interface Building {
   dispatch?: { rank: number; limit: number };
   gridPower?: number; requestedPower?: number;
   habitat?: HabitatState;
+  shield?: ShieldState;
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'research staffed';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached';
 }
 export interface Colony {
+  shielding: ShieldLedger;
   research: ResearchState;
   command: CommandState;
   oxygenUsed: number;
@@ -44,7 +48,7 @@ export type ColonyAction = ProgressionAction | ExplorationAction | CommandAction
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
-  return { research: createResearch(), command: createCommand(), oxygenUsed: 0, buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
+  return { shielding: createShielding(), research: createResearch(), command: createCommand(), oxygenUsed: 0, buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
     energy: 0, generation: 0, demand: 0, buildOpen: false, selected: 'solar', offset: 24, nextId: 1 };
 }
 export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).length * 200;
@@ -56,6 +60,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= 48) return 'Colony limit: 48 facilities';
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
   if (!options.remote && Math.abs(wrap(angle - localAngle(world.astronaut.position))) * WORLD.radius > 97) return 'Build within 96 m of the astronaut';
+  if (isShield(kind) && !world.colony.research.completed.includes('combat')) return 'Requires Combat engineering research';
   const width = BLUEPRINTS[kind].halfWidth;
   const sites = foundationSites(kind, angle);
   if (sites.some(s => Math.abs(wrap(s.angle)) * WORLD.radius < 36 + s.halfWidth - 1e-7)) return 'Keep the landing pad clear';
@@ -104,7 +109,7 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     if (inventoryMass(world.depot) > oreCapacity(remaining) || PRODUCTS.some(p => colony.products[p] + (BLUEPRINTS[building.kind].cost[p] ?? 0) * 0.75 * buildingHealth(building) / 100 > productCapacity(remaining))) {
       notify(world, 'NOT ENOUGH STORAGE AFTER DEMOLITION'); return;
     }
-    ventHabitat(world, building); colony.buildings = remaining.buildings;
+    ventHabitat(world, building); drainShield(world, building); colony.buildings = remaining.buildings;
     if (world.defence.controlled === building.id) world.defence.controlled = null;
     for (const p of PRODUCTS) colony.products[p] += (BLUEPRINTS[building.kind].cost[p] ?? 0) * 0.75 * buildingHealth(building) / 100;
     colony.energy = Math.min(colony.energy, energyCapacity(colony));
@@ -139,10 +144,13 @@ export function stepColony(world: WorldState, dt: number): void {
   for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b)) b.gridPower = b.requestedPower = 8 * powerFraction(b);
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
-  stepHabitats(world, dt);
+  stepHabitats(world, dt, true);
+  maintainShields(world, dt);
+  chargeHabitats(world, dt);
+  chargeShields(world, dt);
   let researchStaffed = false;
   for (const building of orderedBuildings(colony)) {
-    if (isHabitat(building.kind)) continue;
+    if (isHabitat(building.kind) || isShield(building.kind)) continue;
     building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
     if (!operational(building)) continue;
     if (!building.enabled) continue;

@@ -97,15 +97,9 @@ describe('finite nearby-space discovery', () => {
     visit(w); expect(audio.update(w, .1, false).cues).toContain('service'); visit(w); expect(audio.update(w, .1, false).cues).not.toContain('service');
     expect(audio.update(w, 1, true).cues).toEqual([]);
   });
-  it('round trips depleted stocks, surveyed manifests, selection and moving bodies in version 11', () => {
-    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(12);
+  it('round trips depleted stocks, surveyed manifests, selection and moving bodies in the current format', () => {
+    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(13);
     const loaded = decodeCheckpoint(text); expect(loaded.exploration).toEqual(w.exploration); expect(loaded.asteroids).toEqual(w.asteroids); seedNeighborhood(loaded); expect(loaded.asteroids).toHaveLength(27); expect(loaded.exploration.sites.find(t => t.key === s.key)?.stock).toEqual(s.stock);
-  });
-  it('migrates real v10 saves by adding only new sectors once and preserving old depleted IDs', () => {
-    const w = createWorld(), old = JSON.parse(encodeCheckpoint(w)); old.version = 10; delete old.world.exploration;
-    old.world.asteroids = old.world.asteroids.filter((b: { id: number }) => b.id < 15); old.world.nextId = 16;
-    const loaded = decodeCheckpoint(JSON.stringify(old)); expect(loaded.asteroids.filter(b => b.id < 15)).toEqual(old.world.asteroids); expect(loaded.asteroids.some(b => b.id === 15)).toBe(false);
-    expect(loaded.exploration.sites).toHaveLength(3); const again = decodeCheckpoint(encodeCheckpoint(loaded)); expect(again.asteroids).toEqual(loaded.asteroids);
   });
   it('rejects duplicate site IDs, invalid stocks, non-finite motion and malformed belt tags', () => {
     const text = encodeCheckpoint(createWorld());

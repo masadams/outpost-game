@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { legacyCheckpoint } from '../fixtures/legacyCheckpoint';
 import { WORLD } from '../../src/sim/config';
 
 test('shows a live coast path and supports keyboard, wheel and button zoom while paused', async ({ page }) => {
@@ -33,18 +32,4 @@ test('shows a live coast path and supports keyboard, wheel and button zoom while
   await page.screenshot({ path: 'docs/screenshots/atmosphere-trajectory.png' });
   expect(await hud.getAttribute('data-altitude')).toBe(altitude); expect(await hud.getAttribute('data-fuel')).toBe(fuel);
   expect(errors).toEqual([]);
-});
-
-test('loads a legacy checkpoint onto the larger planet without losing its base or inventories', async ({ page }) => {
-  const legacy = legacyCheckpoint();
-  await page.addInitScript(data => localStorage.setItem('outpost.checkpoint.v1', JSON.stringify(data)), legacy);
-  await page.goto('/'); const hud = page.locator('#hud');
-  await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(hud).toHaveAttribute('data-mode', 'astronaut');
-  await expect(hud).toHaveAttribute('data-buildings', '1'); await expect(hud).toHaveAttribute('data-asteroids', '26');
-  await expect(hud).toHaveAttribute('data-cargo', '6.00'); await expect(hud).toHaveAttribute('data-depot', '12.00');
-  await expect(hud).toHaveAttribute('data-altitude', '0.0'); await expect(page.locator('.status')).toContainText('MIGRATED');
-  await page.keyboard.press('k');
-  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!).version)).toBe(12);
-  const savedRadius = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!).environment.radius);
-  expect(savedRadius).toBe(WORLD.radius);
 });

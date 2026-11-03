@@ -3,9 +3,8 @@ import { heading, localAngle, wrap } from './math';
 import { nearbyBuilding, type Building } from './colony';
 import { operational } from './buildingHealth';
 import { damageColony, repairBuilding } from './buildingDamage';
-import { advanceMeteor } from './meteor';
+import { advanceMeteor, meteorDamage } from './meteor';
 import { fracture } from './mining';
-import { collideShip } from './bodies';
 import { isTurret, type DefenceAction, type Meteor } from './defenceConfig';
 import { stepWeapons, turretState } from './weapons';
 import { notify } from './messages';
@@ -54,12 +53,12 @@ export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: 
   const d = world.defence, starts = new Map(d.meteors.map(m => [m.id, { ...m.position }]));
   const survivors: Meteor[] = [];
   for (const m of d.meteors) {
-    const contact = advanceMeteor(m, dt);
+    const contact = advanceMeteor(m, dt, world, shipStart);
+    if (m.health <= 0) { d.intercepted++; continue; }
     if (contact) {
       d.impacts++;
-      const energy = m.mass * (m.velocity.x ** 2 + m.velocity.y ** 2) / 2;
-      damageColony(world, contact, Math.min(180, Math.max(15, energy / 2000)), 65 + m.radius);
-    } else { collideShip(world.ship, m, shipStart, starts.get(m.id)!); survivors.push(m); }
+      damageColony(world, contact, meteorDamage(m), 65 + m.radius);
+    } else survivors.push(m);
   }
   d.meteors = survivors;
   controlledTurret(world);
@@ -73,7 +72,11 @@ export function resolveDefenceHits(world: WorldState): void {
   d.meteors = d.meteors.filter(m => m.health > 0);
   for (const m of destroyed) {
     d.intercepted++;
-    if (m.stage === 0 && d.meteors.length <= 46) d.meteors.push(...fracture(m, () => world.nextId++).rocks);
+    if (m.stage === 0 && d.meteors.length <= 46) {
+      const children: Meteor[] = fracture(m, () => world.nextId++).rocks;
+      if (m.impactBudget !== undefined) children.forEach(child => { child.impactBudget = m.impactBudget! / 2; });
+      d.meteors.push(...children);
+    }
     // A second hit disperses fragments into non-collectible dust; impacts never create free ore.
   }
 }

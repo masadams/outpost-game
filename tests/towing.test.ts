@@ -122,12 +122,6 @@ describe('towing integration and checkpoints', () => {
     for (let i = 0; i < 120; i++) { stepWorld(w, idle, STEP); stepWorld(loaded, idle, STEP); }
     expect(loaded.ship).toEqual(w.ship); expect(loaded.asteroids).toEqual(w.asteroids); expect(loaded.towing).toEqual(w.towing);
   });
-  it('migrates v7 without resetting policies, schedules, combat, cargo or depleted seams', () => {
-    const w = createWorld(); w.colony.policy = { ...createPolicy(), energyReserve: 10 }; w.surfaceDeposits[0].remaining = 50; w.ship.cargo.ice = 4; w.ship.armament.cannon = 20;
-    w.colony.buildings = [{ id: 1, kind: 'refinery', angle: 0.2, enabled: true, progress: 1, recipe: 0, status: 'running', schedule: createSchedule() }]; w.colony.nextId = 2;
-    const old = JSON.parse(encodeCheckpoint(w)); old.version = 7; delete old.world.towing; delete old.world.ship.towRig;
-    const loaded = decodeCheckpoint(JSON.stringify(old)); expect(loaded.ship).toEqual(w.ship); expect(loaded.colony).toEqual(w.colony); expect(loaded.surfaceDeposits).toEqual(w.surfaceDeposits); expect(loaded.towing).toEqual(createTowing());
-  });
   it('rejects dangling targets, impossible cable state and untyped or missing equipment', () => {
     const w = fixture(); applyTowAction(w, { type: 'toggleTow' }); const valid = JSON.parse(encodeCheckpoint(w));
     for (const mutate of [

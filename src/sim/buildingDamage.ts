@@ -1,3 +1,4 @@
+import { drainShield } from './shields';
 import { damageFactor } from './shipStats';
 import { BLUEPRINTS, PRODUCTS } from './colonyConfig';
 import { HABITATS, isHabitat } from './habitatConfig';
@@ -28,7 +29,7 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
     const reach = radius + (isHabitat(b.kind) ? HABITATS[b.kind].halfSpan : BLUEPRINTS[b.kind].halfWidth);
     if (distance >= reach || !operational(b)) continue;
     b.health = Math.max(0, buildingHealth(b) - damage * (1 - distance / reach)); hit = true;
-    if (!operational(b)) { ventHabitat(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
+    if (!operational(b)) { ventHabitat(world, b); drainShield(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
   const n = { x: Math.sin(angle), y: -Math.cos(angle) };
   const at = { x: n.x * WORLD.radius, y: n.y * WORLD.radius };

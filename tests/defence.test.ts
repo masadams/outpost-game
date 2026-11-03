@@ -152,12 +152,6 @@ describe('persistent damage, repair and compatibility', () => {
     const loaded = decodeCheckpoint(encodeCheckpoint(w)); expect(loaded.defence).toEqual({ ...w.defence, controlled: null, beams: [] }); expect(loaded.colony).toEqual(w.colony);
     w.defence.controlled = null; run(w, 2); run(loaded, 2); expect(loaded.defence).toEqual(w.defence); expect(loaded.colony.products).toEqual(w.colony.products);
   });
-  it('migrates alpha-0.2 saves without starting threats or changing planet positions/inventories', () => {
-    const w = base(), legacy = JSON.parse(encodeCheckpoint(w)); legacy.version = 2; delete legacy.world.defence;
-    legacy.world.colony.buildings = legacy.world.colony.buildings.filter((b: { kind: string }) => !isTurret(b.kind));
-    const loaded = decodeCheckpoint(JSON.stringify(legacy)); expect(loaded.defence.wave).toBe(0); expect(loaded.defence.meteors).toHaveLength(0);
-    expect(loaded.ship.position).toEqual(w.ship.position); expect(loaded.colony.products).toEqual(w.colony.products);
-  });
   it('rejects invalid defence saves, duplicate IDs, unbounded ammo and impossible turret state', () => {
     const w = base(), valid = JSON.parse(encodeCheckpoint(w));
     for (const mutate of [

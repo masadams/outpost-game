@@ -14,6 +14,7 @@ TypeScript, Vite, Phaser 3 for rendering/input, custom fixed-timestep physics (6
 - Avoid external images until core gameplay works; use procedural/vector placeholders.
 - Unit-test physics invariants and landing classification.
 - Provide npm scripts for dev, build, test and typecheck.
+- During prototype development, support current-version saves only. Do not build legacy-save migrations until the game is closer to complete; older saves may be reset (user direction, November 2026).
 - Document commands and known limitations. Never claim tests passed unless run.
 - Do not merge PRs automatically. Keep code free of personal names/identifiers.
 

@@ -3,8 +3,6 @@ import { decodeCheckpoint, encodeCheckpoint, readCheckpoint, writeCheckpoint, SA
 import { createWorld } from '../src/sim/world';
 import { stepColony } from '../src/sim/colony';
 import { STEP, WORLD } from '../src/sim/config';
-import { legacyCheckpoint } from './fixtures/legacyCheckpoint';
-import { length, localAngle } from '../src/sim/math';
 
 it('round-trips buildings, stock, machine progress, ship, crew and the finite field', () => {
   const world = createWorld(); world.colony.buildings = [
@@ -24,21 +22,6 @@ it('clears held controls on load and does not mutate the saved source world', ()
 });
 it.each(['{', JSON.stringify({ version: 999, world: createWorld() }), JSON.stringify({ version: 1, world: {} }), ' '.repeat(1_000_001)])('rejects broken, unsupported or oversized checkpoints', text => {
   expect(() => decodeCheckpoint(text)).toThrow();
-});
-it('migrates the old small moon while preserving surface arc distances, resources and depleted deposits', () => {
-  const legacy = legacyCheckpoint(), loaded = decodeCheckpoint(JSON.stringify(legacy));
-  expect(length(loaded.ship.position)).toBeCloseTo(WORLD.radius + 7);
-  expect(localAngle(loaded.astronaut.position) * WORLD.radius).toBeCloseTo(12);
-  expect(loaded.colony.buildings[0].angle * WORLD.radius).toBeCloseTo(120);
-  expect(loaded.depot).toEqual(legacy.world.depot); expect(loaded.ship.cargo).toEqual(legacy.world.ship.cargo);
-  expect(loaded.colony.products).toEqual(legacy.world.colony.products); expect(loaded.ship.fuel).toBe(150);
-  expect(loaded.asteroids.filter(b => b.id <= 15).map(b => b.id)).toEqual(legacy.world.asteroids.map(b => b.id));
-  expect(loaded.asteroids.filter(b => b.belt)).toHaveLength(12); expect(loaded.exploration.sites).toHaveLength(3);
-  expect(length(loaded.exploration.sites[0].position) - WORLD.radius).toBeCloseTo(1450); // New sectors seed after reprojection.
-  expect(length(loaded.asteroids[0].position) - WORLD.radius).toBeCloseTo(440);
-  expect(loaded.notice.message).toContain('MIGRATED');
-  const text = encodeCheckpoint(loaded); expect(JSON.parse(text).version).toBe(12);
-  expect(decodeCheckpoint(text).ship.position).toEqual(loaded.ship.position); // No double scaling.
 });
 it('rejects a newer envelope with an incompatible planet instead of silently moving the world', () => {
   const envelope = JSON.parse(encodeCheckpoint(createWorld())); envelope.environment.radius = 600;
@@ -62,4 +45,9 @@ it('uses a versioned storage key, reports missing checkpoints and propagates una
   expect(readCheckpoint(storage)).toBeNull(); writeCheckpoint(storage, createWorld()); expect(items.has(SAVE_KEY)).toBe(true);
   expect(readCheckpoint(storage)?.colony.products.alloy).toBe(28);
   expect(() => writeCheckpoint({ setItem: () => { throw new Error('Quota exceeded'); } }, createWorld())).toThrow('Quota exceeded');
+});
+
+it.each([1, 7, 12, 14])('rejects incompatible development save version %i without migrating it', version => {
+  const save = JSON.parse(encodeCheckpoint(createWorld())); save.version = version;
+  expect(() => decodeCheckpoint(JSON.stringify(save))).toThrow('incompatible with this development build');
 });

@@ -72,3 +72,7 @@ Follow [the neighborhood route](NEIGHBORHOOD.md#playtest): live chart and target
 ## Ship progression — alpha 0.13
 
 Follow [the research/equipment route](PROGRESSION.md#saves-and-playtest): build/power a lab, pay samples, pause/save active work, fabricate at home and verify real capacities/mass/tool budgets. Tank removal must return existing fuel, while full stock/excess cargo blocks unsafe removal. Recovery preserves modules without free refill. Shields are next; broader balancing and the full graphics/UX/UI overhaul remain scheduled.
+
+## Phase 8.2 shield domes
+
+Use the [supplied-shield playtest route](SHIELDS.md#playtest). Check power shortages, initial charging, real impacts/overflow, breach recovery, toggling, habitat independence, friendly hauling/mining and K/L. Review Command and field visibility at 900×600, 1280×800 and 1920×1080.

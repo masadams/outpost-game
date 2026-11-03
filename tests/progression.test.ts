@@ -146,10 +146,8 @@ describe('ship fabrication, equipment and real consequences', () => {
     const w = workshop(); install(w, 'tank'); install(w, 'cargo'); w.ship.state = 'crashed'; w.ship.fuel = 250; w.ship.cargo.iron = 180;
     applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.equipment).toEqual(['tank', 'cargo']); expect(w.ship.fuel).toBe(20); expect(w.ship.hull).toBe(30); expect(w.combat.lostCargo).toBe(180);
   });
-  it('persists active research and equipment, and migrates v11 without new unlocks or free modules', () => {
-    const w = workshop(); install(w, 'cargo'); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(12); expect(decodeCheckpoint(text).ship.equipment).toEqual(['cargo']);
-    const old = JSON.parse(text); old.version = 11; old.world.ship.cargo.iron = 0; delete old.world.ship.equipment; delete old.world.colony.research;
-    const loaded = decodeCheckpoint(JSON.stringify(old)); expect(loaded.ship.equipment).toEqual([]); expect(loaded.colony.research.completed).toEqual([]); expect(loaded.ship.towRig).toBe(w.ship.towRig);
+  it('persists installed equipment and continues paid research', () => {
+    const w = workshop(); install(w, 'cargo'); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(13); expect(decodeCheckpoint(text).ship.equipment).toEqual(['cargo']);
     const active = laboratory(); applyResearch(active, { type: 'researchStart', tech: 'materials' }); run(active, 3); const resumed = decodeCheckpoint(encodeCheckpoint(active)); run(resumed, 12); expect(resumed.colony.research.completed).toEqual(['materials']);
   });
   it('rejects stacked/unknown/unresearched modules, invalid project work and malformed queues', () => {
