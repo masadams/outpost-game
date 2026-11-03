@@ -113,7 +113,7 @@ The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_00
 - [x] Opt-in refinery scheduling with configurable stock targets (merged [PR #12](https://github.com/masadams/outpost-game/pull/12)).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
 - [ ] Mining drones or asteroid towing, with costs and vulnerability.
-- [ ] Priority controls for power, storage and defensive ammunition (Task 007C implemented as reserves; awaiting review/merge).
+- [ ] Priority controls for power, storage and defensive ammunition (Task 007C implemented as reserves in [PR #13](https://github.com/masadams/outpost-game/pull/13); awaiting review/merge).
 - [ ] Background colony operations while player is in space, using appropriate simulation LOD.
 **Exit:** Colony remains functional and can defend itself while player is away.
 
