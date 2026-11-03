@@ -115,3 +115,9 @@ footer p { margin: 0; line-height: 1.5; }
 .stock-target { display: grid; grid-template-columns: 1fr 30px 36px 30px; gap: 6px; align-items: center; margin-block: 6px; }
 .stock-target button { padding: 6px; margin: 0; }
 .stock-target b { text-align: center; }
+.policy-controls { border-block: 1px solid var(--edge); padding-block: 10px; margin-block: 10px; }
+.policy-controls summary { cursor: pointer; color: var(--mint); padding-block: 4px; }
+.policy-row { display: grid; grid-template-columns: 1fr 30px 38px 30px; gap: 5px; align-items: center; margin-block: 8px; }
+.policy-row button { padding: 6px; margin: 0; }
+.policy-row b { text-align: center; }
+.policy-row small { display: block; }

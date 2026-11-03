@@ -1,4 +1,5 @@
 import { BLUEPRINTS, PRODUCTS } from './colonyConfig';
+import { availableProduct } from './colonyPolicy';
 import { energyCapacity, oreCapacity, productCapacity, nearbyBuilding } from './colony';
 import { WORLD } from './config';
 import { inventoryMass, RESOURCES } from './resources';
@@ -24,7 +25,7 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
     const reach = radius + BLUEPRINTS[b.kind].halfWidth;
     if (distance >= reach || !operational(b)) continue;
     b.health = Math.max(0, buildingHealth(b) - damage * (1 - distance / reach)); hit = true;
-    if (!operational(b)) { b.progress = 0; b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
+    if (!operational(b)) { b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
   const n = { x: Math.sin(angle), y: -Math.cos(angle) };
   const at = { x: n.x * WORLD.radius, y: n.y * WORLD.radius };
@@ -43,8 +44,8 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
 export function repairBuilding(world: WorldState): void {
   const b = nearbyBuilding(world);
   if (!b || !world.astronaut.grounded || world.astronaut.health <= 0) { notify(world, 'STAND WITHIN 18 m OF A FACILITY TO REPAIR'); return; }
-  const amount = Math.min(100 - buildingHealth(b), world.colony.products.alloy * 10);
-  if (amount <= 0) { notify(world, operational(b) && buildingHealth(b) === 100 ? 'FACILITY UNDAMAGED' : 'REPAIR NEEDS ALLOY · 1 kg PER 10 HULL'); return; }
+  const amount = Math.min(100 - buildingHealth(b), availableProduct(world.colony, 'alloy') * 10);
+  if (amount <= 0) { notify(world, operational(b) && buildingHealth(b) === 100 ? 'FACILITY UNDAMAGED' : 'REPAIR NEEDS UNRESERVED ALLOY · LOWER RESERVES IN COLONY'); return; }
   b.health = Math.min(100, buildingHealth(b) + amount); world.colony.products.alloy = Math.max(0, world.colony.products.alloy - amount / 10); b.status = 'idle';
   notify(world, `FACILITY REPAIRED · +${amount.toFixed(0)} HULL`);
 }

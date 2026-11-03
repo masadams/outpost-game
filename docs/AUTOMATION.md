@@ -32,4 +32,4 @@ For mixed scheduling, unload copper, silicon/rare metals and ice or add surface 
 
 Version-6 checkpoints retain each configured refinery's enabled state, targets, selection cursor, selected recipe and cycle progress. Versions 1–5 retain their supported progress and existing manual refinery behavior; v5 surface depletion and combat state are preserved. Malformed policies and schedules attached to other building kinds are rejected. The browser slot remains `outpost.checkpoint.v1`.
 
-Global power/material transport, constant solar and non-solid circular-surface buildings remain prototype limits. Explicit power/storage/ammunition priorities and mobile drones/towing remain future Phase 7 work. The required full graphics/UX/UI overhaul and human usability/economy tuning remain planned.
+Global power/material transport, constant solar and non-solid circular-surface buildings remain prototype limits. The next [resource-priority slice](COLONY_PRIORITIES.md) adds protected battery charge, delivery room and turret-material floors. Mobile drones/towing remain future Phase 7 work. The required full graphics/UX/UI overhaul and human usability/economy tuning remain planned.

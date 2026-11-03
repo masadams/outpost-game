@@ -7,7 +7,7 @@ export class Keyboard {
   private pending = new Set<string>();
   private onBlur = (): void => this.release();
   private onControlFocus = (event: FocusEvent): void => {
-    if (event.target instanceof HTMLElement && event.target.closest('button, input, select, textarea')) this.release();
+    if (event.target instanceof HTMLElement && event.target.closest('button, input, select, textarea, summary')) this.release();
   };
   constructor(scene: Phaser.Scene) {
     this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE,I,ESC', true) as Record<string, Phaser.Input.Keyboard.Key>;

@@ -1,5 +1,6 @@
 import { depositAt } from './geology';
 import { stepMiningRig } from './surfaceExtraction';
+import { availableProduct, createPolicy, industrialPowerBlock, MAX_RESERVE, POLICY_FIELDS, POLICY_INFO, type ColonyPolicy, type PolicyAction } from './colonyPolicy';
 import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selectScheduledRecipe, SCHEDULE_PRODUCTS, type RefinerySchedule, type SchedulingAction } from './scheduling';
 import type { CombatAction } from './combatConfig';
 import type { DefenceAction } from './defenceConfig';
@@ -16,13 +17,14 @@ export interface Building {
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved';
 }
 export interface Colony {
+  policy?: ColonyPolicy;
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -47,6 +49,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
     if (d.remaining <= 1e-9) return 'Deposit exhausted · prospect another seam';
   }
   if (PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Insufficient fabrication materials';
+  if (PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Colony';
   return null;
 }
 export function nearbyBuilding(world: WorldState): Building | undefined {
@@ -54,6 +57,12 @@ export function nearbyBuilding(world: WorldState): Building | undefined {
   return world.colony.buildings.find(b => Math.abs(wrap(b.angle - localAngle(world.astronaut.position))) * WORLD.radius <= 18);
 }
 export function applyColonyAction(world: WorldState, action: ColonyAction): void {
+  if (action.type === 'adjustPolicy') {
+    if (!POLICY_FIELDS.includes(action.field) || (action.direction !== -1 && action.direction !== 1)) return;
+    const policy = world.colony.policy ??= createPolicy();
+    policy[action.field] = clamp(policy[action.field] + action.direction * POLICY_INFO[action.field].step, 0, MAX_RESERVE);
+    return;
+  }
   if (world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0) { notify(world, 'LEAVE THE SHIP AND STAND ON THE SURFACE TO BUILD'); return; }
   const colony = world.colony;
   if (action.type === 'toggleBuild') { colony.buildOpen = !colony.buildOpen; return; }
@@ -114,7 +123,8 @@ export function stepColony(world: WorldState, dt: number): void {
     if (!hasRecipeInputs(world, recipe)) { building.status = 'no feedstock'; continue; }
     if (!hasRecipeRoom(colony.products, recipe, productCapacity(colony))) { building.status = 'output full'; continue; }
     colony.demand += recipe.power;
-    if (colony.energy + 1e-9 < recipe.power * dt) { building.status = 'no power'; continue; }
+    const block = industrialPowerBlock(colony, recipe.power * dt);
+    if (block) { building.status = block; continue; }
     colony.energy = Math.max(0, colony.energy - recipe.power * dt); building.progress += dt; building.status = 'running';
     if (building.progress + 1e-9 < recipe.seconds) continue;
     building.progress = 0;

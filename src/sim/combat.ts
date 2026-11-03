@@ -5,6 +5,7 @@ import { heading, length, localAngle, wrap, type Vec } from './math';
 import { WORLD } from './config';
 import { inventoryMass } from './resources';
 import { notify } from './messages';
+import { availableProduct } from './colonyPolicy';
 import { stepDrone } from './drones';
 import { stepCombatProjectiles, type CombatStarts } from './combatProjectiles';
 import { collideShip, type Asteroid } from './bodies';
@@ -26,6 +27,7 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     if (s.state !== 'crashed') { notify(world, 'RECOVERY IS FOR A LOST SHIP · LAND AND E FOR SERVICE'); return; }
     const stock = world.colony.products;
     if (stock.alloy < 8 || stock.components < 2) { notify(world, 'RECOVERY NEEDS 8 ALLOY + 2 COMPONENTS · L LOADS CHECKPOINT · R RESETS'); return; }
+    if (availableProduct(world.colony, 'alloy') < 8 || availableProduct(world.colony, 'components') < 2) { notify(world, 'RECOVERY MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN COLONY'); return; }
     stock.alloy -= 8; stock.components -= 2; c.lostCargo += inventoryMass(s.cargo); c.recoveries++;
     c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
     const recovered = createShip(); recovered.hull = 30; recovered.fuel = Math.min(s.fuel, 20);

@@ -1,5 +1,7 @@
 import { geologyPanel, rigDetails } from './geology';
 import { schedulingPanel } from './scheduling';
+import { policyPanel } from './colonyPolicy';
+import { POLICY_FIELDS, type PolicyField } from '../sim/colonyPolicy';
 import { SCHEDULE_PRODUCTS, type ScheduleProduct } from '../sim/scheduling';
 import { buildingHealth } from '../sim/buildingHealth';
 import { isTurret, WEAPONS } from '../sim/defenceConfig';
@@ -16,6 +18,7 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     <div class="resource"><span>Supply / demand</span><span>${colony.generation.toFixed(0)} / ${colony.demand.toFixed(0)} kW</span></div>
     <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
     <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
+    ${policyPanel(world, paused)}
     ${geologyPanel(world)}
     <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div>
     <button ${disabled} data-colony="toggleBuild">${colony.buildOpen ? 'Close build palette [B]' : 'Build palette [B] · on foot'}</button>
@@ -35,7 +38,8 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
-  const { colony, select, shift, target, delta } = button.dataset;
+  const { colony, select, shift, target, delta, policy, direction } = button.dataset;
+  if (policy && POLICY_FIELDS.includes(policy as PolicyField) && (direction === '-1' || direction === '1')) return { type: 'adjustPolicy', field: policy as PolicyField, direction: Number(direction) as -1 | 1 };
   if (target && SCHEDULE_PRODUCTS.includes(target as ScheduleProduct) && (delta === '-5' || delta === '5')) return { type: 'adjustTarget', product: target as ScheduleProduct, delta: Number(delta) as -5 | 5 };
   if (select && BUILD_TYPES.includes(select as BuildType)) return { type: 'select', kind: select as BuildType };
   if (shift === '-32' || shift === '32') return { type: 'shift', delta: Number(shift) };
