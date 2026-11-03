@@ -28,6 +28,7 @@ export class CommandConsole {
   private site = 120;
   private blueprint: BuildType = BUILD_TYPES[0];
   private world: WorldState | null = null;
+  private requestedSelection: number|null=null;
   private sampleTime = 0;
   private previous = new Map<string, number>();
   private rates = new Map<string, number>();
@@ -75,6 +76,7 @@ export class CommandConsole {
       const k = e as KeyboardEvent; if (!['Escape', 'p', 'P', 'k', 'K', 'l', 'L', 'm', 'M', 'h', 'H'].includes(k.key)) k.stopPropagation();
     });
   }
+  selectFacility(body: BodyId,id:number):void {this.body=body;if(this.world)this.update(colonyWorld(this.world,body),this.paused);this.selected=id;this.requestedSelection=id;}
   update(source: WorldState, paused: boolean): void {
     const w = this.body === 'local' ? source : colonyWorld(source, this.body);
     const focused = document.activeElement instanceof HTMLElement && this.root.contains(document.activeElement) ? document.activeElement.dataset.focus : undefined;
@@ -84,6 +86,7 @@ export class CommandConsole {
     if (this.world !== w || now < this.sampleTime) { this.rates.clear(); this.previous = stocks; this.sampleTime = now; this.selected = null; }
     if (now - this.sampleTime >= 1) { for (const [p, q] of stocks) this.rates.set(p, (q - (this.previous.get(p) ?? q)) / (now - this.sampleTime)); this.previous = stocks; this.sampleTime = now; }
     this.world = w;
+    if(this.requestedSelection!==null){this.selected=this.requestedSelection;this.requestedSelection=null;}
     if (!c.buildings.some(b => b.id === this.selected)) this.selected = c.buildings[0]?.id ?? null;
     const siteError = orderError(w, this.blueprint, this.site / colonyPlanet(w).radius);
     this.preview = this.root.querySelector('#command-site')?.closest('details')?.open ? { kind: this.blueprint, angle: this.site / colonyPlanet(w).radius, valid: !siteError } : null;

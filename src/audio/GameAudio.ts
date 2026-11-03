@@ -1,3 +1,4 @@
+import { AdaptiveMusic } from './AdaptiveMusic';
 import { AudioDirector, type Cue, type SoundFrame } from './director';
 import { AUDIO_KEY, parsePreferences, type AudioPreferences } from './preferences';
 import type { WorldState } from '../sim/world';
@@ -6,6 +7,12 @@ type Loop = 'engine' | 'mining' | 'tractor' | 'machinery';
 export class GameAudio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
+  private effects: GainNode | null = null;
+  private music: AdaptiveMusic | null = null;
+  private effectsVolume = 1;
+  private musicVolume = .15;
+  private duckTime = 0;
+  setMix(effects: number, music: number): void { this.effectsVolume = effects; this.musicVolume = music; if(this.effects && this.context) this.effects.gain.setTargetAtTime(effects,this.context.currentTime,.03); }
   private director = new AudioDirector();
   private loops = new Map<Loop, { oscillator: OscillatorNode; gain: GainNode }>();
   private voices = new Set<AudioScheduledSourceNode>();
@@ -34,12 +41,14 @@ export class GameAudio {
     try {
       if (!this.context) {
         this.context = new AudioContext(); this.master = this.context.createGain(); this.master.gain.value = 0;
+        this.effects=this.context.createGain(); this.effects.gain.value=this.effectsVolume; this.effects.connect(this.master);
+        this.music=new AdaptiveMusic(this.context,this.master);
         const compressor = this.context.createDynamicsCompressor(); compressor.threshold.value = -16; compressor.ratio.value = 3;
         this.master.connect(compressor); compressor.connect(this.context.destination);
         for (const [name, frequency, type] of [['engine', 82, 'sawtooth'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 62, 'triangle']] as const) {
           const oscillator = this.context.createOscillator(), gain = this.context.createGain(), filter = this.context.createBiquadFilter();
           oscillator.type = type; oscillator.frequency.value = frequency; filter.type = 'lowpass'; filter.frequency.value = name === 'engine' ? 450 : 1000;
-          gain.gain.value = 0; oscillator.connect(filter); filter.connect(gain); gain.connect(this.master); oscillator.start();
+          gain.gain.value = 0; oscillator.connect(filter); filter.connect(gain); gain.connect(this.effects!); oscillator.start();
           this.loops.set(name, { oscillator, gain });
         }
       }
@@ -73,6 +82,9 @@ export class GameAudio {
       const enabled = !paused && frame[name];
       loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.065 : name === 'machinery' ? 0.018 : 0.035 : 0, this.context.currentTime, 0.04);
     }
+    if (frame.cues.some(c=>['warning','landingWarning','fuelWarning','shieldBreach','crash'].includes(c))) this.duckTime=2;
+    this.duckTime=Math.max(0,this.duckTime-seconds);
+    this.music?.update(world,seconds,this.musicVolume,this.audible,this.duckTime>0);
     if (paused) this.stopVoices();
     if (this.audible) for (const cue of frame.cues) this.play(cue);
   }
@@ -84,7 +96,7 @@ export class GameAudio {
     const now = this.context.currentTime + delay, oscillator = this.context.createOscillator(), gain = this.context.createGain();
     oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, now); oscillator.frequency.exponentialRampToValueAtTime(end, now + duration);
     gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.11, now + 0.008); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    oscillator.connect(gain); gain.connect(this.master); this.track(oscillator, gain); oscillator.start(now); oscillator.stop(now + duration + 0.01);
+    oscillator.connect(gain); gain.connect(this.effects!); this.track(oscillator, gain); oscillator.start(now); oscillator.stop(now + duration + 0.01);
   }
   private noise(duration: number, level: number): void {
     if (!this.context || !this.master || this.voices.size >= 20) return;
@@ -92,10 +104,11 @@ export class GameAudio {
     let seed = 19; for (let i = 0; i < data.length; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) | 0; data[i] = seed / 2147483648; }
     const source = this.context.createBufferSource(), gain = this.context.createGain(); source.buffer = buffer;
     const now = this.context.currentTime; gain.gain.setValueAtTime(level, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    source.connect(gain); gain.connect(this.master); this.track(source, gain); source.start(now);
+    source.connect(gain); gain.connect(this.effects!); this.track(source, gain); source.start(now);
   }
   private play(cue: Cue): void {
-    if (cue === 'crash') { this.noise(0.45, 0.16); this.tone(130, 35, 0.45); }
+    if(cue==='airlessArrival'){this.tone(220,330,.3,0,'sine');this.tone(440,330,.35,.3,'sine');}
+    else if (cue === 'crash') { this.noise(0.45, 0.16); this.tone(130, 35, 0.45); }
     else if (cue === 'impact' || cue === 'fracture') { this.noise(0.16, 0.09); this.tone(160, 65, 0.18); }
     else if (cue === 'shieldHit') { this.tone(260, 720, 0.16, 0, 'sine'); }
     else if (cue === 'shieldBreach') { this.tone(520, 100, 0.28); this.tone(180, 90, 0.18, 0.28); }
@@ -123,6 +136,6 @@ export class GameAudio {
     document.removeEventListener('keydown', this.unlock); document.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('blur', this.silence); document.removeEventListener('visibilitychange', this.visibility);
     for (const loop of this.loops.values()) loop.oscillator.stop();
-    this.loops.clear(); if (this.context) void this.context.close().catch(() => {});
+    this.music?.destroy(); this.loops.clear(); if (this.context) void this.context.close().catch(() => {});
   }
 }

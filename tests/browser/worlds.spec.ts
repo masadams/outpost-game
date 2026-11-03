@@ -66,7 +66,7 @@ test('flies to the moving moon, builds supplied mining, saves both colonies, car
   await page.locator('[data-select="miningRig"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
   await tap(page, 't'); await page.locator('[data-select="solar"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '2'); await tap(page, 'b');
   await advance(page, 8000); await tap(page, 'p'); await tap(page, 'k');
-  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(save.version).toBe(14); expect(save.world.moon.depot.ice).toBeGreaterThan(0); expect(save.world.depot.ice).toBe(0); expect(save.world.moon.surfaceDeposits[0].remaining).toBeLessThan(180); expect(save.world.colony.buildings).toHaveLength(0);
+  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(save.version).toBe(15); expect(save.world.objectives.completed).toContain('moonWork');expect(save.world.moon.depot.ice).toBeGreaterThan(0); expect(save.world.depot.ice).toBe(0); expect(save.world.moon.surfaceDeposits[0].remaining).toBeLessThan(180); expect(save.world.colony.buildings).toHaveLength(0);
   await page.getByRole('button', { name: 'Command', exact: true }).click({ force: true }); await advance(page, 100);
   await expect(page.locator('#command-console')).toContainText('COMMAND · NACRE COLONY');
   await page.getByRole('combobox', { name: 'Command colony', exact: true }).selectOption('home'); await advance(page, 100); await expect(page.locator('#command-console')).toContainText('COMMAND · SELENE COLONY');
@@ -78,7 +78,7 @@ test('flies to the moving moon, builds supplied mining, saves both colonies, car
   await fly(page, 'home', 3500, 200, angle);
   while (Math.abs(angle) > .01) { angle -= Math.sign(angle) * Math.min(Math.PI / 4, Math.abs(angle)); await fly(page, 'home', 3500, 150, angle); }
   await fly(page, 'home', 1500); await fly(page, 'home', 7, 600); await tap(page, 'e'); await tap(page, 'p'); await tap(page, 'k');
-  const returned = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(returned.world.ship.ground).toBe('home'); expect(returned.world.depot.ice).toBeGreaterThan(0); expect(returned.world.ship.cargo.ice).toBe(0); expect(returned.world.ship.fuel).toBeLessThan(240); expect(returned.world.moon.colony.buildings).toHaveLength(2); expect(errors).toEqual([]);
+  const returned = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(returned.world.objectives.completed).toEqual(expect.arrayContaining(['moonWork','return','delivery']));expect(returned.world.ship.ground).toBe('home'); expect(returned.world.depot.ice).toBeGreaterThan(0); expect(returned.world.ship.cargo.ice).toBe(0); expect(returned.world.ship.fuel).toBeLessThan(240); expect(returned.world.moon.colony.buildings).toHaveLength(2); expect(errors).toEqual([]);
 });
 
 test('shows surface-relative moon instruments and native local power controls at supported desktop sizes', async ({ page }) => {

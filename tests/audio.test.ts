@@ -60,3 +60,12 @@ it.each([null, '{broken', '{"muted":false,"volume":2}', '{"muted":"yes","volume"
 it('restores valid muted and zero-volume preferences', () => {
   expect(parsePreferences('{"muted":true,"volume":0}')).toEqual({ muted: true, volume: 0 });
 });
+
+it('announces airless source arrival distinctly, with no false atmospheric entry and no replay after load',async()=>{
+ const {colonyWorld}=await import('../src/sim/localWorld');
+ const w=createWorld(),director=new AudioDirector();w.ship.state='flying';director.reset(w);
+ expect(director.update(colonyWorld(w,'moon'),1/60,false).cues).toEqual(['airlessArrival']);
+ expect(director.update(colonyWorld(w,'moon'),1/60,false).cues).toEqual([]);
+ director.reset(colonyWorld(w,'moon'));expect(director.update(colonyWorld(w,'moon'),1/60,false).cues).toEqual([]);
+ expect(director.update(w,1/60,false).cues).toEqual([]);
+});

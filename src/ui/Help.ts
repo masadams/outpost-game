@@ -3,8 +3,8 @@ export class Help {
   private dialog = document.createElement('dialog');
   constructor(private onToggle: (open: boolean) => void) {
     this.dialog.id = 'help'; this.dialog.setAttribute('aria-label', 'Outpost quick-start and controls');
-    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.9</span><button type="button">Return to game [H / Esc]</button></div>
-      <h2>Find your controls</h2><p>Top-left buttons open Cargo, Colony, Combat or Defence in one operations panel. <b>I</b> toggles cargo; <b>Esc</b> closes the panel. Relevant panels open when you build, operate a turret, enter combat or open the depot. Closing a panel never pauses the world; <b>P</b> pauses. Telemetry and weapon state stay along the bottom so targets remain visible.</p><h2>Your first sortie</h2><p>Launch from the green pad, mine ore, land, then build a small working colony on the larger planet and its 1.2 km atmosphere.</p>
+    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.16</span><button type="button">Return to game [H / Esc]</button></div>
+      <h2>Set up your flight deck</h2><p><b>Settings</b> changes text size, motion, graphics, the horizon camera, music/effects levels and all keyboard bindings. This guide shows defaults; the settings binding table and contextual hints show your chosen keys. <b>Objectives</b> records actual deliveries, supplied industry, equipment and a moon work/return trip. It grants no supplies.</p><h2>Find your controls</h2><p>Top-left buttons open Cargo, Colony, Combat or Defence in one operations panel. <b>I</b> toggles cargo; <b>Esc</b> closes the panel. Relevant panels open when you build, operate a turret, enter combat or open the depot. Closing a panel never pauses the world; <b>P</b> pauses. Telemetry and weapon state stay along the bottom so targets remain visible.</p><h2>Your first sortie</h2><p>Launch from the green pad, mine ore, land, then build a small working colony on the larger planet and its 1.2 km atmosphere.</p>
       <ol><li><b>Fly:</b> hold W / Up for about 6.5 seconds for a low atmospheric hop, then coast. Hold Space to clear the starter rock above home, or steer around it. A/D or arrows rotate. Gravity acts everywhere; air resistance fades to zero in space.</li>
       <li><b>Return:</b> keep the nose upright, pulse thrust early during descent. Touch down on green with descent ≤ 6 m/s, drift ≤ 4 m/s, tilt ≤ 15°. R recovers from a crash.</li>
       <li><b>Mine:</b> Space fires forward. Hold C to attract ore within 260 m. The starter iron sample is above home; ice is slightly right. Release thrust after the short launch burn so you can return.</li>
@@ -17,7 +17,7 @@ export class Help {
       <p><b>E on the safe pad repairs and rearms from colony alloy/components</b>; fuel still needs manufactured supplies. If the ship is lost, <b>Backspace</b> spends 8 alloy + 2 components to recover it at home with 30 hull, remaining ammo and at most 20 remaining fuel. Carried cargo is lost. L restores a checkpoint; R resets the sandbox if recovery is unaffordable. Patrol size grows with exploration, deliveries and colony development; attacks never start automatically.</p>
       <h2>Keep your progress</h2><p><b>K saves · L loads</b> a local checkpoint. Reload restores it paused; P resumes. <b>R resets runtime progress</b> but keeps that saved checkpoint. There is no autosave. Save before experimenting.</p>
       <p><b>P</b> pauses · <b>H / Esc</b> closes this guide · <b>M</b> mutes · volume is in the top bar. Sound starts after your first click/key and stops on pause or focus loss.</p>
-      <p class="help-note">First playtest: try flight, mining, walking, production and save/load. Buildings are non-solid but can take meteor damage, the power/material bus is global, and solar is constant. Hostile patrols and meteor drills are opt-in; advanced progression and the full graphics/UI overhaul are later milestones.</p>`;
+      <p class="help-note">First playtest: try flight, mining, walking, production and save/load. Buildings are non-solid but can take meteor damage, the power/material bus is global, and solar is constant. Hostile patrols and meteor drills are opt-in. The presentation pass is implemented; human handling/art/audio evaluation, wider balance and later reliability work remain.</p>`;
     document.body.append(this.dialog);
     isolateControlKeys(this.dialog);
     this.dialog.querySelector('button')!.addEventListener('click', () => this.close());
@@ -25,6 +25,6 @@ export class Help {
   }
   get isOpen(): boolean { return this.dialog.open; }
   toggle(): void { if (this.isOpen) this.close(); else { this.onToggle(true); this.dialog.showModal(); } }
-  close(): void { if (this.dialog.open) { this.dialog.close(); this.onToggle(false); } }
+  close(): void { if (this.dialog.open) { this.dialog.close(); (document.activeElement as HTMLElement)?.blur(); this.onToggle(false); } }
   destroy(): void { this.dialog.remove(); }
 }

@@ -1,4 +1,10 @@
-import { activeWorld, allColonies } from '../sim/localWorld';
+import { VisualEffects } from './effects';
+import { decorateShortcuts } from '../ui/shortcuts';
+import { RenderBudget } from './budget';
+import { drawShip } from './ship';
+import { readPresentation, applyPresentation } from '../preferences/presentation';
+import { Settings } from '../ui/Settings';
+import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
 import { planetAt, planets, CELESTIAL } from '../sim/celestial';
 import { drawShields } from './shields';
 import { applyExplorationAction } from '../sim/exploration';
@@ -32,6 +38,13 @@ import { createPlanet } from './planet';
 import { drawTrajectory } from './trajectory';
 
 export class FlightScene extends Phaser.Scene {
+  private effects=new VisualEffects();
+  private budget=new RenderBudget();
+  private lastDrawKey="";
+  private starKey="";
+  private preferences = readPresentation();
+  private settings!: Settings;
+  private pausedBeforeSettings=false;
   private simulation = createWorld();
   private get ship() { return this.simulation.ship; }
   private clock = new FixedClock();
@@ -60,38 +73,55 @@ export class FlightScene extends Phaser.Scene {
   private starPoints = Array.from({ length: 240 }, (_, i) => ({ x: ((i * 0.61803398875) % 1), y: ((i * i * 0.41421356237) % 1), bright: i % 7 === 0 }));
   constructor() { super('flight'); }
   create(): void {
-    this.keys = new Keyboard(this); this.hud = new Hud(action => { if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if (!this.paused) this.colonyActions.push(action); });
+    applyPresentation(this.preferences);
+    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
       this.setPaused(open ? true : this.pausedBeforeHelp);
     });
-    this.soundControls = new SoundControls(this.audio, () => this.help.toggle());
-    this.flightTools = new FlightTools(action => this.viewAction(action));
+    this.settings = new Settings(this.preferences, () => { this.keys.setBindings(this.preferences.bindings); this.applySettings(); }, open => {
+      if(open) this.pausedBeforeSettings=this.paused;
+      this.setPaused(open ? true : this.pausedBeforeSettings);
+    });
+    this.applySettings();
+    this.soundControls = new SoundControls(this.audio, () => this.help.toggle(), () => this.settings.toggle(), () => { this.setPaused(!this.paused); (document.activeElement as HTMLElement)?.blur(); },this.preferences);
+    this.flightTools = new FlightTools(action => this.viewAction(action),this.preferences);
     this.loadCheckpoint(false);
-    this.audio.reset(this.simulation);
+    this.audio.reset(this.simulation);this.effects.reset(this.simulation);
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
     this.stars = this.add.graphics();
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
     this.planet = createPlanet(this);
-    this.moon = this.add.image(0, 0, this.planet.texture.key).setDisplaySize(this.planet.displayWidth * CELESTIAL.moon.radius / WORLD.radius, this.planet.displayHeight * CELESTIAL.moon.radius / WORLD.radius).setTint(0xc4b4df);
+    this.moon = createPlanet(this, 'moon');
     this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.art]);
     this.map = this.add.graphics();
+    this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
+      if(this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
+      const x=(pointer.x-this.scale.width/2)/this.follow.zoom,y=(pointer.y-this.scale.height*.53)/this.follow.zoom,c=Math.cos(this.follow.angle),s=Math.sin(this.follow.angle);
+      const at={x:this.follow.x+x*c-y*s,y:this.follow.y+x*s+y*c};
+      const candidates=allColonies(this.simulation).flatMap(site=>site.colony.buildings.map(b=>({id:b.id,body:site.siteBody??'home',p:sitePosition(site,b.angle,8)}))).map(v=>({...v,d:Math.hypot(at.x-v.p.x,at.y-v.p.y)})).sort((a,b)=>a.d-b.d);
+      if(candidates[0]?.d<Math.max(16,10/this.follow.zoom))this.hud.selectFacility(candidates[0].body,candidates[0].id);
+    });
     const blur = () => this.setPaused(true), visibility = () => { if (document.hidden) this.setPaused(true); };
     window.addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
     const wheel = (event: WheelEvent) => {
-      if (this.help.isOpen) return;
+      if (this.help.isOpen || this.settings.isOpen) return;
       this.follow.zoomBy(Math.exp(-Math.max(-300, Math.min(300, event.deltaY)) * 0.002)); event.preventDefault();
     };
     this.game.canvas.addEventListener('wheel', wheel, { passive: false });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility);
-      this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
+      this.settings.destroy(); this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
   }
+  private applySettings(): void {
+    this.follow.reducedMotion=this.preferences.reducedMotion;this.follow.rotate=this.preferences.cameraRotation;
+    this.audio.setMix(this.preferences.effectsVolume,this.preferences.musicVolume);
+  }
   private viewAction(action: ViewAction): void {
-    if (this.help.isOpen) return;
+    if (this.help.isOpen || this.settings.isOpen) return;
     if (action === 'trajectory') { this.flightTools.trajectory = !this.flightTools.trajectory; this.prediction = null; this.threats = []; }
     else if (action === 'autoZoom') this.follow.autoZoom();
     else this.follow.zoomBy(action === 'zoomIn' ? 1.25 : 0.8);
@@ -102,16 +132,16 @@ export class FlightScene extends Phaser.Scene {
   }
   update(_time: number, delta: number): void {
     if (this.keys.mute()) this.audio.toggleMute();
-    if (this.keys.help()) this.help.toggle();
-    if (this.keys.closePanel()) { if (this.help.isOpen) this.help.close(); else this.hud.closeDock(); }
-    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship, this.simulation.system); this.audio.reset(this.simulation); this.prediction = null; this.threats = []; }
-    if (!this.help.isOpen && this.keys.save()) {
+    if (!this.settings.isOpen && this.keys.help()) this.help.toggle();
+    if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else this.hud.closeDock(); }
+    if (!this.settings.isOpen && !this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship, this.simulation.system); this.audio.reset(this.simulation);this.effects.reset(this.simulation); this.prediction = null; this.threats = []; }
+    if (!this.settings.isOpen && !this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
       catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
     }
-    if (!this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
-    if (!this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
-    if (!this.help.isOpen) {
+    if (!this.settings.isOpen && !this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
+    if (!this.settings.isOpen && !this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
+    if (!this.settings.isOpen && !this.help.isOpen) {
       if (this.keys.inventory()) this.hud.toggleDock('cargo');
       if (this.keys.trajectory()) this.viewAction('trajectory');
       if (this.keys.zoomIn()) this.viewAction('zoomIn');
@@ -137,29 +167,41 @@ export class FlightScene extends Phaser.Scene {
     }
     this.flightTools.update(this.ship, this.follow, this.prediction, this.simulation.towing.targetId !== null, this.simulation.system);
     this.audio.update(activeWorld(this.simulation), this.paused, delta / 1000);
-    this.soundControls.update();
-    this.draw();
+    this.soundControls.update(this.paused);
+    this.effects.update(this.simulation,Math.min(delta/1000,.1),this.paused,this.preferences.reducedMotion?0:this.preferences.quality==='low'?4:12,{centre:{x:this.follow.x,y:this.follow.y},radius:Math.hypot(this.scale.width,this.scale.height)/2/this.follow.zoom+128/this.follow.zoom});
+    const drawKey=[this.scale.width,this.scale.height,this.follow.x.toFixed(3),this.follow.y.toFixed(3),this.follow.angle.toFixed(4),this.follow.zoom.toFixed(4),this.preferences.quality,this.preferences.reducedMotion,this.flightTools.trajectory,this.hud.selectedBuildingId,JSON.stringify(this.hud.buildPreview),this.hud.shieldAccents,this.simulation.system.time,this.simulation.colony.buildOpen,this.simulation.moon.colony.buildOpen].join(':');
+    if(!this.paused || drawKey!==this.lastDrawKey){const started=performance.now();this.draw();this.budget.record('draw',performance.now()-started);this.lastDrawKey=drawKey;}
+
     this.hudTime += delta;
-    if (this.hudTime > 50) { this.hud.update(activeWorld(this.simulation), this.paused, this.threats); this.hudTime = 0; }
+    if (this.hudTime >= 100) {
+      const started=performance.now();this.hud.update(activeWorld(this.simulation), this.paused, this.threats);decorateShortcuts(document.body,this.preferences);this.budget.record('hud',performance.now()-started);this.hudTime=0;
+      const root=document.querySelector<HTMLElement>('#hud')!;
+      root.dataset.renderMs=this.budget.report('draw').mean.toFixed(3);root.dataset.renderP95=this.budget.report('draw').p95.toFixed(3);root.dataset.hudMs=this.budget.report('hud').mean.toFixed(3);
+      root.dataset.drawSamples=String(this.budget.report('draw').samples);root.dataset.starCount=this.preferences.quality==='low'?'80':'240';root.dataset.effectCap=this.preferences.reducedMotion?'0':this.preferences.quality==='low'?'8':'24';
+    }
   }
   private loadCheckpoint(requested: boolean): void {
     try {
       const saved = readCheckpoint(window.localStorage);
       if (saved) {
         this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
-        this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship);
-        this.audio.reset(saved); this.audio.silence();
+        this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship,saved.system);
+        this.audio.reset(saved);this.effects.reset(saved); this.audio.silence();
         this.prediction = null; this.threats = [];
       } else if (requested) notify(this.simulation, 'NO CHECKPOINT · PRESS K TO SAVE');
     } catch { notify(this.simulation, 'CHECKPOINT INVALID OR STORAGE UNAVAILABLE · CURRENT WORLD KEPT'); }
   }
   private draw(): void {
     const { width, height } = this.scale;
-    const g = this.art; g.clear(); this.stars.clear(); this.map.clear();
-    for (const star of this.starPoints) {
+    const g = this.art; g.clear(); this.map.clear();
+    const starKey=`${width}/${height}/${this.preferences.quality}`;
+    if(starKey!==this.starKey){this.stars.clear();this.starKey=starKey;
+    for (const star of this.starPoints.slice(0,this.preferences.quality==='low'?80:240)) {
       this.stars.fillStyle(star.bright ? 0xa9c9dc : 0x456079, star.bright ? 0.85 : 0.5);
       this.stars.fillRect(star.x * width, star.y * height, star.bright ? 2 : 1, star.bright ? 2 : 1);
     }
+    }
+    const view={centre:{x:this.follow.x,y:this.follow.y},radius:Math.hypot(width,height)/2/this.follow.zoom+128/this.follow.zoom};
     this.world.setPosition(width / 2, height * 0.53).setScale(this.follow.zoom).setRotation(-this.follow.angle);
     g.setPosition(-this.follow.x, -this.follow.y);
     const home = planetAt('home', this.simulation.system), moon = planetAt('moon', this.simulation.system);
@@ -167,6 +209,7 @@ export class FlightScene extends Phaser.Scene {
     this.moon.setVisible(this.simulation.system.binary).setPosition(moon.position.x - this.follow.x, moon.position.y - this.follow.y);
     this.planet.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
     for (const body of planets(this.simulation.system)) {
+      g.lineStyle(.6,body.id==='home'?0xa9d2c7:0xd0c4dd,.7);g.strokeCircle(body.position.x,body.position.y,body.radius);
       g.save(); g.translateCanvas(body.position.x, body.position.y);
     g.lineStyle(4, 0x73f3cf); g.lineBetween(-30, -body.radius, 30, -body.radius);
     for (const x of [-32, 32]) {
@@ -179,26 +222,18 @@ export class FlightScene extends Phaser.Scene {
     }
     if (this.flightTools.trajectory && this.simulation.towing.targetId === null) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawExploration(g, this.simulation, this.follow.zoom);
-    drawMining(g, this.simulation, this.follow.zoom);
+    drawMining(g, this.simulation, this.follow.zoom, view, this.preferences.quality==='high');
     drawTowing(g, this.simulation, this.follow.zoom);
     for (const site of allColonies(this.simulation)) {
-      drawGeology(g, site, this.follow.zoom); drawShields(g, site, this.hud.shieldAccents);
-      drawColony(g, site, this.hud.selectedBuildingId, (site.siteBody ?? 'home') === this.hud.buildPreview?.body ? this.hud.buildPreview : null);
-      drawSurface(g, site);
+      drawGeology(g, site, this.follow.zoom); drawShields(g, site, this.hud.shieldAccents && !this.preferences.reducedMotion);
+      drawColony(g, site, this.hud.selectedBuildingId, (site.siteBody ?? 'home') === this.hud.buildPreview?.body ? this.hud.buildPreview : null, view, this.preferences.quality==='high');
+      drawSurface(g, site, this.paused || this.preferences.reducedMotion ? 0 : this.simulation.system.time);
     }
-    drawDefence(g, this.simulation, this.threats, this.follow.zoom);
-    drawCombat(g, this.simulation, this.follow.zoom);
-    const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
-    const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
-    const p = (x: number, y: number) => new Phaser.Geom.Point(s.position.x + (right.x * x + n.x * y) * visibilityScale, s.position.y + (right.y * x + n.y * y) * visibilityScale);
-    g.lineStyle(1.2, s.impact > 0 ? 0xff8f75 : 0xb7e7e6); g.fillStyle(s.state === 'crashed' ? 0x713c3e : 0x254d60);
-    g.fillPoints([p(0, 10), p(6, -4), p(4, -6), p(-4, -6), p(-6, -4)], true);
-    g.strokePoints([p(0, 10), p(6, -4), p(4, -6), p(-4, -6), p(-6, -4)], true);
-    g.fillStyle(0x73f3cf); const cockpit = p(0, 3); g.fillCircle(cockpit.x, cockpit.y, 2);
-    for (const side of [-1, 1]) { const a = p(side * 4, -3), b = p(side * 8, -7); g.lineBetween(a.x, a.y, b.x, b.y); }
-    if (s.thrusting && !this.paused) {
-      g.fillStyle(0xffbb73); g.fillPoints([p(-3, -6), p(3, -6), p(0, -16 - Math.sin(this.time.now / 45) * 3)], true);
-    }
+    drawDefence(g, this.simulation, this.threats, this.follow.zoom, view);
+    drawCombat(g, this.simulation, this.follow.zoom, this.preferences.reducedMotion, view, this.preferences.quality==='high');
+    const s = this.ship;
+    this.effects.draw(g,this.follow.zoom);
+    drawShip(g,s,this.follow.zoom,this.time.now,this.paused,this.preferences.reducedMotion);
     const mx = width - 92, my = height - 100, m = this.map;
     m.fillStyle(0x0a1724, .9); m.fillCircle(mx, my, 68); m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
     const point = (p: { x: number; y: number }) => { const k = Math.min(.0058, 61 / Math.max(1, Math.hypot(p.x, p.y))); return { x: mx + p.x * k, y: my + p.y * k }; };

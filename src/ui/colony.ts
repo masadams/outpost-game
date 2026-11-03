@@ -1,3 +1,5 @@
+import { MANIFESTS, type ManifestId } from '../sim/manifests';
+import { blueprintFootprint, blueprintPalette } from './blueprints';
 import { RESOURCES, type Resource } from '../sim/resources';
 import type { Product } from '../sim/colonyConfig';
 import { habitatDetails } from './habitats';
@@ -21,13 +23,12 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     <div class="resource"><span>Supply / demand</span><span>${colony.generation.toFixed(0)} / ${colony.demand.toFixed(0)} kW</span></div>
     <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
     <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
-    ${policyPanel(world, paused)}
-    ${geologyPanel(world)}
-    <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div>
+
     <button ${disabled} data-colony="toggleBuild">${colony.buildOpen ? 'Close build palette [B]' : 'Build palette [B] · on foot'}</button>
-    ${colony.buildOpen ? `<div class="build-palette">${BUILD_TYPES.map((kind, i) => `<button ${disabled} class="${kind === colony.selected ? 'selected' : ''}" data-select="${kind}">${i < 9 ? `${i + 1}. ` : ''}${BLUEPRINTS[kind].label}<small>${Object.entries(BLUEPRINTS[kind].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</small></button>`).join('')}</div>
+    ${colony.buildOpen ? `<h3>${BLUEPRINTS[colony.selected].label} · selected blueprint</h3><p>Cost ${Object.entries(BLUEPRINTS[colony.selected].cost).map(([p,q])=>`${q} ${p}`).join(' · ')}<br>${blueprintFootprint(colony.selected)}</p>
       <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
       <div class="build-actions"><button ${disabled} data-shift="-32">← [Q]</button><button ${disabled} data-shift="32">→ [T]</button><button ${disabled || error ? 'disabled' : ''} data-colony="place">Place [Enter]</button></div>
+      ${blueprintPalette(world,disabled)}
       <button ${disabled} data-colony="demolish">Demolish nearby [X] · up to 75% salvage</button>` : ''}
     ${near ? `<div class="machine" data-hull="${buildingHealth(near).toFixed(1)}" data-aim="${(near.turret?.aim ?? 0).toFixed(3)}"><label>${BLUEPRINTS[near.kind].label}</label><p>Hull ${buildingHealth(near).toFixed(0)}% · ${near.status}${recipeFor(near) ? ` · ${recipeFor(near)!.label} · ${near.progress.toFixed(1)} s` : ''}</p>
       ${near.kind === 'storage' || near.kind === 'battery' ? `<p>${buildingHealth(near) > 0 ? 'Passive capacity · available' : 'Capacity lost · repair to restore'}</p>` : `<button ${disabled} data-colony="toggleMachine">${near.enabled ? 'Disable' : 'Enable'} nearby${near.kind === 'service' || isTurret(near.kind) ? '' : ' [E]'}</button>`}
@@ -37,10 +38,14 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
       ${rigDetails(world, near)}${habitatDetails(near)}
       ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}
       ${schedulingPanel(near, disabled || buildingHealth(near) <= 0 ? 'disabled' : '')}</div>` : ''}
+    ${policyPanel(world, paused)}
+    ${geologyPanel(world)}
+    <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div>
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
+  if (button.dataset.manifest && Object.hasOwn(MANIFESTS, button.dataset.manifest)) return { type: 'loadManifest', manifest: button.dataset.manifest as ManifestId };
   if (button.dataset.oreLoad && RESOURCES.includes(button.dataset.oreLoad as Resource)) return { type: 'loadOre', resource: button.dataset.oreLoad as Resource };
   if (button.dataset.freight && PRODUCTS.includes(button.dataset.freight as Product)) return { type: 'freight', product: button.dataset.freight as Product, delta: Number(button.dataset.delta) };
   const { colony, select, shift, target, delta, policy, direction } = button.dataset;

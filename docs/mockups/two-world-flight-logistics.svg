@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+ <title>Outpost Phase 9 two-world flight and logistics concept</title>
+ <desc>Design mockup, not a runtime screenshot. Persistent surface-frame safety instruments surround a clear flight corridor. A single logistics dock previews a finite 25 kilogram rig-and-solar manifest and its local depot costs.</desc>
+ <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#06101a"/><stop offset="1" stop-color="#173447"/></linearGradient></defs>
+ <rect width="1280" height="800" fill="url(#sky)"/>
+ <g font-family="monospace" fill="#d9e8ed">
+  <rect x="24" y="20" width="1232" height="60" rx="6" fill="#091925" stroke="#304b5d"/>
+  <text x="40" y="45" font-size="18">OUTPOST / SELENE</text><text x="40" y="65" font-size="12" fill="#9bb4c5">DESIGN MOCKUP · Phase 9 · illustrative paused state</text>
+  <text x="500" y="46" font-size="14">SURFACE FRAME: SELENE</text><text x="500" y="66" font-size="12" fill="#9bb4c5">Atmosphere · manual flight · auto camera</text>
+  <text x="1020" y="55" font-size="14">PAUSED  /  SETTINGS</text>
+  <rect x="24" y="100" width="854" height="50" rx="6" fill="#20332f" stroke="#8ce9dd"/>
+  <text x="40" y="122" font-size="15" fill="#8ce9dd">✓ LANDED · PAD CONTACT</text><text x="40" y="141" font-size="12">Surface speed 0.0 m/s · fuel 20 / 60 kg · hull 100%</text>
+  <circle cx="438" cy="1220" r="690" fill="#273e46" stroke="#759797" stroke-width="3"/>
+  <path d="M24 649 Q440 495 878 649" fill="none" stroke="#8ce9dd" stroke-opacity=".22" stroke-width="15"/>
+  <g transform="translate(448 500)" stroke="#8ce9dd" fill="#223d49" stroke-width="2"><path d="M0-35 L22 14 L11 24 L-11 24 L-22 14 Z"/><path d="M-11 16 L-32 34 M11 16 L32 34 M-38 34 H-24 M24 34 H38"/><path d="M-7-11 H7 V5 H-7Z" fill="#8ce9dd"/></g>
+  <text x="320" y="584" font-size="14">SELENE PAD · supplies remain local</text>
+  <rect x="24" y="172" width="280" height="106" rx="6" fill="#091925" stroke="#304b5d"/>
+  <text x="40" y="197" font-size="13" fill="#9bb4c5">NAV TARGET · NACRE</text><text x="40" y="224" font-size="20">9.5 km centre range</text><text x="40" y="247" font-size="13">Target-relative speed: 41.7 m/s</text><text x="40" y="267" font-size="12" fill="#ffc58c">△ Plan around terrain · no autopilot</text>
+  <rect x="900" y="100" width="356" height="610" rx="6" fill="#091925" stroke="#304b5d"/>
+  <text x="920" y="131" font-size="18">CARGO / EXPEDITION</text><text x="920" y="154" font-size="13" fill="#9bb4c5">Home depot → piloted ship at home pad</text>
+  <path d="M920 174 H1236" stroke="#304b5d"/>
+  <text x="920" y="203" font-size="14">Raw + freight hold</text><text x="920" y="229" font-size="20">0 → 25 / 120 kg</text>
+  <rect x="920" y="242" width="316" height="12" rx="3" fill="#20313d"/><rect x="920" y="242" width="66" height="12" rx="3" fill="#8ce9dd"/>
+  <text x="920" y="288" font-size="15">RIG + SOLAR MANIFEST</text><text x="920" y="310" font-size="12" fill="#9bb4c5">Preview actual local cost before loading</text>
+  <text x="920" y="344" font-size="14">Alloy</text><text x="1130" y="344" font-size="14">15 kg</text>
+  <text x="920" y="374" font-size="14">Wire</text><text x="1130" y="374" font-size="14">5 kg</text>
+  <text x="920" y="404" font-size="14">Components</text><text x="1130" y="404" font-size="14">5 kg</text>
+  <path d="M920 426 H1236" stroke="#304b5d"/>
+  <text x="920" y="453" font-size="13">✓ Enough unreserved local stock</text><text x="920" y="477" font-size="13">✓ Within shared cargo capacity</text>
+  <rect x="920" y="500" width="316" height="48" rx="4" fill="#20313d" stroke="#304b5d"/><text x="938" y="529" font-size="14" fill="#9bb4c5">Load manifest · 25 kg</text>
+  <text x="920" y="577" font-size="12" fill="#ffc58c">Simulation action unavailable while paused</text>
+  <text x="920" y="609" font-size="13">Individual materials / unload →</text><text x="920" y="638" font-size="12" fill="#9bb4c5">Finite stock · reserves respected</text><text x="920" y="661" font-size="12" fill="#9bb4c5">No resource grant from kit selection</text><text x="920" y="687" font-size="12">Esc close · keyboard and pointer parity</text>
+  <rect x="24" y="662" width="854" height="114" rx="6" fill="#091925" stroke="#304b5d"/>
+  <text x="42" y="687" font-size="12" fill="#9bb4c5">ALTITUDE / SURFACE</text><text x="258" y="687" font-size="12" fill="#9bb4c5">DESCENT</text><text x="458" y="687" font-size="12" fill="#9bb4c5">DRIFT</text><text x="660" y="687" font-size="12" fill="#9bb4c5">TILT / SPIN</text>
+  <text x="42" y="718" font-size="24">0 m</text><text x="258" y="718" font-size="24">0.0 m/s</text><text x="458" y="718" font-size="24">0.0 m/s</text><text x="660" y="718" font-size="24">0° / 0°/s</text>
+  <text x="42" y="754" font-size="13">W thrust · A/D rotate · F leave ship · Nav / Chart · H guide</text>
+  <text x="920" y="745" font-size="12" fill="#9bb4c5">Concept only · controls not implemented here</text>
+ </g>
+</svg>

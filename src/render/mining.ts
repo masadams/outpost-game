@@ -1,11 +1,13 @@
+import { visible, type RenderView } from './budget';
 import { tractorStats } from '../sim/shipStats';
 import Phaser from 'phaser';
 import { MINING } from '../sim/mining';
 import { RESOURCE_INFO } from '../sim/resources';
 import { type WorldState } from '../sim/world';
 
-export function drawMining(g: Phaser.GameObjects.Graphics, world: WorldState, zoom: number): void {
+export function drawMining(g: Phaser.GameObjects.Graphics, world: WorldState, zoom: number, view?: RenderView, detail = true): void {
   for (const rock of world.asteroids) {
+    if(!visible(view,rock.position,rock.radius)) continue;
     const color = RESOURCE_INFO[rock.resource].color;
     const points = Array.from({ length: 9 }, (_, i) => {
       const angle = i / 9 * Math.PI * 2 + rock.id;
@@ -14,6 +16,7 @@ export function drawMining(g: Phaser.GameObjects.Graphics, world: WorldState, zo
     });
     g.fillStyle(0x243443); g.fillPoints(points, true);
     g.lineStyle(1.2 / Math.max(zoom, 0.6), color, 0.85); g.strokePoints(points, true);
+    if(detail) { g.lineStyle(.6, 0x91a7b5, .35); g.beginPath();g.moveTo(rock.position.x-rock.radius*.7,rock.position.y-rock.radius*.2);g.lineTo(rock.position.x,rock.position.y+rock.radius*.25);g.lineTo(rock.position.x+rock.radius*.5,rock.position.y-rock.radius*.3);g.strokePath(); }
     g.fillStyle(color, 0.65); g.fillCircle(rock.position.x - rock.radius * 0.2, rock.position.y, 2.5);
     if (rock.health < rock.maxHealth) {
       g.lineStyle(2 / zoom, 0x73f3cf);
@@ -22,8 +25,9 @@ export function drawMining(g: Phaser.GameObjects.Graphics, world: WorldState, zo
     }
   }
   for (const ore of world.pickups) {
+    if(!visible(view,ore.position,4/zoom)) continue;
     g.fillStyle(RESOURCE_INFO[ore.resource].color); const size = Math.max(2, 2 / zoom);
-    g.fillRect(ore.position.x - size, ore.position.y - size, size * 2, size * 2);
+    g.fillPoints([{x:ore.position.x,y:ore.position.y-size},{x:ore.position.x+size,y:ore.position.y},{x:ore.position.x,y:ore.position.y+size},{x:ore.position.x-size,y:ore.position.y}],true);
   }
   if (world.tractorActive) {
     g.lineStyle(1 / zoom, 0x73f3cf, 0.2); g.strokeCircle(world.ship.position.x, world.ship.position.y, tractorStats(world.ship).range);

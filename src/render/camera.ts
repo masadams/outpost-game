@@ -5,6 +5,8 @@ import { SUIT } from '../sim/astronaut';
 import type { Vec } from '../sim/math';
 interface FollowTarget { position: Vec }
 export class FlightCamera {
+  reducedMotion = false;
+  rotate = true;
   x = 0; y = 0; angle = 0; zoom = 1.7;
   private manualZoom: number | null = null;
   get mode(): 'auto' | 'manual' { return this.manualZoom === null ? 'auto' : 'manual'; }
@@ -17,11 +19,11 @@ export class FlightCamera {
     const blend = clamp((altitude - ATMOSPHERE.height * 0.75) / (ATMOSPHERE.height * 0.75), 0, 1);
     const smooth = blend * blend * (3 - 2 * blend);
     // Smoothly blend the local frame into the fixed world frame, including at the angle seam.
-    const targetAngle = this.angle + wrap(localAngle(relative(ship.position, nearestPlanet(ship.position, system))) - this.angle) * (1 - smooth) + wrap(-this.angle) * smooth;
+    const targetAngle = !this.rotate || this.reducedMotion ? 0 : this.angle + wrap(localAngle(relative(ship.position, nearestPlanet(ship.position, system))) - this.angle) * (1 - smooth) + wrap(-this.angle) * smooth;
     const follow = 1 - Math.exp(-5 * dt);
     this.x += (ship.position.x - this.x) * follow;
     this.y += (ship.position.y - this.y) * follow;
-    this.angle = wrap(this.angle + wrap(targetAngle - this.angle) * (1 - Math.exp(-2.5 * dt)));
+    this.angle = !this.rotate || this.reducedMotion ? 0 : wrap(this.angle + wrap(targetAngle - this.angle) * (1 - Math.exp(-2.5 * dt)));
     const baseZoom = onFoot ? 2.8 : 1.7;
     const targetZoom = this.manualZoom ?? clamp(baseZoom / (1 + altitude / 360), 0.08, baseZoom);
     this.zoom += (targetZoom - this.zoom) * (1 - Math.exp(-2 * dt));

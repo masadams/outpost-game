@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Command #17, nearby-space discovery #18 and research/equipment #19 are merged with user authorization, following habitats #16. Phase 8.2 shield domes merged in #20 after 343 unit tests, 31 production browser scenarios and green CI. Phase 8.5 [Task 010](../CODEX_TASK_010.md) is implemented for final verification/review on `feat/nearby-worlds`, including supplied moon mining and a demonstrated return delivery; the full Phase 9 overhaul remains required.
+**Status:** Nearby worlds / Phase 8.5 merged in [PR #21](https://github.com/masadams/outpost-game/pull/21) after typecheck, 380 unit tests, build and all 33 production-browser scenarios passed on the final implementation commit. The complete supplied moon work/mining/return route is playable. The Phase 9 technical graphics, UX, UI and audio pass in [Task 011](../CODEX_TASK_011.md) is implemented for verification/review; wider progression/balance and human playtesting remain open.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
@@ -112,18 +112,18 @@ The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_00
 - [x] Finite planetary deposits and powered surface rigs connected to colony storage.
 - [x] Opt-in refinery scheduling with configurable stock targets (merged [PR #12](https://github.com/masadams/outpost-game/pull/12)).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
-- [ ] Mining drones or asteroid towing, with costs and vulnerability (Task 007E towing implemented; awaiting review/merge).
+- [x] Mining drones or asteroid towing, with costs and vulnerability (paid, breakable towing merged in [PR #15](https://github.com/masadams/outpost-game/pull/15); autonomous drones remain deferred).
 - [x] Priority controls for power, storage and defensive ammunition (Task 007C merged as reserves in [PR #13](https://github.com/masadams/outpost-game/pull/13)).
 - [ ] Background colony operations while player is in space, using appropriate simulation LOD.
 **Exit:** Colony remains functional and can defend itself while player is away.
 
 ## Flight feedback before mobile logistics (Task 007D)
 
-The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](../CODEX_TASK_007D.md) is implemented in [PR #14](https://github.com/masadams/outpost-game/pull/14) on `feat/landing-warning-instruments`, retargeted onto main after resource-priority PR #13 merged. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Awaiting review/merge.
+The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](../CODEX_TASK_007D.md) is implemented in [PR #14](https://github.com/masadams/outpost-game/pull/14) on `feat/landing-warning-instruments`, retargeted onto main after resource-priority PR #13 merged. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Merged in [PR #14](https://github.com/masadams/outpost-game/pull/14).
 
 ## Mobile logistics (Task 007E)
 
-[Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) on `feat/asteroid-towing`, stacked on PR #14 for review. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
+[Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) merged after PR #14. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
 
 ## Phase 7.5 — Habitat domes and life support (Task 007F, merged #16)
 
@@ -172,13 +172,13 @@ Merged in #18; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget
 
 ## Phase 8.5 — Nearby planets and moons
 
-Explicitly requested by the user; a bounded first neighborhood before the full presentation/reliability/release phases. See [multi-world requirements](COMMAND_AND_EXPLORATION.md).
-- [ ] Define distinct planets/moons, atmospheres, gravity, motion, resources and interactions.
-- [ ] Consistent multi-body gravity, finite cores, moving reference frames and swept surface/pad contacts.
-- [ ] Body-relative building/habitat/shield placement, walking, docking, towing and camera/local-up transitions.
-- [ ] System navigation, transfers/arrival/return and fuel/range/recovery tradeoffs in continuous flight.
-- [ ] Persist body motion, local colonies and depleted sites; support current-version save continuation; development saves may be reset.
-- [ ] Verify cross-world flight/landing/return, coupled hauling, frame transitions, precision and save continuation.
+Explicitly requested by the user; a bounded first neighborhood before the full presentation/reliability/release phases. Merged in [PR #21](https://github.com/masadams/outpost-game/pull/21); see [Task 010](../CODEX_TASK_010.md), the [world model and route](NEARBY_WORLDS.md), and [multi-world requirements](COMMAND_AND_EXPLORATION.md).
+- [x] Define distinct planets/moons, atmospheres, gravity, motion, resources and interactions.
+- [x] Consistent multi-body gravity, finite cores, moving reference frames and swept surface/pad contacts.
+- [x] Body-relative building/habitat/shield placement, walking, docking, towing and camera/local-up transitions.
+- [x] System navigation, transfers/arrival/return and fuel/range/recovery tradeoffs in continuous flight.
+- [x] Persist body motion, local colonies and depleted sites; support current-version save continuation; development saves may be reset.
+- [x] Verify cross-world flight/landing/return, coupled hauling, frame transitions, precision and save continuation.
 **Exit:** Visit, land/work on and return from a distinct nearby world in the same continuous game.
 
 ## Phase 9 — Graphics, UX and UI overhaul; audio polish
@@ -219,7 +219,8 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Landing feedback #14, towing #15 and habitats #16 are merged. Command #17, nearby-space discovery #18 and ship progression/research #19 are merged. Shield domes #20 are merged. Finish full-suite/CI review and merge of [Task 010](../CODEX_TASK_010.md) using the [nearby-worlds playtest](NEARBY_WORLDS.md). The supplied physical transfer/work/return route is demonstrated. Continue wider progression/balance and the full Phase 9 presentation overhaul afterward. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
+
+Finish full-suite verification, review and CI for [Task 011](../CODEX_TASK_011.md), using the [presentation model and review route](PRESENTATION.md). It implements body-specific procedural art, readable frame/warning instruments, native accessibility/settings/rebinding, supplied manifests, short objectives and bounded visual/audio work. Preserve real physics, local resources and manual flight; human evaluation and representative hardware checks remain open. Follow with wider objectives/balance and reliability/content work. Human handling/usability/art/audio evaluation remains required and is not replaced by automated regression.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

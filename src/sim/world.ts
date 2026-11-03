@@ -1,3 +1,4 @@
+import { createObjectives, observeObjectives, type ObjectiveState } from './objectives';
 import { planetAt, nearestPlanet, CELESTIAL, type SystemFrame, type BodyId } from './celestial';
 import { activeWorld, allColonies, colonyWorld } from './localWorld';
 import { isProgressionAction } from './progressionConfig';
@@ -32,6 +33,7 @@ export function unloadCargo(world: WorldState): number { return unloadDepot(colo
 
 export interface WorldControls extends Controls { combatFire?: boolean; combatActions?: CombatAction[]; mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
 export interface WorldState {
+  objectives: ObjectiveState;
   system: SystemFrame;
   moon: { colony: Colony; depot: Inventory; surfaceDeposits: SurfaceDeposit[] };
   /** Only local views expose these; never persisted on the root. */
@@ -59,7 +61,7 @@ export function createWorld(): WorldState {
   const moon = { colony: createColony(), depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL.moon.radius) };
   for (const p of Object.keys(moon.colony.products) as (keyof typeof moon.colony.products)[]) moon.colony.products[p] = 0;
   moon.colony.nextId = 1001;
-  const world: WorldState = { system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
+  const world: WorldState = { objectives: createObjectives(), system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
     playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), combat: createCombat() };
   world.moon.colony.research = world.colony.research;
   seedNeighborhood(world);
@@ -120,6 +122,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   if (world.asteroids.some(rock => rock.health <= 0)) resolveMinedRocks(world);
   resolveTow(world); resolveSites(world);
   world.system.time += dt;
+  observeObjectives(world);
 }
 
 function resolveMinedRocks(world: WorldState): void {

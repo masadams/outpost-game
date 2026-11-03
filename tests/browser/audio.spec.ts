@@ -1,20 +1,9 @@
+import { installAudioProbe } from '../helpers/audioProbe';
 import { expect, test } from '@playwright/test';
 
 test('audio unlocks after input, produces a signal, silences on pause/mute and persists settings', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.addInitScript(() => {
-    const connect = AudioNode.prototype.connect;
-    AudioNode.prototype.connect = function(this: AudioNode, destination: AudioNode | AudioParam, ...args: number[]) {
-      if (destination instanceof AudioDestinationNode) {
-        const analyser = destination.context.createAnalyser(); analyser.fftSize = 2048;
-        Reflect.apply(connect, this, [analyser]); Reflect.apply(connect, analyser, [destination]);
-        const data = new Float32Array(analyser.fftSize);
-        Object.assign(window, { outpostAudioRms: () => { analyser.getFloatTimeDomainData(data); return Math.sqrt(data.reduce((sum, v) => sum + v * v, 0) / data.length); } });
-        return destination;
-      }
-      return Reflect.apply(connect, this, [destination, ...args]);
-    } as typeof AudioNode.prototype.connect;
-  });
+  await installAudioProbe(page);
   const rms = () => page.evaluate(() => (window as unknown as { outpostAudioRms?: () => number }).outpostAudioRms?.() ?? 0);
   await page.goto('/'); const sound = page.locator('#sound-panel');
   await expect(sound).toHaveAttribute('data-status', 'locked');
@@ -61,4 +50,14 @@ test('quick-start guide pauses gameplay, supports keyboard and resumes without s
   await page.waitForTimeout(150);
   expect(await page.evaluate(() => localStorage.getItem('outpost.checkpoint.v1'))).toBeNull();
   expect(errors).toEqual([]);
+});
+
+test('mixes music and effects independently and silences both on pause',async({page})=>{
+ test.setTimeout(45000);await installAudioProbe(page);await page.goto('/');const hud=page.locator('#hud');await expect(hud).toHaveAttribute('data-state','landed');
+ const rms=()=>page.evaluate(()=>(window as unknown as {outpostAudioRms?:()=>number}).outpostAudioRms?.()??0);
+ const mix=async(effects:string,music:string)=>{await page.getByRole('button',{name:'Open settings',exact:true}).click();await page.getByRole('slider',{name:'Effects volume',exact:true}).fill(effects);await page.getByRole('slider',{name:'Music volume',exact:true}).fill(music);await page.getByRole('button',{name:'Return to game',exact:true}).click();};
+ await mix('0','1');await expect.poll(rms).toBeGreaterThan(.00005);
+ await mix('0','0');await expect.poll(rms,{timeout:10000}).toBeLessThan(.00001);
+ await page.keyboard.down('w');await expect.poll(rms).toBeLessThan(.00001);await page.keyboard.up('w');
+ await mix('1','0');await page.keyboard.down('w');await expect.poll(rms).toBeGreaterThan(.00005);await page.keyboard.up('w');await page.keyboard.press('p');await expect.poll(rms).toBeLessThan(.00001);
 });
