@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Nearby worlds / Phase 8.5 merged in [PR #21](https://github.com/masadams/outpost-game/pull/21) after typecheck, 380 unit tests, build and all 33 production-browser scenarios passed on the final implementation commit. The complete supplied moon work/mining/return route is playable. Next is the full Phase 9 graphics, UX, UI and audio overhaul in [Task 011](../CODEX_TASK_011.md); wider progression/balance and human playtesting remain open.
+**Status:** Nearby worlds / Phase 8.5 merged in [PR #21](https://github.com/masadams/outpost-game/pull/21) after typecheck, 380 unit tests, build and all 33 production-browser scenarios passed on the final implementation commit. The complete supplied moon work/mining/return route is playable. The Phase 9 technical graphics, UX, UI and audio pass in [Task 011](../CODEX_TASK_011.md) is implemented for verification/review; wider progression/balance and human playtesting remain open.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
@@ -220,7 +220,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Implement [Task 011](../CODEX_TASK_011.md): overhaul graphics, UX, UI and audio around the complete two-world loop. Begin with the [alpha 0.15 technical audit](PRESENTATION_AUDIT.md), refreshed mockups and accessible interaction hierarchy; preserve real physics, local resources and manual flight. Follow with wider objectives/balance and reliability/content work. Human handling/usability/art/audio evaluation remains required and is not replaced by automated regression.
+Finish full-suite verification, review and CI for [Task 011](../CODEX_TASK_011.md), using the [presentation model and review route](PRESENTATION.md). It implements body-specific procedural art, readable frame/warning instruments, native accessibility/settings/rebinding, supplied manifests, short objectives and bounded visual/audio work. Preserve real physics, local resources and manual flight; human evaluation and representative hardware checks remain open. Follow with wider objectives/balance and reliability/content work. Human handling/usability/art/audio evaluation remains required and is not replaced by automated regression.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

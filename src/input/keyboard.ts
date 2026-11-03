@@ -1,3 +1,4 @@
+import { BINDING_SLOTS, type PresentationPreferences } from '../preferences/presentation';
 import Phaser from 'phaser';
 import type { WorldControls } from '../sim/world';
 import { BUILD_TYPES } from '../sim/colonyConfig';
@@ -12,22 +13,28 @@ export class Keyboard {
   private onCommandPointer = (event: Event): void => {
     if (event.target instanceof HTMLElement && event.target.closest('#command-console')) this.release();
   };
-  constructor(scene: Phaser.Scene) {
-    this.keys = scene.input.keyboard!.addKeys('W,A,D,UP,LEFT,RIGHT,R,P,SPACE,C,E,F,B,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,N,G,U,Q,T,ENTER,X,V,K,L,M,H,J,MINUS,PLUS,ZERO,O,Z,SHIFT,BACKSPACE,I,ESC,Y', true) as Record<string, Phaser.Input.Keyboard.Key>;
+  constructor(private scene: Phaser.Scene, bindings: PresentationPreferences['bindings'] = {}) {
+    this.keys = {}; this.setBindings(bindings);
+    window.addEventListener('blur', this.onBlur); document.addEventListener('focusin', this.onControlFocus); document.addEventListener('pointerdown', this.onCommandPointer); document.addEventListener('dragstart', this.onCommandPointer);
+  }
+  setBindings(bindings: PresentationPreferences['bindings']): void {
+    this.release(); this.scene.input.keyboard!.removeAllKeys(true);
+    this.keys = Object.fromEntries(BINDING_SLOTS.map(slot => [slot, this.scene.input.keyboard!.addKey(bindings[slot] ?? slot, false)]));
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
     for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'O', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC', 'Y']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
-        if (!event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
+        if (!(this.gameplayFocus() && ['W','UP','SPACE','SHIFT','C'].includes(name)) && !this.typing() && !event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
     }
-    window.addEventListener('blur', this.onBlur); document.addEventListener('focusin', this.onControlFocus); document.addEventListener('pointerdown', this.onCommandPointer); document.addEventListener('dragstart', this.onCommandPointer);
   }
+  private gameplayFocus(): boolean { return document.activeElement instanceof HTMLElement && !!document.activeElement.closest('button,input,select,textarea,summary,[contenteditable=true]'); }
+  private typing(): boolean { return document.activeElement instanceof HTMLElement && document.activeElement.matches('input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]), select, textarea, [contenteditable=true]'); }
   release(): void { Object.values(this.keys).forEach(key => key.reset()); this.pending.clear(); }
   private consume(name: string): boolean {
     const pressed = this.pending.delete(name);
     return this.held(name) || pressed;
   }
-  private held(name: string): boolean { const key = this.keys[name]; return key.isDown && !key.ctrlKey && !key.metaKey && !key.altKey; }
+  private held(name: string): boolean { const key = this.keys[name]; return !this.gameplayFocus() && key.isDown && !key.ctrlKey && !key.metaKey && !key.altKey; }
   read(): WorldControls {
     const board = this.consume('F'), interact = this.consume('E'), space = this.consume('SPACE');
     const w = this.consume('W'), up = this.consume('UP');

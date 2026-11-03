@@ -1,11 +1,12 @@
 import { isolateControlKeys } from './controlKeys';
 import type { DockView, HudContext } from './context';
 
-const labels: Record<DockView, string> = { cargo: 'Cargo', colony: 'Colony', combat: 'Combat', defence: 'Defence', command: 'Command', navigation: 'Nav' };
+const labels: Record<DockView, string> = { cargo: 'Cargo', colony: 'Colony', combat: 'Combat', defence: 'Defence', command: 'Command', navigation: 'Nav', objectives: 'Objectives' };
 export class OperationsDock {
   readonly nav = document.createElement('nav');
   readonly root = document.createElement('aside');
   readonly cargo = document.createElement('section');
+  readonly objectives = document.createElement('section');
   readonly colony = document.createElement('section');
   readonly combat = document.createElement('section');
   readonly navigation = document.createElement('section');
@@ -18,7 +19,7 @@ export class OperationsDock {
   private view: DockView | null = null;
   constructor() {
     this.nav.className = 'dock-nav'; this.nav.setAttribute('aria-label', 'Operations panels');
-    this.nav.innerHTML = Object.entries(labels).map(([view, label]) => `<button type="button" data-panel="${view}" aria-controls="operations-dock" aria-expanded="false">${label}${view === 'cargo' ? ' [I]' : ''}</button>`).join('');
+    this.nav.innerHTML = Object.entries(labels).filter(([view])=>view!=='objectives').map(([view, label]) => `<button type="button" data-panel="${view}" aria-controls="operations-dock" aria-expanded="false">${label}${view === 'cargo' ? ' [I]' : ''}</button>`).join('');
     this.root.id = 'operations-dock'; this.root.setAttribute('aria-label', 'Operations'); this.root.hidden = true;
     const header = document.createElement('div'); header.className = 'dock-heading';
     const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close [Esc]'; close.setAttribute('aria-label', 'Close operations panel'); close.onclick = () => this.close();
@@ -26,7 +27,7 @@ export class OperationsDock {
     this.cargo.className = 'mining'; this.cargo.setAttribute('aria-label', 'Cargo and mining telemetry');
     this.colony.className = 'colony-panel'; this.colony.setAttribute('aria-label', 'Colony construction and production');
     this.combat.id = 'combat-content'; this.defence.id = 'defence-content';
-    this.root.append(this.cargo, this.colony, this.combat, this.defence, this.command, this.navigation);
+    this.root.append(this.cargo, this.colony, this.combat, this.defence, this.command, this.navigation, this.objectives);
     this.nav.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (button?.dataset.panel) { this.toggle(button.dataset.panel as DockView); if (event.detail > 0) button.blur(); }
@@ -44,17 +45,18 @@ export class OperationsDock {
       this.render();
     }
   }
+  open(view: DockView): void {this.manual=true;this.view=view;this.render();}
   toggle(view: DockView): void { this.manual = true; this.view = this.view === view ? null : view; this.render(); }
   close(): void {
     this.manual = true; this.view = null;
     const focused = document.activeElement;
-    if (focused instanceof HTMLElement && (this.root.contains(focused) || this.nav.contains(focused))) focused.blur();
+    if (focused instanceof HTMLElement && (this.root.contains(focused) || this.nav.contains(focused) || focused.id==='objectives')) focused.blur();
     this.render();
   }
   private render(): void {
     this.root.hidden = this.view === null; this.root.dataset.panel = this.view ?? 'closed';
     this.heading.textContent = this.view ? labels[this.view].toUpperCase() : '';
-    const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation };
+    const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation, objectives: this.objectives };
     for (const [view, section] of Object.entries(sections)) section.hidden = view !== this.view;
     for (const button of Array.from(this.nav.querySelectorAll('button'))) {
       const selected = button.dataset.panel === this.view;

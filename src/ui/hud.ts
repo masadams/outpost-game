@@ -1,3 +1,5 @@
+import { Objectives } from './Objectives';
+import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { freightPanel } from './freight';
 import { colonyPlanet, localAngleAt } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
@@ -26,7 +28,7 @@ import { SUIT } from '../sim/astronaut';
 import { surfacePanel } from './surface';
 import { colonyPanel, actionFromButton } from './colony';
 import type { ColonyAction } from '../sim/colony';
-import { patchMarkup } from './dom';
+import { setText, patchMarkup } from './dom';
 export class Hud {
   private root = document.createElement('div');
   private stats: HTMLElement;
@@ -42,19 +44,22 @@ export class Hud {
   get selectedBuildingId(): number | null { return this.dock.root.dataset.panel === 'command' ? this.command.selected : null; }
   get buildPreview() { return this.dock.root.dataset.panel === 'command' ? this.command.preview ? { ...this.command.preview, body: this.command.bodyId } : null : null; }
   private dock = new OperationsDock();
+  private objectives = new Objectives(()=>this.dock.open('objectives'));
   destroy(): void { this.root.remove(); }
   toggleDock(view: DockView): void { this.dock.toggle(view); }
+  selectFacility(body: import('../sim/celestial').BodyId,id:number):void {this.dock.open('command');this.command.selectFacility(body,id);}
   closeDock(): void { this.dock.close(); }
-  constructor(onColonyAction: (action: ColonyAction) => void) {
+  constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
+    this.dock.objectives.append(this.objectives.content);
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
     this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.15</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
-      <section class="instruments" aria-label="Flight telemetry"></section>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.16</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
+      <div id="surface-frame"></div><section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
       <footer><p class="context-hint"></p></footer>`;
-    this.root.append(this.dock.nav, this.dock.root, this.nav.guidance); document.body.append(this.root);
+    this.root.append(this.objectives.root, this.dock.nav, this.dock.root, this.nav.guidance); document.body.append(this.root);
     this.stats = this.root.querySelector('.instruments')!;
     this.status = this.root.querySelector('.status')!;
     this.mining = this.dock.cargo; this.colony = this.dock.colony;
@@ -73,8 +78,11 @@ export class Hud {
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;
     this.root.dataset.time = world.system.time.toFixed(4); this.root.dataset.x = world.ship.position.x.toFixed(4); this.root.dataset.y = world.ship.position.y.toFixed(4);
     this.root.dataset.vx = world.ship.velocity.x.toFixed(4); this.root.dataset.vy = world.ship.velocity.y.toFixed(4); this.root.dataset.angle = world.ship.angle.toFixed(5); this.root.dataset.spin = world.ship.angularVelocity.toFixed(5);
-    this.root.querySelector('#hud-context')!.textContent = context.label + ' · ' + colonyPlanet(world).label;
-    this.root.querySelector('.context-hint')!.textContent = context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : '');
+    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.16`);
+    setText(this.root.querySelector('#hud-context')!,context.label + ' · ' + colonyPlanet(world).label);
+    setText(this.root.querySelector('.context-hint')!,controlHint(context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
+    setText(this.root.querySelector('#surface-frame')!,`SURFACE FRAME · ${colonyPlanet(world).label.toUpperCase()} · ${world.playerMode==='astronaut'?'CREW':'SHIP'}`);
+    this.objectives.update(world,this.preferences);this.root.dataset.objectives=world.objectives.completed.join(',');
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
     const region = flightRegion(onFoot ? world.astronaut.position : ship.position, world.system), regionBadge = this.root.querySelector<HTMLElement>('#flight-region')!;
@@ -95,7 +103,9 @@ export class Hud {
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
       ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : region === 'airless' ? 'AIRLESS FLIGHT · GRAVITY · NO AIR DRAG' : region === 'space' ? 'OPEN SPACE · SHARED GRAVITY' : 'ATMOSPHERIC FLIGHT · GRAVITY + DRAG';
-    if (this.status.textContent !== message) this.status.textContent = message;
+    const originalNotice=world.notice.time>0?world.notice.message:null;
+    const shown=originalNotice?message.split(originalNotice).map(part=>controlHint(part,this.preferences)).join(originalNotice):controlHint(message,this.preferences);
+    setText(this.status,shown);
     this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || !habitatSource(world) && world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;
     this.root.dataset.altitude = t.altitude.toFixed(1);
@@ -117,6 +127,8 @@ export class Hud {
     const emitters = world.colony.buildings.filter(b => isShield(b.kind)), active = emitters.filter(shieldActive).length;
     const protection = emitters.length && (warning || hostiles || emitters.some(b => b.status === 'shield breached')) ? `${warning || hostiles ? ' · ' : ''}SHIELDS ${active}/${emitters.length} ACTIVE${emitters.some(b => b.status === 'shield breached') ? ' · BREACHED' : ''}` : '';
     if (alert.textContent !== warning + hostiles + protection) alert.textContent = warning + hostiles + protection;
+    this.root.dataset.cargo=cargoMass(world.ship).toFixed(2);this.root.dataset.depot=inventoryMass(world.depot).toFixed(2);
+    this.root.dataset.asteroids=String(world.asteroids.length);this.root.dataset.pickups=String(world.pickups.length);this.root.dataset.mining=world.beam?'active':'idle';
     this.updateMining(world);
     this.nav.update(world, paused, !this.dock.navigation.hidden);
     if (!this.dock.command.hidden) this.command.update(world, paused);
@@ -144,7 +156,7 @@ export class Hud {
     patchMarkup(this.mining, `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${cargoCapacity(world.ship)} kg</small></strong>
       <div class="cargo-meter"><i style="width:${cargo / cargoCapacity(world.ship) * 100}%"></i></div>
       ${RESOURCES.map(type => `<div class="resource"><span>${RESOURCE_INFO[type].label}</span><span>${world.ship.cargo[type].toFixed(1)} / ${world.depot[type].toFixed(1)}</span></div>`).join('')}
-      ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${objective}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser ${miningStats(world.ship).range} m</small>` : 'Field depleted'}</div>
+      ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${controlHint(objective,this.preferences)}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser ${miningStats(world.ship).range} m</small>` : 'Field depleted'}</div>
       <small>${cargo >= cargoCapacity(world.ship) ? 'HOLD FULL · return and unload' : world.tractorActive ? `TRACTOR ACTIVE · ${tractorStats(world.ship).range} m` : 'C: tractor · SPACE: laser'}</small>`}${towingPanel(world, this.root.dataset.state === 'paused')}${freightPanel(world, this.root.dataset.state === 'paused')}`);
     this.root.dataset.cargo = cargo.toFixed(2); this.root.dataset.depot = stored.toFixed(2);
     this.root.dataset.asteroids = String(world.asteroids.length); this.root.dataset.pickups = String(world.pickups.length);

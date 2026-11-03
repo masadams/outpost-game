@@ -186,3 +186,110 @@ footer p { margin: 0; line-height: 1.5; }
 .research-panel article, .equipment-panel article { border: 1px solid var(--edge); padding: 8px; margin-block: 8px; }
 .research-panel progress { width: 100%; accent-color: var(--mint); }
 .equipment-panel [data-installed="true"] { border-color: var(--mint); }
+
+/* Phase 9: one readable flight deck, scalable operations, a clear flight corridor. */
+:root { --text-scale: 1; --panel: #091925f7; --edge: #3e5969; --muted: #b0c5cf; --telemetry-height: 108px; color: #e3eff2; }
+body { background: radial-gradient(ellipse at top, #142b3c, #06101a 65%); }
+button, select, summary { touch-action: manipulation; }
+button, input, select, summary { border-radius: 4px; }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+label, small { color: var(--muted); }
+#hud { padding: 16px 20px; }
+#hud header { max-width: 49%; min-height: 48px; }
+.eyebrow { font-size: 10px; letter-spacing: 1.3px; }
+h1 { font-size: 21px; letter-spacing: 2px; }
+#hud-context { font-size: 11px; letter-spacing: .2px; padding-left: 8px; margin-left: 2px; }
+#flight-region { font-size: 10px; letter-spacing: .3px; margin-left: 6px; }
+.mission { display: none; }
+#sound-panel { right: 20px; top: 20px; font-size: 11px; gap: 5px; max-width: 49%; }
+#sound-panel button { padding: 7px; }
+#sound-panel > button:first-child { width: 88px; }
+#sound-panel input { width: 55px; }
+.dock-nav { top: 84px; left: 20px; width: min(55vw, 600px); display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); font-size: clamp(11px,calc(11px * var(--text-scale)),14px); gap: 5px; }
+.dock-nav button { padding: 7px 3px; min-width: 0; }
+#flight-tools { top: 84px; right: 20px; font-size: 11px; }
+#flight-tools span { font-size: 10px; }
+.notices { top: 130px; left: 20px; width: min(34vw,440px); }
+.notices .status { font-size: clamp(11px,calc(11px * var(--text-scale)),14px); letter-spacing: 0; padding: 7px 10px; line-height: 1.45; max-height: 62px; overflow-y: auto; pointer-events: auto; }
+#flight-alert, .notices #threat-alert { font-size: 12px; line-height: 1.45; margin-top: 5px; padding: 7px 10px; }
+#objectives { position: absolute; top: 264px; left: 20px; width: min(34vw,440px); max-height: calc(100vh - 500px); overflow: auto; pointer-events: auto; background: var(--panel); border: 1px solid var(--edge); border-radius: 4px; padding: 8px 10px; font-size: clamp(11px,calc(11px * var(--text-scale)),15px); }
+#objectives summary { cursor: pointer; color: var(--mint); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+#objectives article { border-top: 1px solid var(--edge); padding-block: 9px; line-height: 1.5; }
+#objectives article[data-complete=true] b { color: var(--mint); }
+#objectives p { margin: 5px 0; }
+#operations-dock { top: 130px; right: 20px; width: 340px; max-height: calc(100vh - 340px); font-size: calc(12px * var(--text-scale)); line-height: 1.6; border-radius: 6px; box-shadow: 0 14px 50px #0007; }
+.dock-heading { padding: 10px 12px; font-size: 12px; letter-spacing: 1px; }
+#operations-dock > section { padding: 14px; }
+#operations-dock label { font-size: inherit; letter-spacing: .7px; }
+#operations-dock section button, #command-console button, #navigation-panel button { font-size: inherit; padding: 8px; }
+#operations-dock section small, #command-console table { font-size: max(11px,calc(11px * var(--text-scale))); line-height: 1.5; }
+#command-console, #navigation-panel { font-size: inherit; line-height: 1.6; }
+#command-console h3, #navigation-panel h3, .manifest h3 { font-size: 1.05em; color: var(--mint); font-weight: normal; }
+#command-console table { table-layout: fixed; }
+#command-console td, #command-console th { overflow-wrap: anywhere; }
+.product-grid { gap: 8px; }.product-grid span { font-size: inherit; }
+.build-palette { display: block; }
+.build-palette fieldset { border: 1px solid var(--edge); margin: 12px 0; padding: 6px; min-width: 0; }
+.build-palette legend { color: var(--mint); padding: 0 5px; }
+.build-palette button { line-height: 1.5; }
+.build-palette button.selected { background: #1b3b48; border-left: 4px solid var(--mint); }
+.manifest { border: 1px solid var(--edge); margin: 10px 0; padding: 10px; background: #102535; border-radius: 5px; }
+#hud .instruments { bottom: 64px; left: 20px; right: 184px; height: var(--telemetry-height); }
+#hud .instruments > div { padding: 8px; overflow: hidden; }
+#hud .instruments label { font-size: clamp(11px,calc(11px * var(--text-scale)),13px); line-height: 1.2; letter-spacing: .2px; margin-bottom: 5px; }
+#hud[data-mode] .instruments strong { font-size: clamp(20px,calc(23px * var(--text-scale)),28px); line-height: 1.15; }
+#hud[data-mode] .instruments strong small { display: inline; font-size: 11px; }
+#hud .instrument-status { font-size: clamp(10px,calc(10px * var(--text-scale)),12px); line-height: 1.35; margin-top: 5px; min-height: 28px; }
+#surface-frame { position: absolute; left: 20px; bottom: calc(76px + var(--telemetry-height)); font-size: 12px; letter-spacing: .5px; color: var(--mint); background: var(--panel); padding: 3px 6px; }
+#flight-status { left: 20px; right: auto; bottom: calc(100px + var(--telemetry-height)); max-width: min(34vw,520px); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#navigation-guidance { left: 20px; bottom: calc(126px + var(--telemetry-height)); max-width: min(34vw,520px); font-size: 12px; }
+#combat-status { left: 20px; font-size: 11px; }
+footer { left: 20px; font-size: 11px; }
+#settings, #help { background: #091925; color: #e3eff2; width: min(820px,calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid var(--mint); border-radius: 8px; font-size: calc(13px * var(--text-scale)); padding: 24px; line-height: 1.6; }
+#settings::backdrop, #help::backdrop { background: #030812eb; }
+#settings h2, #help h2 { font-size: 1.35em; color: var(--mint); }
+#settings input, #settings select { font: inherit; color: #e3eff2; background: #102535; border: 1px solid var(--edge); padding: 8px; max-width: 100%; }
+#settings label { font-size: inherit; letter-spacing: 0; }
+#settings select, #settings input[type=range] { display: block; width: 100%; margin-top: 6px; }
+.settings-grid, .binding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.binding-grid { margin-top: 16px; }.binding-grid label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }.binding-grid button { min-width: 65px; }
+#binding-status { color: var(--amber); }
+:root[data-reduced-motion=true] *, :root[data-reduced-motion=true] *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+@media (max-width:1100px) {
+ :root { --telemetry-height: 176px; }
+ #operations-dock { width: 280px; max-height: calc(100vh - 340px); }
+ #hud .instruments, #hud[data-mode=ship] .instruments { bottom: 54px; grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: 88px; }
+ #hud .instruments > div { padding: 5px 8px; }
+ #hud[data-mode] .instruments strong { font-size: 24px; }
+ #hud .instruments label { margin-bottom: 2px; font-size: 12px; }
+ #hud .instrument-status { margin-top: 2px; font-size: 11px; line-height: 1.25; }
+ #surface-frame { bottom: calc(62px + var(--telemetry-height)); font-size: 11px; }
+ #flight-status { bottom: calc(88px + var(--telemetry-height)); }
+ #navigation-guidance { bottom: calc(112px + var(--telemetry-height)); font-size: 11px; }
+ #hud-context { display: inline-block; font-size: 10px; max-width: 180px; letter-spacing: 0; }
+ #flight-region { display: none; }
+ #sound-panel { font-size: 10px; } #sound-panel label { font-size: 10px; }
+ #sound-panel input { width: 42px; }
+ #flight-tools button { padding: 7px 5px; }
+ #flight-tools span { min-width: 60px; }
+ footer { bottom: 12px; max-height: 32px; overflow: auto; font-size: 10px; }
+ #combat-status { bottom: 38px; font-size: 10px; }
+}
+@media (max-width:1100px) { #flight-region { display: inline-block; font-size: 9px; margin-left: 3px; padding: 3px; } h1 { letter-spacing: 1px; font-size: 19px; } }
+
+#operations-dock { max-height: calc(100vh - var(--telemetry-height) - 206px); }
+
+.chart-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+
+/* Objectives share the operations dock; safety notices never compete with an expanded list. */
+#objectives { top:60px; bottom:auto; height:22px; max-height:none; padding:3px 8px; font-size:12px; line-height:1.2; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--mint); }
+#objective-panel article { border-top:1px solid var(--edge); padding-block:12px; }
+#objective-panel article[data-complete=true] b { color:var(--mint); }
+#objective-panel p { margin:6px 0; }
+.dock-nav { font-size:clamp(11px,calc(11px * var(--text-scale)),13px); }
+.dock-nav button { white-space:nowrap; }
+#operations-dock label { letter-spacing:.2px; }
+:root[data-text-scale="1.5"] .product-grid, :root[data-text-scale="1.25"] .product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.policy-row { grid-template-columns:minmax(0,1fr) 32px 52px 32px; }
+.stock-target { grid-template-columns:minmax(0,1fr) 32px 52px 32px; }
+.command-row { grid-template-columns:minmax(0,1fr) 32px 32px; }

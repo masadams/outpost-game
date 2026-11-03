@@ -36,3 +36,8 @@ it('smoothly changes focus and zoom when the pilot leaves the ship', () => {
   for (let i = 0; i < 300; i++) camera.update(suit, 1 / 60, true);
   expect(camera.x).toBeCloseTo(14); expect(camera.zoom).toBeGreaterThan(2.7);
 });
+
+it('respects fixed/reduced-motion horizon preferences without moving the physical actor',()=>{
+ const ship=createShip();ship.position={x:WORLD.radius+7,y:0};const before=structuredClone(ship),camera=new FlightCamera();camera.reset(ship);camera.reducedMotion=true;camera.update(ship,1/60);expect(camera.angle).toBe(0);expect(ship).toEqual(before);
+ camera.reducedMotion=false;camera.rotate=false;camera.update(ship,1/60);expect(camera.angle).toBe(0);
+});

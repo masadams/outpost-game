@@ -42,3 +42,9 @@ Keep the actual two-world transfer/work/return, supplied research/equipment, shi
 ![Flight and finite expedition manifest concept](mockups/two-world-flight-logistics.svg)
 
 This is a design mockup, not a runtime screenshot or implemented manifest control. It proposes a distinct surface frame versus target frame, persistent safety instruments, and an explicit finite rig/solar freight preview. The pause example disables loading; live execution must obey local stock/reserves, shared hold capacity, actual mass and physical pad access. Validate larger text and compact layouts before adopting the composition.
+
+## Alpha 0.16 technical implementation follow-up
+
+The [presentation pass](PRESENTATION.md) implements the refreshed audit: named surface/target frames, larger instrument labels and scalable operations text, compact objective access through one dock, explicit paid manifests, grouped blueprints with selected costs/footings, body-specific procedural geology and distinct machinery/vehicle details. Settings provide text/motion/quality/camera/audio controls and conflict-checked key bindings. Native focus, open/closed disclosures, paused inspection, reset/load telemetry, actual audio buses and large-text warning layouts have focused browser coverage. The normal-control moon work/return route preserves actual objective progression.
+
+The technical tests and runtime captures remain distinct from human usability evaluation. First-time discoverability, subjective flight/art/audio feel, longer objectives/economy balance and representative GPU/low-powered hardware performance remain open. Do not infer their approval from the automated suite.

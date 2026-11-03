@@ -1,3 +1,4 @@
+import { loadManifest, type ManifestId } from './manifests';
 import { nearestPlanet, type BodyId } from './celestial';
 import { transferFreight, loadDepotOre } from './freight';
 import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
@@ -46,7 +47,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = ({ type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = ({ type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -84,6 +85,7 @@ export function nearbyBuilding(world: WorldState): Building | undefined {
     .filter(v => v.distance <= 18).sort((a, b) => a.distance - b.distance || a.b.id - b.b.id)[0]?.b;
 }
 export function applyColonyAction(world: WorldState, action: ColonyAction): void {
+  if (action.type === 'loadManifest') { loadManifest(world, action.manifest); return; }
   if (action.type === 'loadOre') { loadDepotOre(world, action.resource); return; }
   if (action.type === 'freight') { transferFreight(world, action.product, action.delta); return; }
   if (action.type === 'adjustPolicy') {

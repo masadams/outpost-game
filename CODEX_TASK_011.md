@@ -1,6 +1,6 @@
 # Task 011 — Graphics, UX and UI overhaul (Phase 9)
 
-Next implementation after the complete nearby-worlds phase in PR #21. Retain the established retro instrument-panel identity while overhauling the playable two-world game. Follow AGENTS.md, GAME_DESIGN.md, PRESENTATION_AUDIT.md, PRESENTATION_DIRECTION.md and the full Phase 9 roadmap. Do not call the overhaul complete from screenshots alone; record human playtest work still outstanding.
+Status: technical implementation complete for review on `feat/presentation-overhaul` after merged nearby-worlds PR #21. Typecheck, 390 unit tests, build, benchmark and the final 14 focused browser checks pass. The complete moon work/return route also passed. Regressions from the initial full run were fixed and rechecked; a clean final full CI run and merge remain. Human playtesting is still outstanding. See [implementation rules and limits](docs/PRESENTATION.md). Retain the established retro instrument-panel identity while overhauling the playable two-world game. Follow AGENTS.md, GAME_DESIGN.md, PRESENTATION_AUDIT.md, PRESENTATION_DIRECTION.md and the full Phase 9 roadmap. Do not call the overhaul complete from screenshots alone; record human playtest work still outstanding.
 
 ## Outcome
 

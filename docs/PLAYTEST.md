@@ -80,3 +80,7 @@ Use the [supplied-shield playtest route](SHIELDS.md#playtest). Check power short
 ## Phase 8.5 nearby worlds
 
 Follow [the Nacre freight/mining/return route](NEARBY_WORLDS.md#validation-and-playtest). Check moving-frame instruments, safe touchdown, independent stocks/power, remote Command selection, suit air, freight mass/capacity, continued off-world production and paused save/reload. Return around terrain rather than flying through the home circle.
+
+## Alpha 0.16 presentation review
+
+Use [the presentation rules and review route](PRESENTATION.md). Try 150% text at 900×600, navigate each panel by keyboard, rebind thrust to an unused key and restore controls. Check that focused controls cannot fly/fire, modal close returns control, and pause/load clears held input. Load the paid rig/solar manifest, inspect remaining real stocks, and repeat the supplied moon work/return route; objectives must follow actual play. Compare surface and target frames while parked on the moving moon. Inspect actual facilities by clicking them in the world. Listen to separate effects/music levels, mute, alarm priority, airless arrival and pause/focus-loss silence. Review low quality/reduced motion without stopping remote mining. Human findings and representative low-powered performance remain to be recorded.
