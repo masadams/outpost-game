@@ -1,6 +1,6 @@
 # Ship upgrades, habitats and shield domes — development schedule
 
-Ship upgrades were already listed broadly in Phase 8. This makes the categories and building milestones explicit in response to the user's request. The tow rig and habitats are merged; Command #17, neighborhood #18 and ship progression/research #19 are merged; [actual costs, effects and playtest](PROGRESSION.md) supersede the earlier provisional equipment list. Shields are implemented for verification/review on `feat/shield-domes`; [actual shield rules](SHIELDS.md) define the costs and selective collision policy. Nearby worlds and the full presentation overhaul remain planned.
+Ship upgrades were already listed broadly in Phase 8. This makes the categories and building milestones explicit in response to the user's request. The tow rig and habitats are merged; Command #17, neighborhood #18 and ship progression/research #19 are merged; [actual costs, effects and playtest](PROGRESSION.md) supersede the earlier provisional equipment list. Shields are merged in #20; [actual shield rules](SHIELDS.md) define the costs and selective collision policy. Nearby worlds and the full presentation overhaul remain planned.
 
 ## Order and dependencies
 
@@ -11,7 +11,7 @@ Ship upgrades were already listed broadly in Phase 8. This makes the categories 
 | Phase 7.75 | Central Command console, remote facilities, power allocation, queues and economy | Habitat/building foundation |
 | Phase 7.9 | Nearby belts, destinations and navigation | Towing and Command |
 | Merged: Phase 8.1 / Task 008 | Paid lab research, eight module upgrades and fabrication | Stable logistics/economy and supplied service |
-| Implemented for review: Phase 8.2 / Task 009 | Powered shield domes and defence progression | Building damage, meteors/projectiles, power priorities |
+| Merged #20: Phase 8.2 / Task 009 | Powered shield domes and defence progression | Building damage, meteors/projectiles, power priorities |
 | Phase 8.5 | Nearby planets/moons and consistent cross-world flight | Navigation, ship range and body-relative colonies |
 | Phase 9 | Full graphics/UX/UI overhaul across these systems | Playable upgraded ship and colony loop |
 

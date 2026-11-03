@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Command #17, nearby-space discovery #18 and research/equipment #19 are merged with user authorization, following habitats #16. Phase 8.2 shield domes are implemented on `feat/shield-domes` (Task 009), undergoing automated/browser verification and review. Nearby worlds are next; the full Phase 9 overhaul remains required.
+**Status:** Command #17, nearby-space discovery #18 and research/equipment #19 are merged with user authorization, following habitats #16. Phase 8.2 shield domes merged in #20 after 343 unit tests, 31 production browser scenarios and green CI. Phase 8.5 [Task 010](../CODEX_TASK_010.md) is scoped on `feat/nearby-worlds`; its physical moon implementation is next; the full Phase 9 overhaul remains required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -163,7 +163,7 @@ Merged in #18; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget
 **Dependencies:** Phases 2–7, life support, Command and neighborhood discovery.
 - [ ] Technology/unlock progression for ship, mining, energy and defences.
 - [x] Merged #19: Phase 8.1 / [Task 008](../CODEX_TASK_008.md), merged from `feat/ship-progression`; see [actual progression/playtest](PROGRESSION.md). Includes powered labs and paid prerequisite research plus explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
-- [ ] Phase 8.2: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
+- [x] Phase 8.2 / merged #20: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
 - [ ] Meaningful tradeoffs: cargo mass vs manoeuvrability; fuel vs range; power vs defence.
 - [ ] Resource scarcity, hazards, escalating events and recovery loops.
 - [ ] Mission/objective system with onboarding and longer-term goals.
@@ -219,7 +219,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Landing feedback #14, towing #15 and habitats #16 are merged. Command #17, nearby-space discovery #18 and ship progression/research #19 are merged. Finish verification/review of Task 009 shield domes using [SHIELDS.md](SHIELDS.md), then implement nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
+Landing feedback #14, towing #15 and habitats #16 are merged. Command #17, nearby-space discovery #18 and ship progression/research #19 are merged. Shield domes #20 are merged. Implement [Task 010](../CODEX_TASK_010.md) using the [nearby-worlds model](NEARBY_WORLDS.md): shared gravity/moving frames → supplied body-local colonies → real transfer/landing/work/return. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.
