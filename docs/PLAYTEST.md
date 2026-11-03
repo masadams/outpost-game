@@ -1,4 +1,4 @@
-# Outpost alpha 0.9 — first playtest
+# Outpost alpha 0.10 — first playtest
 
 Start with flight, asteroid mining, surface exploration and construction. Then try finite planetary mining and automatic refinery targets. Save before the opt-in defence drill or ship patrol. Then try protected power, delivery room and turret-material reserves. Mobile logistics and the full presentation overhaul remain later work.
 
@@ -52,3 +52,8 @@ The priorities are ship handling/aiming, combat difficulty, heat/ammo feedback, 
 Known prototype limits: non-solid buildings with blast damage, terrain/small-arms suit collision, a global power/material bus, constant solar, a finite field, one manual local checkpoint, and no offline production. Keep your checkpoint on the same browser/origin. No public hosting, multiplayer or cloud save is configured.
 
 The initial [graphics/UX/UI audit](PRESENTATION_AUDIT.md) records prototype issues; human usability testing and the full Phase 9 overhaul remain pending.
+
+
+## Oxygen habitats — alpha 0.10
+
+Follow [the habitat route](HABITATS.md#playtest). Confirm the source changes to HABITAT AIR, the suit reserve holds, disabling/exit resumes consumption, charged backup visibly exhausts, and K/reload preserves buffers while paused. Habitat air offers no fall/combat protection. Small/large palette buttons remain reachable with keyboard focus. The central Command console is the next milestone.

@@ -13,11 +13,12 @@ export function createAstronaut(): Astronaut {
   return { position: { x: 0, y: -WORLD.radius - SUIT.radius }, velocity: { x: 0, y: 0 },
     grounded: true, oxygen: SUIT.oxygen, health: 100, jumpHeld: false };
 }
-export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number): void {
+export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number, environmentalAirSeconds = 0): void {
   if (suit.health <= 0) return;
-  const oxygenUsed = Math.min(suit.oxygen, dt);
+  const suitSeconds = Math.max(0, dt - Math.max(0, Math.min(dt, environmentalAirSeconds)));
+  const oxygenUsed = Math.min(suit.oxygen, suitSeconds);
   suit.oxygen -= oxygenUsed;
-  suit.health = Math.max(0, suit.health - (dt - oxygenUsed) * 5);
+  suit.health = Math.max(0, suit.health - (suitSeconds - oxygenUsed) * 5);
   if (suit.health <= 0) { suit.velocity = { x: 0, y: 0 }; return; }
   const normal = heading(localAngle(suit.position)), tangent = { x: -normal.y, y: normal.x };
   const jump = input.jump && !suit.jumpHeld; suit.jumpHeld = input.jump;

@@ -5,7 +5,7 @@ export const POLICY_FIELDS = ['energyReserve', 'deliveryReserve', 'alloyReserve'
 export type PolicyField = typeof POLICY_FIELDS[number];
 export interface ColonyPolicy { energyReserve: number; deliveryReserve: number; alloyReserve: number; componentsReserve: number }
 export const POLICY_INFO: Record<PolicyField, { label: string; step: number; unit: string }> = {
-  energyReserve: { label: 'Defence / service power', step: 5, unit: 'kJ' },
+  energyReserve: { label: 'Essential systems power', step: 5, unit: 'kJ' },
   deliveryReserve: { label: 'Ship delivery room', step: 25, unit: 'kg' },
   alloyReserve: { label: 'Turret alloy', step: 5, unit: 'kg' },
   componentsReserve: { label: 'Turret components', step: 1, unit: 'kg' },

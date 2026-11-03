@@ -1,3 +1,5 @@
+import { habitatSource } from '../sim/habitats';
+import { habitatNotice } from './habitats';
 import { OperationsDock } from './OperationsDock';
 import { instrumentMarkup } from './instruments';
 import { towingPanel } from './towing';
@@ -32,7 +34,7 @@ export class Hud {
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.9</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.10</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
@@ -72,12 +74,12 @@ export class Hud {
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · R TO RESTART' :
       !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? world.notice.message :
       world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
-      onFoot ? (world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : 'ON FOOT · A/D WALK · SPACE JUMP · F BOARD') :
+      onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : habitatNotice(world)) :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
       ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : t.altitude > ATMOSPHERE.height ? 'OPEN SPACE · RADIAL GRAVITY' : 'ATMOSPHERIC FLIGHT · GRAVITY + DRAG';
     if (this.status.textContent !== message) this.status.textContent = message;
-    this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
+    this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || !habitatSource(world) && world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;
     this.root.dataset.altitude = t.altitude.toFixed(1);
     this.root.dataset.fuel = ship.fuel.toFixed(2);

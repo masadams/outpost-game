@@ -2,6 +2,10 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Habitat implementation — Task 007F
+
+On `feat/oxygen-habitats`, 40 m / 160 m domes use 20 m / 45 m elliptical roofs over the curved surface. The large span replaces the provisional 80 m so both footings can clear home terminals. Real oxygen stock fills 1 kg / 4 kg buffers; real 2 kW / 4 kW life support and separately charged ten-second backups replace free grace timers. Crew air pauses suit depletion without refill/healing; leaks, depletion, wrecks and demolition consume/vent finite supplies. Overlap pays one crew source by ID. Essential life support may use reserved energy; backup charging may not. Version-9 saves retain buffers and migrate v1–8. This is life support; shields remain a later milestone. Details and rationale: [HABITATS.md](HABITATS.md). Central Command follows this slice.
+
 ## Confirmed
 | ID | Decision | Rationale |
 |---|---|---|

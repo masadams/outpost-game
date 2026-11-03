@@ -1,0 +1,5 @@
+# Task 007F — Oxygen habitats
+
+Implement Phase 7.5 after Task 007E with buildable small/large domes, clear footing placement over existing colonies, curved coverage, finite oxygen stock/buffers, powered support and paid emergency backup. Habitat air holds suit reserve without refill/healing or damage immunity. Depletion, loss of coverage, disabling or wrecks resume suit air. Show air source, shortages, buffer and backup in accessible HUD/colony controls, render coverage, share pause/mute/reset behavior, and preserve all state in migrated versioned saves.
+
+Implemented on `feat/oxygen-habitats`; [model and playtest](docs/HABITATS.md). Spans 40/160 m, roofs 20/45 m. The large span deliberately clears home terminals. Follow AGENTS.md architecture; pure fixed-step simulation, bounded conservation, deterministic scheduling. Verify build/typecheck/unit tests and the complete production Chromium suite, including native construction and failure transitions. Open a review PR stacked after #15; do not merge automatically. Next: Phase 7.75 central Command, as requested in [the plan](docs/COMMAND_AND_EXPLORATION.md).

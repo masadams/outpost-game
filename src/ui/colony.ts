@@ -1,3 +1,4 @@
+import { habitatDetails } from './habitats';
 import { geologyPanel, rigDetails } from './geology';
 import { schedulingPanel } from './scheduling';
 import { policyPanel } from './colonyPolicy';
@@ -22,7 +23,7 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     ${geologyPanel(world)}
     <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div>
     <button ${disabled} data-colony="toggleBuild">${colony.buildOpen ? 'Close build palette [B]' : 'Build palette [B] · on foot'}</button>
-    ${colony.buildOpen ? `<div class="build-palette">${BUILD_TYPES.map((kind, i) => `<button ${disabled} class="${kind === colony.selected ? 'selected' : ''}" data-select="${kind}">${i + 1}. ${BLUEPRINTS[kind].label}<small>${Object.entries(BLUEPRINTS[kind].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</small></button>`).join('')}</div>
+    ${colony.buildOpen ? `<div class="build-palette">${BUILD_TYPES.map((kind, i) => `<button ${disabled} class="${kind === colony.selected ? 'selected' : ''}" data-select="${kind}">${i < 9 ? `${i + 1}. ` : ''}${BLUEPRINTS[kind].label}<small>${Object.entries(BLUEPRINTS[kind].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</small></button>`).join('')}</div>
       <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
       <div class="build-actions"><button ${disabled} data-shift="-32">← [Q]</button><button ${disabled} data-shift="32">→ [T]</button><button ${disabled || error ? 'disabled' : ''} data-colony="place">Place [Enter]</button></div>
       <button ${disabled} data-colony="demolish">Demolish nearby [X] · up to 75% salvage</button>` : ''}
@@ -31,7 +32,7 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
       ${isTurret(near.kind) ? `<p>${WEAPONS[near.kind].range} m · ${WEAPONS[near.kind].energy} kJ/shot${WEAPONS[near.kind].alloy ? ` · ${WEAPONS[near.kind].alloy} alloy${WEAPONS[near.kind].components ? ` + ${WEAPONS[near.kind].components} components` : ''}` : ''}</p><button ${disabled} data-colony="controlTurret">${world.defence.controlled === near.id ? 'Release turret' : 'Control turret'} [E]</button><button ${disabled} data-colony="toggleAuto">Auto defence [G]: ${near.turret?.automatic ? 'on' : 'off'}</button>` : ''}
       <button ${disabled || buildingHealth(near) >= 100 ? 'disabled' : ''} data-colony="repairBuilding">Repair nearby [U] · 1 alloy / 10 hull</button>
       ${near.kind === 'service' ? '<p>E: suit service / repair / refuel</p>' : ''}
-      ${rigDetails(world, near)}
+      ${rigDetails(world, near)}${habitatDetails(near)}
       ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}
       ${schedulingPanel(near, disabled || buildingHealth(near) <= 0 ? 'disabled' : '')}</div>` : ''}
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
