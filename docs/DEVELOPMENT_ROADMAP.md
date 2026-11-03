@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6, presentation foundations, planetary mining, scheduling and resource priorities are merged through PR #13. Landing feedback PR #14 is green and open against main. Task 007E implements paid physical asteroid towing as the next Phase 7 slice, stacked for review. Oxygen habitats are scheduled next in Phase 7.5; explicit ship progression and shield domes follow in Phase 8. The full Phase 9 overhaul remains required.
+**Status:** Phases 0–6, presentation foundations, planetary mining, scheduling and resource priorities are merged through PR #13. Landing feedback PR #14 is green and open against main. Task 007E implements paid physical asteroid towing and clearer atmosphere/space cues, stacked for review. Command, neighborhood discovery and multi-world milestones are now explicit. Oxygen habitats are scheduled next in Phase 7.5; explicit ship progression and shield domes follow in Phase 8. The full Phase 9 overhaul remains required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -136,8 +136,31 @@ Explicitly requested by the user. Follow towing before the wider Phase 8 progres
 - [ ] Show habitat/suit-air source, coverage, buffer/demand and failure feedback; save, pause and test all transitions.
 **Exit:** Crew can work inside a supplied dome without draining suit air, and loses that benefit predictably when supply/coverage fails.
 
+## Phase 7.75 — Central Command console
+
+Requested by the user to replace walking between facilities for routine control. Follow habitat buildings, before adding more progression/economy complexity. See [the functional plan](COMMAND_AND_EXPLORATION.md) and [concept wireframe](mockups/command-console.svg).
+- [ ] Cohesive spacecraft-style overview, colony selection/map and persistent critical warnings.
+- [ ] Remote facility enable/disable, recipes/targets, turret automation and supplied service management.
+- [ ] Power flow diagram, generation/demand/storage/capacity meters, actual versus requested allocation, per-facility caps and dispatch priorities.
+- [ ] Drag-and-drop ordering/dials with native keyboard alternatives, stable focus and pause-safe planning/execution.
+- [ ] Validated supplied construction/work queue, progress/cancellation and explicit executor/refund rules.
+- [ ] Economy ledger with usable/reserved stock, actual rates, bottlenecks and recipe flows.
+- [ ] Integrate real research and navigation as their milestones ship; no inert placeholder controls.
+- [ ] Persist priorities/budgets/orders, and test scarcity, damage, cancellation and input parity.
+**Exit:** Direct the installed colony from ship or surface without visiting every machine, with understandable power/material consequences.
+
+## Phase 7.9 — Nearby belts, destinations and discovery
+
+Promoted from optional late expansion in response to the user's empty-neighborhood feedback. Improve the immediate neighborhood before wider ship progression; see [the exploration plan](COMMAND_AND_EXPLORATION.md).
+- [ ] Distinct finite resource belts/clusters with useful mining/towing opportunities and persistent depletion.
+- [ ] Survey beacons, derelict/salvage, docking/service or anomaly sites with meaningful supplied interactions.
+- [ ] Overview chart, destination selection, range/bearing/relative-motion markers and clear home-return navigation.
+- [ ] Short exploration objectives and procedural silhouette/density/landmark variation.
+- [ ] Measured simulation/body budgets and deterministic far-field behavior without freezing threats or granting respawns.
+**Exit:** Navigate to a recognizable nearby opportunity, interact/mine and return with a meaningful result.
+
 ## Phase 8 — Progression and balancing
-**Dependencies:** Phases 2–7 and Phase 7.5 life support.
+**Dependencies:** Phases 2–7, life support, Command and neighborhood discovery.
 - [ ] Technology/unlock progression for ship, mining, energy and defences.
 - [ ] Phase 8.1: explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
 - [ ] Phase 8.2: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
@@ -146,6 +169,17 @@ Explicitly requested by the user. Follow towing before the wider Phase 8 progres
 - [ ] Mission/objective system with onboarding and longer-term goals.
 - [ ] Balance toward 60% action / 40% building.
 **Exit:** Engaging multi-session progression with clear short- and long-term goals.
+
+## Phase 8.5 — Nearby planets and moons
+
+Explicitly requested by the user; a bounded first neighborhood before the full presentation/reliability/release phases. See [multi-world requirements](COMMAND_AND_EXPLORATION.md).
+- [ ] Define distinct planets/moons, atmospheres, gravity, motion, resources and interactions.
+- [ ] Consistent multi-body gravity, finite cores, moving reference frames and swept surface/pad contacts.
+- [ ] Body-relative building/habitat/shield placement, walking, docking, towing and camera/local-up transitions.
+- [ ] System navigation, transfers/arrival/return and fuel/range/recovery tradeoffs in continuous flight.
+- [ ] Persist body motion, local colonies and depleted sites; preserve legacy home-world progress.
+- [ ] Verify cross-world flight/landing/return, coupled hauling, frame transitions, precision and save continuation.
+**Exit:** Visit, land/work on and return from a distinct nearby world in the same continuous game.
 
 ## Phase 9 — Graphics, UX and UI overhaul; audio polish
 
@@ -180,12 +214,12 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 ## Phase 11 — Release and later expansion
 - [ ] Desktop browser release and deployment.
 - [ ] Android feasibility, touch/controller mapping and performance testing.
-- [ ] Optional extra planets/biomes, factions, story and deeper colony systems.
+- [ ] Optional additional systems/biomes beyond the initial Phase 8.5 neighborhood, factions, story and deeper colony systems.
 - [ ] Revisit co-op/multiplayer only after single-player is stable; no commitment yet.
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review landing feedback PR #14 and the towing slice, then playtest alpha 0.9 using [PLAYTEST.md](PLAYTEST.md), especially latch eligibility, hauling, cable strain and return/mining flow. Next implement Phase 7.5 oxygen habitats; broader ship upgrades and shield domes follow in Phase 8. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Review landing feedback PR #14 and the towing slice, then playtest alpha 0.9 using [PLAYTEST.md](PLAYTEST.md), especially latch eligibility, hauling, cable strain and return/mining flow. Then implement habitats → Command console → nearby belts/destinations → ship progression/shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

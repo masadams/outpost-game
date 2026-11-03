@@ -106,6 +106,8 @@ export class GameAudio {
     else if (cue === 'towLatch') this.tone(210, 360, 0.18);
     else if (cue === 'towRelease') this.tone(330, 150, 0.12);
     else if (cue === 'towSnap') { this.noise(0.08, 0.06); this.tone(150, 80, 0.14); }
+    else if (cue === 'atmosphereExit') { this.tone(330, 520, 0.18); this.tone(520, 780, 0.2, 0.18); }
+    else if (cue === 'atmosphereEntry') { this.tone(660, 440, 0.18); this.tone(440, 260, 0.2, 0.18); }
     else if (cue === 'land' || cue === 'delivery' || cue === 'service') { this.tone(330, 440, 0.14); this.tone(660, 660, 0.18, 0.12); }
     else if (cue === 'pickup' || cue === 'production') this.tone(cue === 'pickup' ? 740 : 440, 980, 0.08);
     else if (cue === 'build') { this.noise(0.08, 0.035); this.tone(260, 520, 0.18); }

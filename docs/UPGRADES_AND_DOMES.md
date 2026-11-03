@@ -8,9 +8,14 @@ Ship upgrades were already listed broadly in Phase 8. This makes the categories 
 |---|---|---|
 | Now: Task 007E | Paid physical asteroid towing, first utility equipment | Flight, mining, material reserves and checkpoints |
 | Next: Phase 7.5 / Task 007F | Oxygen habitat domes and life-support coverage | Power, ice → oxygen supply, surface placement, suit safety |
+| Phase 7.75 | Central Command console, remote facilities, power allocation, queues and economy | Habitat/building foundation |
+| Phase 7.9 | Nearby belts, destinations and navigation | Towing and Command |
 | Phase 8.1 | Ship upgrade fabrication and progression | Stable logistics/economy and supplied service |
 | Phase 8.2 | Powered shield domes and defence progression | Building damage, meteors/projectiles, power priorities |
+| Phase 8.5 | Nearby planets/moons and consistent cross-world flight | Navigation, ship range and body-relative colonies |
 | Phase 9 | Full graphics/UX/UI overhaul across these systems | Playable upgraded ship and colony loop |
+
+See [the Command and exploration plan](COMMAND_AND_EXPLORATION.md) for the user’s later requests, full sequence and the [console concept](mockups/command-console.svg).
 
 ## Ship upgrades
 

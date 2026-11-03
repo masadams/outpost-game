@@ -25,6 +25,8 @@ Cargo/Colony/Combat/Defence open one right operations dock; I toggles Cargo and 
 
 The landing instruments now add color, symbols and text while descending/hovering near the surface. Compare radial/drift/tilt/spin to the touchdown limits, watch clearance/off-pad cues, and check that the warning clears during launch/ascent. Compare landing and low-fuel tones, mute and pause, and try the OS/browser reduced-motion preference. The low-fuel lights start at 15%, becoming critical at 5%; ship warning tones stay silent on foot or after landing/crashing. See [warning thresholds and limits](FLIGHT_WARNINGS.md). Human timing and sound-balance feedback is needed.
 
+For atmosphere transitions, launch beyond the 1,200 m body-centre air boundary and check the persistent ATMOSPHERE → THIN AIR → SPACE / VACUUM badge, exit/entry tones and continuing gravity readout. Reverse the flight and verify entry. Loading a paused checkpoint should not play a false crossing tone.
+
 For towing, open Cargo on the piloted home pad and fabricate the rig. Check the 16 alloy / 6 wire / 3 components cost and 25 kg equipment mass. In flight, match a nearby rock's velocity and Y to latch within 180 m. Check strain, gentle hauling, Y release, mining/collection and return/unload. Save/reload an active cable; coast prediction should explicitly suspend while attached and resume after release. See [TOWING.md](TOWING.md). Habitats, wider ship upgrades and shield domes are [scheduled separately](UPGRADES_AND_DOMES.md), not playable yet.
 
 ## Suggested route (about 25–30 minutes)

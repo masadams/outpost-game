@@ -2,13 +2,14 @@ import { inventoryMass } from '../sim/resources';
 import { heading } from '../sim/math';
 import { WORLD } from '../sim/config';
 import { flightSafety } from '../sim/flightSafety';
+import { flightRegion } from '../sim/flightRegion';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap';
+export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
-  return { towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
+  return { space: flightRegion(world.ship.position) === 'space', towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: { ...world.astronaut.position }, cargo: inventoryMass(world.ship.cargo), unloaded: world.unloaded,
@@ -20,7 +21,8 @@ export class AudioDirector {
   private footDistance = 0;
   private alarmTime = 0;
   private lastAlarm = new Map<string, number>();
-  reset(world: WorldState): void { this.previous = snapshot(world); this.footDistance = 0; this.alarmTime = 0; this.lastAlarm.clear(); }
+  private regionCooldown = 0;
+  reset(world: WorldState): void { this.previous = snapshot(world); this.footDistance = 0; this.alarmTime = 0; this.lastAlarm.clear(); this.regionCooldown = 0; }
   update(world: WorldState, seconds: number, paused: boolean): SoundFrame {
     const next = snapshot(world), prev = this.previous; this.previous = next;
     if (!prev || paused) { this.footDistance = 0; return silent(); }
@@ -28,6 +30,10 @@ export class AudioDirector {
     const viewer = onFoot ? world.astronaut.position : world.ship.position;
     const near = (x: number, y: number, range: number) => Math.hypot(viewer.x - x, viewer.y - y) <= range;
     const cues: Cue[] = [];
+    this.regionCooldown = Math.max(0, this.regionCooldown - Math.max(0, seconds));
+    if (!onFoot && prev.mode === 'ship' && next.state === 'flying' && prev.state === 'flying' && next.space !== prev.space && this.regionCooldown <= 1e-9) {
+      cues.push(next.space ? 'atmosphereExit' : 'atmosphereEntry'); this.regionCooldown = 6;
+    }
     if (next.towRig && !prev.towRig) cues.push('build');
     if (next.towTarget !== null && next.towTarget !== prev.towTarget) cues.push('towLatch');
     if (next.towBreaks > prev.towBreaks) cues.push('towSnap');

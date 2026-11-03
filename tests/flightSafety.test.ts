@@ -65,7 +65,7 @@ describe('flight alarm priority and cadence', () => {
     w.defence.meteors.push({ ...structuredClone(w.asteroids[0]), id: 100 });
     expect(d.update(w, 0, false).cues).toEqual(['landingWarning']); expect(d.update(w, 2.4, false).cues).toEqual([]);
     expect(d.update(w, 0.1, false).cues).toEqual(['landingWarning']);
-    w.ship = approach(1500); w.ship.fuel = 10; expect(d.update(w, 0, false).cues).toEqual(['fuelWarning']);
+    w.ship = approach(1500); w.ship.fuel = 10; expect(d.update(w, 0, false).cues).toEqual(['atmosphereExit', 'fuelWarning']);
   });
   it('keeps existing threat alarms ahead of a noncritical fuel caution', () => {
     const w = createWorld(); w.ship = approach(1500); w.ship.fuel = 30; w.defence.meteors.push({ ...structuredClone(w.asteroids[0]), id: 100 });

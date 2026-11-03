@@ -1,6 +1,7 @@
 import { OperationsDock } from './OperationsDock';
 import { instrumentMarkup } from './instruments';
 import { towingPanel } from './towing';
+import { flightRegion, REGION_LABELS } from '../sim/flightRegion';
 import { flightSafety } from '../sim/flightSafety';
 import { hudContext, type DockView } from './context';
 import { combatPanel } from './combat';
@@ -31,7 +32,7 @@ export class Hud {
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.9</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.9</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
@@ -57,6 +58,9 @@ export class Hud {
     this.root.querySelector('.context-hint')!.textContent = context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : '');
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
+    const region = flightRegion(onFoot ? world.astronaut.position : ship.position), regionBadge = this.root.querySelector<HTMLElement>('#flight-region')!;
+    regionBadge.dataset.region = region;
+    if (regionBadge.textContent !== REGION_LABELS[region]) regionBadge.textContent = REGION_LABELS[region];
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
     patchMarkup(this.stats, instrumentMarkup(world));
     const safety = flightSafety(ship), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;

@@ -1,6 +1,7 @@
 import { isolateControlKeys } from './controlKeys';
 import { ATMOSPHERE } from '../sim/config';
 import { airDensity, gravity } from '../sim/environment';
+import { flightRegion, REGION_LABELS } from '../sim/flightRegion';
 import type { Ship } from '../sim/physics';
 import type { Trajectory } from '../sim/trajectory';
 import type { FlightCamera } from '../render/camera';
@@ -26,7 +27,7 @@ export class FlightTools {
     this.value.textContent = `${camera.mode} ${camera.zoom.toFixed(2)}×`;
     const density = airDensity(ship.position), g = gravity(ship.position);
     const path = towing ? 'tow active · prediction suspended' : !this.trajectory ? 'path hidden' : ship.state !== 'flying' ? 'launch to predict' : !prediction?.points.length ? 'updating…' : prediction.contact ? `contact in ${prediction.contact.seconds.toFixed(1)} s` : 'no terrain contact in 180 s';
-    this.status.textContent = `${density > 0 ? `AIR ${(density / ATMOSPHERE.surfaceDensity * 100).toFixed(1)}%` : 'VACUUM'} · g ${Math.hypot(g.x, g.y).toFixed(2)} m/s² · Coast: ${path}`;
+    this.status.textContent = `${REGION_LABELS[flightRegion(ship.position)]} · ${density > 0 ? `AIR ${(density / ATMOSPHERE.surfaceDensity * 100).toFixed(1)}%` : 'NO AIR DRAG'} · g ${Math.hypot(g.x, g.y).toFixed(2)} m/s² · Coast: ${path}`;
     this.status.title = 'Coast prediction releases all controls and includes gravity and atmospheric drag. Moving objects and tools are not predicted; prediction is suspended while towing.';
     this.root.dataset.trajectory = String(this.trajectory); this.root.dataset.zoomMode = camera.mode; this.root.dataset.zoom = camera.zoom.toFixed(3);
     this.status.dataset.regime = density > 0 ? 'atmosphere' : 'vacuum';

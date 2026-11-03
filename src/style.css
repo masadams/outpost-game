@@ -122,6 +122,9 @@ footer p { margin: 0; line-height: 1.5; }
 .policy-row b { text-align: center; }
 .policy-row small { display: block; }
 .towing-panel { border-top: 1px solid var(--edge); margin-top: 12px; padding-top: 12px; }
+#flight-region { display: inline-block; font-size: 9px; letter-spacing: 1px; margin-left: 12px; padding: 4px 6px; border: 1px solid var(--edge); color: #86c7ff; vertical-align: middle; }
+#flight-region[data-region="thin-air"] { color: #f3d779; border-color: #f3d779; }
+#flight-region[data-region="space"] { color: #8ce9dd; border-color: #8ce9dd; }
 
 #hud[data-mode="ship"] .instruments { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 #hud[data-mode="ship"] .instruments strong { font-size: 22px; }
