@@ -1,3 +1,4 @@
+import { relative } from '../sim/celestial';
 import { airDensity } from '../sim/environment';
 import { colonyPlanet, sitePosition } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
@@ -14,7 +15,7 @@ function snapshot(world: WorldState) {
   return { body: world.siteBody ?? 'home', shieldHits: world.colony.shielding.hits, shieldBreaches: world.colony.shielding.breaches, research: world.colony.research.completed.length, equipment: world.ship.equipment.length, surveys: world.exploration.surveyed.length, salvage: world.exploration.salvaged, habitat: !!habitatSource(world), space: airDensity(world.ship.position, world.system) <= 0, towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
-    position: { ...world.astronaut.position }, cargo: cargoMass(world.ship), unloaded: world.unloaded,
+    position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
     rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position }])),
     buildings: new Map(world.colony.buildings.map(b => [b.id, { progress: b.progress, recipe: b.recipe }])) };
 }

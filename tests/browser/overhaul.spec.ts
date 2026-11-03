@@ -11,7 +11,7 @@ test('persists accessible settings and conflict-checked controls without changin
  await page.getByRole('button',{name:'Change Thrust / jump binding',exact:true}).click();await page.keyboard.press('p');await expect(page.locator('#binding-status')).toContainText('Already assigned');await page.keyboard.press('s');await expect(page.locator('#binding-status')).toHaveText('Control updated.');
  await page.getByRole('button',{name:'Return to game',exact:true}).click();await expect(hud).toHaveAttribute('data-state','landed');await expect(page.locator('.context-hint')).toContainText('S thrust');await expect(hud).toHaveAttribute('data-star-count','80');await expect(hud).toHaveAttribute('data-effect-cap','0');
  await page.keyboard.down('w');await page.waitForTimeout(250);await page.keyboard.up('w');await expect(hud).toHaveAttribute('data-fuel','240.00');
- await page.getByRole('button',{name:'Cargo [I]',exact:true}).focus();await page.keyboard.press('Space');await expect(page.locator('#operations-dock')).toHaveAttribute('data-panel','cargo');await page.keyboard.down('s');await page.waitForTimeout(250);await page.keyboard.up('s');await expect(hud).toHaveAttribute('data-fuel','240.00');
+ await page.getByRole('button',{name:'Ship [I]',exact:true}).focus();await page.keyboard.press('Space');await expect(page.locator('#operations-dock')).toHaveAttribute('data-panel','cargo');await page.keyboard.down('s');await page.waitForTimeout(250);await page.keyboard.up('s');await expect(hud).toHaveAttribute('data-fuel','240.00');
  await page.keyboard.press('Escape');await page.keyboard.down('s');await expect.poll(async()=>Number(await hud.getAttribute('data-fuel'))).toBeLessThan(240);await page.keyboard.up('s');await page.keyboard.press('p');
  expect(await page.evaluate(()=>localStorage.getItem('outpost.checkpoint.v1'))).toBeNull();
  await page.reload();await expect(page.locator('html')).toHaveAttribute('data-text-scale','1.5');await expect(hud).toHaveAttribute('data-state','landed');
@@ -33,7 +33,7 @@ test('keeps enlarged flight instruments and long live panels usable at supported
  await page.addInitScript(text=>localStorage.setItem('outpost.checkpoint.v1',text),encodeCheckpoint(w));
  for(const [width,height] of [[900,600],[1280,800],[1920,1080]]){
   await page.setViewportSize({width,height});await page.goto('/');await page.getByRole('button',{name:'Open settings',exact:true}).click();await page.getByLabel('Text size',{exact:true}).selectOption('1.5');await page.getByRole('button',{name:'Return to game',exact:true}).click();
-  await page.getByRole('button',{name:'Command',exact:true}).click();await expect(page.locator('#command-console')).toBeVisible();
+  await page.getByRole('button',{name:'Manage',exact:true}).click();await expect(page.locator('#command-console')).toBeVisible();
   const issues=await page.evaluate(()=>{
    const errors:string[]=[],sels=['.instruments','#operations-dock','.dock-nav','#flight-tools','#sound-panel','#objectives','.notices'];
    const boxes=sels.map(s=>({s,b:document.querySelector(s)!.getBoundingClientRect()}));
@@ -52,7 +52,7 @@ test('bounds visual work with both colonies and full body budgets while distant 
  const moon=colonyWorld(w,'moon');for(let i=0;i<48;i++)w.colony.buildings.push(completedBuilding(i+1,'solar',-Math.PI+i*Math.PI/24,w));w.colony.nextId=49;
  for(let i=0;i<24;i++)moon.colony.buildings.push(completedBuilding(1001+i,i===0?'miningRig':'solar',i===0?160/450:-Math.PI+i*Math.PI/12,moon));moon.colony.nextId=1025;
  const save=encodeCheckpoint(w);await page.addInitScript(text=>localStorage.setItem('outpost.checkpoint.v1',text),save);
- await page.goto('/');const hud=page.locator('#hud');await expect(hud).toHaveAttribute('data-state','paused');await page.getByRole('button',{name:'Command',exact:true}).click();await page.waitForTimeout(700);
+ await page.goto('/');const hud=page.locator('#hud');await expect(hud).toHaveAttribute('data-state','paused');await page.getByRole('button',{name:'Manage',exact:true}).click();await page.waitForTimeout(700);
  const detailed=await hud.evaluate(e=>({drawMean:e.dataset.renderMs,drawP95:e.dataset.renderP95,hudMean:e.dataset.hudMs,nodes:document.querySelectorAll('*').length}));expect(detailed.nodes).toBeLessThan(3500);
  await page.getByRole('button',{name:'Open settings',exact:true}).click();await page.getByLabel('Graphics quality',{exact:true}).selectOption('low');await page.getByLabel('Reduced motion and flashes').check();await page.getByRole('button',{name:'Return to game',exact:true}).click();await expect(hud).toHaveAttribute('data-star-count','80');await expect(hud).toHaveAttribute('data-effect-cap','0');
  const samples=await hud.getAttribute('data-draw-samples');await page.waitForTimeout(300);expect(await hud.getAttribute('data-draw-samples')).toBe(samples);

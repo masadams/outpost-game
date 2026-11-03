@@ -20,6 +20,7 @@ export function completedBuilding(id: number, kind: BuildType, angle: number, w:
 }
 /** Validate paid sites against other reservations without pretending the pilot is the worker. */
 export function orderError(w: WorldState, kind: BuildType, angle: number, omit?: number): string | null {
+  if(omit===undefined&&w.colony.command.queue.length>=16)return 'Queue limit: 16 orders';
   const reservations = w.colony.command.queue.filter(o => o.id !== omit).map(o => ({ id: -o.id, kind: o.kind, angle: o.angle } as Building));
   return placementError(w, kind, angle, { remote: true, paid: omit !== undefined, reservations });
 }

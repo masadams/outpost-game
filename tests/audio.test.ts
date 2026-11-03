@@ -69,3 +69,10 @@ it('announces airless source arrival distinctly, with no false atmospheric entry
  director.reset(colonyWorld(w,'moon'));expect(director.update(colonyWorld(w,'moon'),1/60,false).cues).toEqual([]);
  expect(director.update(w,1/60,false).cues).toEqual([]);
 });
+
+it('paces footsteps by surface travel rather than the moving moon carrying idle crew',async()=>{
+ const {colonyWorld}=await import('../src/sim/localWorld'),{planetAt,surfacePosition}=await import('../src/sim/celestial');
+ const w=createWorld();w.playerMode='astronaut';const moon=colonyWorld(w,'moon'),director=new AudioDirector();w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);director.reset(moon);
+ for(let i=0;i<10;i++){w.system.time+=1;w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);expect(director.update(moon,1,false).cues).not.toContain('step');}
+ w.astronaut.position=surfacePosition(planetAt('moon',w.system),4.1/450,2.5);expect(director.update(moon,1,false).cues).toContain('step');
+});

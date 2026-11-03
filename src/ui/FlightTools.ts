@@ -33,6 +33,7 @@ export class FlightTools {
     const path = towing ? 'tow active · prediction suspended' : !this.trajectory ? 'path hidden' : ship.state !== 'flying' ? 'launch to predict' : !prediction?.points.length ? 'updating…' : prediction.contact ? `contact in ${prediction.contact.seconds.toFixed(1)} s` : 'no terrain contact in 180 s';
     setText(this.status,`${REGION_LABELS[flightRegion(ship.position, system)]} · ${density > 0 ? `AIR ${(density / ATMOSPHERE.surfaceDensity * 100).toFixed(1)}%` : 'NO AIR DRAG'} · g ${Math.hypot(g.x, g.y).toFixed(2)} m/s² · Coast: ${path}`);
     this.status.title = 'Coast prediction releases all controls and includes gravity and atmospheric drag. Moving objects and tools are not predicted; prediction is suspended while towing.';
+    this.root.dataset.cameraX=camera.x.toFixed(5);this.root.dataset.cameraY=camera.y.toFixed(5);this.root.dataset.cameraAngle=camera.angle.toFixed(6);
     this.root.dataset.trajectory = String(this.trajectory); this.root.dataset.zoomMode = camera.mode; this.root.dataset.zoom = camera.zoom.toFixed(3);
     this.status.dataset.regime = density > 0 ? 'atmosphere' : 'vacuum';
     this.root.dataset.predictionPoints = String(towing ? 0 : prediction?.points.length ?? 0);

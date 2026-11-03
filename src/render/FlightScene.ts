@@ -1,3 +1,5 @@
+import { screenToWorld } from './pointer';
+import { drawCrewOrder } from './crewOrders';
 import { VisualEffects } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
 import { RenderBudget } from './budget';
@@ -25,7 +27,7 @@ import { FlightCamera } from './camera';
 import { drawMining } from './mining';
 import { drawSurface } from './surface';
 import { drawColony } from './colony';
-import type { ColonyAction } from '../sim/colony';
+import { applyColonyAction, type ColonyAction } from '../sim/colony';
 import { notify } from '../sim/messages';
 import { readCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
 import { GameAudio } from '../audio/GameAudio';
@@ -42,6 +44,7 @@ export class FlightScene extends Phaser.Scene {
   private budget=new RenderBudget();
   private lastDrawKey="";
   private starKey="";
+  private pointerInside=false;
   private preferences = readPresentation();
   private settings!: Settings;
   private pausedBeforeSettings=false;
@@ -74,7 +77,7 @@ export class FlightScene extends Phaser.Scene {
   constructor() { super('flight'); }
   create(): void {
     applyPresentation(this.preferences);
-    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
+    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
@@ -98,11 +101,20 @@ export class FlightScene extends Phaser.Scene {
     this.map = this.add.graphics();
     this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
       if(this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
-      const x=(pointer.x-this.scale.width/2)/this.follow.zoom,y=(pointer.y-this.scale.height*.53)/this.follow.zoom,c=Math.cos(this.follow.angle),s=Math.sin(this.follow.angle);
-      const at={x:this.follow.x+x*c-y*s,y:this.follow.y+x*s+y*c};
+      const at=screenToWorld(pointer,{...this.follow,width:this.scale.width,height:this.scale.height});
+      const local=activeWorld(this.simulation);this.hud.setBuildPointer(local,at,this.follow.zoom);
+      if(pointer.rightButtonDown()){
+        this.hud.clearBuildPointer();
+        if(this.hud.pointerBuilding){applyColonyAction(local,{type:'buildMode',open:false});return;}
+        if(!this.paused){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:Math.atan2(at.x-p.position.x,-(at.y-p.position.y)),body:p.id});}}
+        return;
+      }
+      if(this.hud.pointerBuilding){const d=this.hud.buildPointer;if(!this.paused&&d){if(d.valid)this.colonyActions.push({type:'queueBuild',kind:d.kind,angle:d.angle,body:d.body});else notify(this.simulation,d.error??'Invalid site');}return;}
       const candidates=allColonies(this.simulation).flatMap(site=>site.colony.buildings.map(b=>({id:b.id,body:site.siteBody??'home',p:sitePosition(site,b.angle,8)}))).map(v=>({...v,d:Math.hypot(at.x-v.p.x,at.y-v.p.y)})).sort((a,b)=>a.d-b.d);
       if(candidates[0]?.d<Math.max(16,10/this.follow.zoom))this.hud.selectFacility(candidates[0].body,candidates[0].id);
     });
+    const enter=()=>{this.pointerInside=true;},leave=()=>{this.pointerInside=false;this.hud.hideBuildTip();},contextMenu=(e:Event)=>e.preventDefault();
+    this.game.canvas.addEventListener('pointerenter',enter);this.game.canvas.addEventListener('pointerleave',leave);this.game.canvas.addEventListener('contextmenu',contextMenu);
     const blur = () => this.setPaused(true), visibility = () => { if (document.hidden) this.setPaused(true); };
     window.addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
     const wheel = (event: WheelEvent) => {
@@ -112,6 +124,7 @@ export class FlightScene extends Phaser.Scene {
     this.game.canvas.addEventListener('wheel', wheel, { passive: false });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility);
+      this.game.canvas.removeEventListener('pointerenter',enter);this.game.canvas.removeEventListener('pointerleave',leave);this.game.canvas.removeEventListener('contextmenu',contextMenu);
       this.settings.destroy(); this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
@@ -142,6 +155,7 @@ export class FlightScene extends Phaser.Scene {
     if (!this.settings.isOpen && !this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
     if (!this.settings.isOpen && !this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
     if (!this.settings.isOpen && !this.help.isOpen) {
+      for(const a of this.keys.planningActions()){const local=activeWorld(this.simulation);applyColonyAction(local,a);if(a.type==='toggleBuild'&&local.colony.buildOpen)this.hud.openBuild();}
       if (this.keys.inventory()) this.hud.toggleDock('cargo');
       if (this.keys.trajectory()) this.viewAction('trajectory');
       if (this.keys.zoomIn()) this.viewAction('zoomIn');
@@ -156,6 +170,7 @@ export class FlightScene extends Phaser.Scene {
     }
     const onFoot = this.simulation.playerMode === 'astronaut';
     this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot, this.simulation.system);
+    if(this.pointerInside){this.hud.setBuildPointer(activeWorld(this.simulation),screenToWorld(this.input.activePointer,{...this.follow,width:this.scale.width,height:this.scale.height}),this.follow.zoom);this.hud.showBuildTip(this.input.activePointer.x,this.input.activePointer.y);}
     this.predictionTime += delta / 1000;
     if (this.simulation.towing.targetId !== null) this.prediction = null;
     if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.paused && this.predictionTime >= 0.2))) {
@@ -224,6 +239,7 @@ export class FlightScene extends Phaser.Scene {
     drawExploration(g, this.simulation, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom, view, this.preferences.quality==='high');
     drawTowing(g, this.simulation, this.follow.zoom);
+    drawCrewOrder(g,this.simulation,this.follow.zoom);
     for (const site of allColonies(this.simulation)) {
       drawGeology(g, site, this.follow.zoom); drawShields(g, site, this.hud.shieldAccents && !this.preferences.reducedMotion);
       drawColony(g, site, this.hud.selectedBuildingId, (site.siteBody ?? 'home') === this.hud.buildPreview?.body ? this.hud.buildPreview : null, view, this.preferences.quality==='high');

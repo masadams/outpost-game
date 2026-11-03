@@ -4,7 +4,7 @@ export interface HudContext { key: string; label: string; view: DockView | null;
 /** Presentation decisions only; changing panels never changes the simulation. */
 export function hudContext(w: WorldState): HudContext {
   if (w.ship.state === 'crashed' && w.playerMode === 'ship') return { key: 'recovery', label: 'Recovery', view: 'combat', hint: 'Backspace recover · L checkpoint · R reset · H help' };
-  if (w.colony.buildOpen && w.playerMode === 'astronaut') return { key: 'construction', label: 'Construction', view: 'colony', hint: 'Choose a blueprint · Q/T shift · Enter place · X salvage · B close' };
+  if (w.colony.buildOpen) return { key: 'construction', label: 'Construction', view: 'colony', hint: 'Point + left click: paid work · Right click: finish · B toggle · Q/T/Enter: nearby placement' };
   if (w.defence.controlled !== null) return { key: 'turret', label: 'Turret', view: 'defence', hint: 'A/D aim · Space fire · E release · G auto defence · P pause' };
   if (w.playerMode === 'ship' && w.combat.enemies.length) return { key: 'combat', label: 'Combat', view: 'combat', hint: 'Shift fire · Z weapon · A/D turn · W thrust · P pause · H help' };
   if (w.defence.meteors.length) return { key: 'defence', label: 'Defence', view: 'defence', hint: 'N next drill when clear · I cargo · P pause · H help' };

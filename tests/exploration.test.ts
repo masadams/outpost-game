@@ -99,7 +99,7 @@ describe('finite nearby-space discovery', () => {
     expect(audio.update(w, 1, true).cues).toEqual([]);
   });
   it('round trips depleted stocks, surveyed manifests, selection and moving bodies in the current format', () => {
-    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(15);
+    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(16);
     const loaded = decodeCheckpoint(text); expect(loaded.exploration).toEqual(w.exploration); expect(loaded.asteroids).toEqual(w.asteroids); seedNeighborhood(loaded); expect(loaded.asteroids).toHaveLength(27); expect(loaded.exploration.sites.find(t => t.key === s.key)?.stock).toEqual(s.stock);
   });
   it('rejects duplicate site IDs, invalid stocks, non-finite motion and malformed belt tags', () => {

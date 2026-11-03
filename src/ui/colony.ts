@@ -1,5 +1,7 @@
+import { colonyPlanet } from '../sim/localWorld';
+import { buildFlow, type BuildDraft } from './buildFlow';
 import { MANIFESTS, type ManifestId } from '../sim/manifests';
-import { blueprintFootprint, blueprintPalette } from './blueprints';
+import { blueprintFootprint, blueprintPalette, type BuildCategory } from './blueprints';
 import { RESOURCES, type Resource } from '../sim/resources';
 import type { Product } from '../sim/colonyConfig';
 import { habitatDetails } from './habitats';
@@ -15,20 +17,18 @@ import { energyCapacity, oreCapacity, placementError, nearbyBuilding, recipeFor,
 import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 
-export function colonyPanel(world: WorldState, paused: boolean): string {
+export function colonyPanel(world: WorldState, paused: boolean, draft?:BuildDraft|null,category:BuildCategory='power'): string {
   const colony = world.colony, disabled = paused || world.playerMode !== 'astronaut' ? 'disabled' : '';
   const near = nearbyBuilding(world);
   const error = colony.buildOpen ? placementError(world) : null;
-  return `<label>COLONY GRID · ${colony.buildings.length} FACILITIES</label>
-    <div class="resource"><span>Supply / demand</span><span>${colony.generation.toFixed(0)} / ${colony.demand.toFixed(0)} kW</span></div>
-    <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
-    <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
+  return `<label>BUILD · ${colonyPlanet(world).label.toUpperCase()} · ${colony.buildings.length} FACILITIES</label>
 
-    <button ${disabled} data-colony="toggleBuild">${colony.buildOpen ? 'Close build palette [B]' : 'Build palette [B] · on foot'}</button>
-    ${colony.buildOpen ? `<h3>${BLUEPRINTS[colony.selected].label} · selected blueprint</h3><p>Cost ${Object.entries(BLUEPRINTS[colony.selected].cost).map(([p,q])=>`${q} ${p}`).join(' · ')}<br>${blueprintFootprint(colony.selected)}</p>
-      <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
+
+    <button data-colony="toggleBuild">${colony.buildOpen ? 'Finish mouse building [B]' : 'Plan construction [B]'}</button>
+    ${colony.buildOpen ? `<p class="build-instruction">Choose → point at surface → left click queues work · right click finishes</p><h3>${BLUEPRINTS[colony.selected].label} · selected blueprint</h3><p>Cost ${Object.entries(BLUEPRINTS[colony.selected].cost).map(([p,q])=>`${q} ${p}`).join(' · ')}<br>${blueprintFootprint(colony.selected)}</p>
+      <label for="build-category">Blueprint category</label><select id="build-category">${([['power','Power & storage'],['industry','Industry & research'],['crew','Crew & service'],['defence','Defence'],['all','All blueprints']] as const).map(([id,label])=>`<option value="${id}" ${category===id?'selected':''}>${label}</option>`).join('')}</select>${blueprintPalette(world,'',category)}${buildFlow(world,paused,draft)}<details data-preserve-open><summary>Nearby manual placement · Q/T/Enter</summary>      <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
       <div class="build-actions"><button ${disabled} data-shift="-32">← [Q]</button><button ${disabled} data-shift="32">→ [T]</button><button ${disabled || error ? 'disabled' : ''} data-colony="place">Place [Enter]</button></div>
-      ${blueprintPalette(world,disabled)}
+</details>
       <button ${disabled} data-colony="demolish">Demolish nearby [X] · up to 75% salvage</button>` : ''}
     ${near ? `<div class="machine" data-hull="${buildingHealth(near).toFixed(1)}" data-aim="${(near.turret?.aim ?? 0).toFixed(3)}"><label>${BLUEPRINTS[near.kind].label}</label><p>Hull ${buildingHealth(near).toFixed(0)}% · ${near.status}${recipeFor(near) ? ` · ${recipeFor(near)!.label} · ${near.progress.toFixed(1)} s` : ''}</p>
       ${near.kind === 'storage' || near.kind === 'battery' ? `<p>${buildingHealth(near) > 0 ? 'Passive capacity · available' : 'Capacity lost · repair to restore'}</p>` : `<button ${disabled} data-colony="toggleMachine">${near.enabled ? 'Disable' : 'Enable'} nearby${near.kind === 'service' || isTurret(near.kind) ? '' : ' [E]'}</button>`}
@@ -40,11 +40,18 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
       ${schedulingPanel(near, disabled || buildingHealth(near) <= 0 ? 'disabled' : '')}</div>` : ''}
     ${policyPanel(world, paused)}
     ${geologyPanel(world)}
-    <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div>
+    <details data-preserve-open><summary>Local power and stocks</summary>    <div class="resource"><span>Supply / demand</span><span>${colony.generation.toFixed(0)} / ${colony.demand.toFixed(0)} kW</span></div>
+    <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
+    <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
+    <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div></details>
     ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
+  const body=button.dataset.body==='home'||button.dataset.body==='moon'?button.dataset.body:undefined;
+  if(button.dataset.crew&&['walk','build','stop'].includes(button.dataset.crew))return {type:'crewOrder',operation:button.dataset.crew as 'build'|'stop',body};
+  if(button.dataset.queueSite!==undefined&&button.dataset.kind&&BUILD_TYPES.includes(button.dataset.kind as BuildType))return {type:'queueBuild',kind:button.dataset.kind as BuildType,angle:Number(button.dataset.queueSite),body};
+  if(button.dataset.workOrder&&['pause','cancel'].includes(button.dataset.workOperation??''))return {type:'queueControl',id:Number(button.dataset.workOrder),operation:button.dataset.workOperation as 'pause'|'cancel',body};
   if (button.dataset.manifest && Object.hasOwn(MANIFESTS, button.dataset.manifest)) return { type: 'loadManifest', manifest: button.dataset.manifest as ManifestId };
   if (button.dataset.oreLoad && RESOURCES.includes(button.dataset.oreLoad as Resource)) return { type: 'loadOre', resource: button.dataset.oreLoad as Resource };
   if (button.dataset.freight && PRODUCTS.includes(button.dataset.freight as Product)) return { type: 'freight', product: button.dataset.freight as Product, delta: Number(button.dataset.delta) };
