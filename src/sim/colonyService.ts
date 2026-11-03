@@ -1,5 +1,6 @@
 import { resupplyArmament } from './combatSupply';
 import { operational } from './buildingHealth';
+import { availableProduct } from './colonyPolicy';
 import { SUIT } from './astronaut';
 import { WORLD } from './config';
 import { notify } from './messages';
@@ -23,7 +24,7 @@ export function serviceAtBuilding(world: WorldState, building: Building): void {
   world.astronaut.health = 100;
   const at = stationPosition(building.angle);
   const near = world.ship.state === 'landed' && Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y) <= 80;
-  const repair = near ? Math.min(100 - world.ship.hull, products.alloy * 10) : 0;
+  const repair = near ? Math.min(100 - world.ship.hull, availableProduct(world.colony, 'alloy') * 10) : 0;
   world.ship.hull += repair; products.alloy = Math.max(0, products.alloy - repair / 10);
   const fuel = refuelShip(world, at);
   if (near) resupplyArmament(world);

@@ -1,6 +1,7 @@
 import { createSurfaceDeposits } from '../sim/geology';
 import { validGeology } from './validateGeology';
 import { validSchedule } from '../sim/scheduling';
+import { validPolicy } from '../sim/colonyPolicy';
 import { createArmament, createCombat } from '../sim/combatConfig';
 import { validCombat } from './validateCombat';
 import { createDefence } from '../sim/defenceConfig';
@@ -32,10 +33,11 @@ function validWorld(value: unknown): value is WorldState {
   if (!number(world.ship.fuel, 0, WORLD.fuelCapacity) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
   if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > CARGO_CAPACITY + 1e-6) return false;
   const colony = world.colony;
+  if (colony.policy !== undefined && !validPolicy(colony.policy)) return false;
   if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met'].includes(b.status))) return false;
+    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved'].includes(b.status))) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
   if (!PRODUCTS.every(p => number(colony.products[p], 0, productCapacity(colony))) || !number(colony.energy, 0, energyCapacity(colony)) || inventoryMass(world.depot) > oreCapacity(colony) + 1e-6) return false;
@@ -52,12 +54,12 @@ function validWorld(value: unknown): value is WorldState {
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 6, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
+  return JSON.stringify({ version: 7, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || ![1, 2, 3, 4, 5, 6].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
   if (envelope.version !== 1 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
   if ((envelope.version as number) < 3) envelope.world.defence = createDefence();
   if ((envelope.version as number) < 4) {

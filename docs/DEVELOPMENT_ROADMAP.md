@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6, the presentation foundation and finite planetary mining are merged through PR #11. Refinery scheduling is implemented as the next Phase 7 slice for review. Power/storage/ammunition priorities, mobile logistics and the full Phase 9 graphics/UX/UI overhaul remain required.
+**Status:** Phases 0–6, presentation foundations, planetary mining and refinery scheduling are merged through PR #12. Resource priorities are implemented as a separate Phase 7 slice for review. Mobile logistics and the full Phase 9 overhaul remain required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -108,12 +108,12 @@ Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and me
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
 
-The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implemented the first slice in merged [PR #11](https://github.com/masadams/outpost-game/pull/11): ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). [Task 007B](../CODEX_TASK_007B.md) adds opt-in refinery scheduling next, with desired-stock targets, fair recipe rotation, cycle preservation and version-6 checkpoints. See [automation rules](AUTOMATION.md). Neither slice completes Phase 7.
+The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implemented the first slice in merged [PR #11](https://github.com/masadams/outpost-game/pull/11): ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). [Task 007B](../CODEX_TASK_007B.md) adds opt-in refinery scheduling next, with desired-stock targets, fair recipe rotation, cycle preservation and version-6 checkpoints. See [automation rules](AUTOMATION.md). [Task 007C](../CODEX_TASK_007C.md) adds protected power, delivery room and turret materials on `feat/colony-priorities`, based on main after PR #12 merged. See [resource priorities](COLONY_PRIORITIES.md). These slices do not complete Phase 7.
 - [x] Finite planetary deposits and powered surface rigs connected to colony storage.
-- [ ] Opt-in refinery scheduling with configurable stock targets (Task 007B implemented in [PR #12](https://github.com/masadams/outpost-game/pull/12); awaiting review/merge).
+- [x] Opt-in refinery scheduling with configurable stock targets (merged [PR #12](https://github.com/masadams/outpost-game/pull/12)).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
 - [ ] Mining drones or asteroid towing, with costs and vulnerability.
-- [ ] Priority controls for power, storage and defensive ammunition.
+- [ ] Priority controls for power, storage and defensive ammunition (Task 007C implemented as reserves in [PR #13](https://github.com/masadams/outpost-game/pull/13); awaiting review/merge).
 - [ ] Background colony operations while player is in space, using appropriate simulation LOD.
 **Exit:** Colony remains functional and can defend itself while player is away.
 
@@ -164,7 +164,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review refinery scheduling and playtest alpha 0.7 using [PLAYTEST.md](PLAYTEST.md), especially target discovery, automatic recipe choices, blocked-state feedback and manual override. Then continue Phase 7 priorities and mobile logistics. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Review the resource-priority slice, then playtest alpha 0.8 using [PLAYTEST.md](PLAYTEST.md), especially held-resource feedback, remote release and actual turret/ship consumption. Continue Phase 7 mobile logistics after review. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

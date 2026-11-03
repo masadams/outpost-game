@@ -12,7 +12,7 @@ function patchChildren(target: Node, source: Node): void {
       target.replaceChild(next.cloneNode(true), current); return;
     }
     if (current instanceof Element && next instanceof Element) {
-      for (const attribute of Array.from(current.attributes)) if (!next.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
+      for (const attribute of Array.from(current.attributes)) if (!next.hasAttribute(attribute.name) && !(attribute.name === 'open' && current.matches('details[data-preserve-open]'))) current.removeAttribute(attribute.name);
       for (const attribute of Array.from(next.attributes)) if (current.getAttribute(attribute.name) !== attribute.value) current.setAttribute(attribute.name, attribute.value);
       patchChildren(current, next);
     } else if (current.nodeValue !== next.nodeValue) current.nodeValue = next.nodeValue;
