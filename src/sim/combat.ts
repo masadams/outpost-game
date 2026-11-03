@@ -1,3 +1,4 @@
+import { equipped } from './shipStats';
 import { createCombat, SHIP_WEAPONS, type CombatAction, type Drone } from './combatConfig';
 import { createShip, telemetry } from './physics';
 import { shipMass } from './shipMass';
@@ -33,7 +34,7 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     releaseTow(world, true);
     c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
     const recovered = createShip(); recovered.hull = 30; recovered.fuel = Math.min(s.fuel, 20);
-    recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig;
+    recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig; recovered.equipment = [...s.equipment];
     world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { x: 0, y: 0 }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
     world.defence.controlled = null; world.colony.buildOpen = false; world.depotOpen = false;
     notify(world, 'RECOVERED AT HOME · CARGO LOST · HULL 30 · E USES SUPPLIES TO SERVICE'); return;
@@ -52,23 +53,24 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
 }
 function fireShip(world: WorldState): void {
   const s = world.ship, a = s.armament, spec = SHIP_WEAPONS[a.selected], c = world.combat;
-  if (world.playerMode !== 'ship' || s.state !== 'flying' || a.cooldown > 1e-9 || a.overheated || a.energy + 1e-9 < spec.energy || a[a.selected] < 1 || c.projectiles.length >= 96) return;
+  const boosted = a.selected === 'cannon' && equipped(s, 'coil'), energy = boosted ? 12 : spec.energy, heat = boosted ? 22 : spec.heat, damage = boosted ? 24 : spec.damage;
+  if (world.playerMode !== 'ship' || s.state !== 'flying' || a.cooldown > 1e-9 || a.overheated || a.energy + 1e-9 < energy || a[a.selected] < 1 || c.projectiles.length >= 96) return;
   const n = heading(s.angle), at = { x: s.position.x + n.x * 13, y: s.position.y + n.y * 13 };
   const target = a.selected === 'missile' ? c.enemies.filter(d => d.hull > 0 && Math.hypot(d.position.x - at.x, d.position.y - at.y) < 1400 &&
     Math.abs(wrap(localAngle({ x: d.position.x - at.x, y: d.position.y - at.y }) - s.angle)) < 0.65 && lineOfSight(at, d.position)).sort((l, r) => Math.hypot(l.position.x - at.x, l.position.y - at.y) - Math.hypot(r.position.x - at.x, r.position.y - at.y))[0] : undefined;
-  a[a.selected]--; a.energy = Math.max(0, a.energy - spec.energy); a.heat = Math.min(100, a.heat + spec.heat); a.cooldown = spec.interval;
+  a[a.selected]--; a.energy = Math.max(0, a.energy - energy); a.heat = Math.min(100, a.heat + heat); a.cooldown = spec.interval;
   if (a.heat >= 100) a.overheated = true;
   c.shots++;
-  c.projectiles.push({ id: world.nextId++, owner: 'ship', kind: a.selected, position: at, velocity: { x: s.velocity.x + n.x * spec.speed, y: s.velocity.y + n.y * spec.speed }, life: spec.life, targetId: target?.id ?? null });
+  c.projectiles.push({ id: world.nextId++, owner: 'ship', kind: a.selected, damage, position: at, velocity: { x: s.velocity.x + n.x * spec.speed, y: s.velocity.y + n.y * spec.speed }, life: spec.life, targetId: target?.id ?? null });
   const mass = shipMass(s); s.velocity.x -= n.x * spec.mass * spec.speed / mass; s.velocity.y -= n.y * spec.mass * spec.speed / mass;
 }
 export function stepCombat(world: WorldState, fire: boolean, dt: number, starts: Omit<CombatStarts, 'enemies'>): void {
   const c = world.combat, s = world.ship, a = s.armament;
   c.furthestAltitude = Math.max(c.furthestAltitude, telemetry(s).altitude);
   c.flashes = c.flashes.filter(f => (f.life -= dt) > 0);
-  a.cooldown = Math.max(0, a.cooldown - dt); a.heat = Math.max(0, a.heat - 20 * dt);
+  a.cooldown = Math.max(0, a.cooldown - dt); a.heat = Math.max(0, a.heat - (equipped(s, 'cooling') ? 30 : 20) * dt);
   if (a.overheated && a.heat <= 35) a.overheated = false;
-  if (s.state !== 'crashed') a.energy = Math.min(100, a.energy + 12 * dt);
+  if (s.state !== 'crashed') a.energy = Math.min(100, a.energy + (equipped(s, 'cooling') ? 9 : 12) * dt);
   const enemyStarts = new Map(c.enemies.map(d => [d.id, { ...d.position }])), live: Drone[] = [];
   for (const d of c.enemies) {
     const old = enemyStarts.get(d.id)!, result = stepDrone(world, d, dt);

@@ -1,3 +1,4 @@
+import { fuelCapacity } from './shipStats';
 import { WORLD } from './config';
 import { localAngle, wrap } from './math';
 import { telemetry, type Ship } from './physics';
@@ -21,7 +22,7 @@ export function flightSafety(ship: Ship): FlightSafety {
   const onPad = Math.abs(wrap(localAngle(ship.position) - WORLD.padAngle)) * WORLD.radius <= WORLD.padHalfWidth;
   const instruments: Record<FlightMetric, InstrumentSafety> = {
     altitude: neutral(), radial: neutral(), drift: neutral(), speed: neutral(), tilt: neutral(), spin: neutral(),
-    fuel: ship.fuel <= WORLD.fuelCapacity * 0.05 ? { level: 'critical', label: ship.fuel <= 0 ? 'EMPTY' : 'FUEL CRITICAL' } : ship.fuel <= WORLD.fuelCapacity * 0.15 ? { level: 'caution', label: 'LOW FUEL' } : { level: 'safe', label: 'FUEL OK' },
+    fuel: ship.fuel <= fuelCapacity(ship) * 0.05 ? { level: 'critical', label: ship.fuel <= 0 ? 'EMPTY' : 'FUEL CRITICAL' } : ship.fuel <= fuelCapacity(ship) * 0.15 ? { level: 'caution', label: 'LOW FUEL' } : { level: 'safe', label: 'FUEL OK' },
     hull: ship.hull <= 25 ? { level: 'critical', label: 'HULL CRITICAL' } : ship.hull <= 50 ? { level: 'caution', label: 'HULL LOW' } : { level: 'safe', label: 'HULL OK' },
   };
   const problems: string[] = [];

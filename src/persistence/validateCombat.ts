@@ -11,7 +11,7 @@ export function validCombat(w: WorldState): boolean {
   if (![c.encounters, c.kills, c.escaped, c.shots, c.enemyShots, c.recoveries].every(n => num(n) && Number.isInteger(n)) || !num(c.tier, 1, 3) || !Number.isInteger(c.tier) || !num(c.lostCargo) || !num(c.furthestAltitude)) return false;
   if (!c.enemies.every(d => obj(d) && id(d.id) && vec(d.position) && vec(d.velocity) && num(d.angle, -Math.PI, Math.PI) && num(d.hull, 0, 48) && num(d.fuel, 0, 120) && num(d.ammo, 0, 24) && Number.isInteger(d.ammo) &&
     num(d.energy, 0, 50) && num(d.cooldown, 0, 1.4) && num(d.windup, 0, 0.9) && num(d.retreatTime, 0, 25) && ['approach', 'attack', 'retreat'].includes(d.state))) return false;
-  if (!c.projectiles.every(p => obj(p) && id(p.id) && ['ship', 'enemy'].includes(p.owner) && ['cannon', 'missile'].includes(p.kind) && vec(p.position) && vec(p.velocity) && num(p.life, 0, p.kind === 'missile' ? 12 : 5) && (p.targetId === null || id(p.targetId)) && (p.owner !== 'enemy' || p.kind === 'cannon'))) return false;
+  if (!c.projectiles.every(p => obj(p) && id(p.id) && ['ship', 'enemy'].includes(p.owner) && ['cannon', 'missile'].includes(p.kind) && vec(p.position) && vec(p.velocity) && num(p.life, 0, p.kind === 'missile' ? 12 : 5) && (p.targetId === null || id(p.targetId)) && (p.owner !== 'enemy' || p.kind === 'cannon') && (p.damage === undefined || num(p.damage, 0, 55)))) return false;
   if (!c.flashes.every(f => obj(f) && vec(f.position) && num(f.life, 0, 0.4))) return false;
   const ids = [...w.asteroids, ...w.pickups, ...w.defence.meteors, ...w.defence.projectiles, ...c.enemies, ...c.projectiles].map(v => v.id);
   return new Set(ids).size === ids.length && w.nextId > Math.max(0, ...ids);

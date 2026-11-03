@@ -1,0 +1,12 @@
+import { WORLD } from './config';
+import { CARGO_CAPACITY } from './resources';
+import { UPGRADES, type UpgradeId } from './progressionConfig';
+import type { Ship } from './physics';
+export const equipped = (s: Pick<Ship, 'equipment'>, id: UpgradeId): boolean => s.equipment.includes(id);
+export const equipmentMass = (s: Pick<Ship, 'equipment'>): number => s.equipment.reduce((mass, id) => mass + UPGRADES[id].mass, 0);
+export const fuelCapacity = (s: Pick<Ship, 'equipment'>): number => WORLD.fuelCapacity + (equipped(s, 'tank') ? 80 : 0);
+export const cargoCapacity = (s: Pick<Ship, 'equipment'>): number => CARGO_CAPACITY + (equipped(s, 'cargo') ? 80 : 0);
+export const engineStats = (s: Pick<Ship, 'equipment'>) => ({ thrust: WORLD.thrust * (equipped(s, 'engine') ? 1.3 : 1), burn: WORLD.burnRate * (equipped(s, 'engine') ? 1.3 : 1) });
+export const damageFactor = (s: Pick<Ship, 'equipment'>): number => equipped(s, 'armour') ? .8 : 1;
+export const miningStats = (s: Pick<Ship, 'equipment'>) => ({ range: equipped(s, 'mining') ? 550 : 450, rate: equipped(s, 'mining') ? 1.5 : 1 });
+export const tractorStats = (s: Pick<Ship, 'equipment'>) => ({ range: equipped(s, 'tractor') ? 360 : 260, acceleration: equipped(s, 'tractor') ? 28 : 35 });

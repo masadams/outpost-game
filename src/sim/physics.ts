@@ -1,3 +1,5 @@
+import type { UpgradeId } from './progressionConfig';
+import { engineStats, damageFactor } from './shipStats';
 import { createArmament, type Armament } from './combatConfig';
 import { shipMass } from './shipMass';
 import { ATMOSPHERE, WORLD } from './config';
@@ -10,6 +12,7 @@ export interface Controls { thrust: boolean; turn: number }
 export const IDLE: Controls = { thrust: false, turn: 0 };
 export type FlightState = 'landed' | 'flying' | 'crashed';
 export interface Ship {
+  equipment: UpgradeId[];
   towRig: boolean;
   position: Vec; velocity: Vec; angle: number; angularVelocity: number;
   fuel: number; hull: number; state: FlightState; thrusting: boolean;
@@ -17,7 +20,7 @@ export interface Ship {
   cargo: Inventory; armament: Armament;
 }
 export function createShip(): Ship {
-  return { towRig: false, position: { x: 0, y: -WORLD.radius - WORLD.shipRadius },
+  return { equipment: [], towRig: false, position: { x: 0, y: -WORLD.radius - WORLD.shipRadius },
     velocity: { x: 0, y: 0 }, angle: 0, angularVelocity: 0,
     fuel: WORLD.fuelCapacity, hull: 100, state: 'landed', thrusting: false, impact: 0, landings: 0, cargo: emptyInventory(), armament: createArmament() };
 }
@@ -60,9 +63,10 @@ export function stepShip(ship: Ship, input: Controls, dt: number): void {
   ship.angle = wrap(ship.angle + ship.angularVelocity * dt);
   const acceleration = { x: 0, y: 0 };
   let mass = shipMass(ship);
+  const engine = engineStats(ship);
   if (input.thrust && ship.fuel > 0) {
-    const consumed = Math.min(ship.fuel, WORLD.burnRate * dt);
-    const force = WORLD.thrust * consumed / (WORLD.burnRate * dt);
+    const consumed = Math.min(ship.fuel, engine.burn * dt);
+    const force = engine.thrust * consumed / (engine.burn * dt);
     const direction = heading(ship.angle);
     mass -= consumed / 2;
     acceleration.x += direction.x * force / mass;
@@ -89,7 +93,7 @@ export function stepShip(ship: Ship, input: Controls, dt: number): void {
     return;
   }
   const damage = Math.max(12, data.speed * 2.5 + data.tilt * 25);
-  ship.hull = Math.max(0, ship.hull - damage);
+  ship.hull = Math.max(0, ship.hull - damage * damageFactor(ship));
   ship.impact = 1;
   if (ship.hull <= 0 || data.speed > 28 || data.tilt > Math.PI / 3) {
     ship.hull = 0; ship.state = 'crashed'; ship.thrusting = false; ship.velocity = { x: 0, y: 0 };

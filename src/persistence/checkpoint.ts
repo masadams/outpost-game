@@ -1,3 +1,6 @@
+import { createResearch } from '../sim/progressionConfig';
+import { validProgression } from './validateProgression';
+import { fuelCapacity, cargoCapacity } from '../sim/shipStats';
 import { createExploration } from '../sim/explorationConfig';
 import { seedNeighborhood } from '../sim/exploration';
 import { validExploration } from './validateExploration';
@@ -17,7 +20,7 @@ import { validDefence } from './validateDefence';
 import { createWorld, type WorldState } from '../sim/world';
 import { BUILD_TYPES, PRODUCTS, REFINERY_RECIPES } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity } from '../sim/colony';
-import { CARGO_CAPACITY, inventoryMass, RESOURCES } from '../sim/resources';
+import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 import { migrateSmallMoon } from './migratePlanet';
@@ -37,15 +40,16 @@ function validWorld(value: unknown): value is WorldState {
   const template = createWorld();
   if (!object(value) || !shape(template, value)) return false;
   const world = value as unknown as WorldState;
+  if (!validProgression(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;
-  if (!number(world.ship.fuel, 0, WORLD.fuelCapacity) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
-  if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > CARGO_CAPACITY + 1e-6) return false;
+  if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
+  if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > cargoCapacity(world.ship) + 1e-6) return false;
   const colony = world.colony;
   if (colony.policy !== undefined && !validPolicy(colony.policy)) return false;
   if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited'].includes(b.status))) return false;
+    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'research staffed'].includes(b.status))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, HABITATS[b.kind].capacity) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
@@ -63,12 +67,12 @@ function validWorld(value: unknown): value is WorldState {
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 11, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
+  return JSON.stringify({ version: 12, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
   if (envelope.version !== 1 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
   if ((envelope.version as number) < 3) envelope.world.defence = createDefence();
   if ((envelope.version as number) < 4) {
@@ -89,6 +93,10 @@ export function decodeCheckpoint(text: string): WorldState {
     envelope.world.colony.command = createCommand();
   }
   if ((envelope.version as number) < 11 && !object(envelope.world.exploration)) envelope.world.exploration = createExploration();
+  if ((envelope.version as number) < 12) {
+    if (!object(envelope.world.ship) || !object(envelope.world.colony)) throw new Error('Checkpoint progression is invalid');
+    envelope.world.ship.equipment = []; envelope.world.colony.research = createResearch();
+  }
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
   world.combat.flashes = [];

@@ -1,3 +1,4 @@
+import { damageFactor } from './shipStats';
 import { SHIP_WEAPONS, type CombatProjectile, type Drone } from './combatConfig';
 import { integrateVelocity } from './environment';
 import { clamp, length, type Vec } from './math';
@@ -12,7 +13,7 @@ import type { WorldState } from './world';
 export interface CombatStarts { ship: Vec; enemies: Map<number, Vec>; rocks: Map<number, Vec>; meteors: Map<number, Vec>; suit: Vec }
 type Victim = { kind: 'drone'; body: Drone } | { kind: 'rock' | 'meteor'; body: Asteroid } | { kind: 'ship' | 'suit' | 'terrain' };
 export function damageShip(world: WorldState, damage: number): void {
-  const s = world.ship; s.hull = Math.max(0, s.hull - damage); s.impact = 1;
+  const s = world.ship; s.hull = Math.max(0, s.hull - damage * damageFactor(s)); s.impact = 1;
   if (s.hull === 0) { s.state = 'crashed'; s.velocity = { x: 0, y: 0 }; s.thrusting = false; }
 }
 function missileBlast(world: WorldState, at: Vec, damage: number): void {
@@ -22,7 +23,7 @@ function missileBlast(world: WorldState, at: Vec, damage: number): void {
 export function stepCombatProjectiles(world: WorldState, dt: number, starts: CombatStarts): void {
   const c = world.combat, remaining: CombatProjectile[] = [];
   for (const p of c.projectiles) {
-    const spec = SHIP_WEAPONS[p.kind], start = { ...p.position }, acceleration = { x: 0, y: 0 };
+    const spec = SHIP_WEAPONS[p.kind], damage = p.damage ?? spec.damage, start = { ...p.position }, acceleration = { x: 0, y: 0 };
     const target = p.owner === 'ship' && p.kind === 'missile' ? c.enemies.find(d => d.id === p.targetId && d.hull > 0) : null;
     if (target) {
       const delta = { x: target.position.x - start.x, y: target.position.y - start.y }, distance = length(delta);
@@ -47,9 +48,9 @@ export function stepCombatProjectiles(world: WorldState, dt: number, starts: Com
       const at = { x: start.x + (p.position.x - start.x) * hit, y: start.y + (p.position.y - start.y) * hit };
       c.flashes.push({ position: at, life: 0.25 });
       const impacted = victim as Victim;
-      if (p.owner === 'ship' && p.kind === 'missile') missileBlast(world, at, spec.damage);
-      else if (impacted.kind === 'drone') impacted.body.hull = Math.max(0, impacted.body.hull - spec.damage);
-      else if (impacted.kind === 'rock' || impacted.kind === 'meteor') impacted.body.health -= (p.owner === 'enemy' ? 10 : spec.damage) / 50;
+      if (p.owner === 'ship' && p.kind === 'missile') missileBlast(world, at, damage);
+      else if (impacted.kind === 'drone') impacted.body.hull = Math.max(0, impacted.body.hull - damage);
+      else if (impacted.kind === 'rock' || impacted.kind === 'meteor') impacted.body.health -= (p.owner === 'enemy' ? 10 : damage) / 50;
       else if (impacted.kind === 'ship') damageShip(world, 10);
       else if (impacted.kind === 'suit') world.astronaut.health = Math.max(0, world.astronaut.health - 15);
       else if (p.owner === 'enemy') damageColony(world, at, 10, 18, 'HOSTILE IMPACT');
