@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6 and the pre-automation presentation foundation are merged through PR #10. The first Phase 7 slice implements finite planetary mining for review. Scheduling, logistics, drones/towing and priority controls remain future work; the full Phase 9 overhaul remains required.
+**Status:** Phases 0–6, the presentation foundation and finite planetary mining are merged through PR #11. Refinery scheduling is implemented as the next Phase 7 slice for review. Power/storage/ammunition priorities, mobile logistics and the full Phase 9 graphics/UX/UI overhaul remain required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -108,8 +108,9 @@ Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and me
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
 
-The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implements the first slice in [PR #11](https://github.com/masadams/outpost-game/pull/11) on `feat/planetary-mining` for review: ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). This does not complete Phase 7.
-- [ ] Finite planetary deposits and powered surface rigs connected to colony storage (implemented; awaiting review/merge).
+The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implemented the first slice in merged [PR #11](https://github.com/masadams/outpost-game/pull/11): ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). [Task 007B](../CODEX_TASK_007B.md) adds opt-in refinery scheduling next, with desired-stock targets, fair recipe rotation, cycle preservation and version-6 checkpoints. See [automation rules](AUTOMATION.md). Neither slice completes Phase 7.
+- [x] Finite planetary deposits and powered surface rigs connected to colony storage.
+- [ ] Opt-in refinery scheduling with configurable stock targets (Task 007B implemented in [PR #12](https://github.com/masadams/outpost-game/pull/12); awaiting review/merge).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
 - [ ] Mining drones or asteroid towing, with costs and vulnerability.
 - [ ] Priority controls for power, storage and defensive ammunition.
@@ -163,7 +164,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review planetary mining and playtest alpha 0.6 using [PLAYTEST.md](PLAYTEST.md), especially seam discovery, footprint placement, finite reserves and power/storage feedback. Then continue Phase 7 scheduling and logistics using the merged layout foundation. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Review refinery scheduling and playtest alpha 0.7 using [PLAYTEST.md](PLAYTEST.md), especially target discovery, automatic recipe choices, blocked-state feedback and manual override. Then continue Phase 7 priorities and mobile logistics. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

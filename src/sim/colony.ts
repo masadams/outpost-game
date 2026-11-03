@@ -1,5 +1,6 @@
 import { depositAt } from './geology';
 import { stepMiningRig } from './surfaceExtraction';
+import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selectScheduledRecipe, SCHEDULE_PRODUCTS, type RefinerySchedule, type SchedulingAction } from './scheduling';
 import type { CombatAction } from './combatConfig';
 import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
@@ -12,15 +13,16 @@ import { notify } from './messages';
 import type { WorldState } from './world';
 
 export interface Building {
+  schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met';
 }
 export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -79,7 +81,14 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     colony.energy = Math.min(colony.energy, energyCapacity(colony));
     notify(world, 'FACILITY REMOVED · SALVAGE SCALES WITH REMAINING HULL');
   } else if (!operational(building)) { notify(world, 'FACILITY WRECKED · U TO REPAIR');
+  } else if ((action.type === 'toggleSchedule' || action.type === 'adjustTarget') && building.kind === 'refinery') {
+    const schedule = building.schedule ??= createSchedule();
+    if (action.type === 'toggleSchedule') { schedule.enabled = !schedule.enabled; notify(world, schedule.enabled ? 'AUTO RECIPES ON · SHARED STOCK TARGETS' : 'AUTO RECIPES OFF · CURRENT RECIPE RETAINED'); }
+    else if (SCHEDULE_PRODUCTS.includes(action.product) && (action.delta === -5 || action.delta === 5)) {
+      schedule.targets[action.product] = clamp(schedule.targets[action.product] + action.delta, 0, MAX_STOCK_TARGET);
+    }
   } else if (action.type === 'cycleRecipe' && building.kind === 'refinery') {
+    if (building.schedule) building.schedule.enabled = false;
     building.recipe = (building.recipe + 1) % REFINERY_RECIPES.length; building.progress = 0;
     notify(world, REFINERY_RECIPES[building.recipe].label);
   } else if (action.type === 'toggleMachine') {
@@ -100,10 +109,10 @@ export function stepColony(world: WorldState, dt: number): void {
     if (!operational(building)) continue;
     if (!building.enabled) continue;
     if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
+    if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;
     const recipe = recipeFor(building); if (!recipe) continue;
-    if (Object.entries(recipe.raw).some(([r, quantity]) => world.depot[r as keyof typeof world.depot] + 1e-9 < quantity) ||
-      Object.entries(recipe.input).some(([p, quantity]) => colony.products[p as keyof ProductInventory] + 1e-9 < quantity)) { building.status = 'no feedstock'; continue; }
-    if (Object.entries(recipe.output).some(([p, quantity]) => colony.products[p as keyof ProductInventory] + quantity > productCapacity(colony))) { building.status = 'output full'; continue; }
+    if (!hasRecipeInputs(world, recipe)) { building.status = 'no feedstock'; continue; }
+    if (!hasRecipeRoom(colony.products, recipe, productCapacity(colony))) { building.status = 'output full'; continue; }
     colony.demand += recipe.power;
     if (colony.energy + 1e-9 < recipe.power * dt) { building.status = 'no power'; continue; }
     colony.energy = Math.max(0, colony.energy - recipe.power * dt); building.progress += dt; building.status = 'running';
@@ -112,5 +121,6 @@ export function stepColony(world: WorldState, dt: number): void {
     for (const [r, quantity] of Object.entries(recipe.raw)) world.depot[r as keyof typeof world.depot] = Math.max(0, world.depot[r as keyof typeof world.depot] - quantity);
     for (const [p, quantity] of Object.entries(recipe.input)) colony.products[p as keyof ProductInventory] = Math.max(0, colony.products[p as keyof ProductInventory] - quantity);
     for (const [p, quantity] of Object.entries(recipe.output)) colony.products[p as keyof ProductInventory] += quantity;
+    if (building.kind === 'refinery' && building.schedule?.enabled) building.schedule.cursor = (building.recipe + 1) % REFINERY_RECIPES.length;
   }
 }

@@ -28,7 +28,7 @@ export class Hud {
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.6</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.7</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
