@@ -2,7 +2,8 @@ import { expect, test } from '@playwright/test';
 import { WORLD } from '../../src/sim/config';
 
 test('manages reserves from ship and surface, protects production/storage/materials and restores policy', async ({ page }) => {
-  test.setTimeout(90000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  // This full construction/hold/release/save route takes longer on software-rendered CI runners.
+  test.setTimeout(120000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/'); const hud = page.locator('#hud'), policy = page.locator('.policy-controls');
   await page.getByRole('button', { name: 'Colony', exact: true }).click();
   await page.locator('.policy-controls summary').focus(); await page.keyboard.press('Enter');
