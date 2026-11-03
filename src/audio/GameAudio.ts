@@ -97,6 +97,8 @@ export class GameAudio {
   private play(cue: Cue): void {
     if (cue === 'crash') { this.noise(0.45, 0.16); this.tone(130, 35, 0.45); }
     else if (cue === 'impact' || cue === 'fracture') { this.noise(0.16, 0.09); this.tone(160, 65, 0.18); }
+    else if (cue === 'shieldHit') { this.tone(260, 720, 0.16, 0, 'sine'); }
+    else if (cue === 'shieldBreach') { this.tone(520, 100, 0.28); this.tone(180, 90, 0.18, 0.28); }
     else if (cue === 'shot') this.tone(920, 180, 0.1, 0, 'sawtooth');
     else if (cue === 'step') this.noise(0.045, 0.035);
     else if (cue === 'airlock') { this.noise(0.18, 0.04); this.tone(230, 320, 0.1); }

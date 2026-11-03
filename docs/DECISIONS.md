@@ -148,3 +148,9 @@ The user also requested a spacecraft-style central management menu with power me
 
 ## Change process
 When a confirmed decision is revised, record the new decision, reason, and PR link. Never silently change established gameplay direction.
+
+## Task 009 — Paid selective shields
+
+Merged reviewed green-CI Command #17, discovery #18 and progression #19 into main under the user’s explicit merge instruction. Continue with separate Combat-engineering shield emitters: finite SP capacity and actual kJ upkeep/recharge, essential air first, stable maintenance/charging priorities, preserved breach timers and empty rebuild/repair. Shield SP are gameplay damage capacity; kinetic energy and dispersed mass are tracked separately. Swept incoming meteors/hostile rounds pay sequential boundary costs; overflow slows with a persisted residual budget and rechecked moving-target collisions. Ordinary traffic, tow cargo and friendly weapons pass; no oxygen or free ore. Version 13 persists protection state; older formats are rejected during development under the user’s explicit direction to defer legacy-save support. See [rules, accounting, limitations and route](SHIELDS.md). Nearby worlds and the full Phase 9 presentation overhaul remain next.
+
+Preserve manually chosen operation panels when threats arrive/clear in the same player mode. These transitions previously hid Command and left its counters stale; construction, turret control, recovery and boarding still choose their contextual defaults.

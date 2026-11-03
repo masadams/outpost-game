@@ -1,3 +1,5 @@
+import { isShield } from '../sim/shieldConfig';
+import { shieldActive } from '../sim/shields';
 import { cargoCapacity, miningStats, tractorStats } from '../sim/shipStats';
 import { NavigationPanel } from './Navigation';
 import { CommandConsole } from './CommandConsole';
@@ -33,6 +35,7 @@ export class Hud {
   private defenceMarkup = '';
   private nav: NavigationPanel;
   private command: CommandConsole;
+  get shieldAccents(): boolean { return this.command.shieldAccents; }
   get selectedBuildingId(): number | null { return this.dock.root.dataset.panel === 'command' ? this.command.selected : null; }
   get buildPreview() { return this.dock.root.dataset.panel === 'command' ? this.command.preview : null; }
   private dock = new OperationsDock();
@@ -43,7 +46,7 @@ export class Hud {
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
     this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.13</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.14</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
@@ -63,7 +66,7 @@ export class Hud {
     });
   }
   update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
-    const context = hudContext(world); this.dock.update(context);
+    const context = hudContext(world); this.dock.update(context, world.playerMode);
     this.root.dataset.context = context.key;
     this.root.querySelector('#hud-context')!.textContent = context.label;
     this.root.querySelector('.context-hint')!.textContent = context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : '');
@@ -106,7 +109,9 @@ export class Hud {
     const combatText = world.playerMode === 'ship' ? `${arm.selected.toUpperCase()} ${arm[arm.selected]} · CELL ${arm.energy.toFixed(0)} · HEAT ${arm.heat.toFixed(0)}${arm.overheated ? ' · COOLING LOCK' : ''}` : '';
     if (combatStatus.textContent !== combatText) combatStatus.textContent = combatText;
     const hostiles = world.combat.enemies.length ? `${warning ? ' · ' : ''}${world.combat.enemies.length} HOSTILE${world.combat.enemies.every(d => d.state === 'retreat') ? ' · DISENGAGING' : world.combat.enemies.some(d => d.windup > 0) ? ' · DRONE AIMING' : ' · APPROACHING'}` : '';
-    if (alert.textContent !== warning + hostiles) alert.textContent = warning + hostiles;
+    const emitters = world.colony.buildings.filter(b => isShield(b.kind)), active = emitters.filter(shieldActive).length;
+    const protection = emitters.length && (warning || hostiles || emitters.some(b => b.status === 'shield breached')) ? `${warning || hostiles ? ' · ' : ''}SHIELDS ${active}/${emitters.length} ACTIVE${emitters.some(b => b.status === 'shield breached') ? ' · BREACHED' : ''}` : '';
+    if (alert.textContent !== warning + hostiles + protection) alert.textContent = warning + hostiles + protection;
     this.updateMining(world);
     this.nav.update(world, paused, !this.dock.navigation.hidden);
     if (!this.dock.command.hidden) this.command.update(world, paused);

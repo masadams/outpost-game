@@ -124,11 +124,6 @@ describe('supplied recovery and persistence', () => {
     const loaded = decodeCheckpoint(encodeCheckpoint(w)); expect(loaded.combat).toEqual({ ...w.combat, flashes: [] }); expect(loaded.ship).toEqual(w.ship);
     run(w, 2, true); run(loaded, 2, true); expect(loaded.combat).toEqual(w.combat); expect(loaded.ship).toEqual(w.ship);
   });
-  it('migrates version-3 worlds without starting enemies or resetting active defence and inventory', () => {
-    const w = flight(), old = JSON.parse(encodeCheckpoint(w)); old.version = 3; delete old.world.combat; delete old.world.ship.armament; old.world.defence.wave = 2;
-    const loaded = decodeCheckpoint(JSON.stringify(old)); expect(loaded.combat.enemies).toHaveLength(0); expect(loaded.combat.encounters).toBe(0); expect(loaded.defence.wave).toBe(2);
-    expect(loaded.ship.position).toEqual(w.ship.position); expect(loaded.colony.products).toEqual(w.colony.products); expect(loaded.ship.armament.cannon).toBe(40);
-  });
   it('rejects impossible ammo, over-sized actors, duplicate IDs, invalid effects and nonfinite drone state', () => {
     const w = flight(); applyCombatAction(w, { type: 'startEncounter' }); const valid = JSON.parse(encodeCheckpoint(w));
     for (const mutate of [

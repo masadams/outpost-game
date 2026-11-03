@@ -37,7 +37,7 @@ export function ventHabitat(w: WorldState, b: Building): void {
   b.habitat.oxygen = 0; b.habitat.energy = 0; b.habitat.powered = false; b.habitat.backup = false;
 }
 /** Essential life support runs before industry and may draw protected charge. Backup charging may not. */
-export function stepHabitats(w: WorldState, dt: number): void {
+export function stepHabitats(w: WorldState, dt: number, deferCharging = false): void {
   const c = w.colony;
   for (const b of orderedBuildings(c)) {
     if (!isHabitat(b.kind) || !b.habitat) continue;
@@ -58,6 +58,10 @@ export function stepHabitats(w: WorldState, dt: number): void {
     b.status = h.oxygen <= spec.capacity * HABITAT.minimumFraction + 1e-9 ? c.products.oxygen <= 1e-9 ? 'no feedstock' : 'pressurizing' :
       h.oxygen < spec.capacity * HABITAT.warningFraction ? 'air low' : 'breathable';
   }
+  if (!deferCharging) chargeHabitats(w, dt);
+}
+export function chargeHabitats(w: WorldState, dt: number): void {
+  const c = w.colony;
   // Fund every dome's essential load before spending spare grid energy on backup charging.
   for (const b of orderedBuildings(c)) {
     if (!isHabitat(b.kind) || !b.habitat?.powered || powerFraction(b) < 1) continue;

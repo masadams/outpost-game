@@ -13,6 +13,8 @@ export class OperationsDock {
   readonly defence = document.createElement('section');
   private heading = document.createElement('span');
   private contextKey = '';
+  private playerMode = '';
+  private manual = false;
   private view: DockView | null = null;
   constructor() {
     this.nav.className = 'dock-nav'; this.nav.setAttribute('aria-label', 'Operations panels');
@@ -31,12 +33,20 @@ export class OperationsDock {
     });
     isolateControlKeys(this.nav); isolateControlKeys(this.root);
   }
-  update(context: HudContext): void {
-    if (context.key !== this.contextKey) { this.contextKey = context.key; this.view = context.view; this.render(); }
+  update(context: HudContext, playerMode: string): void {
+    if (context.key !== this.contextKey || playerMode !== this.playerMode) {
+      const alerts = ['defence', 'combat'];
+      const preserve = this.manual && playerMode === this.playerMode &&
+        (alerts.includes(context.key) || alerts.includes(this.contextKey)) &&
+        !['recovery', 'construction', 'turret', 'depot'].includes(context.key);
+      this.contextKey = context.key; this.playerMode = playerMode;
+      if (!preserve) { this.view = context.view; this.manual = false; }
+      this.render();
+    }
   }
-  toggle(view: DockView): void { this.view = this.view === view ? null : view; this.render(); }
+  toggle(view: DockView): void { this.manual = true; this.view = this.view === view ? null : view; this.render(); }
   close(): void {
-    this.view = null;
+    this.manual = true; this.view = null;
     const focused = document.activeElement;
     if (focused instanceof HTMLElement && (this.root.contains(focused) || this.nav.contains(focused))) focused.blur();
     this.render();

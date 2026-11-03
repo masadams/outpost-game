@@ -127,11 +127,6 @@ describe('reserve controls, persistence and simulation', () => {
     loaded.colony.policy!.energyReserve = 0; policy.energyReserve = 0; run(w, 2); run(loaded, 2);
     expect(loaded.colony).toEqual(w.colony); expect(loaded.depot).toEqual(w.depot);
   });
-  it('loads version-6 progress without adding reserves or resetting schedules, combat or depletion', () => {
-    const { w, building } = fixture(); delete w.colony.policy; building.schedule = createSchedule(); building.schedule.enabled = true;
-    w.surfaceDeposits[0].remaining = 90; w.ship.armament.cannon = 12; const old = JSON.parse(encodeCheckpoint(w)); old.version = 6;
-    const loaded = decodeCheckpoint(JSON.stringify(old)); expect(loaded.colony).toEqual(w.colony); expect(loaded.ship).toEqual(w.ship); expect(loaded.surfaceDeposits).toEqual(w.surfaceDeposits);
-  });
   it('rejects missing fields, negative, excessive, nonnumeric and unknown reserve fields', () => {
     const { w } = fixture(), valid = JSON.parse(encodeCheckpoint(w));
     for (const policy of [null, [], {}, { ...createPolicy(), energyReserve: -1 }, { ...createPolicy(), deliveryReserve: MAX_RESERVE + 1 }, { ...createPolicy(), alloyReserve: '10' }, { ...createPolicy(), imaginary: 1 }]) {

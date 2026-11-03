@@ -110,12 +110,6 @@ describe('scheduled production persistence and background operation', () => {
     const loaded = decodeCheckpoint(encodeCheckpoint(w)); expect(loaded.colony.buildings[1]).toEqual(refinery);
     run(w, 20); run(loaded, 20); expect(loaded.colony).toEqual(w.colony); expect(loaded.depot).toEqual(w.depot);
   });
-  it('accepts version-5 checkpoints with all prior progress and leaves their refineries manual', () => {
-    const { w, refinery } = fixture(); delete refinery.schedule; w.surfaceDeposits[0].remaining = 120; w.ship.cargo.ice = 4; w.ship.armament.cannon = 20;
-    const old = JSON.parse(encodeCheckpoint(w)); old.version = 5; const loaded = decodeCheckpoint(JSON.stringify(old));
-    expect(loaded.colony).toEqual(w.colony); expect(loaded.surfaceDeposits).toEqual(w.surfaceDeposits); expect(loaded.ship).toEqual(w.ship);
-    expect(loaded.colony.buildings[1].schedule).toBeUndefined();
-  });
   it('rejects malformed schedules, illegal goals and schedules on non-refinery buildings', () => {
     const { w } = fixture(), saved = JSON.parse(encodeCheckpoint(w));
     for (const mutate of [

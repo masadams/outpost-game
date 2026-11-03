@@ -1,6 +1,6 @@
 # Ship upgrades, habitats and shield domes — development schedule
 
-Ship upgrades were already listed broadly in Phase 8. This makes the categories and building milestones explicit in response to the user's request. The tow rig and habitats are merged; Command #17 and neighborhood #18 are open for review. Ship progression/research is now implemented on `feat/ship-progression`; [actual costs, effects and playtest](PROGRESSION.md) supersede the earlier provisional equipment list. Shields, nearby worlds and the full presentation overhaul remain planned.
+Ship upgrades were already listed broadly in Phase 8. This makes the categories and building milestones explicit in response to the user's request. The tow rig and habitats are merged; Command #17, neighborhood #18 and ship progression/research #19 are merged; [actual costs, effects and playtest](PROGRESSION.md) supersede the earlier provisional equipment list. Shields are implemented for verification/review on `feat/shield-domes`; [actual shield rules](SHIELDS.md) define the costs and selective collision policy. Nearby worlds and the full presentation overhaul remain planned.
 
 ## Order and dependencies
 
@@ -10,8 +10,8 @@ Ship upgrades were already listed broadly in Phase 8. This makes the categories 
 | Implemented for review: Phase 7.5 / Task 007F | Oxygen habitat domes and life-support coverage | Power, ice → oxygen supply, surface placement, suit safety |
 | Phase 7.75 | Central Command console, remote facilities, power allocation, queues and economy | Habitat/building foundation |
 | Phase 7.9 | Nearby belts, destinations and navigation | Towing and Command |
-| Implemented for review: Phase 8.1 / Task 008 | Paid lab research, eight module upgrades and fabrication | Stable logistics/economy and supplied service |
-| Phase 8.2 | Powered shield domes and defence progression | Building damage, meteors/projectiles, power priorities |
+| Merged: Phase 8.1 / Task 008 | Paid lab research, eight module upgrades and fabrication | Stable logistics/economy and supplied service |
+| Implemented for review: Phase 8.2 / Task 009 | Powered shield domes and defence progression | Building damage, meteors/projectiles, power priorities |
 | Phase 8.5 | Nearby planets/moons and consistent cross-world flight | Navigation, ship range and body-relative colonies |
 | Phase 9 | Full graphics/UX/UI overhaul across these systems | Playable upgraded ship and colony loop |
 
@@ -28,7 +28,7 @@ The first utility upgrade is the towing rig: supplied fabrication at home adds r
 - Weapons/defence: ammunition, energy, cooling and armour tradeoffs; respect existing finite rearm/repair rules.
 - Navigation/utility: towing improvements, surveying and optional landing aids. Preserve manual flight and make assistance explicit.
 
-Unlock/fabrication requirements belong to Phase 8 progression. Replacement/salvage, wreck recovery and migration rules must prevent duplicated equipment or refunded supplies. Tests must use dynamic upgraded masses/capacities and cover install/replace/save/recovery boundaries. No unlimited stacking of numerical bonuses.
+Unlock/fabrication requirements belong to Phase 8 progression. Replacement/salvage, wreck recovery and current-save rules must prevent duplicated equipment or refunded supplies. Tests must use dynamic upgraded masses/capacities and cover install/replace/save/recovery boundaries. No unlimited stacking of numerical bonuses.
 
 ## Oxygen habitat domes — Phase 7.5
 

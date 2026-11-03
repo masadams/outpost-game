@@ -101,12 +101,6 @@ describe('production loop, background simulation and persistence', () => {
     expect(loaded.surfaceDeposits).toEqual(w.surfaceDeposits); expect(loaded.colony.buildings).toEqual(w.colony.buildings);
     run(w, 6); run(loaded, 6); expect(loaded.surfaceDeposits).toEqual(w.surfaceDeposits); expect(loaded.depot).toEqual(w.depot); expect(loaded.colony.energy).toBe(w.colony.energy);
   });
-  it('adds finite seams to version-4 saves without resetting old world progress or supplying raw ore', () => {
-    const w = createWorld(); w.asteroids.splice(0, 2); w.ship.cargo.ice = 5; w.depot.iron = 8;
-    const old = JSON.parse(encodeCheckpoint(w)); old.version = 4; delete old.world.surfaceDeposits;
-    const loaded = decodeCheckpoint(JSON.stringify(old)); expect(loaded.surfaceDeposits).toEqual(createSurfaceDeposits()); expect(loaded.asteroids).toEqual(w.asteroids);
-    expect(loaded.depot).toEqual(w.depot); expect(loaded.ship).toEqual(w.ship); expect(loaded.colony.products).toEqual(w.colony.products);
-  });
   it('rejects missing/duplicate seams, changed capacities, invalid reserves and off-seam rig bindings', () => {
     const w = fixture(), valid = JSON.parse(encodeCheckpoint(w));
     for (const mutate of [

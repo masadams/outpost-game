@@ -1,3 +1,4 @@
+import { shieldDetails, shieldPanel } from './shields';
 import { progressionPanel, progressionAction } from './progression';
 import { orderError } from '../sim/construction';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type ProductInventory, type BuildType } from '../sim/colonyConfig';
@@ -17,6 +18,7 @@ const fmt = (n: number) => n.toFixed(1);
 export class CommandConsole {
   readonly root = document.createElement('section');
   selected: number | null = null;
+  shieldAccents = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   preview: { kind: BuildType; angle: number; valid: boolean } | null = null;
   private paused = false;
   private site = 120;
@@ -47,6 +49,7 @@ export class CommandConsole {
     });
     this.root.addEventListener('change', e => {
       const el = e.target as HTMLInputElement;
+      if (el.id === 'shield-accents') this.shieldAccents = el.checked;
       if (el.dataset.limit && !this.paused) this.issue({ type: 'powerLimit', id: Number(el.dataset.limit), percent: Number(el.value) });
       if (el.id === 'command-site') this.site = Number(el.value);
       if (el.id === 'command-blueprint') this.blueprint = el.value as typeof this.blueprint;
@@ -80,7 +83,7 @@ export class CommandConsole {
     this.preview = this.root.querySelector('#command-site')?.closest('details')?.open ? { kind: this.blueprint, angle: this.site / WORLD.radius, valid: !siteError } : null;
     const selected = c.buildings.find(b => b.id === this.selected), policy = policyFor(c), disabled = paused ? 'disabled' : '';
     const net = c.generation - c.demand, remaining = net < -.01 ? `${fmt(c.energy / -net)} s estimated` : 'balanced / charging';
-    const warn = c.buildings.filter(b => ['wrecked', 'no power', 'air low', 'no feedstock', 'power reserved', 'output full'].includes(b.status));
+    const warn = c.buildings.filter(b => ['wrecked', 'no power', 'air low', 'no feedstock', 'power reserved', 'output full', 'shield breached', 'shield charging'].includes(b.status));
     const action = (operation: RemoteOperation, label: string) => `<button ${disabled} data-id="${selected!.id}" data-remote="${operation}">${label}</button>`;
     const recipe = selected ? recipeFor(selected) : null;
     const card = selected ? `<article class="command-machine" data-selected="${selected.id}"><h3>#${selected.id} · ${BLUEPRINTS[selected.kind].label}</h3><p>${selected.status} · hull ${fmt(selected.health ?? 100)}%</p>
@@ -88,11 +91,11 @@ export class CommandConsole {
       ${ratedPower(selected) ? `<label for="command-limit">Power limit · ${selected.dispatch?.limit ?? 100}% of ${ratedPower(selected)} kW</label><input ${disabled} id="command-limit" aria-label="Selected facility power limit" data-limit="${selected.id}" type="range" min="0" max="100" step="10" value="${selected.dispatch?.limit ?? 100}"><p>Grid actual ${fmt(selected.gridPower ?? 0)} / request ${fmt(selected.requestedPower ?? 0)} kW</p>` : isTurret(selected.kind) ? `<p>Burst load · ${WEAPONS[selected.kind].energy} kJ / shot · protected materials allowed</p>${action('auto', `Automatic defence: ${selected.turret?.automatic ? 'on' : 'off'}`)}` : ''}
       ${selected.kind === 'refinery' ? `${action('recipe', 'Next selected recipe')}${action('schedule', `Auto recipes: ${selected.schedule?.enabled ? 'on' : 'off'}`)}${selected.schedule ? SCHEDULE_PRODUCTS.map(p => `<div class="command-target"><span>${p} ${selected.schedule!.targets[p]} kg</span><button ${disabled} aria-label="Lower selected ${p} target" data-id="${selected.id}" data-product="${p}" data-delta="-5">−</button><button ${disabled} aria-label="Raise selected ${p} target" data-id="${selected.id}" data-product="${p}" data-delta="5">+</button></div>`).join('') : ''}` : ''}
       ${recipe ? `<p>${recipe.label} · ${fmt(selected.progress)} / ${recipe.seconds} work s</p><small>Paid cycle progress is retained when throttled or starved; changing the manual recipe discards work.</small>` : ''}
-      ${selected.kind === 'service' ? action('service', 'Request supplied service') + '<small>2 kJ + actual supplies. Crew within 18 m or landed ship within 80 m; no remote healing.</small>' : ''}${habitatDetails(selected)}</article>` : '<p>No facilities yet. Queue a supplied site below.</p>';
+      ${selected.kind === 'service' ? action('service', 'Request supplied service') + '<small>2 kJ + actual supplies. Crew within 18 m or landed ship within 80 m; no remote healing.</small>' : ''}${habitatDetails(selected)}${shieldDetails(selected)}</article>` : '<p>No facilities yet. Queue a supplied site below.</p>';
     const stockRows = [...stocks].map(([p, q]) => `<tr><th>${p}</th><td>${fmt(q)}</td><td>${PRODUCTS.includes(p as keyof ProductInventory) ? fmt(availableProduct(c, p as keyof ProductInventory)) : '—'}</td><td>${this.rates.has(p) ? `${(this.rates.get(p)! >= 0 ? '+' : '') + this.rates.get(p)!.toFixed(2)}` : '—'}</td></tr>`).join('');
     patchMarkup(this.root, `<label>COMMAND · HOME COLONY</label><p class="command-mode">${paused ? 'PAUSED · inspect only · P to resume' : 'LIVE · remote operations · global grid'}</p>
       <div class="command-flow"><span>SOLAR ${fmt(c.generation)} kW</span><b>↓</b><span>BUS ${fmt(c.energy)} / ${energyCapacity(c)} kJ</span><meter aria-label="Colony energy" min="0" max="${energyCapacity(c)}" value="${c.energy}"></meter><b>↓</b><span>LOAD ${fmt(c.demand)} kW · ${remaining}</span></div>
-      <small>Life support first → priority industry → turret bursts. Backup charging uses spare unreserved charge. Requested load is conditional; time-to-shortfall is an estimate.</small>
+      <small>Life support → shield upkeep → backup and shield charging → priority industry → turret bursts. Charging uses spare unreserved charge. Requested load is conditional; time-to-shortfall is an estimate.</small>
       <p class="command-alert" role="status">${w.defence.meteors.length || w.combat.enemies.length ? 'THREATS ACTIVE · ' : ''}${warn.length ? `${warn.length} facility alerts · ${warn.slice(0, 3).map(b => `#${b.id} ${b.status}`).join(' · ')}` : 'Facilities nominal'}</p>
       <details open data-preserve-open><summary>Facilities · ${c.buildings.length}</summary><div class="command-map" aria-label="Colony surface map">${c.buildings.map(b => `<button data-locate="${b.id}" aria-label="Locate facility ${b.id}">${Math.round(b.angle * WORLD.radius)} m · #${b.id}</button>`).join('')}</div><small>Drag rows to reorder; ↑ / ↓ gives the same priority control. Selection highlights the actual building.</small>
       <div class="command-list">${orderedBuildings(c).map((b, i, list) => `<div draggable="${!paused}" data-facility="${b.id}" class="command-row ${b.id === this.selected ? 'selected' : ''}"><button data-focus="select-${b.id}" data-locate="${b.id}" aria-pressed="${b.id === this.selected}" aria-label="Select facility ${b.id}">#${b.id} ${BLUEPRINTS[b.kind].label}</button><button ${disabled || i === 0 ? 'disabled' : ''} data-focus="up-${b.id}" data-id="${b.id}" data-move="up" aria-label="Raise facility ${b.id} priority">↑</button><button ${disabled || i === list.length - 1 ? 'disabled' : ''} data-focus="down-${b.id}" data-id="${b.id}" data-move="down" aria-label="Lower facility ${b.id} priority">↓</button></div>`).join('')}</div>${card}</details>
@@ -101,7 +104,7 @@ export class CommandConsole {
       <p>Commit ${Object.entries(BLUEPRINTS[this.blueprint].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</p><p class="command-site-status">${siteError ?? 'Site clear · ghost preview in world'}</p>
       <label for="command-site">Site · metres along surface from home</label><input ${disabled} id="command-site" type="number" min="-1000" max="1000" step="1" value="${this.site}"><button ${disabled || siteError ? 'disabled' : ''} data-enqueue="true">Queue paid construction</button>
       ${c.command.queue.map(o => `<article class="command-order" data-order="${o.id}"><p>#${o.id} ${BLUEPRINTS[o.kind].label} · ${Math.round(o.angle * WORLD.radius)} m<br>${escapeText(o.status)}<br>Unworked refund: ${Object.entries(BLUEPRINTS[o.kind].cost).map(([p, q]) => `${fmt(q * Math.max(0, 1 - o.progress / CONSTRUCTION_SECONDS))} ${p}`).join(' · ')}</p><progress aria-label="Order ${o.id} progress" max="${CONSTRUCTION_SECONDS}" value="${o.progress}"></progress><button ${disabled} data-order="pause" data-id="${o.id}">${o.paused ? 'Resume' : 'Pause'} order ${o.id}</button><button ${disabled} data-order="cancel" data-id="${o.id}">Cancel order ${o.id}</button></article>`).join('')}</details>
-      ${progressionPanel(w, paused)}
+      ${progressionPanel(w, paused)}${shieldPanel(w, this.shieldAccents)}
       <details data-preserve-open><summary>Economy · stocks and observed flow</summary><p>Ore ${fmt(inventoryMass(w.depot))} / ${oreCapacity(c)} kg · products ${productCapacity(c)} kg each</p><small>Net stock change / simulated second; includes deliveries, construction, refunds and habitat transfers. No offline production. — means sampling.</small><table><thead><tr><th>Stock</th><th>kg</th><th>usable</th><th>kg/s</th></tr></thead><tbody>${stockRows}</tbody></table><p>Protected energy ${policy.energyReserve} kJ · delivery room ${policy.deliveryReserve} kg<br>Habitat oxygen spent ${fmt(c.oxygenUsed)} kg</p><small>Set reserves in Colony → Resource priorities.</small></details>`);
     const slider = this.root.querySelector<HTMLInputElement>('#command-limit');
     if (slider && document.activeElement !== slider && selected) slider.value = String(selected.dispatch?.limit ?? 100);

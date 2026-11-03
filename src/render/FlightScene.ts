@@ -1,3 +1,4 @@
+import { drawShields } from './shields';
 import { applyExplorationAction } from '../sim/exploration';
 import { drawExploration, drawExplorationRadar } from './exploration';
 import { drawGeology } from './geology';
@@ -172,6 +173,7 @@ export class FlightScene extends Phaser.Scene {
     drawMining(g, this.simulation, this.follow.zoom);
     drawTowing(g, this.simulation, this.follow.zoom);
     drawGeology(g, this.simulation, this.follow.zoom);
+    drawShields(g, this.simulation, this.hud.shieldAccents);
     drawColony(g, this.simulation, this.hud.selectedBuildingId, this.hud.buildPreview);
     drawDefence(g, this.simulation, this.threats, this.follow.zoom);
     drawSurface(g, this.simulation);
