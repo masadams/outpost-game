@@ -145,7 +145,7 @@ Implemented on `feat/command-console`; see [Task 007G](../CODEX_TASK_007G.md) an
 - [x] Drag-and-drop ordering/dials with native keyboard alternatives, stable focus and pause-safe planning/execution.
 - [x] Validated supplied construction/work queue, progress/cancellation and explicit executor/refund rules.
 - [x] Economy ledger with usable/reserved stock, actual rates, bottlenecks and recipe flows.
-- [x] Integrate real research and navigation as their milestones ship; no inert placeholder controls.
+- [ ] Integrate real research and navigation when Phases 7.9/8 ship; deliberately deferred, with no inert placeholder controls in this console.
 - [x] Persist priorities/budgets/orders, and test scarcity, damage, cancellation and input parity.
 **Exit:** Direct the installed colony from ship or surface without visiting every machine, with understandable power/material consequences.
 
