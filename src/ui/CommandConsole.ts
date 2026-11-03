@@ -1,3 +1,5 @@
+import type { BodyId } from '../sim/celestial';
+import { colonyPlanet, colonyWorld, activeWorld } from '../sim/localWorld';
 import { shieldDetails, shieldPanel } from './shields';
 import { progressionPanel, progressionAction } from './progression';
 import { orderError } from '../sim/construction';
@@ -9,7 +11,6 @@ import { isTurret, WEAPONS } from '../sim/defenceConfig';
 import { SCHEDULE_PRODUCTS } from '../sim/scheduling';
 import { availableProduct, policyFor } from '../sim/colonyPolicy';
 import { RESOURCES, inventoryMass } from '../sim/resources';
-import { WORLD } from '../sim/config';
 import { habitatDetails } from './habitats';
 import { patchMarkup } from './dom';
 import type { WorldState } from '../sim/world';
@@ -21,6 +22,9 @@ export class CommandConsole {
   shieldAccents = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   preview: { kind: BuildType; angle: number; valid: boolean } | null = null;
   private paused = false;
+  private body: BodyId | 'local' = 'local';
+  get bodyId(): BodyId { return this.world?.siteBody ?? 'home'; }
+  private dispatch(action: ColonyAction): void { this.issue({ ...action, body: this.bodyId }); }
   private site = 120;
   private blueprint: BuildType = BUILD_TYPES[0];
   private world: WorldState | null = null;
@@ -34,7 +38,7 @@ export class CommandConsole {
       const d = button.dataset, id = Number(d.id);
       if (d.locate) { this.selected = Number(d.locate); return; }
       if (this.paused) return;
-      const progress = progressionAction(button); if (progress) { this.issue(progress); if (e.detail > 0) button.blur(); return; }
+      const progress = progressionAction(button); if (progress) { this.dispatch(progress); if (e.detail > 0) button.blur(); return; }
       let action: CommandAction | undefined;
       if (d.remote) action = { type: 'remote', id, operation: d.remote as RemoteOperation };
       if (d.move && this.world) {
@@ -43,14 +47,15 @@ export class CommandConsole {
       }
       if (d.product) action = { type: 'remoteTarget', id, product: d.product, delta: Number(d.delta) };
       if (d.order) action = { type: 'queueControl', id, operation: d.order as 'pause' | 'cancel' };
-      if (d.enqueue) action = { type: 'queueBuild', kind: this.blueprint, angle: this.site / WORLD.radius };
-      if (action) this.issue(action);
+      if (d.enqueue) action = { type: 'queueBuild', kind: this.blueprint, angle: this.site / colonyPlanet(this.world!).radius };
+      if (action) this.dispatch(action);
       if (e.detail > 0) button.blur();
     });
     this.root.addEventListener('change', e => {
       const el = e.target as HTMLInputElement;
+      if (el.id === 'command-body' && ['home', 'moon', 'local'].includes(el.value)) { this.body = el.value as typeof this.body; if (this.world) this.update(activeWorld(this.world), this.paused); return; }
       if (el.id === 'shield-accents') this.shieldAccents = el.checked;
-      if (el.dataset.limit && !this.paused) this.issue({ type: 'powerLimit', id: Number(el.dataset.limit), percent: Number(el.value) });
+      if (el.dataset.limit && !this.paused) this.dispatch({ type: 'powerLimit', id: Number(el.dataset.limit), percent: Number(el.value) });
       if (el.id === 'command-site') this.site = Number(el.value);
       if (el.id === 'command-blueprint') this.blueprint = el.value as typeof this.blueprint;
     });
@@ -63,14 +68,15 @@ export class CommandConsole {
     this.root.addEventListener('drop', e => {
       e.preventDefault(); const row = (e.target as HTMLElement).closest<HTMLElement>('[data-facility]');
       const id = Number(e.dataTransfer?.getData('application/x-outpost-facility'));
-      if (row && id && id !== Number(row.dataset.facility) && !this.paused) this.issue({ type: 'priority', id, before: Number(row.dataset.facility) });
+      if (row && id && id !== Number(row.dataset.facility) && !this.paused) this.dispatch({ type: 'priority', id, before: Number(row.dataset.facility) });
     });
     // Editing fields and dragging cannot thrust, walk, fire or invoke build shortcuts.
     for (const name of ['keydown', 'keyup']) this.root.addEventListener(name, e => {
       const k = e as KeyboardEvent; if (!['Escape', 'p', 'P', 'k', 'K', 'l', 'L', 'm', 'M', 'h', 'H'].includes(k.key)) k.stopPropagation();
     });
   }
-  update(w: WorldState, paused: boolean): void {
+  update(source: WorldState, paused: boolean): void {
+    const w = this.body === 'local' ? source : colonyWorld(source, this.body);
     const focused = document.activeElement instanceof HTMLElement && this.root.contains(document.activeElement) ? document.activeElement.dataset.focus : undefined;
     this.paused = paused;
     const c = w.colony, now = c.command.elapsed;
@@ -79,8 +85,8 @@ export class CommandConsole {
     if (now - this.sampleTime >= 1) { for (const [p, q] of stocks) this.rates.set(p, (q - (this.previous.get(p) ?? q)) / (now - this.sampleTime)); this.previous = stocks; this.sampleTime = now; }
     this.world = w;
     if (!c.buildings.some(b => b.id === this.selected)) this.selected = c.buildings[0]?.id ?? null;
-    const siteError = orderError(w, this.blueprint, this.site / WORLD.radius);
-    this.preview = this.root.querySelector('#command-site')?.closest('details')?.open ? { kind: this.blueprint, angle: this.site / WORLD.radius, valid: !siteError } : null;
+    const siteError = orderError(w, this.blueprint, this.site / colonyPlanet(w).radius);
+    this.preview = this.root.querySelector('#command-site')?.closest('details')?.open ? { kind: this.blueprint, angle: this.site / colonyPlanet(w).radius, valid: !siteError } : null;
     const selected = c.buildings.find(b => b.id === this.selected), policy = policyFor(c), disabled = paused ? 'disabled' : '';
     const net = c.generation - c.demand, remaining = net < -.01 ? `${fmt(c.energy / -net)} s estimated` : 'balanced / charging';
     const warn = c.buildings.filter(b => ['wrecked', 'no power', 'air low', 'no feedstock', 'power reserved', 'output full', 'shield breached', 'shield charging'].includes(b.status));
@@ -93,17 +99,17 @@ export class CommandConsole {
       ${recipe ? `<p>${recipe.label} · ${fmt(selected.progress)} / ${recipe.seconds} work s</p><small>Paid cycle progress is retained when throttled or starved; changing the manual recipe discards work.</small>` : ''}
       ${selected.kind === 'service' ? action('service', 'Request supplied service') + '<small>2 kJ + actual supplies. Crew within 18 m or landed ship within 80 m; no remote healing.</small>' : ''}${habitatDetails(selected)}${shieldDetails(selected)}</article>` : '<p>No facilities yet. Queue a supplied site below.</p>';
     const stockRows = [...stocks].map(([p, q]) => `<tr><th>${p}</th><td>${fmt(q)}</td><td>${PRODUCTS.includes(p as keyof ProductInventory) ? fmt(availableProduct(c, p as keyof ProductInventory)) : '—'}</td><td>${this.rates.has(p) ? `${(this.rates.get(p)! >= 0 ? '+' : '') + this.rates.get(p)!.toFixed(2)}` : '—'}</td></tr>`).join('');
-    patchMarkup(this.root, `<label>COMMAND · HOME COLONY</label><p class="command-mode">${paused ? 'PAUSED · inspect only · P to resume' : 'LIVE · remote operations · global grid'}</p>
+    patchMarkup(this.root, `<label>COMMAND · ${colonyPlanet(w).label.toUpperCase()} COLONY</label><label for="command-body">Colony view</label><select id="command-body" aria-label="Command colony"><option value="local" ${this.body === 'local' ? 'selected' : ''}>Nearby world</option><option value="home" ${this.body === 'home' ? 'selected' : ''}>Selene · home</option><option value="moon" ${this.body === 'moon' ? 'selected' : ''}>Nacre · moon</option></select><p class="command-mode">${paused ? 'PAUSED · inspect only · P to resume' : 'LIVE · remote operations · global grid'}</p>
       <div class="command-flow"><span>SOLAR ${fmt(c.generation)} kW</span><b>↓</b><span>BUS ${fmt(c.energy)} / ${energyCapacity(c)} kJ</span><meter aria-label="Colony energy" min="0" max="${energyCapacity(c)}" value="${c.energy}"></meter><b>↓</b><span>LOAD ${fmt(c.demand)} kW · ${remaining}</span></div>
       <small>Life support → shield upkeep → backup and shield charging → priority industry → turret bursts. Charging uses spare unreserved charge. Requested load is conditional; time-to-shortfall is an estimate.</small>
       <p class="command-alert" role="status">${w.defence.meteors.length || w.combat.enemies.length ? 'THREATS ACTIVE · ' : ''}${warn.length ? `${warn.length} facility alerts · ${warn.slice(0, 3).map(b => `#${b.id} ${b.status}`).join(' · ')}` : 'Facilities nominal'}</p>
-      <details open data-preserve-open><summary>Facilities · ${c.buildings.length}</summary><div class="command-map" aria-label="Colony surface map">${c.buildings.map(b => `<button data-locate="${b.id}" aria-label="Locate facility ${b.id}">${Math.round(b.angle * WORLD.radius)} m · #${b.id}</button>`).join('')}</div><small>Drag rows to reorder; ↑ / ↓ gives the same priority control. Selection highlights the actual building.</small>
+      <details open data-preserve-open><summary>Facilities · ${c.buildings.length}</summary><div class="command-map" aria-label="Colony surface map">${c.buildings.map(b => `<button data-locate="${b.id}" aria-label="Locate facility ${b.id}">${Math.round(b.angle * colonyPlanet(w).radius)} m · #${b.id}</button>`).join('')}</div><small>Drag rows to reorder; ↑ / ↓ gives the same priority control. Selection highlights the actual building.</small>
       <div class="command-list">${orderedBuildings(c).map((b, i, list) => `<div draggable="${!paused}" data-facility="${b.id}" class="command-row ${b.id === this.selected ? 'selected' : ''}"><button data-focus="select-${b.id}" data-locate="${b.id}" aria-pressed="${b.id === this.selected}" aria-label="Select facility ${b.id}">#${b.id} ${BLUEPRINTS[b.kind].label}</button><button ${disabled || i === 0 ? 'disabled' : ''} data-focus="up-${b.id}" data-id="${b.id}" data-move="up" aria-label="Raise facility ${b.id} priority">↑</button><button ${disabled || i === list.length - 1 ? 'disabled' : ''} data-focus="down-${b.id}" data-id="${b.id}" data-move="down" aria-label="Lower facility ${b.id} priority">↓</button></div>`).join('')}</div>${card}</details>
       <details data-preserve-open><summary>Construction queue · ${c.command.queue.length}</summary><small>8 s stationary crew work within 96 m per order. Materials commit now; unworked fraction is refunded on cancel if storage fits. Pause lets later orders run.</small>
       <label for="command-blueprint">Blueprint</label><select ${disabled} id="command-blueprint">${BUILD_TYPES.map(k => `<option ${k === this.blueprint ? 'selected' : ''} value="${k}">${BLUEPRINTS[k].label}</option>`).join('')}</select>
       <p>Commit ${Object.entries(BLUEPRINTS[this.blueprint].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</p><p class="command-site-status">${siteError ?? 'Site clear · ghost preview in world'}</p>
       <label for="command-site">Site · metres along surface from home</label><input ${disabled} id="command-site" type="number" min="-1000" max="1000" step="1" value="${this.site}"><button ${disabled || siteError ? 'disabled' : ''} data-enqueue="true">Queue paid construction</button>
-      ${c.command.queue.map(o => `<article class="command-order" data-order="${o.id}"><p>#${o.id} ${BLUEPRINTS[o.kind].label} · ${Math.round(o.angle * WORLD.radius)} m<br>${escapeText(o.status)}<br>Unworked refund: ${Object.entries(BLUEPRINTS[o.kind].cost).map(([p, q]) => `${fmt(q * Math.max(0, 1 - o.progress / CONSTRUCTION_SECONDS))} ${p}`).join(' · ')}</p><progress aria-label="Order ${o.id} progress" max="${CONSTRUCTION_SECONDS}" value="${o.progress}"></progress><button ${disabled} data-order="pause" data-id="${o.id}">${o.paused ? 'Resume' : 'Pause'} order ${o.id}</button><button ${disabled} data-order="cancel" data-id="${o.id}">Cancel order ${o.id}</button></article>`).join('')}</details>
+      ${c.command.queue.map(o => `<article class="command-order" data-order="${o.id}"><p>#${o.id} ${BLUEPRINTS[o.kind].label} · ${Math.round(o.angle * colonyPlanet(w).radius)} m<br>${escapeText(o.status)}<br>Unworked refund: ${Object.entries(BLUEPRINTS[o.kind].cost).map(([p, q]) => `${fmt(q * Math.max(0, 1 - o.progress / CONSTRUCTION_SECONDS))} ${p}`).join(' · ')}</p><progress aria-label="Order ${o.id} progress" max="${CONSTRUCTION_SECONDS}" value="${o.progress}"></progress><button ${disabled} data-order="pause" data-id="${o.id}">${o.paused ? 'Resume' : 'Pause'} order ${o.id}</button><button ${disabled} data-order="cancel" data-id="${o.id}">Cancel order ${o.id}</button></article>`).join('')}</details>
       ${progressionPanel(w, paused)}${shieldPanel(w, this.shieldAccents)}
       <details data-preserve-open><summary>Economy · stocks and observed flow</summary><p>Ore ${fmt(inventoryMass(w.depot))} / ${oreCapacity(c)} kg · products ${productCapacity(c)} kg each</p><small>Net stock change / simulated second; includes deliveries, construction, refunds and habitat transfers. No offline production. — means sampling.</small><table><thead><tr><th>Stock</th><th>kg</th><th>usable</th><th>kg/s</th></tr></thead><tbody>${stockRows}</tbody></table><p>Protected energy ${policy.energyReserve} kJ · delivery room ${policy.deliveryReserve} kg<br>Habitat oxygen spent ${fmt(c.oxygenUsed)} kg</p><small>Set reserves in Colony → Resource priorities.</small></details>`);
     const slider = this.root.querySelector<HTMLInputElement>('#command-limit');

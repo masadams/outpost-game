@@ -1,9 +1,9 @@
+import { localAngleAt } from '../sim/localWorld';
 import { fuelCapacity } from '../sim/shipStats';
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { habitatSource } from '../sim/habitats';
 import { flightSafety, type FlightMetric, type InstrumentSafety } from '../sim/flightSafety';
 import { telemetry } from '../sim/physics';
-import { localAngle } from '../sim/math';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 import type { WorldState } from '../sim/world';
@@ -11,8 +11,8 @@ import type { WorldState } from '../sim/world';
 const symbol = { neutral: '', safe: '●', caution: '▲', critical: '!' } as const;
 export function instrumentMarkup(world: WorldState): string {
   const onFoot = world.playerMode === 'astronaut', ship = world.ship;
-  const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
-  const safety = flightSafety(ship), habitat = habitatSource(world);
+  const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
+  const safety = flightSafety(ship, world.system), habitat = habitatSource(world);
   const habitatPercent = habitat?.habitat && isHabitat(habitat.kind) ? habitat.habitat.oxygen / HABITATS[habitat.kind].capacity * 100 : 0;
   const rows: Array<[FlightMetric | 'oxygen' | 'suit' | 'footing', string, string]> = [
     ['altitude', 'ALTITUDE', `${t.altitude.toFixed(0)}<small> m</small>`], ['radial', 'RADIAL', `${t.radial.toFixed(1)}<small> m/s</small>`],

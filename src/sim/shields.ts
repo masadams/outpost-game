@@ -1,9 +1,10 @@
+import { planetAt, surfacePosition } from './celestial';
+import { allColonies, colonyPlanet } from './localWorld';
 import { SHIELDS, SHIELD, isShield } from './shieldConfig';
 import { operational } from './buildingHealth';
 import { orderedBuildings, powerFraction } from './power';
 import { policyFor } from './colonyPolicy';
-import { WORLD } from './config';
-import { heading, type Vec } from './math';
+import { type Vec } from './math';
 import { surfaceHit } from './physics';
 import type { Building } from './colony';
 import type { WorldState } from './world';
@@ -48,28 +49,29 @@ export function chargeShields(w: WorldState, dt: number): void {
     b.status = h.ready ? 'shield active' : h.recovery > 1e-9 ? 'shield breached' : 'shield charging';
   }
 }
-export interface ShieldHit { building: Building; t: number }
+export interface ShieldHit { building: Building; t: number; site?: WorldState; velocity?: Vec }
 /** Only outside-to-inside crossings count. Traffic and threats already inside are unaffected. */
-export function firstShieldHit(w: WorldState, start: Vec, end: Vec, radius: number, before = 1): ShieldHit | null {
+export function firstShieldHit(w: WorldState, start: Vec, end: Vec, radius: number, before = 1, dt = 0, elapsed = 0): ShieldHit | null {
   let best: ShieldHit | null = null;
-  for (const b of w.colony.buildings) {
+  for (const site of allColonies(w)) for (const b of site.colony.buildings) {
     if (!shieldActive(b) || !isShield(b.kind)) continue;
-    const n = heading(b.angle), centre = { x: n.x * WORLD.radius, y: n.y * WORLD.radius };
-    const a = { x: start.x - centre.x, y: start.y - centre.y }, z = { x: end.x - centre.x, y: end.y - centre.y }, r = SHIELDS[b.kind].radius + radius;
+    const planet = colonyPlanet(site), first = planetAt(planet.id, { ...w.system, time: w.system.time + elapsed * dt }), last = planetAt(planet.id, { ...w.system, time: w.system.time + dt });
+    const centre = surfacePosition(first, b.angle), next = surfacePosition(last, b.angle);
+    const a = { x: start.x - centre.x, y: start.y - centre.y }, z = { x: end.x - next.x, y: end.y - next.y }, r = SHIELDS[b.kind].radius + radius;
     if (a.x * a.x + a.y * a.y < r * r - 1e-7 || a.x * (z.x - a.x) + a.y * (z.y - a.y) >= 0) continue;
     const t = surfaceHit(a, z, r);
     if (t === null || t >= before || best && (t > best.t + 1e-10 || Math.abs(t - best.t) <= 1e-10 && b.id > best.building.id)) continue;
-    best = { building: b, t };
+    best = { building: b, t, site, velocity: planet.velocity };
   }
   return best;
 }
 /** Returns the residual damage fraction; removed kinetic energy is explicitly dissipated. */
 export function absorbShield(w: WorldState, hit: ShieldHit, damage: number, velocity: Vec, mass: number): number {
-  const h = hit.building.shield!, ledger = w.colony.shielding;
+  const h = hit.building.shield!, ledger = (hit.site ?? w).colony.shielding;
   const paid = Math.min(h.charge, damage), fraction = Math.max(0, (damage - paid) / damage);
   h.charge = Math.max(0, h.charge - paid); h.delay = SHIELD.delay; h.flash = .25;
   ledger.hits++; ledger.absorbed += paid;
-  ledger.dissipatedEnergy += mass * (velocity.x ** 2 + velocity.y ** 2) / 2 * (1 - fraction);
+  ledger.dissipatedEnergy += mass * ((velocity.x - (hit.velocity?.x ?? 0)) ** 2 + (velocity.y - (hit.velocity?.y ?? 0)) ** 2) / 2 * (1 - fraction);
   if (fraction <= 1e-9) ledger.dustMass += mass;
   if (h.charge <= 1e-9) { h.charge = 0; h.ready = false; h.recovery = SHIELD.recovery; ledger.breaches++; hit.building.status = 'shield breached'; }
   return fraction;

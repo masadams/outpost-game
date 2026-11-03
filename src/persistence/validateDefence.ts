@@ -1,3 +1,4 @@
+import { allColonies } from '../sim/localWorld';
 import type { WorldState } from '../sim/world';
 import { isTurret } from '../sim/defenceConfig';
 
@@ -13,10 +14,10 @@ export function validDefence(world: WorldState): boolean {
   const d = world.defence;
   if (!object(d) || !Array.isArray(d.meteors) || d.meteors.length > 48 || !Array.isArray(d.projectiles) || d.projectiles.length > 32 || !Array.isArray(d.beams) || d.beams.length > 96) return false;
   if (![d.wave, d.intercepted, d.impacts, d.shots].every(v => num(v) && Number.isInteger(v)) || !num(d.lostStock)) return false;
-  if (d.controlled !== null && (!id(d.controlled) || !world.colony.buildings.some(b => b.id === d.controlled && isTurret(b.kind)))) return false;
+  if (d.controlled !== null && (!id(d.controlled) || !allColonies(world).some(site => site.colony.buildings.some(b => b.id === d.controlled && isTurret(b.kind))))) return false;
   if (!d.meteors.every(m => object(m) && id(m.id) && vector(m.position) && vector(m.velocity) && num(m.radius, 0.01, 200) && num(m.mass, 1e-12, 1e6) &&
     [0, 1].includes(m.stage) && m.resource === 'iron' && num(m.health, 0, 1) && num(m.maxHealth, 0.01, 1))) return false;
-  if (!d.projectiles.every(p => object(p) && id(p.id) && ['flak', 'missile'].includes(p.kind) && vector(p.position) && vector(p.velocity) && num(p.life, 0, 20) && num(p.fuse, 0, 20) && (p.targetId === null || id(p.targetId)))) return false;
+  if (!d.projectiles.every(p => object(p) && id(p.id) && ['flak', 'missile'].includes(p.kind) && (p.frameVelocity === undefined || vector(p.frameVelocity)) && vector(p.position) && vector(p.velocity) && num(p.life, 0, 20) && num(p.fuse, 0, 20) && (p.targetId === null || id(p.targetId)))) return false;
   if (!d.beams.every(b => object(b) && vector(b.start) && vector(b.end) && num(b.life, 0, 0.13))) return false;
   const ids = [...world.asteroids, ...world.pickups, ...d.meteors, ...d.projectiles].map(b => b.id);
   return new Set(ids).size === ids.length && world.nextId > Math.max(0, ...ids);

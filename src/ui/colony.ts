@@ -1,3 +1,5 @@
+import { RESOURCES, type Resource } from '../sim/resources';
+import type { Product } from '../sim/colonyConfig';
 import { habitatDetails } from './habitats';
 import { geologyPanel, rigDetails } from './geology';
 import { schedulingPanel } from './scheduling';
@@ -39,6 +41,8 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
+  if (button.dataset.oreLoad && RESOURCES.includes(button.dataset.oreLoad as Resource)) return { type: 'loadOre', resource: button.dataset.oreLoad as Resource };
+  if (button.dataset.freight && PRODUCTS.includes(button.dataset.freight as Product)) return { type: 'freight', product: button.dataset.freight as Product, delta: Number(button.dataset.delta) };
   const { colony, select, shift, target, delta, policy, direction } = button.dataset;
   if (policy && POLICY_FIELDS.includes(policy as PolicyField) && (direction === '-1' || direction === '1')) return { type: 'adjustPolicy', field: policy as PolicyField, direction: Number(direction) as -1 | 1 };
   if (target && SCHEDULE_PRODUCTS.includes(target as ScheduleProduct) && (delta === '-5' || delta === '5')) return { type: 'adjustTarget', product: target as ScheduleProduct, delta: Number(delta) as -5 | 5 };

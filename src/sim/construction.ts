@@ -1,3 +1,5 @@
+import { nearestPlanet } from './celestial';
+import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
 import { isShield, createShield } from './shieldConfig';
 import { orderedBuildings } from './power';
 import { createHabitat, isHabitat } from './habitatConfig';
@@ -5,8 +7,7 @@ import { depositAt } from './geology';
 import { BLUEPRINTS, PRODUCTS, type BuildType } from './colonyConfig';
 import { placementError, productCapacity, type Building } from './colony';
 import { CONSTRUCTION_SECONDS, type ConstructionOrder } from './commandConfig';
-import { localAngle, length, wrap } from './math';
-import { WORLD } from './config';
+import { length, wrap } from './math';
 import { notify } from './messages';
 import type { WorldState } from './world';
 export function completedBuilding(id: number, kind: BuildType, angle: number, w: WorldState): Building {
@@ -15,7 +16,7 @@ export function completedBuilding(id: number, kind: BuildType, angle: number, w:
   return { ...(configured ? { dispatch: { rank: w.colony.buildings.length, limit: 100 } } : {}), id, kind, angle, health: 100, enabled: true, progress: 0, recipe: 0, status: 'idle',
     ...(isShield(kind) ? { shield: createShield() } : {}),
     ...(isHabitat(kind) ? { habitat: createHabitat() } : {}),
-    ...(kind === 'miningRig' ? { depositId: depositAt(w.surfaceDeposits, angle, BLUEPRINTS[kind].halfWidth)!.id } : {}) };
+    ...(kind === 'miningRig' ? { depositId: depositAt(w.surfaceDeposits, angle, BLUEPRINTS[kind].halfWidth, colonyPlanet(w).radius)!.id } : {}) };
 }
 /** Validate paid sites against other reservations without pretending the pilot is the worker. */
 export function orderError(w: WorldState, kind: BuildType, angle: number, omit?: number): string | null {
@@ -36,9 +37,9 @@ export function stepConstruction(w: WorldState, dt: number): void {
   if (!o) return;
   const error = orderError(w, o.kind, o.angle, o.id); if (error) { o.status = error; return; }
   const suit = w.astronaut;
-  if (w.playerMode !== 'astronaut' || !suit.grounded || suit.health <= 0 || length(suit.velocity) > .5 || Math.abs(wrap(o.angle - localAngle(suit.position))) * WORLD.radius > 96) { o.status = 'waiting for stationary crew within 96 m'; return; }
+  if (nearestPlanet(suit.position, w.system).id !== colonyPlanet(w).id || w.playerMode !== 'astronaut' || !suit.grounded || suit.health <= 0 || length({ x: suit.velocity.x - colonyPlanet(w).velocity.x, y: suit.velocity.y - colonyPlanet(w).velocity.y }) > .5 || Math.abs(wrap(o.angle - localAngleAt(w, suit.position))) * colonyPlanet(w).radius > 96) { o.status = 'waiting for stationary crew within 96 m'; return; }
   o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt); o.status = 'crew building';
   if (o.progress + 1e-9 < CONSTRUCTION_SECONDS) return;
-  w.colony.buildings.push(completedBuilding(w.colony.nextId++, o.kind, o.angle, w));
+  w.colony.buildings.push(completedBuilding(allocateBuildingId(w), o.kind, o.angle, w));
   command.queue = command.queue.filter(q => q.id !== o.id); notify(w, `${BLUEPRINTS[o.kind].label.toUpperCase()} ORDER COMPLETE`);
 }

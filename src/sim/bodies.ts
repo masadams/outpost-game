@@ -1,7 +1,8 @@
+import { STATIC_SYSTEM, terrainHit, surfacePosition, relativeVelocity, type SystemFrame } from './celestial';
 import { damageFactor } from './shipStats';
 import { shipMass } from './shipMass';
 import { WORLD } from './config';
-import { dot, heading, length, type Vec } from './math';
+import { dot, length, type Vec } from './math';
 import { surfaceHit, type Ship } from './physics';
 import { integrateVelocity } from './environment';
 import { type Resource } from './resources';
@@ -12,19 +13,15 @@ export interface Body { belt?: BeltId; id: number; position: Vec; velocity: Vec;
 export interface Asteroid extends Body { stage: number; health: number; maxHealth: number }
 export interface Pickup extends Body {}
 
-export function moveBody(body: Body, dt: number): void {
-  body.velocity = integrateVelocity(body.position, body.velocity, { x: 0, y: 0 }, body.mass, 0.47 * Math.PI * body.radius ** 2, dt);
+export function moveBody(body: Body, dt: number, system: SystemFrame = STATIC_SYSTEM): void {
+  body.velocity = integrateVelocity(body.position, body.velocity, { x: 0, y: 0 }, body.mass, 0.47 * Math.PI * body.radius ** 2, dt, system);
   const end = { x: body.position.x + body.velocity.x * dt, y: body.position.y + body.velocity.y * dt };
-  const radius = WORLD.radius + body.radius;
-  const hit = surfaceHit(body.position, end, radius);
-  if (hit === null) { body.position = end; return; }
-  const normal = heading(Math.atan2(body.position.x + (end.x - body.position.x) * hit, -(body.position.y + (end.y - body.position.y) * hit)));
-  body.position = { x: normal.x * (radius + 0.001), y: normal.y * (radius + 0.001) };
-  const inward = dot(body.velocity, normal);
-  if (inward < 0) {
-    body.velocity.x = body.velocity.x * 0.8 - normal.x * inward * 1.05;
-    body.velocity.y = body.velocity.y * 0.8 - normal.y * inward * 1.05;
-  }
+  const hit = terrainHit(body.position, end, body.radius, system, dt);
+  if (!hit) { body.position = end; return; }
+  body.position = surfacePosition(hit.planet, hit.angle, body.radius + .001);
+  const v = relativeVelocity(body.velocity, hit.planet), inward = dot(v, hit.normal);
+  if (inward < 0) body.velocity = { x: hit.planet.velocity.x + v.x * .8 - hit.normal.x * inward * 1.05, y: hit.planet.velocity.y + v.y * .8 - hit.normal.y * inward * 1.05 };
+
 }
 
 export function separateBodies(a: Body, b: Body): void {
@@ -64,5 +61,5 @@ export function collideShip(ship: Ship, rock: Asteroid, startShip: Vec, startRoc
   ship.velocity.x += n.x * impulse / mass; ship.velocity.y += n.y * impulse / mass;
   rock.velocity.x -= n.x * impulse / rock.mass; rock.velocity.y -= n.y * impulse / rock.mass;
   ship.hull = Math.max(0, ship.hull - Math.max(1, (speed - 2) * 3) * damageFactor(ship)); ship.impact = 1;
-  if (ship.hull <= 0) { ship.state = 'crashed'; ship.thrusting = false; ship.velocity = { x: 0, y: 0 }; }
+  if (ship.hull <= 0) { ship.state = 'crashed'; ship.thrusting = false; }
 }

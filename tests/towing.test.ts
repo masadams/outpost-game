@@ -1,3 +1,4 @@
+import { planetAt, relative, surfacePosition } from '../src/sim/celestial';
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld, type WorldState } from '../src/sim/world';
 import { applyTowAction, resolveTow, stepTow, towInstallationError } from '../src/sim/towing';
@@ -96,7 +97,7 @@ describe('finite cable dynamics and vulnerability', () => {
   });
   it('lets the planet anchor a landed ship while the rock remains physical', () => {
     const w = fixture(); applyTowAction(w, { type: 'toggleTow' }); w.ship.state = 'landed'; w.asteroids[0].position.x += 2;
-    stepTow(w, STEP); expect(w.ship.velocity).toEqual({ x: 0, y: 0 }); expect(w.asteroids[0].velocity.x).toBeLessThan(0);
+    stepTow(w, STEP); expect(w.ship.velocity).toEqual(planetAt('home', w.system).velocity); expect(w.asteroids[0].velocity.x).toBeLessThan(0);
   });
   it('preserves paid equipment through recovery, loses the cable and still charges recovery supplies', () => {
     const w = fixture(); applyTowAction(w, { type: 'toggleTow' }); w.ship.state = 'crashed'; w.ship.hull = 0;

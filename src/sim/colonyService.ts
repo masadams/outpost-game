@@ -1,11 +1,10 @@
+import { sitePosition } from './localWorld';
 import { fuelCapacity } from './shipStats';
 import { resupplyArmament } from './combatSupply';
 import { operational } from './buildingHealth';
 import { availableProduct } from './colonyPolicy';
 import { SUIT } from './astronaut';
-import { WORLD } from './config';
 import { notify } from './messages';
-import { stationPosition } from './stations';
 import type { Vec } from './math';
 import type { Building } from './colony';
 import type { WorldState } from './world';
@@ -23,7 +22,7 @@ export function serviceAtBuilding(world: WorldState, building: Building, crewPre
   const oxygen = crewPresent ? Math.min((SUIT.oxygen - world.astronaut.oxygen) / SUIT.oxygen, products.oxygen) : 0;
   world.astronaut.oxygen += oxygen * SUIT.oxygen; products.oxygen = Math.max(0, products.oxygen - oxygen);
   if (crewPresent) world.astronaut.health = 100;
-  const at = stationPosition(building.angle);
+  const at = sitePosition(world, building.angle);
   const near = world.ship.state === 'landed' && Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y) <= 80;
   const repair = near ? Math.min(100 - world.ship.hull, availableProduct(world.colony, 'alloy') * 10) : 0;
   world.ship.hull += repair; products.alloy = Math.max(0, products.alloy - repair / 10);

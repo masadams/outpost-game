@@ -1,10 +1,10 @@
+import { cargoMass } from './shipMass';
+import { planets, clearTerrain, STATIC_SYSTEM, type SystemFrame } from './celestial';
 import { equipped, miningStats, tractorStats, cargoCapacity } from './shipStats';
 import { shipMass as totalShipMass } from './shipMass';
-import { WORLD } from './config';
 import { dot, heading, length, type Vec } from './math';
 import { type Asteroid, type Pickup } from './bodies';
 import { type Ship } from './physics';
-import { inventoryMass } from './resources';
 
 export const MINING = { range: 450, damagePerSecond: 1, tractorRange: 260, tractorAcceleration: 35, collectRange: 18 } as const;
 export interface Beam { start: Vec; end: Vec; targetId: number | null }
@@ -17,7 +17,7 @@ export function rayCircle(origin: Vec, direction: Vec, center: Vec, radius: numb
   if (along + half < 0) return null;
   return Math.max(0, along - half);
 }
-export function fireLaser(ship: Ship, asteroids: Asteroid[], dt: number): Beam | null {
+export function fireLaser(ship: Ship, asteroids: Asteroid[], dt: number, system: SystemFrame = STATIC_SYSTEM): Beam | null {
   if (ship.state !== 'flying') return null;
   const spec = miningStats(ship);
   if (equipped(ship, 'mining')) {
@@ -28,7 +28,7 @@ export function fireLaser(ship: Ship, asteroids: Asteroid[], dt: number): Beam |
   const direction = heading(ship.angle);
   const start = { x: ship.position.x + direction.x * 10, y: ship.position.y + direction.y * 10 };
   let distance: number = spec.range;
-  const moonHit = rayCircle(start, direction, { x: 0, y: 0 }, WORLD.radius);
+  const moonHit = rayTerrain(start, direction, system);
   if (moonHit !== null) distance = Math.min(distance, moonHit);
   let target: Asteroid | undefined;
   for (const rock of asteroids) {
@@ -54,12 +54,13 @@ export function fracture(rock: Asteroid, nextId: () => number): { rocks: Asteroi
       velocity: { x: rock.velocity.x + n.x * 2, y: rock.velocity.y + n.y * 2 } };
   }) };
 }
-export function tractor(ship: Ship, pickup: Pickup, dt: number): void {
-  if (ship.state !== 'flying' || inventoryMass(ship.cargo) >= cargoCapacity(ship)) return;
+export function tractor(ship: Ship, pickup: Pickup, dt: number, system = STATIC_SYSTEM): void {
+  if (ship.state !== 'flying' || cargoMass(ship) >= cargoCapacity(ship)) return;
+  if (!clearTerrain(ship.position, pickup.position, system)) return;
   const delta = { x: ship.position.x - pickup.position.x, y: ship.position.y - pickup.position.y }, distance = length(delta);
   if (distance > tractorStats(ship).range) return;
   if (distance <= MINING.collectRange) {
-    const accepted = Math.min(pickup.mass, cargoCapacity(ship) - inventoryMass(ship.cargo));
+    const accepted = Math.min(pickup.mass, cargoCapacity(ship) - cargoMass(ship));
     const mass = totalShipMass(ship);
     ship.velocity.x = (ship.velocity.x * mass + pickup.velocity.x * accepted) / (mass + accepted);
     ship.velocity.y = (ship.velocity.y * mass + pickup.velocity.y * accepted) / (mass + accepted);
@@ -85,4 +86,9 @@ export function powerTractor(ship: Ship, dt: number): boolean {
   ship.armament.energy = Math.max(0, ship.armament.energy - 3 * dt); ship.armament.heat = Math.min(100, ship.armament.heat + 2 * dt);
   if (ship.armament.heat >= 100) ship.armament.overheated = true;
   return true;
+}
+
+export function rayTerrain(start: Vec, direction: Vec, system = STATIC_SYSTEM): number | null {
+  const hits = planets(system).map(p => rayCircle(start, direction, p.position, p.radius)).filter((t): t is number => t !== null);
+  return hits.length ? Math.min(...hits) : null;
 }

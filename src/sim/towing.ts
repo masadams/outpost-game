@@ -1,16 +1,18 @@
+import { clearTerrain } from './celestial';
+import { colonyPlanet, localPosition, localAngleAt } from './localWorld';
 import { TOW, type TowAction } from './towingConfig';
 import { availableProduct } from './colonyPolicy';
 import { WORLD } from './config';
-import { localAngle, wrap } from './math';
-import { surfaceHit } from './physics';
+import { wrap } from './math';
 import { shipMass } from './shipMass';
 import { notify } from './messages';
 import type { WorldState } from './world';
 
 export const isTowAction = (action: { type: string }): action is TowAction => action.type === 'toggleTow' || action.type === 'installTowRig';
 export function towInstallationError(w: WorldState): string | null {
+  if (w.siteBody === 'moon') return 'Equipment fabrication requires the home pad';
   if (w.ship.towRig) return 'Tow rig already fitted';
-  if (w.playerMode !== 'ship' || w.ship.state !== 'landed' || Math.abs(Math.hypot(w.ship.position.x, w.ship.position.y) - WORLD.radius - WORLD.shipRadius) > 0.1 || Math.abs(wrap(localAngle(w.ship.position) - WORLD.padAngle)) * WORLD.radius > WORLD.padHalfWidth) return 'Pilot the landed ship on the home pad to fit a tow rig';
+  if (w.playerMode !== 'ship' || w.ship.state !== 'landed' || Math.abs(Math.hypot(localPosition(w, w.ship.position).x, localPosition(w, w.ship.position).y) - colonyPlanet(w).radius - WORLD.shipRadius) > 0.1 || Math.abs(wrap(localAngleAt(w, w.ship.position) - WORLD.padAngle)) * colonyPlanet(w).radius > WORLD.padHalfWidth) return 'Pilot the landed ship on the home pad to fit a tow rig';
   if (Object.entries(TOW.cost).some(([p, q]) => availableProduct(w.colony, p as keyof typeof TOW.cost) + 1e-9 < q)) return 'Needs 16 unreserved alloy + 6 wire + 3 components';
   return null;
 }
@@ -30,7 +32,7 @@ export function applyTowAction(w: WorldState, action: TowAction): void {
   if (!w.ship.towRig || w.playerMode !== 'ship' || w.ship.state !== 'flying') { notify(w, 'FIT A TOW RIG AT HOME, THEN Y WHILE PILOTING IN FLIGHT'); return; }
   const candidates = w.asteroids.filter(r => r.health > 0).map(rock => ({ rock, distance: Math.hypot(rock.position.x - w.ship.position.x, rock.position.y - w.ship.position.y) }))
     .filter(v => v.distance >= v.rock.radius + WORLD.shipRadius + 2 && v.distance <= TOW.range &&
-      Math.hypot(v.rock.velocity.x - w.ship.velocity.x, v.rock.velocity.y - w.ship.velocity.y) <= TOW.relativeSpeed && surfaceHit(w.ship.position, v.rock.position, WORLD.radius) === null)
+      Math.hypot(v.rock.velocity.x - w.ship.velocity.x, v.rock.velocity.y - w.ship.velocity.y) <= TOW.relativeSpeed && clearTerrain(w.ship.position, v.rock.position, w.system))
     .sort((a, b) => a.distance - b.distance || a.rock.id - b.rock.id);
   const target = candidates[0];
   if (!target) { notify(w, 'NO SAFE TOW TARGET · WITHIN 180 m · MATCH VELOCITY TO 15 m/s · CLEAR THE TERRAIN'); return; }
@@ -42,7 +44,7 @@ export function resolveTow(w: WorldState): void {
   const target = w.asteroids.find(r => r.id === w.towing.targetId && r.health > 0);
   if (!target || !w.ship.towRig || w.ship.state === 'crashed' || w.ship.impact > 0.8) { releaseTow(w, true); return; }
   const distance = Math.hypot(target.position.x - w.ship.position.x, target.position.y - w.ship.position.y);
-  if (distance > w.towing.length + TOW.stretch || surfaceHit(w.ship.position, target.position, WORLD.radius) !== null) releaseTow(w, true, 'TOW SNAPPED · OVERSTRETCH OR TERRAIN OCCLUSION');
+  if (distance > w.towing.length + TOW.stretch || !clearTerrain(w.ship.position, target.position, w.system)) releaseTow(w, true, 'TOW SNAPPED · OVERSTRETCH OR TERRAIN OCCLUSION');
 }
 /** Equal/opposite cable impulses. Slack never pushes, and damping dissipates relative motion. */
 export function stepTow(w: WorldState, dt: number): void {

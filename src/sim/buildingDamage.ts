@@ -1,3 +1,6 @@
+import { colonyWorld } from './localWorld';
+import { nearestPlanet } from './celestial';
+import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
 import { drainShield } from './shields';
 import { damageFactor } from './shipStats';
 import { BLUEPRINTS, PRODUCTS } from './colonyConfig';
@@ -5,9 +8,8 @@ import { HABITATS, isHabitat } from './habitatConfig';
 import { ventHabitat } from './habitats';
 import { availableProduct } from './colonyPolicy';
 import { energyCapacity, oreCapacity, productCapacity, nearbyBuilding } from './colony';
-import { WORLD } from './config';
 import { inventoryMass, RESOURCES } from './resources';
-import { localAngle, wrap, type Vec } from './math';
+import { wrap, type Vec } from './math';
 import { notify } from './messages';
 import type { WorldState } from './world';
 
@@ -22,21 +24,22 @@ export function constrainDamagedStorage(world: WorldState): void {
   c.energy = Math.min(c.energy, energyCapacity(c));
 }
 export function damageColony(world: WorldState, position: Vec, damage: number, radius: number, label = 'METEOR IMPACT'): void {
-  const angle = localAngle(position);
+  world = colonyWorld(world, nearestPlanet(position, world.system).id);
+  const angle = localAngleAt(world, position);
   let hit = false;
   for (const b of world.colony.buildings) {
-    const distance = Math.abs(wrap(b.angle - angle)) * WORLD.radius;
+    const distance = Math.abs(wrap(b.angle - angle)) * colonyPlanet(world).radius;
     const reach = radius + (isHabitat(b.kind) ? HABITATS[b.kind].halfSpan : BLUEPRINTS[b.kind].halfWidth);
     if (distance >= reach || !operational(b)) continue;
     b.health = Math.max(0, buildingHealth(b) - damage * (1 - distance / reach)); hit = true;
     if (!operational(b)) { ventHabitat(world, b); drainShield(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
   const n = { x: Math.sin(angle), y: -Math.cos(angle) };
-  const at = { x: n.x * WORLD.radius, y: n.y * WORLD.radius };
+  const at = sitePosition(world, angle, 0);
   const distanceShip = Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y);
   if (distanceShip < radius) {
     world.ship.hull = Math.max(0, world.ship.hull - damage * (1 - distanceShip / radius) * damageFactor(world.ship)); world.ship.impact = 1;
-    if (world.ship.hull === 0) { world.ship.state = 'crashed'; world.ship.velocity = { x: 0, y: 0 }; world.ship.thrusting = false; }
+    if (world.ship.hull === 0) { world.ship.state = 'crashed'; world.ship.thrusting = false; }
   }
   if (world.playerMode === 'astronaut') {
     const distanceSuit = Math.hypot(at.x - world.astronaut.position.x, at.y - world.astronaut.position.y);

@@ -4,8 +4,8 @@ export const BELT_IDS = ['frost', 'copper', 'rim'] as const;
 export type BeltId = typeof BELT_IDS[number];
 export const SITE_IDS = ['survey', 'cache', 'tender'] as const;
 export type SiteId = typeof SITE_IDS[number];
-export type Destination = 'home' | BeltId | SiteId;
-export const DESTINATIONS: Destination[] = ['home', ...BELT_IDS, ...SITE_IDS];
+export type Destination = 'home' | 'moon' | BeltId | SiteId;
+export const DESTINATIONS: Destination[] = ['home', 'moon', ...BELT_IDS, ...SITE_IDS];
 export const BELTS: Record<BeltId, { label: string; angle: number; altitude: number; resources: readonly Resource[]; color: number }> = {
   frost: { label: 'Frost arc', angle: .32, altitude: 1450, resources: ['ice', 'ice', 'ice', 'iron'], color: 0x86e0ff },
   copper: { label: 'Copper shoal', angle: -.85, altitude: 1900, resources: ['copper', 'copper', 'iron', 'copper'], color: 0xf5ab79 },

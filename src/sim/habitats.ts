@@ -1,27 +1,28 @@
+import { planetAt, relative, type Planet } from './celestial';
+import { colonyPlanet } from './localWorld';
 import { orderedBuildings, powerFraction } from './power';
 import { HABITAT, HABITATS, isHabitat } from './habitatConfig';
 import { operational, buildingHealth } from './buildingHealth';
 import { policyFor } from './colonyPolicy';
-import { WORLD } from './config';
 import { SUIT } from './astronaut';
 import { length, localAngle, wrap } from './math';
 import type { Building } from './colony';
 import type { WorldState } from './world';
 
-export function habitatContains(building: Building, position: { x: number; y: number }): boolean {
+export function habitatContains(building: Building, position: { x: number; y: number }, planet: Planet = planetAt('home')): boolean {
   if (!isHabitat(building.kind)) return false;
-  const spec = HABITATS[building.kind], arc = Math.abs(wrap(localAngle(position) - building.angle)) * WORLD.radius;
+  const spec = HABITATS[building.kind], arc = Math.abs(wrap(localAngle(relative(position, planet)) - building.angle)) * planet.radius;
   if (arc + SUIT.radius > spec.halfSpan + 1e-7) return false;
   // Conservative bounding box keeps the entire suit below even the lower, outer roof edge.
   const ceiling = spec.height * Math.sqrt(Math.max(0, 1 - ((arc + SUIT.radius) / spec.halfSpan) ** 2));
-  return length(position) - WORLD.radius + SUIT.radius <= ceiling + 1e-7;
+  return length(relative(position, planet)) - planet.radius + SUIT.radius <= ceiling + 1e-7;
 }
 export function habitatBreathable(b: Building): boolean {
   return isHabitat(b.kind) && operational(b) && b.enabled && !!b.habitat?.powered && b.habitat.oxygen > HABITATS[b.kind].capacity * HABITAT.minimumFraction + 1e-9;
 }
 export function habitatSource(w: WorldState): Building | undefined {
   if (w.playerMode !== 'astronaut' || w.astronaut.health <= 0) return undefined;
-  return w.colony.buildings.filter(b => habitatBreathable(b) && habitatContains(b, w.astronaut.position)).sort((a, b) => a.id - b.id)[0];
+  return w.colony.buildings.filter(b => habitatBreathable(b) && habitatContains(b, w.astronaut.position, colonyPlanet(w))).sort((a, b) => a.id - b.id)[0];
 }
 /** Sample coverage at the beginning of the fixed step and pay for only one crew's air. */
 export function consumeHabitatAir(w: WorldState, dt: number): number {

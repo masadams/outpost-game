@@ -1,3 +1,6 @@
+import { nearestPlanet, type BodyId } from './celestial';
+import { transferFreight, loadDepotOre } from './freight';
+import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
 import { createShielding, isShield, type ShieldState, type ShieldLedger } from './shieldConfig';
 import { maintainShields, chargeShields, drainShield } from './shields';
 import { createResearch, type ResearchState, type ProgressionAction } from './progressionConfig';
@@ -17,9 +20,8 @@ import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selec
 import type { CombatAction } from './combatConfig';
 import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
-import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
-import { WORLD } from './config';
-import { clamp, localAngle, wrap } from './math';
+import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, type Product, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
+import { clamp, wrap } from './math';
 import { inventoryMass } from './resources';
 import { STATIONS } from './stations';
 import { notify } from './messages';
@@ -44,8 +46,8 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
-  { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' };
+export type ColonyAction = ({ type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+  { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
   return { shielding: createShielding(), research: createResearch(), command: createCommand(), oxygenUsed: 0, buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
@@ -54,20 +56,20 @@ export function createColony(): Colony {
 export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).length * 200;
 export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).length * 100;
 export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).length * 200;
-export const previewAngle = (world: WorldState): number => wrap(localAngle(world.astronaut.position) + world.colony.offset / WORLD.radius);
+export const previewAngle = (world: WorldState): number => wrap(localAngleAt(world, world.astronaut.position) + world.colony.offset / colonyPlanet(world).radius);
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
-  if (!options.remote && (world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
+  if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
   if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= 48) return 'Colony limit: 48 facilities';
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
-  if (!options.remote && Math.abs(wrap(angle - localAngle(world.astronaut.position))) * WORLD.radius > 97) return 'Build within 96 m of the astronaut';
+  if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
   if (isShield(kind) && !world.colony.research.completed.includes('combat')) return 'Requires Combat engineering research';
   const width = BLUEPRINTS[kind].halfWidth;
-  const sites = foundationSites(kind, angle);
-  if (sites.some(s => Math.abs(wrap(s.angle)) * WORLD.radius < 36 + s.halfWidth - 1e-7)) return 'Keep the landing pad clear';
-  if (sites.some(site => STATIONS.some(s => Math.abs(wrap(site.angle - s.angle)) * WORLD.radius < site.halfWidth + 13 - 1e-7))) return 'Keep the home terminals clear';
-  if (sites.some(site => [...world.colony.buildings, ...(options.reservations ?? world.colony.command.queue)].some(b => foundationSites(b.kind, b.angle).some(other => Math.abs(wrap(site.angle - other.angle)) * WORLD.radius < site.halfWidth + other.halfWidth + 4 - 1e-7)))) return 'Facilities overlap';
+  const sites = foundationSites(kind, angle, colonyPlanet(world).radius);
+  if (sites.some(s => Math.abs(wrap(s.angle)) * colonyPlanet(world).radius < 36 + s.halfWidth - 1e-7)) return 'Keep the landing pad clear';
+  if (sites.some(site => (world.siteBody === 'moon' ? STATIONS.filter(s => s.kind === 'depot').map(s => ({ ...s, angle: 54 / colonyPlanet(world).radius })) : STATIONS).some(s => Math.abs(wrap(site.angle - s.angle)) * colonyPlanet(world).radius < site.halfWidth + 13 - 1e-7))) return 'Keep the home terminals clear';
+  if (sites.some(site => [...world.colony.buildings, ...(options.reservations ?? world.colony.command.queue)].some(b => foundationSites(b.kind, b.angle, colonyPlanet(world).radius).some(other => Math.abs(wrap(site.angle - other.angle)) * colonyPlanet(world).radius < site.halfWidth + other.halfWidth + 4 - 1e-7)))) return 'Facilities overlap';
   if (kind === 'miningRig') {
-    const d = depositAt(world.surfaceDeposits, angle, width);
+    const d = depositAt(world.surfaceDeposits, angle, width, colonyPlanet(world).radius);
     if (!d) return 'Place the whole rig footprint on a marked surface deposit';
     if (d.remaining <= 1e-9) return 'Deposit exhausted · prospect another seam';
   }
@@ -76,12 +78,14 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   return null;
 }
 export function nearbyBuilding(world: WorldState): Building | undefined {
-  if (world.playerMode !== 'astronaut') return undefined;
-  const angle = localAngle(world.astronaut.position);
-  return world.colony.buildings.map(b => ({ b, distance: Math.min(Math.abs(wrap(b.angle - angle)) * WORLD.radius, ...foundationSites(b.kind, b.angle).map(s => Math.abs(wrap(s.angle - angle)) * WORLD.radius)) }))
+  if (world.playerMode !== 'astronaut' || nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id) return undefined;
+  const angle = localAngleAt(world, world.astronaut.position);
+  return world.colony.buildings.map(b => ({ b, distance: Math.min(Math.abs(wrap(b.angle - angle)) * colonyPlanet(world).radius, ...foundationSites(b.kind, b.angle, colonyPlanet(world).radius).map(s => Math.abs(wrap(s.angle - angle)) * colonyPlanet(world).radius)) }))
     .filter(v => v.distance <= 18).sort((a, b) => a.distance - b.distance || a.b.id - b.b.id)[0]?.b;
 }
 export function applyColonyAction(world: WorldState, action: ColonyAction): void {
+  if (action.type === 'loadOre') { loadDepotOre(world, action.resource); return; }
+  if (action.type === 'freight') { transferFreight(world, action.product, action.delta); return; }
   if (action.type === 'adjustPolicy') {
     if (!POLICY_FIELDS.includes(action.field) || (action.direction !== -1 && action.direction !== 1)) return;
     const policy = world.colony.policy ??= createPolicy();
@@ -98,7 +102,7 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     const error = placementError(world); if (error) { notify(world, error); return; }
     const blueprint = BLUEPRINTS[colony.selected];
     for (const product of PRODUCTS) colony.products[product] = Math.max(0, colony.products[product] - (blueprint.cost[product] ?? 0));
-    colony.buildings.push(completedBuilding(colony.nextId++, colony.selected, previewAngle(world), world));
+    colony.buildings.push(completedBuilding(allocateBuildingId(world), colony.selected, previewAngle(world), world));
     notify(world, `${blueprint.label.toUpperCase()} BUILT`); return;
   }
   const building = nearbyBuilding(world);
@@ -136,7 +140,7 @@ export function applyFacilityAction(world: WorldState, building: Building, actio
 export function recipeFor(building: Building): Recipe | null {
   return building.kind === 'refinery' ? REFINERY_RECIPES[building.recipe] : building.kind === 'fuelProcessor' ? FUEL_RECIPE : null;
 }
-export function stepColony(world: WorldState, dt: number): void {
+export function stepColony(world: WorldState, dt: number, researchStaffed = false): boolean {
   stepConstruction(world, dt);
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
@@ -148,7 +152,6 @@ export function stepColony(world: WorldState, dt: number): void {
   maintainShields(world, dt);
   chargeHabitats(world, dt);
   chargeShields(world, dt);
-  let researchStaffed = false;
   for (const building of orderedBuildings(colony)) {
     if (isHabitat(building.kind) || isShield(building.kind)) continue;
     building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
@@ -173,4 +176,5 @@ export function stepColony(world: WorldState, dt: number): void {
     for (const [p, quantity] of Object.entries(recipe.output)) colony.products[p as keyof ProductInventory] += quantity;
     if (building.kind === 'refinery' && building.schedule?.enabled) building.schedule.cursor = (building.recipe + 1) % REFINERY_RECIPES.length;
   }
+  return researchStaffed;
 }

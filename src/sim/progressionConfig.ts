@@ -1,3 +1,4 @@
+import type { BodyId } from './celestial';
 import type { ProductInventory } from './colonyConfig';
 export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat'] as const;
 export type TechId = typeof TECH_IDS[number];
@@ -22,7 +23,7 @@ export const UPGRADES: Record<UpgradeId, Upgrade> = {
   armour: { label: 'Impact armour', tech: 'materials', cost: { alloy: 10, wire: 2, components: 2 }, mass: 14, benefit: '20% less incoming hull damage', tradeoff: 'No free repair; hard/overturned terrain crashes remain fatal' },
 };
 export const PROGRESSION = { labPower: 4, fabricationEnergy: 20, salvageFraction: .5 } as const;
-export interface ResearchProject { tech: TechId; progress: number; paused: boolean }
+export interface ResearchProject { funding: BodyId; tech: TechId; progress: number; paused: boolean }
 export interface ResearchState { completed: TechId[]; queue: ResearchProject[]; energyUsed: number }
 export const createResearch = (): ResearchState => ({ completed: [], queue: [], energyUsed: 0 });
 export type ProgressionAction = { type: 'researchStart'; tech: TechId } | { type: 'researchControl'; tech: TechId; operation: 'pause' | 'cancel' } | { type: 'equipment'; upgrade: UpgradeId; operation: 'install' | 'remove' };
