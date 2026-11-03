@@ -1,3 +1,4 @@
+import { orderedBuildings } from './power';
 import { createHabitat, isHabitat } from './habitatConfig';
 import { depositAt } from './geology';
 import { BLUEPRINTS, PRODUCTS, type BuildType } from './colonyConfig';
@@ -8,7 +9,9 @@ import { WORLD } from './config';
 import { notify } from './messages';
 import type { WorldState } from './world';
 export function completedBuilding(id: number, kind: BuildType, angle: number, w: WorldState): Building {
-  return { id, kind, angle, health: 100, enabled: true, progress: 0, recipe: 0, status: 'idle',
+  const configured = w.colony.buildings.some(b => b.dispatch !== undefined);
+  if (configured) orderedBuildings(w.colony).forEach((b, rank) => { b.dispatch = { rank, limit: b.dispatch?.limit ?? 100 }; });
+  return { ...(configured ? { dispatch: { rank: w.colony.buildings.length, limit: 100 } } : {}), id, kind, angle, health: 100, enabled: true, progress: 0, recipe: 0, status: 'idle',
     ...(isHabitat(kind) ? { habitat: createHabitat() } : {}),
     ...(kind === 'miningRig' ? { depositId: depositAt(w.surfaceDeposits, angle, BLUEPRINTS[kind].halfWidth)!.id } : {}) };
 }

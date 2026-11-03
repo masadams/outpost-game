@@ -104,6 +104,13 @@ describe('supplied construction queue', () => {
     applyCommandAction(w, { type: 'queueBuild', kind: 'miningRig', angle: seam.angle }); expect(w.colony.command.queue).toHaveLength(1);
     seam.remaining = 0; worker(w, seam.angle * WORLD.radius); run(w, 10); expect(w.colony.buildings).toHaveLength(0); expect(w.colony.command.queue[0].status).toMatch(/exhausted/);
   });
+  it('appends new construction after surviving priorities even when demolition leaves rank gaps', () => {
+    const w = fixture(); applyCommandAction(w, { type: 'priority', id: 3, before: 2 });
+    w.colony.buildings = w.colony.buildings.filter(b => b.id === 2);
+    applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: 300 / WORLD.radius }); worker(w, 300); run(w, 8);
+    expect(orderedBuildings(w.colony).map(b => b.id)).toEqual([2, 4]);
+    expect(() => encodeCheckpoint(w)).not.toThrow();
+  });
   it('preserves priorities, budgets, paid work and legacy progress with version 10 migration', () => {
     const w = fixture(); applyCommandAction(w, { type: 'powerLimit', id: 2, percent: 30 }); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); worker(w, 500); run(w, 2);
     const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(10); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
