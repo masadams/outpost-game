@@ -4,7 +4,7 @@
 A single-player retro-inspired 2D space action and colony game, with 60% piloting, mining and combat and 40% construction and colony management. Players physically leave a base, fly through space with Asteroids-style inertia, mine or fight, return using Lunar Lander-style gravity and landing, exit the ship, and construct a persistent colony.
 
 ## World
-One continuous Cartesian 2D world containing a circular planetoid and space. Radial gravity near the planet; smooth camera rotation/zoom. Later expansion may include additional celestial bodies.
+One continuous Cartesian 2D world containing Selene, the airless moon Nacre and surrounding space. Both sources move in a bounded binary orbit and exert shared finite-core gravity; surfaces, local colonies, drag, landing telemetry and camera use their parent frame. See NEARBY_WORLDS.md for the Phase 8.5 implementation. Further worlds remain later expansion.
 
 ## Gameplay loop
 Build and prepare -> launch -> explore/fight/mine -> collect cargo -> return and land -> exit ship -> refine and construct -> defend colony -> repeat.

@@ -76,3 +76,7 @@ Follow [the research/equipment route](PROGRESSION.md#saves-and-playtest): build/
 ## Phase 8.2 shield domes
 
 Use the [supplied-shield playtest route](SHIELDS.md#playtest). Check power shortages, initial charging, real impacts/overflow, breach recovery, toggling, habitat independence, friendly hauling/mining and K/L. Review Command and field visibility at 900×600, 1280×800 and 1920×1080.
+
+## Phase 8.5 nearby worlds
+
+Follow [the Nacre freight/mining/return route](NEARBY_WORLDS.md#validation-and-playtest). Check moving-frame instruments, safe touchdown, independent stocks/power, remote Command selection, suit air, freight mass/capacity, continued off-world production and paused save/reload. Return around terrain rather than flying through the home circle.

@@ -1,18 +1,19 @@
+import { activeWorld, allColonies } from '../sim/localWorld';
+import { planetAt, planets, CELESTIAL } from '../sim/celestial';
 import { drawShields } from './shields';
 import { applyExplorationAction } from '../sim/exploration';
-import { drawExploration, drawExplorationRadar } from './exploration';
+import { drawExploration } from './exploration';
 import { drawGeology } from './geology';
 import { drawTowing } from './towing';
-import { drawCombat, drawCombatRadar } from './combat';
+import { drawCombat } from './combat';
 import { predictMeteor, type ThreatPrediction } from '../sim/meteor';
-import { drawDefence, drawThreatRadar } from './defence';
+import { drawDefence } from './defence';
 import Phaser from 'phaser';
 import { Keyboard } from '../input/keyboard';
 import { FixedClock } from '../sim/clock';
-import { ATMOSPHERE, WORLD } from '../sim/config';
-import { heading, localAngle } from '../sim/math';
+import { WORLD } from '../sim/config';
+import { heading } from '../sim/math';
 import { createWorld, stepWorld } from '../sim/world';
-import { RESOURCE_INFO } from '../sim/resources';
 import { Hud } from '../ui/hud';
 import { FlightCamera } from './camera';
 import { drawMining } from './mining';
@@ -40,6 +41,7 @@ export class FlightScene extends Phaser.Scene {
   private world!: Phaser.GameObjects.Container;
   private art!: Phaser.GameObjects.Graphics;
   private atmosphere!: Phaser.GameObjects.Image;
+  private moon!: Phaser.GameObjects.Image;
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
   private map!: Phaser.GameObjects.Graphics;
@@ -68,11 +70,12 @@ export class FlightScene extends Phaser.Scene {
     this.flightTools = new FlightTools(action => this.viewAction(action));
     this.loadCheckpoint(false);
     this.audio.reset(this.simulation);
-    this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship);
+    this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
     this.stars = this.add.graphics();
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
     this.planet = createPlanet(this);
-    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.art]);
+    this.moon = this.add.image(0, 0, this.planet.texture.key).setDisplaySize(this.planet.displayWidth * CELESTIAL.moon.radius / WORLD.radius, this.planet.displayHeight * CELESTIAL.moon.radius / WORLD.radius).setTint(0xc4b4df);
+    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.art]);
     this.map = this.add.graphics();
     const blur = () => this.setPaused(true), visibility = () => { if (document.hidden) this.setPaused(true); };
     window.addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
@@ -101,7 +104,7 @@ export class FlightScene extends Phaser.Scene {
     if (this.keys.mute()) this.audio.toggleMute();
     if (this.keys.help()) this.help.toggle();
     if (this.keys.closePanel()) { if (this.help.isOpen) this.help.close(); else this.hud.closeDock(); }
-    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship); this.audio.reset(this.simulation); this.prediction = null; this.threats = []; }
+    if (!this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship, this.simulation.system); this.audio.reset(this.simulation); this.prediction = null; this.threats = []; }
     if (!this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
       catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
@@ -122,22 +125,22 @@ export class FlightScene extends Phaser.Scene {
       });
     }
     const onFoot = this.simulation.playerMode === 'astronaut';
-    this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot);
+    this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot, this.simulation.system);
     this.predictionTime += delta / 1000;
     if (this.simulation.towing.targetId !== null) this.prediction = null;
     if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.paused && this.predictionTime >= 0.2))) {
-      this.prediction = predictCoast(this.ship); this.predictionTime = 0;
+      this.prediction = predictCoast(this.ship, 180, this.simulation.system); this.predictionTime = 0;
     }
     this.threatTime += delta / 1000;
     if ((!this.paused && this.threatTime >= 0.5) || this.threats.length !== Math.min(12, this.simulation.defence.meteors.length)) {
-      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => predictMeteor(m)); this.threatTime = 0;
+      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => predictMeteor(m, 120, this.simulation.system)); this.threatTime = 0;
     }
-    this.flightTools.update(this.ship, this.follow, this.prediction, this.simulation.towing.targetId !== null);
-    this.audio.update(this.simulation, this.paused, delta / 1000);
+    this.flightTools.update(this.ship, this.follow, this.prediction, this.simulation.towing.targetId !== null, this.simulation.system);
+    this.audio.update(activeWorld(this.simulation), this.paused, delta / 1000);
     this.soundControls.update();
     this.draw();
     this.hudTime += delta;
-    if (this.hudTime > 50) { this.hud.update(this.simulation, this.paused, this.threats); this.hudTime = 0; }
+    if (this.hudTime > 50) { this.hud.update(activeWorld(this.simulation), this.paused, this.threats); this.hudTime = 0; }
   }
   private loadCheckpoint(requested: boolean): void {
     try {
@@ -159,24 +162,31 @@ export class FlightScene extends Phaser.Scene {
     }
     this.world.setPosition(width / 2, height * 0.53).setScale(this.follow.zoom).setRotation(-this.follow.angle);
     g.setPosition(-this.follow.x, -this.follow.y);
-    this.atmosphere.setPosition(-this.follow.x, -this.follow.y);
-    this.planet.setPosition(-this.follow.x, -this.follow.y);
-    g.lineStyle(4, 0x73f3cf); g.lineBetween(-30, -WORLD.radius, 30, -WORLD.radius);
+    const home = planetAt('home', this.simulation.system), moon = planetAt('moon', this.simulation.system);
+    this.atmosphere.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
+    this.moon.setVisible(this.simulation.system.binary).setPosition(moon.position.x - this.follow.x, moon.position.y - this.follow.y);
+    this.planet.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
+    for (const body of planets(this.simulation.system)) {
+      g.save(); g.translateCanvas(body.position.x, body.position.y);
+    g.lineStyle(4, 0x73f3cf); g.lineBetween(-30, -body.radius, 30, -body.radius);
     for (const x of [-32, 32]) {
-      g.lineStyle(1, 0x73f3cf); g.lineBetween(x, -WORLD.radius, x, -WORLD.radius - 18);
-      g.fillStyle(0x73f3cf); g.fillCircle(x, -WORLD.radius - 19, 2);
+      g.lineStyle(1, 0x73f3cf); g.lineBetween(x, -body.radius, x, -body.radius - 18);
+      g.fillStyle(0x73f3cf); g.fillCircle(x, -body.radius - 19, 2);
     }
     // Pad beacon remains visible at orbital zoom.
-    g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -WORLD.radius - WORLD.shipRadius, 16 / this.follow.zoom);
+    g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -body.radius - WORLD.shipRadius, 16 / this.follow.zoom);
+      g.restore();
+    }
     if (this.flightTools.trajectory && this.simulation.towing.targetId === null) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawExploration(g, this.simulation, this.follow.zoom);
     drawMining(g, this.simulation, this.follow.zoom);
     drawTowing(g, this.simulation, this.follow.zoom);
-    drawGeology(g, this.simulation, this.follow.zoom);
-    drawShields(g, this.simulation, this.hud.shieldAccents);
-    drawColony(g, this.simulation, this.hud.selectedBuildingId, this.hud.buildPreview);
+    for (const site of allColonies(this.simulation)) {
+      drawGeology(g, site, this.follow.zoom); drawShields(g, site, this.hud.shieldAccents);
+      drawColony(g, site, this.hud.selectedBuildingId, (site.siteBody ?? 'home') === this.hud.buildPreview?.body ? this.hud.buildPreview : null);
+      drawSurface(g, site);
+    }
     drawDefence(g, this.simulation, this.threats, this.follow.zoom);
-    drawSurface(g, this.simulation);
     drawCombat(g, this.simulation, this.follow.zoom);
     const s = this.ship; const n = heading(s.angle); const right = { x: -n.y, y: n.x };
     const visibilityScale = Math.max(1, 0.7 / this.follow.zoom);
@@ -189,27 +199,12 @@ export class FlightScene extends Phaser.Scene {
     if (s.thrusting && !this.paused) {
       g.fillStyle(0xffbb73); g.fillPoints([p(-3, -6), p(3, -6), p(0, -16 - Math.sin(this.time.now / 45) * 3)], true);
     }
-    // Radar shows the complete moon and the direction home at every altitude.
-    const mx = width - 92, my = height - 100, radius = 22;
-    const m = this.map; m.fillStyle(0x0a1724, 0.9); m.fillCircle(mx, my, 68);
-    m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
-    m.lineStyle(1, 0x3b5969); m.strokeCircle(mx, my, radius);
-    m.lineStyle(1, 0x5481b0, 0.6); m.strokeCircle(mx, my, radius * (1 + ATMOSPHERE.height / WORLD.radius));
-    m.fillStyle(0x73f3cf); m.fillRect(mx - 3, my - radius - 2, 6, 4);
-    const angle = localAngle(s.position); const direction = heading(angle);
-    const distance = Math.min(61, Math.hypot(s.position.x, s.position.y) / WORLD.radius * radius);
-    m.fillStyle(0xffcf94); m.fillCircle(mx + direction.x * distance, my + direction.y * distance, 3);
-    if (this.simulation.playerMode === 'astronaut') {
-      const p = this.simulation.astronaut.position;
-      m.fillStyle(0xe0eff2); m.fillCircle(mx + p.x / WORLD.radius * radius, my + p.y / WORLD.radius * radius, 2);
-    }
-    drawExplorationRadar(m, this.simulation, mx, my, radius / WORLD.radius);
-    drawCombatRadar(m, this.simulation, mx, my, radius);
-    drawThreatRadar(m, this.simulation, mx, my, radius);
-    for (const rock of this.simulation.asteroids) {
-      const distance = Math.hypot(rock.position.x, rock.position.y);
-      const scale = Math.min(radius / WORLD.radius, 61 / distance);
-      m.fillStyle(RESOURCE_INFO[rock.resource].color, 0.8); m.fillCircle(mx + rock.position.x * scale, my + rock.position.y * scale, 1.5);
-    }
+    const mx = width - 92, my = height - 100, m = this.map;
+    m.fillStyle(0x0a1724, .9); m.fillCircle(mx, my, 68); m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
+    const point = (p: { x: number; y: number }) => { const k = Math.min(.0058, 61 / Math.max(1, Math.hypot(p.x, p.y))); return { x: mx + p.x * k, y: my + p.y * k }; };
+    for (const body of planets(this.simulation.system)) { const p = point(body.position); m.lineStyle(1, body.id === 'home' ? 0x73f3cf : 0xc9b2ef); m.strokeCircle(p.x, p.y, body.radius * .0058); }
+    for (const actor of [...this.simulation.asteroids, ...this.simulation.exploration.sites, ...this.simulation.defence.meteors]) { const p = point(actor.position); m.fillStyle(0x9bb4c5, .7); m.fillCircle(p.x, p.y, 1.3); }
+    const ship = point(s.position); m.fillStyle(0xffcf94); m.fillCircle(ship.x, ship.y, 3);
+    if (this.simulation.playerMode === 'astronaut') { const p = point(this.simulation.astronaut.position); m.fillStyle(0xe0eff2); m.fillCircle(p.x, p.y, 2); }
   }
 }

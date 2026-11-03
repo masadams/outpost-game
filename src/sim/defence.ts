@@ -1,5 +1,8 @@
-import { ATMOSPHERE, WORLD } from './config';
-import { heading, localAngle, wrap } from './math';
+import { nearestPlanet } from './celestial';
+import { activeWorld } from './localWorld';
+import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
+import { ATMOSPHERE } from './config';
+import { heading, wrap } from './math';
 import { nearbyBuilding, type Building } from './colony';
 import { operational } from './buildingHealth';
 import { damageColony, repairBuilding } from './buildingDamage';
@@ -13,7 +16,7 @@ import type { Vec } from './math';
 
 export function controlledTurret(world: WorldState): Building | undefined {
   const b = world.colony.buildings.find(b => b.id === world.defence.controlled);
-  if (!b || !isTurret(b.kind) || !b.enabled || !operational(b) || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0 || Math.abs(wrap(b.angle - localAngle(world.astronaut.position))) * WORLD.radius > 18) {
+  if (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || !b || !isTurret(b.kind) || !b.enabled || !operational(b) || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0 || Math.abs(wrap(b.angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 18) {
     world.defence.controlled = null; return undefined;
   }
   return b;
@@ -28,8 +31,8 @@ export function applyDefenceAction(world: WorldState, action: DefenceAction): vo
     const count = Math.min(3, d.wave);
     for (let i = 0; i < count; i++) {
       const angle = (target?.angle ?? 0) + (i - (count - 1) / 2) * 0.025, n = heading(angle);
-      const radius = WORLD.radius + ATMOSPHERE.height + 400 + i * 200;
-      d.meteors.push({ id: world.nextId++, position: { x: n.x * radius, y: n.y * radius }, velocity: { x: -n.x * 115, y: -n.y * 115 },
+      const radius = colonyPlanet(world).radius + ATMOSPHERE.height + 400 + i * 200;
+      d.meteors.push({ id: world.nextId++, position: sitePosition(world, angle, radius - colonyPlanet(world).radius), velocity: { x: colonyPlanet(world).velocity.x - n.x * 115, y: colonyPlanet(world).velocity.y - n.y * 115 },
         radius: 14, mass: 1200, stage: 0, resource: 'iron', health: 1, maxHealth: 1 });
     }
     notify(world, `DEFENCE DRILL ${d.wave} · ${count} INCOMING · DAMAGE IS REAL · K SAVES`); return;
@@ -57,11 +60,11 @@ export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: 
     if (m.health <= 0) { d.intercepted++; continue; }
     if (contact) {
       d.impacts++;
-      damageColony(world, contact, meteorDamage(m), 65 + m.radius);
+      damageColony(world, contact, meteorDamage(m, nearestPlanet(contact, world.system).velocity), 65 + m.radius);
     } else survivors.push(m);
   }
   d.meteors = survivors;
-  controlledTurret(world);
+  controlledTurret(activeWorld(world));
   stepWeapons(world, fire, turn, dt, starts);
   resolveDefenceHits(world);
 }

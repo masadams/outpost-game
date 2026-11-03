@@ -1,5 +1,7 @@
+import { planetAt, surfacePosition, clearTerrain, nearestPlanet, relative as bodyRelative } from './celestial';
+import { cargoMass } from './shipMass';
 import { fuelCapacity, cargoCapacity } from './shipStats';
-import { moveBody, separateBodies, collideShip, type Asteroid } from './bodies';
+import { moveBody, separateBodies, collideShip } from './bodies';
 import { BELTS, BELT_IDS, SITE_IDS, SITE_INFO, EXPLORATION, DESTINATIONS, type Site, type Destination } from './explorationConfig';
 import { WORLD } from './config';
 import { emptyInventory, inventoryMass, RESOURCES } from './resources';
@@ -30,7 +32,7 @@ export function seedNeighborhood(w: WorldState): void {
   }
 }
 export function destination(w: WorldState, key = w.exploration.selected): { label: string; position: Vec; velocity: Vec; site?: Site } {
-  if (key === 'home') return { label: 'Home pad', position: { x: 0, y: -WORLD.radius - WORLD.shipRadius }, velocity: { x: 0, y: 0 } };
+  if (key === 'home' || key === 'moon') { const p = planetAt(key, w.system); return { label: key === 'home' ? 'Home pad' : 'Nacre moon pad · airless', position: surfacePosition(p, 0, WORLD.shipRadius), velocity: p.velocity }; }
   const site = w.exploration.sites.find(s => s.key === key);
   if (site) return { label: SITE_INFO[site.key].label, position: site.position, velocity: site.velocity, site };
   const belt = BELT_IDS.find(b => b === key);
@@ -50,7 +52,7 @@ export function navigation(w: WorldState, key?: Destination) {
   const relative = { x: viewer.velocity.x - target.velocity.x, y: viewer.velocity.y - target.velocity.y };
   const direction = range > 1e-9 ? { x: delta.x / range, y: delta.y / range } : { x: 0, y: 0 };
   const terrain = range > 1e-9 ? rayCircle(viewer.position, direction, { x: 0, y: 0 }, WORLD.radius) : null;
-  return { ...target, range, relativeSpeed: length(relative), closing: dot(relative, direction), bearing: range < 1e-9 ? 0 : wrap(localAngle(delta) - (w.playerMode === 'ship' ? w.ship.angle : localAngle(viewer.position))), occluded: terrain !== null && terrain < range - 1e-6 };
+  return { ...target, range, relativeSpeed: length(relative), closing: dot(relative, direction), bearing: range < 1e-9 ? 0 : wrap(localAngle(delta) - (w.playerMode === 'ship' ? w.ship.angle : localAngle(bodyRelative(viewer.position, nearestPlanet(viewer.position, w.system))))), occluded: !clearTerrain(viewer.position, target.position, w.system) };
 }
 export function siteError(w: WorldState, site: Site): string | null {
   if (w.playerMode !== 'ship' || w.ship.state !== 'flying') return 'Pilot a flying ship to rendezvous';
@@ -71,7 +73,7 @@ export function applyExplorationAction(w: WorldState, a: ExplorationAction): voi
   if (site.key === 'cache') {
     let accepted = 0;
     for (const r of RESOURCES) {
-      const amount = Math.min(site.stock[r], cargoCapacity(w.ship) - inventoryMass(w.ship.cargo)); if (amount <= 0) continue;
+      const amount = Math.min(site.stock[r], cargoCapacity(w.ship) - cargoMass(w.ship)); if (amount <= 0) continue;
       transferMomentum(w, site, amount); w.ship.cargo[r] += amount; site.stock[r] -= amount; accepted += amount;
     }
     w.exploration.salvaged += accepted; notify(w, accepted ? `SALVAGE +${accepted.toFixed(1)} kg · RETURN AND UNLOAD AT HOME` : inventoryMass(site.stock) ? 'HOLD FULL · UNLOAD BEFORE RECOVERING MORE' : 'CACHE EMPTY · NO RESPAWN');
@@ -88,7 +90,7 @@ function transferMomentum(w: WorldState, site: Site, amount: number): void {
 }
 export function stepSites(w: WorldState, dt: number, shipStart: Vec): void {
   const starts = new Map(w.exploration.sites.map(s => [s.id, { ...s.position }]));
-  for (const s of w.exploration.sites) moveBody(s, dt);
+  for (const s of w.exploration.sites) moveBody(s, dt, w.system);
   for (let i = 0; i < w.exploration.sites.length; i++) {
     const s = w.exploration.sites[i]; for (const rock of w.asteroids) separateBodies(s, rock);
     for (let j = i + 1; j < w.exploration.sites.length; j++) separateBodies(s, w.exploration.sites[j]);

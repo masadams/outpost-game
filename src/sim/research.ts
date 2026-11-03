@@ -1,3 +1,4 @@
+import { colonyWorld } from './localWorld';
 import { TECHNOLOGIES, TECH_IDS, PROGRESSION, type TechId, type ProgressionAction } from './progressionConfig';
 import { PRODUCTS } from './colonyConfig';
 import { availableProduct, industrialPowerBlock } from './colonyPolicy';
@@ -20,14 +21,15 @@ export function applyResearch(w: WorldState, a: Extract<ProgressionAction, { typ
   if (a.type === 'researchStart') {
     const error = researchError(w, a.tech); if (error) { notify(w, error); return; }
     for (const p of PRODUCTS) w.colony.products[p] = Math.max(0, w.colony.products[p] - (TECHNOLOGIES[a.tech].cost[p] ?? 0));
-    r.queue.push({ tech: a.tech, progress: 0, paused: false }); notify(w, 'RESEARCH MATERIALS COMMITTED · POWER AN ENABLED LAB'); return;
+    r.queue.push({ funding: w.siteBody ?? 'home', tech: a.tech, progress: 0, paused: false }); notify(w, 'RESEARCH MATERIALS COMMITTED · POWER AN ENABLED LAB'); return;
   }
   const project = r.queue.find(p => p.tech === a.tech); if (!project) return;
   if (a.operation === 'pause') { project.paused = !project.paused; return; }
   if (a.operation !== 'cancel') return;
+  const funding = colonyWorld(w, project.funding).colony;
   const spec = TECHNOLOGIES[a.tech], fraction = Math.max(0, 1 - project.progress / spec.seconds);
-  if (PRODUCTS.some(p => w.colony.products[p] + (spec.cost[p] ?? 0) * fraction > productCapacity(w.colony) + 1e-9)) { notify(w, 'MAKE PRODUCT ROOM BEFORE CANCELLING RESEARCH'); return; }
-  for (const p of PRODUCTS) w.colony.products[p] += (spec.cost[p] ?? 0) * fraction;
+  if (PRODUCTS.some(p => funding.products[p] + (spec.cost[p] ?? 0) * fraction > productCapacity(funding) + 1e-9)) { notify(w, 'MAKE PRODUCT ROOM AT THE FUNDING COLONY BEFORE CANCELLING RESEARCH'); return; }
+  for (const p of PRODUCTS) funding.products[p] += (spec.cost[p] ?? 0) * fraction;
   r.queue = r.queue.filter(p => p !== project); notify(w, 'RESEARCH CANCELLED · UNWORKED SAMPLES RETURNED');
 }
 /** One lab contributes each tick. Industry ordering/reserves/caps apply to real paid work. */

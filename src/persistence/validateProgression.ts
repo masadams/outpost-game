@@ -5,7 +5,7 @@ export function validProgression(w: WorldState): boolean {
   const r = w.colony.research, equipment = w.ship.equipment;
   if (!r || !Array.isArray(r.completed) || r.completed.length > 4 || !r.completed.every(t => TECH_IDS.includes(t)) || new Set(r.completed).size !== r.completed.length || !Array.isArray(r.queue) || r.queue.length > 4 || !num(r.energyUsed)) return false;
   if (!r.completed.every(t => TECHNOLOGIES[t].requires.every(p => r.completed.includes(p)))) return false;
-  if (!r.queue.every(p => !!p && TECH_IDS.includes(p.tech) && !r.completed.includes(p.tech) && TECHNOLOGIES[p.tech].requires.every(t => r.completed.includes(t)) && num(p.progress, TECHNOLOGIES[p.tech].seconds) && p.progress < TECHNOLOGIES[p.tech].seconds && typeof p.paused === 'boolean')) return false;
+  if (!r.queue.every(p => !!p && ['home', 'moon'].includes(p.funding) && TECH_IDS.includes(p.tech) && !r.completed.includes(p.tech) && TECHNOLOGIES[p.tech].requires.every(t => r.completed.includes(t)) && num(p.progress, TECHNOLOGIES[p.tech].seconds) && p.progress < TECHNOLOGIES[p.tech].seconds && typeof p.paused === 'boolean')) return false;
   if (new Set(r.queue.map(p => p.tech)).size !== r.queue.length) return false;
   return Array.isArray(equipment) && equipment.length <= UPGRADE_IDS.length && new Set(equipment).size === equipment.length && equipment.every(id => UPGRADE_IDS.includes(id) && r.completed.includes(UPGRADES[id].tech));
 }

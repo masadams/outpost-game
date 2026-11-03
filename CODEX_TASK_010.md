@@ -1,6 +1,6 @@
 # Task 010 — Nearby worlds (Phase 8.5)
 
-Status: implementation plan prepared after merged shield PR #20. The current playable build still has one landable world. Work on `feat/nearby-worlds`; do not mark this task complete until the full transfer/landing/work/return route is demonstrated.
+Status: implemented for verification/review on `feat/nearby-worlds` after merged shield PR #20. The live simulation and production browser demonstrate the full supplied transfer/landing/work/mining/return route. Final full-suite/CI checks and merge remain before marking the roadmap milestone complete.
 
 Follow AGENTS.md, GAME_DESIGN.md and the [worlds model](docs/NEARBY_WORLDS.md). Legacy saves may be reset. Keep the existing single continuous world and 60 Hz simulation.
 

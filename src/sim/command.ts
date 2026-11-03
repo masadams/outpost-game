@@ -1,3 +1,4 @@
+import { sitePosition } from './localWorld';
 import { applyFacilityAction, type Building } from './colony';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS } from './colonyConfig';
 import { SCHEDULE_PRODUCTS, type ScheduleProduct } from './scheduling';
@@ -7,7 +8,6 @@ import { turretState } from './weapons';
 import { isTurret } from './defenceConfig';
 import { operational } from './buildingHealth';
 import { serviceAtBuilding } from './colonyService';
-import { stationPosition } from './stations';
 import { notify } from './messages';
 import type { CommandAction } from './commandConfig';
 import type { WorldState } from './world';
@@ -48,7 +48,7 @@ export function applyCommandAction(w: WorldState, a: CommandAction): void {
   else if (a.operation === 'service' && b.kind === 'service') remoteService(w, b);
 }
 function remoteService(w: WorldState, b: Building): void {
-  const at = stationPosition(b.angle), near = (p: { x: number; y: number }, range: number) => Math.hypot(p.x - at.x, p.y - at.y) <= range;
+  const at = sitePosition(w, b.angle), near = (p: { x: number; y: number }, range: number) => Math.hypot(p.x - at.x, p.y - at.y) <= range;
   const crew = w.playerMode === 'astronaut' && w.astronaut.grounded && near(w.astronaut.position, 18);
   if (!crew && !(w.ship.state === 'landed' && near(w.ship.position, 80))) { notify(w, 'SERVICE REQUIRES CREW OR LANDED SHIP AT THE FACILITY'); return; }
   serviceAtBuilding(w, b, crew);

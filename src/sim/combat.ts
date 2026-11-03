@@ -1,10 +1,13 @@
+import { colonyWorld } from './localWorld';
+import { planetAt } from './celestial';
+import { cargoMass } from './shipMass';
+import { nearestPlanet, relative, surfacePosition } from './celestial';
 import { equipped } from './shipStats';
 import { createCombat, SHIP_WEAPONS, type CombatAction, type Drone } from './combatConfig';
 import { createShip, telemetry } from './physics';
 import { shipMass } from './shipMass';
-import { heading, length, localAngle, wrap, type Vec } from './math';
+import { heading, length, localAngle, wrap } from './math';
 import { WORLD } from './config';
-import { inventoryMass } from './resources';
 import { notify } from './messages';
 import { availableProduct } from './colonyPolicy';
 import { releaseTow } from './towing';
@@ -26,26 +29,28 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     notify(world, `${s.armament.selected.toUpperCase()} SELECTED · SHIFT TO FIRE`); return;
   }
   if (action.type === 'recoverShip') {
+    world = colonyWorld(world, 'home');
     if (s.state !== 'crashed') { notify(world, 'RECOVERY IS FOR A LOST SHIP · LAND AND E FOR SERVICE'); return; }
     const stock = world.colony.products;
     if (stock.alloy < 8 || stock.components < 2) { notify(world, 'RECOVERY NEEDS 8 ALLOY + 2 COMPONENTS · L LOADS CHECKPOINT · R RESETS'); return; }
     if (availableProduct(world.colony, 'alloy') < 8 || availableProduct(world.colony, 'components') < 2) { notify(world, 'RECOVERY MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN COLONY'); return; }
-    stock.alloy -= 8; stock.components -= 2; c.lostCargo += inventoryMass(s.cargo); c.recoveries++;
+    stock.alloy -= 8; stock.components -= 2; c.lostCargo += cargoMass(s); c.recoveries++;
     releaseTow(world, true);
     c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
-    const recovered = createShip(); recovered.hull = 30; recovered.fuel = Math.min(s.fuel, 20);
+    const recovered = createShip(), home = planetAt('home', world.system); recovered.ground = 'home'; recovered.position = surfacePosition(home, 0, WORLD.shipRadius); recovered.velocity = { ...home.velocity }; recovered.hull = 30; recovered.fuel = Math.min(s.fuel, 20);
     recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig; recovered.equipment = [...s.equipment];
-    world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { x: 0, y: 0 }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
+    world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { ...home.velocity }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
     world.defence.controlled = null; world.colony.buildOpen = false; world.depotOpen = false;
     notify(world, 'RECOVERED AT HOME · CARGO LOST · HULL 30 · E USES SUPPLIES TO SERVICE'); return;
   }
-  if (world.playerMode !== 'ship' || s.state !== 'flying' || telemetry(s).altitude < 200) { notify(world, 'LAUNCH ABOVE 200 m BEFORE STARTING A PATROL · SAVE WITH K FIRST'); return; }
+  if (world.playerMode !== 'ship' || s.state !== 'flying' || telemetry(s, WORLD.shipRadius, world.system).altitude < 200) { notify(world, 'LAUNCH ABOVE 200 m BEFORE STARTING A PATROL · SAVE WITH K FIRST'); return; }
   if (c.enemies.length || c.projectiles.length) { notify(world, 'FINISH OR DISENGAGE THE CURRENT PATROL FIRST'); return; }
   c.encounters++; c.tier = threatTier(world);
   for (let i = 0; i < c.tier; i++) {
     const n = heading(s.angle + (i === 0 ? 0 : i === 1 ? 0.55 : -0.55));
     let position = { x: s.position.x + n.x * (320 + i * 100), y: s.position.y + n.y * (320 + i * 100) };
-    if (length(position) < WORLD.radius + 120) { const up = heading(localAngle(position)); position = { x: up.x * (WORLD.radius + 120), y: up.y * (WORLD.radius + 120) }; }
+    const planet = nearestPlanet(position, world.system);
+    if (length(relative(position, planet)) < planet.radius + 120) position = surfacePosition(planet, localAngle(relative(position, planet)), 120);
     c.enemies.push({ id: world.nextId++, position, velocity: { ...s.velocity }, angle: localAngle({ x: s.position.x - position.x, y: s.position.y - position.y }),
       hull: 48, fuel: 120, ammo: 24, energy: 50, cooldown: 0, windup: 0, retreatTime: 0, state: 'approach' });
   }
@@ -57,7 +62,7 @@ function fireShip(world: WorldState): void {
   if (world.playerMode !== 'ship' || s.state !== 'flying' || a.cooldown > 1e-9 || a.overheated || a.energy + 1e-9 < energy || a[a.selected] < 1 || c.projectiles.length >= 96) return;
   const n = heading(s.angle), at = { x: s.position.x + n.x * 13, y: s.position.y + n.y * 13 };
   const target = a.selected === 'missile' ? c.enemies.filter(d => d.hull > 0 && Math.hypot(d.position.x - at.x, d.position.y - at.y) < 1400 &&
-    Math.abs(wrap(localAngle({ x: d.position.x - at.x, y: d.position.y - at.y }) - s.angle)) < 0.65 && lineOfSight(at, d.position)).sort((l, r) => Math.hypot(l.position.x - at.x, l.position.y - at.y) - Math.hypot(r.position.x - at.x, r.position.y - at.y))[0] : undefined;
+    Math.abs(wrap(localAngle({ x: d.position.x - at.x, y: d.position.y - at.y }) - s.angle)) < 0.65 && lineOfSight(at, d.position, world.system)).sort((l, r) => Math.hypot(l.position.x - at.x, l.position.y - at.y) - Math.hypot(r.position.x - at.x, r.position.y - at.y))[0] : undefined;
   a[a.selected]--; a.energy = Math.max(0, a.energy - energy); a.heat = Math.min(100, a.heat + heat); a.cooldown = spec.interval;
   if (a.heat >= 100) a.overheated = true;
   c.shots++;
@@ -66,7 +71,7 @@ function fireShip(world: WorldState): void {
 }
 export function stepCombat(world: WorldState, fire: boolean, dt: number, starts: Omit<CombatStarts, 'enemies'>): void {
   const c = world.combat, s = world.ship, a = s.armament;
-  c.furthestAltitude = Math.max(c.furthestAltitude, telemetry(s).altitude);
+  c.furthestAltitude = Math.max(c.furthestAltitude, telemetry(s, WORLD.shipRadius, world.system).altitude);
   c.flashes = c.flashes.filter(f => (f.life -= dt) > 0);
   a.cooldown = Math.max(0, a.cooldown - dt); a.heat = Math.max(0, a.heat - (equipped(s, 'cooling') ? 30 : 20) * dt);
   if (a.overheated && a.heat <= 35) a.overheated = false;

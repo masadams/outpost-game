@@ -1,8 +1,8 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Command #17, nearby-space discovery #18 and research/equipment #19 are merged with user authorization, following habitats #16. Phase 8.2 shield domes merged in #20 after 343 unit tests, 31 production browser scenarios and green CI. Phase 8.5 [Task 010](../CODEX_TASK_010.md) is scoped on `feat/nearby-worlds`; its physical moon implementation is next; the full Phase 9 overhaul remains required.
+**Status:** Command #17, nearby-space discovery #18 and research/equipment #19 are merged with user authorization, following habitats #16. Phase 8.2 shield domes merged in #20 after 343 unit tests, 31 production browser scenarios and green CI. Phase 8.5 [Task 010](../CODEX_TASK_010.md) is implemented for final verification/review on `feat/nearby-worlds`, including supplied moon mining and a demonstrated return delivery; the full Phase 9 overhaul remains required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
-**Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
+**Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
 ## Progress rules
 - [ ] means not completed; [x] means implemented, tested and merged.
@@ -219,7 +219,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Landing feedback #14, towing #15 and habitats #16 are merged. Command #17, nearby-space discovery #18 and ship progression/research #19 are merged. Shield domes #20 are merged. Implement [Task 010](../CODEX_TASK_010.md) using the [nearby-worlds model](NEARBY_WORLDS.md): shared gravity/moving frames → supplied body-local colonies → real transfer/landing/work/return. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
+Landing feedback #14, towing #15 and habitats #16 are merged. Command #17, nearby-space discovery #18 and ship progression/research #19 are merged. Shield domes #20 are merged. Finish full-suite/CI review and merge of [Task 010](../CODEX_TASK_010.md) using the [nearby-worlds playtest](NEARBY_WORLDS.md). The supplied physical transfer/work/return route is demonstrated. Continue wider progression/balance and the full Phase 9 presentation overhaul afterward. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. Human evaluation and Phase 9 remain required.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

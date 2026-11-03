@@ -1,3 +1,4 @@
+import { planetAt, relative, surfacePosition } from '../src/sim/celestial';
 import { describe, expect, it } from 'vitest';
 import { applyCommandAction } from '../src/sim/command';
 import { createWorld, stepWorld } from '../src/sim/world';
@@ -16,7 +17,7 @@ function fixture() {
   return w;
 }
 const run = (w: ReturnType<typeof createWorld>, seconds: number) => { for (let i = 0; i < Math.round(seconds / STEP); i++) stepColony(w, STEP); };
-function worker(w: ReturnType<typeof createWorld>, arc = 120) { w.playerMode = 'astronaut'; w.astronaut.position = stationPosition(arc / WORLD.radius); w.astronaut.velocity = { x: 0, y: 0 }; w.astronaut.grounded = true; }
+function worker(w: ReturnType<typeof createWorld>, arc = 120) { w.playerMode = 'astronaut'; w.astronaut.position = stationPosition(arc / WORLD.radius); w.astronaut.velocity = { ...planetAt('home', w.system).velocity }; w.astronaut.grounded = true; }
 describe('central command operations and power', () => {
   it('remotely toggles and selects recipes from the ship without moving the astronaut', () => {
     const w = fixture(), at = { ...w.astronaut.position }; applyCommandAction(w, { type: 'remote', id: 2, operation: 'toggle' });
@@ -112,7 +113,7 @@ describe('supplied construction queue', () => {
   });
   it('preserves priorities, budgets and paid work through checkpoint continuation', () => {
     const w = fixture(); applyCommandAction(w, { type: 'powerLimit', id: 2, percent: 30 }); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); worker(w, 500); run(w, 2);
-    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(13); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
+    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(14); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
   });
   it('rejects malformed priorities, limits, duplicate orders and invalid paid progress', () => {
     const w = fixture(); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); const text = encodeCheckpoint(w);

@@ -1,3 +1,4 @@
+import { planetAt, relative, surfacePosition } from '../src/sim/celestial';
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld, unloadCargo } from '../src/sim/world';
 import { applyExplorationAction, navigation, siteError, resolveSites, seedNeighborhood, orbitalState } from '../src/sim/exploration';
@@ -72,7 +73,7 @@ describe('finite nearby-space discovery', () => {
   it('moves sites continuously under the shared gravity model with no far-field freeze', () => {
     const w = createWorld(), s = w.exploration.sites[0], initial = { ...s.position };
     for (let i = 0; i < 120; i++) stepWorld(w, { thrust: false, turn: 0 }, STEP);
-    expect(s.position).not.toEqual(initial); expect(Math.abs(length(s.position) - length(initial))).toBeLessThan(1);
+    expect(s.position).not.toEqual(initial); expect(Math.abs(length(relative(s.position, planetAt('home', w.system))) - length(initial))).toBeLessThan(1);
   });
   it('sweeps ship collisions against physical sites rather than allowing a fast pass', () => {
     const { w, s } = rendezvous(); w.asteroids = []; w.ship.position = { x: s.position.x, y: s.position.y - 50 }; w.ship.velocity = { x: s.velocity.x, y: s.velocity.y + 20000 };
@@ -98,7 +99,7 @@ describe('finite nearby-space discovery', () => {
     expect(audio.update(w, 1, true).cues).toEqual([]);
   });
   it('round trips depleted stocks, surveyed manifests, selection and moving bodies in the current format', () => {
-    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(13);
+    const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(14);
     const loaded = decodeCheckpoint(text); expect(loaded.exploration).toEqual(w.exploration); expect(loaded.asteroids).toEqual(w.asteroids); seedNeighborhood(loaded); expect(loaded.asteroids).toHaveLength(27); expect(loaded.exploration.sites.find(t => t.key === s.key)?.stock).toEqual(s.stock);
   });
   it('rejects duplicate site IDs, invalid stocks, non-finite motion and malformed belt tags', () => {

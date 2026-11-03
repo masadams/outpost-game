@@ -1,13 +1,15 @@
+import { colonyPlanet, localAngleAt } from '../sim/localWorld';
+import { nearestPlanet } from '../sim/celestial';
 import Phaser from 'phaser';
-import { heading, localAngle } from '../sim/math';
+import { heading } from '../sim/math';
 import { STATIONS } from '../sim/surface';
-import { WORLD } from '../sim/config';
 import type { WorldState } from '../sim/world';
 
 export function drawSurface(g: Phaser.GameObjects.Graphics, world: WorldState): void {
-  for (const station of STATIONS) {
+  const body = colonyPlanet(world);
+  for (const station of (world.siteBody === 'moon' ? STATIONS.filter(s => s.kind === 'depot').map(s => ({ ...s, angle: 54 / body.radius })) : STATIONS)) {
     const n = heading(station.angle), tangent = { x: -n.y, y: n.x };
-    const p = (x: number, height: number) => new Phaser.Geom.Point(n.x * (WORLD.radius + height) + tangent.x * x, n.y * (WORLD.radius + height) + tangent.y * x);
+    const p = (x: number, height: number) => new Phaser.Geom.Point(body.position.x + n.x * (body.radius + height) + tangent.x * x, body.position.y + n.y * (body.radius + height) + tangent.y * x);
     g.fillStyle(0x203749); g.lineStyle(1, station.color);
     const shell = [p(-6, 0), p(-6, 11), p(4, 11), p(7, 7), p(7, 0)];
     g.fillPoints(shell, true); g.strokePoints(shell, true);
@@ -18,8 +20,8 @@ export function drawSurface(g: Phaser.GameObjects.Graphics, world: WorldState): 
       const a = p(-1, 5), b = p(1, 7); g.lineStyle(1, 0x203749); g.lineBetween(a.x, a.y, b.x, b.y);
     }
   }
-  if (world.playerMode !== 'astronaut') return;
-  const suit = world.astronaut, n = heading(localAngle(suit.position)), tangent = { x: -n.y, y: n.x };
+  if (world.playerMode !== 'astronaut' || nearestPlanet(world.astronaut.position, world.system).id !== body.id) return;
+  const suit = world.astronaut, n = heading(localAngleAt(world, suit.position)), tangent = { x: -n.y, y: n.x };
   const p = (x: number, y: number) => ({ x: suit.position.x + tangent.x * x + n.x * y, y: suit.position.y + tangent.y * x + n.y * y });
   const head = p(0, 2.8), torso = p(0, 0);
   const color = suit.health <= 0 ? 0xff8f75 : 0xe0eff2;

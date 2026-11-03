@@ -1,15 +1,18 @@
+import { cargoMass } from './shipMass';
+import { colonyPlanet, localPosition, localAngleAt } from './localWorld';
 import { UPGRADES, UPGRADE_IDS, PROGRESSION, type UpgradeId, type ProgressionAction } from './progressionConfig';
 import { PRODUCTS } from './colonyConfig';
 import { productCapacity } from './colony';
 import { availableProduct, industrialPowerBlock } from './colonyPolicy';
-import { inventoryMass, CARGO_CAPACITY } from './resources';
+import { CARGO_CAPACITY } from './resources';
 import { WORLD } from './config';
-import { localAngle, wrap } from './math';
+import { wrap } from './math';
 import { notify } from './messages';
 import type { WorldState } from './world';
 export function shopError(w: WorldState): string | null {
+  if (w.siteBody === 'moon') return 'Equipment fabrication requires the home pad';
   const s = w.ship;
-  if (s.state !== 'landed' || Math.abs(Math.hypot(s.position.x, s.position.y) - WORLD.radius - WORLD.shipRadius) > .1 || Math.abs(wrap(localAngle(s.position))) * WORLD.radius > WORLD.padHalfWidth) return 'Land on the home pad for equipment work';
+  if (s.state !== 'landed' || Math.abs(Math.hypot(localPosition(w, s.position).x, localPosition(w, s.position).y) - colonyPlanet(w).radius - WORLD.shipRadius) > .1 || Math.abs(wrap(localAngleAt(w, s.position))) * colonyPlanet(w).radius > WORLD.padHalfWidth) return 'Land on the home pad for equipment work';
   if (w.playerMode === 'astronaut' && (!w.astronaut.grounded || w.astronaut.health <= 0 || Math.hypot(w.astronaut.position.x - s.position.x, w.astronaut.position.y - s.position.y) > 20)) return 'Board or stand within 20 m of the home-pad ship';
   return null;
 }
@@ -24,7 +27,7 @@ export function equipmentError(w: WorldState, id: UpgradeId, operation: 'install
     if (industrialPowerBlock(w.colony, PROGRESSION.fabricationEnergy)) return 'Needs 20 kJ unreserved grid energy';
   } else {
     if (!installed) return 'Equipment is not installed';
-    if (id === 'cargo' && inventoryMass(s.cargo) > CARGO_CAPACITY + 1e-9) return 'Unload cargo below 120 kg before removing rack';
+    if (id === 'cargo' && cargoMass(s) > CARGO_CAPACITY + 1e-9) return 'Unload cargo below 120 kg before removing rack';
     const excess = id === 'tank' ? Math.max(0, s.fuel - WORLD.fuelCapacity) : 0;
     if (PRODUCTS.some(p => w.colony.products[p] + (spec.cost[p] ?? 0) * PROGRESSION.salvageFraction * s.hull / 100 + (p === 'fuel' ? excess : 0) > productCapacity(w.colony) + 1e-9)) return 'Make stock room for salvage and excess tank fuel';
   }

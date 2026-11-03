@@ -1,3 +1,4 @@
+import { STATIC_SYSTEM, nearestPlanet, relative } from './celestial';
 import { fuelCapacity } from './shipStats';
 import { WORLD } from './config';
 import { localAngle, wrap } from './math';
@@ -16,10 +17,10 @@ const neutral = (): InstrumentSafety => ({ level: 'neutral', label: '' });
 function limit(value: number, maximum: number, high: string): InstrumentSafety {
   return value > maximum ? { level: 'critical', label: high } : value > maximum * 0.7 ? { level: 'caution', label: 'NEAR LIMIT' } : { level: 'safe', label: 'WITHIN LIMIT' };
 }
-export function flightSafety(ship: Ship): FlightSafety {
-  const t = telemetry(ship), descending = Math.max(0, -t.radial), contactSeconds = descending > 0 ? t.altitude / descending : Infinity;
+export function flightSafety(ship: Ship, system = STATIC_SYSTEM): FlightSafety {
+  const t = telemetry(ship, WORLD.shipRadius, system), descending = Math.max(0, -t.radial), contactSeconds = descending > 0 ? t.altitude / descending : Infinity;
   const approach = ship.state === 'flying' && t.radial <= 0.5 && (t.altitude <= 300 || t.altitude <= 800 && contactSeconds <= 10);
-  const onPad = Math.abs(wrap(localAngle(ship.position) - WORLD.padAngle)) * WORLD.radius <= WORLD.padHalfWidth;
+  const onPad = Math.abs(wrap(localAngle(relative(ship.position, nearestPlanet(ship.position, system))) - WORLD.padAngle)) * nearestPlanet(ship.position, system).radius <= WORLD.padHalfWidth;
   const instruments: Record<FlightMetric, InstrumentSafety> = {
     altitude: neutral(), radial: neutral(), drift: neutral(), speed: neutral(), tilt: neutral(), spin: neutral(),
     fuel: ship.fuel <= fuelCapacity(ship) * 0.05 ? { level: 'critical', label: ship.fuel <= 0 ? 'EMPTY' : 'FUEL CRITICAL' } : ship.fuel <= fuelCapacity(ship) * 0.15 ? { level: 'caution', label: 'LOW FUEL' } : { level: 'safe', label: 'FUEL OK' },

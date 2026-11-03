@@ -1,3 +1,4 @@
+import { planetAt, relative, surfacePosition } from '../src/sim/celestial';
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld, type WorldState, type WorldControls } from '../src/sim/world';
 import { applyDefenceAction, controlledTurret } from '../src/sim/defence';
@@ -104,7 +105,7 @@ describe('powered defence and controls', () => {
   it('lets the crew aim and fire without walking or jumping, and releases invalid control', () => {
     const w = base(); applyDefenceAction(w, { type: 'controlTurret' }); expect(w.defence.controlled).toBe(2);
     const at = { ...w.astronaut.position }; run(w, 0.5, { ...idle, turn: 1, mine: true, jump: true });
-    expect(w.astronaut.position).toEqual(at); expect(w.astronaut.grounded).toBe(true); expect(w.colony.buildings[1].turret!.aim).toBeGreaterThan(0.4);
+    expect(relative(w.astronaut.position, planetAt('home', w.system)).x).toBeCloseTo(at.x); expect(relative(w.astronaut.position, planetAt('home', w.system)).y).toBeCloseTo(at.y); expect(w.astronaut.grounded).toBe(true); expect(w.colony.buildings[1].turret!.aim).toBeGreaterThan(0.4);
     expect(w.defence.shots).toBe(2); expect(w.colony.energy).toBeLessThan(24);
     applyDefenceAction(w, { type: 'controlTurret' }); expect(w.defence.controlled).toBeNull();
     applyDefenceAction(w, { type: 'controlTurret' }); w.colony.buildings[1].health = 0; expect(controlledTurret(w)).toBeUndefined();

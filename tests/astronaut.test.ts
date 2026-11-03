@@ -1,3 +1,4 @@
+import { planetAt, relative, surfacePosition } from '../src/sim/celestial';
 import { describe, expect, it } from 'vitest';
 import { createAstronaut, stepAstronaut, suitAltitude, SUIT } from '../src/sim/astronaut';
 import { FixedClock } from '../src/sim/clock';
@@ -71,7 +72,7 @@ describe('boarding, controls and surface services', () => {
     const world = createWorld(); boardOrExit(world);
     const shipPosition = { ...world.ship.position }, asteroidPosition = { ...world.asteroids[0].position };
     for (let i = 0; i < 60; i++) stepWorld(world, { thrust: true, turn: 1, mine: true, tractor: true }, STEP);
-    expect(world.ship.position).toEqual(shipPosition); expect(world.ship.fuel).toBe(WORLD.fuelCapacity);
+    expect(world.ship.position).toEqual(surfacePosition(planetAt('home', world.system), 0, WORLD.shipRadius)); expect(world.ship.fuel).toBe(WORLD.fuelCapacity);
     expect(world.beam).toBeNull(); expect(world.tractorActive).toBe(false);
     expect(world.asteroids[0].position).not.toEqual(asteroidPosition); expect(world.astronaut.oxygen).toBeCloseTo(179);
   });
@@ -97,7 +98,7 @@ describe('boarding, controls and surface services', () => {
     const world = createWorld(); boardOrExit(world); world.astronaut.oxygen = 0;
     boardOrExit(world); expect(world.astronaut.oxygen).toBe(SUIT.oxygen);
     boardOrExit(world); world.astronaut.health = 0; boardOrExit(world); expect(world.playerMode).toBe('astronaut');
-    expect(createWorld().astronaut).toEqual(createAstronaut());
+    expect(createWorld().astronaut).toEqual({ ...createAstronaut(), velocity: planetAt('home', createWorld().system).velocity });
   });
   it('walks to the depot, transfers a delivered hold, returns to board and launches', () => {
     const world = createWorld(); world.ship.cargo.copper = 16;

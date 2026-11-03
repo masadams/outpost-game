@@ -1,3 +1,4 @@
+import { colonyPlanet } from '../sim/localWorld';
 import { HABITATS, HABITAT, isHabitat } from '../sim/habitatConfig';
 import { habitatContains, habitatSource } from '../sim/habitats';
 import type { Building } from '../sim/colony';
@@ -10,6 +11,6 @@ export function habitatDetails(b: Building): string {
 export function habitatNotice(w: WorldState): string {
   const b = habitatSource(w);
   if (b?.habitat && isHabitat(b.kind)) return `HABITAT AIR · ${b.status === 'air low' ? 'AIR LOW · ' : ''}${b.habitat.backup ? `BACKUP ${(b.habitat.energy / HABITATS[b.kind].power).toFixed(1)} s · ` : ''}SUIT RESERVE HELD`;
-  if (w.colony.buildings.some(b => isHabitat(b.kind) && habitatContains(b, w.astronaut.position))) return 'HABITAT AIR UNAVAILABLE · USING SUIT RESERVE';
+  if (w.colony.buildings.some(b => isHabitat(b.kind) && habitatContains(b, w.astronaut.position, colonyPlanet(w)))) return 'HABITAT AIR UNAVAILABLE · USING SUIT RESERVE';
   return 'ON FOOT · A/D WALK · SPACE JUMP · F BOARD';
 }

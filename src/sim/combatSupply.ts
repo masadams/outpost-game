@@ -1,5 +1,6 @@
+import { colonyPlanet, localPosition, localAngleAt } from './localWorld';
 import { WORLD } from './config';
-import { localAngle, wrap } from './math';
+import { wrap } from './math';
 import { SHIP_WEAPONS, type ShipWeapon } from './combatConfig';
 import { notify } from './messages';
 import { availableProduct } from './colonyPolicy';
@@ -17,7 +18,7 @@ export function resupplyArmament(world: WorldState): number {
 }
 export function serviceCombatAtPad(world: WorldState): void {
   const s = world.ship;
-  if (s.state !== 'landed' || Math.abs(Math.hypot(s.position.x, s.position.y) - WORLD.radius - WORLD.shipRadius) > 0.1 || Math.abs(wrap(localAngle(s.position))) * WORLD.radius > WORLD.padHalfWidth) return;
+  if (s.state !== 'landed' || Math.abs(Math.hypot(localPosition(world, s.position).x, localPosition(world, s.position).y) - colonyPlanet(world).radius - WORLD.shipRadius) > 0.1 || Math.abs(wrap(localAngleAt(world, s.position))) * colonyPlanet(world).radius > WORLD.padHalfWidth) return;
   const repair = Math.min(100 - world.ship.hull, availableProduct(world.colony, 'alloy') * 10);
   world.ship.hull = Math.min(100, world.ship.hull + repair); world.colony.products.alloy = Math.max(0, world.colony.products.alloy - repair / 10);
   const rounds = resupplyArmament(world);
