@@ -32,7 +32,9 @@ it('migrates the old small moon while preserving surface arc distances, resource
   expect(loaded.colony.buildings[0].angle * WORLD.radius).toBeCloseTo(120);
   expect(loaded.depot).toEqual(legacy.world.depot); expect(loaded.ship.cargo).toEqual(legacy.world.ship.cargo);
   expect(loaded.colony.products).toEqual(legacy.world.colony.products); expect(loaded.ship.fuel).toBe(150);
-  expect(loaded.asteroids.map(b => b.id)).toEqual(legacy.world.asteroids.map(b => b.id));
+  expect(loaded.asteroids.filter(b => b.id <= 15).map(b => b.id)).toEqual(legacy.world.asteroids.map(b => b.id));
+  expect(loaded.asteroids.filter(b => b.belt)).toHaveLength(12); expect(loaded.exploration.sites).toHaveLength(3);
+  expect(length(loaded.exploration.sites[0].position) - WORLD.radius).toBeCloseTo(1450); // New sectors seed after reprojection.
   expect(length(loaded.asteroids[0].position) - WORLD.radius).toBeCloseTo(440);
   expect(loaded.notice.message).toContain('MIGRATED');
   const text = encodeCheckpoint(loaded); expect(JSON.parse(text).version).toBe(11);
