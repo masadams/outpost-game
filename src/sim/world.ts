@@ -89,10 +89,12 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   const startShip = { ...world.ship.position };
   const starts = new Map([...world.asteroids, ...world.exploration.sites].map(rock => [rock.id, { ...rock.position }]));
   stepShip(world.ship, piloting ? input : { thrust: false, turn: 0 }, dt, world.system);
+  let paidHabitatSeconds = 0;
   if (!piloting) {
     const controlling = !!controlledTurret(local);
     const automatic=crewMove(world,input.turn!==0||!!input.jump||!!input.board);
-    stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn || automatic, jump: !controlling && !!input.jump }, dt, consumeHabitatAir(local, dt), world.system);
+    paidHabitatSeconds = consumeHabitatAir(local, dt);
+    stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn || automatic, jump: !controlling && !!input.jump }, dt, paidHabitatSeconds, world.system);
     if (nearbyStation(local)?.kind !== 'depot') world.depotOpen = false;
     if (interact) interactSurface(local);
   } else {
@@ -127,7 +129,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   resolveTow(world); resolveSites(world);
   world.system.time += dt;
   if(world.crewOrder&&(world.playerMode!=='astronaut'||!world.astronaut.grounded||world.astronaut.health<=0))world.crewOrder=null;
-  observeObjectives(world);
+  observeObjectives(world, paidHabitatSeconds);
 }
 
 function resolveMinedRocks(world: WorldState): void {

@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Alpha 0.16 technical presentation merged in #22 after 390 unit tests and 39 production-browser scenarios passed in CI. The user reports that menus and routine walking still need improvement; [Task 012](../CODEX_TASK_012.md) implements a focused direct-control follow-up on `feat/direct-colony-controls`. Human review, representative GPU/hardware checks and wider balance/reliability/content/release work remain open.
+**Status:** Direct colony controls / alpha 0.17 merged in [PR #23](https://github.com/masadams/outpost-game/pull/23) after typecheck, build, 401 unit tests and all 43 production-browser scenarios passed in CI. [Task 013](../CODEX_TASK_013.md) implements the next Phase 8 slice: longer-term milestones, live progress/control links and a finite starter-route budget. Human/hardware review, wider economy/event/recovery balance, reliability/content and release remain open.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
@@ -166,7 +166,7 @@ Merged in #18; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget
 - [x] Phase 8.2 / merged #20: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
 - [ ] Meaningful tradeoffs: cargo mass vs manoeuvrability; fuel vs range; power vs defence.
 - [ ] Resource scarcity, hazards, escalating events and recovery loops.
-- [ ] Mission/objective system with onboarding and longer-term goals.
+- [x] Mission/objective system with onboarding and longer-term goals: [Task 013](../CODEX_TASK_013.md) adds eight observed-result goals, live tracking/control links and a read-only starter-route material/energy budget; implemented in this milestone; final CI and merge evidence belong to its implementation PR. See [model and limits](PROGRESSION_GOALS.md).
 - [ ] Balance toward 60% action / 40% building.
 **Exit:** Engaging multi-session progression with clear short- and long-term goals.
 
@@ -221,7 +221,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Verify and review [Task 012](../CODEX_TASK_012.md): four task-oriented entry points, categorized mouse construction and optional real crew walk/work orders in response to direct user feedback. Then complete human full-loop review, broader scarcity/objectives/economy balancing, current-format reliability/content and release preparation. The master plan has not ended; no legacy save migrations are required during this prototype phase.
+Continue the wider economy/event/recovery balance, then current-format reliability/content work after [Task 013](../CODEX_TASK_013.md). Record human full-loop feedback and representative hardware performance before release. The master plan has not ended; legacy save migrations remain deferred.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

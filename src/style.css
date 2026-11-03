@@ -309,3 +309,12 @@ footer { left: 20px; font-size: 11px; }
 #command-console details, .command-machine { scroll-margin-top:56px; }
 
 #build-pointer-tip { max-height:140px;overflow:hidden; }
+
+#tracked-objective { width:100%;padding:8px;background:#102535;color:#dfebee;font:inherit;border:1px solid var(--edge); }
+#objective-panel .tracked-goal h3 { margin:0 0 6px;line-height:1.3; }
+#objective-panel .tracked-goal { border:1px solid var(--mint);padding:10px;margin-block:12px; }
+#objective-panel progress { width:100%; }
+#objective-panel button { width:100%;white-space:normal;overflow-wrap:anywhere;margin-block:6px; }
+#objective-panel details { margin-block:12px;padding-block:8px;border-top:1px solid var(--edge); }
+#objective-panel .route-budget p { border-left:2px solid var(--edge);padding-left:8px; }
+#objective-panel .budget-shortfall { color:var(--amber); }
