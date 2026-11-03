@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6, presentation foundations, planetary mining and refinery scheduling are merged through PR #12. Resource priorities are implemented as a separate Phase 7 slice for review. Mobile logistics and the full Phase 9 overhaul remain required.
+**Status:** Phases 0–6, presentation foundations, planetary mining and refinery scheduling are merged through PR #12. Resource priorities are in review as PR #13. The user’s landing/HUD feedback is implemented as a separate stacked Task 007D slice for review. Mobile logistics and the full Phase 9 overhaul remain required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -117,6 +117,10 @@ The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_00
 - [ ] Background colony operations while player is in space, using appropriate simulation LOD.
 **Exit:** Colony remains functional and can defend itself while player is away.
 
+## Flight feedback before mobile logistics (Task 007D)
+
+The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](../CODEX_TASK_007D.md) is implemented on `feat/landing-warning-instruments`, stacked on open resource-priority PR #13. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Awaiting review/merge.
+
 ## Phase 8 — Progression and balancing
 **Dependencies:** Phases 2–7.
 - [ ] Technology/unlock progression for ship, mining, energy and defences.
@@ -164,7 +168,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review the resource-priority slice, then playtest alpha 0.8 using [PLAYTEST.md](PLAYTEST.md), especially held-resource feedback, remote release and actual turret/ship consumption. Continue Phase 7 mobile logistics after review. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Review resource priorities and landing feedback, then playtest alpha 0.8.1 using [PLAYTEST.md](PLAYTEST.md), especially landing-warning timing/readability/sound, held-resource feedback and remote release. Continue Phase 7 mobile logistics after review. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

@@ -1,9 +1,10 @@
 import { inventoryMass } from '../sim/resources';
 import { heading } from '../sim/math';
 import { WORLD } from '../sim/config';
+import { flightSafety } from '../sim/flightSafety';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot';
+export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
@@ -18,7 +19,8 @@ export class AudioDirector {
   private previous: ReturnType<typeof snapshot> | null = null;
   private footDistance = 0;
   private warningCooldown = 0;
-  reset(world: WorldState): void { this.previous = snapshot(world); this.footDistance = 0; this.warningCooldown = 0; }
+  private warningKey = '';
+  reset(world: WorldState): void { this.previous = snapshot(world); this.footDistance = 0; this.warningCooldown = 0; this.warningKey = ''; }
   update(world: WorldState, seconds: number, paused: boolean): SoundFrame {
     const next = snapshot(world), prev = this.previous; this.previous = next;
     if (!prev || paused) { this.footDistance = 0; return silent(); }
@@ -57,9 +59,14 @@ export class AudioDirector {
       const old = prev.buildings.get(b.id), n = heading(b.angle);
       return old && old.recipe === b.recipe && b.progress < old.progress && b.status === 'running' && near(n.x * WORLD.radius, n.y * WORLD.radius, 150);
     })) cues.push('production');
-    const warning = alive && (next.threats > 0 || (onFoot ? next.oxygen < 30 : next.state === 'flying' && (next.fuel < WORLD.fuelCapacity * 0.15 || next.hull < 25)));
-    this.warningCooldown = warning ? Math.max(0, this.warningCooldown - Math.max(0, seconds)) : 0;
-    if (warning && this.warningCooldown === 0) { cues.push('warning'); this.warningCooldown = 8; }
+    const safety = flightSafety(world.ship), fuelLevel = safety.instruments.fuel.level;
+    const landing = alive && !onFoot && safety.urgent, fuel = alive && !onFoot && next.state === 'flying' && (fuelLevel === 'caution' || fuelLevel === 'critical');
+    const generic = alive && (next.threats > 0 || (onFoot ? next.oxygen < 30 : next.state === 'flying' && next.hull < 25));
+    const fuelFirst = fuel && (fuelLevel === 'critical' || !generic);
+    const key = landing ? 'landing' : fuelFirst ? `fuel-${fuelLevel}` : generic ? 'generic' : '';
+    this.warningCooldown = key && this.warningKey && key !== this.warningKey ? 0 : Math.max(0, this.warningCooldown - Math.max(0, seconds));
+    if (key && this.warningCooldown <= 1e-9) { cues.push(landing ? 'landingWarning' : fuelFirst ? 'fuelWarning' : 'warning'); this.warningCooldown = landing ? 2.5 : fuelFirst && fuelLevel === 'critical' ? 4 : 8; }
+    this.warningKey = key;
     return { cues, engine: alive && !onFoot && world.ship.thrusting,
       mining: alive && !!world.beam, tractor: alive && world.tractorActive, machinery: alive && machinery };
   }

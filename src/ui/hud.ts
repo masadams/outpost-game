@@ -1,4 +1,6 @@
 import { OperationsDock } from './OperationsDock';
+import { instrumentMarkup } from './instruments';
+import { flightSafety } from '../sim/flightSafety';
 import { hudContext, type DockView } from './context';
 import { combatPanel } from './combat';
 import { defencePanel } from './defence';
@@ -28,9 +30,9 @@ export class Hud {
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void) {
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.8</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow">SELENE / OUTPOST ALPHA 0.8.1</span><h1>OUTPOST <span id="hud-context">On pad</span></h1></div><div class="mission">FLY · MINE · BUILD · DEFEND</div></header>
       <section class="instruments" aria-label="Flight telemetry"></section>
-      <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="threat-alert"></div></section>
+      <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div></section>
       <div id="combat-status"></div>
       <footer><p class="context-hint"></p></footer>`;
     this.root.append(this.dock.nav, this.dock.root); document.body.append(this.root);
@@ -55,12 +57,13 @@ export class Hud {
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngle(world.astronaut.position) }, SUIT.radius) : telemetry(ship);
-    this.stats.innerHTML = [ ['ALTITUDE', `${t.altitude.toFixed(0)}<small> m</small>`],
-      ['RADIAL', `${t.radial.toFixed(1)}<small> m/s</small>`], ['DRIFT', `${t.tangential.toFixed(1)}<small> m/s</small>`],
-      ['SPEED', `${t.speed.toFixed(1)}<small> m/s</small>`],
-      [onFoot ? 'OXYGEN' : 'FUEL', `${((onFoot ? world.astronaut.oxygen / SUIT.oxygen : ship.fuel / WORLD.fuelCapacity) * 100).toFixed(0)}<small> %</small>`],
-      [onFoot ? 'SUIT' : 'HULL', `${(onFoot ? world.astronaut.health : ship.hull).toFixed(0)}<small> %</small>`],
-      [onFoot ? 'FOOTING' : 'TILT', onFoot ? world.astronaut.grounded ? 'GROUND' : 'AIR' : `${(t.tilt * 180 / Math.PI).toFixed(0)}<small> °</small>`] ].map(([label, value]) => `<div><label>${label}</label><strong>${value}</strong></div>`).join('');
+    patchMarkup(this.stats, instrumentMarkup(world));
+    const safety = flightSafety(ship), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;
+    const flightMessage = onFoot || ship.state === 'crashed' ? '' : safety.message;
+    if (flightAlert.textContent !== flightMessage) flightAlert.textContent = flightMessage;
+    flightAlert.hidden = !flightMessage; flightAlert.dataset.level = safety.level;
+    this.root.dataset.approach = String(!onFoot && safety.approach);
+    this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · R TO RESTART' :
       !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? world.notice.message :
       world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :

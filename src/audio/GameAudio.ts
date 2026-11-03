@@ -101,6 +101,8 @@ export class GameAudio {
     else if (cue === 'step') this.noise(0.045, 0.035);
     else if (cue === 'airlock') { this.noise(0.18, 0.04); this.tone(230, 320, 0.1); }
     else if (cue === 'warning') { this.tone(660, 600, 0.12); this.tone(660, 600, 0.12, 0.2); }
+    else if (cue === 'landingWarning') { this.tone(880, 520, 0.16); this.tone(880, 520, 0.16, 0.24); }
+    else if (cue === 'fuelWarning') { this.tone(420, 420, 0.14); this.tone(310, 310, 0.2, 0.22); }
     else if (cue === 'land' || cue === 'delivery' || cue === 'service') { this.tone(330, 440, 0.14); this.tone(660, 660, 0.18, 0.12); }
     else if (cue === 'pickup' || cue === 'production') this.tone(cue === 'pickup' ? 740 : 440, 980, 0.08);
     else if (cue === 'build') { this.noise(0.08, 0.035); this.tone(260, 520, 0.18); }
