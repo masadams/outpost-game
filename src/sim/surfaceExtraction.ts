@@ -1,3 +1,4 @@
+import { powerFraction } from './power';
 import { RIG, rigDeposit } from './geology';
 import { inventoryMass } from './resources';
 import { industrialPowerBlock, policyFor } from './colonyPolicy';
@@ -11,10 +12,12 @@ export function stepMiningRig(world: WorldState, building: Building, dt: number,
   if (deposit.remaining <= 1e-9) { building.status = 'depleted'; building.progress = 0; return; }
   const physicalRoom = capacity - inventoryMass(world.depot), room = physicalRoom - policyFor(colony).deliveryReserve;
   if (room <= 1e-9) { building.status = physicalRoom <= 1e-9 ? 'output full' : 'delivery reserved'; return; }
-  colony.demand += RIG.power;
-  const block = industrialPowerBlock(colony, RIG.power * dt);
+  const work = dt * powerFraction(building); building.requestedPower = RIG.power * powerFraction(building);
+  if (!work) { building.status = 'power limited'; return; }
+  colony.demand += building.requestedPower;
+  const block = industrialPowerBlock(colony, RIG.power * work);
   if (block) { building.status = block; return; }
-  colony.energy = Math.max(0, colony.energy - RIG.power * dt); building.progress += dt; building.status = 'running';
+  colony.energy = Math.max(0, colony.energy - RIG.power * work); building.gridPower = RIG.power * powerFraction(building); building.progress += work; building.status = 'running';
   if (building.progress + 1e-9 < RIG.seconds) return;
   const amount = Math.min(RIG.yield, deposit.remaining, room);
   building.progress = 0; deposit.remaining = Math.max(0, deposit.remaining - amount); world.depot[deposit.resource] += amount;

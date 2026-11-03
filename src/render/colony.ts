@@ -1,16 +1,20 @@
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { operational } from '../sim/buildingHealth';
 import Phaser from 'phaser';
-import { BLUEPRINTS } from '../sim/colonyConfig';
+import { BLUEPRINTS, type BuildType } from '../sim/colonyConfig';
 import { placementError, previewAngle } from '../sim/colony';
 import { WORLD } from '../sim/config';
 import { heading } from '../sim/math';
 import type { WorldState } from '../sim/world';
 
-export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState): void {
+export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null): void {
   const colony = world.colony;
+  const target = colony.buildings.find(b => b.id === selected);
+  if (target) { const n = heading(target.angle); g.lineStyle(1, 0xffc58c, .9); g.strokeCircle(n.x * (WORLD.radius + 12), n.y * (WORLD.radius + 12), 24); }
+  for (const order of colony.command.queue) { const n = heading(order.angle); g.lineStyle(1, 0xffc58c, .5); g.strokeCircle(n.x * (WORLD.radius + 6), n.y * (WORLD.radius + 6), 8); }
   const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled && operational(b) && (!isHabitat(b.kind) || !!b.habitat?.powered) }));
-  if (colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world) });
+  if (draft) entries.push({ kind: draft.kind, angle: draft.angle, ghost: true, active: draft.valid });
+  if (!draft && colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world) });
   for (const entry of entries) {
     const blueprint = BLUEPRINTS[entry.kind], n = heading(entry.angle), tangent = { x: -n.y, y: n.x };
     const p = (x: number, height: number) => new Phaser.Geom.Point(n.x * (WORLD.radius + height) + tangent.x * x, n.y * (WORLD.radius + height) + tangent.y * x);

@@ -1,3 +1,4 @@
+import { orderedBuildings } from './power';
 import { isTurret, WEAPONS, type Projectile } from './defenceConfig';
 import { WORLD } from './config';
 import { clamp, heading, length, localAngle, wrap, type Vec } from './math';
@@ -30,7 +31,7 @@ function blast(world: WorldState, at: Vec, radius: number, damage: number): void
 export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: number, starts: Map<number, Vec>): void {
   const defence = world.defence;
   defence.beams = defence.beams.filter(b => (b.life -= dt) > 0);
-  for (const b of world.colony.buildings) {
+  for (const b of orderedBuildings(world.colony)) {
     if (!isTurret(b.kind)) continue;
     const state = turretState(b), spec = WEAPONS[b.kind], at = turretPosition(b);
     state.cooldown = Math.max(0, state.cooldown - dt);
@@ -44,7 +45,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
       if (Math.abs(desired - state.aim) > 0.06) continue;
     }
     if (!(manual ? fire : state.automatic && target)) continue;
-    world.colony.demand += spec.energy / spec.cooldown;
+    b.requestedPower = spec.energy / spec.cooldown; world.colony.demand += b.requestedPower;
     if (state.cooldown > 1e-9) continue;
     if (world.colony.energy + 1e-9 < spec.energy) { b.status = 'no power'; continue; }
     if (world.colony.products.alloy + 1e-9 < spec.alloy || world.colony.products.components + 1e-9 < spec.components) { b.status = 'no feedstock'; continue; }
@@ -53,7 +54,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     world.colony.energy = Math.max(0, world.colony.energy - spec.energy);
     world.colony.products.alloy = Math.max(0, world.colony.products.alloy - spec.alloy);
     world.colony.products.components = Math.max(0, world.colony.products.components - spec.components);
-    state.cooldown = spec.cooldown; b.status = 'running'; defence.shots++;
+    b.gridPower = spec.energy / dt; state.cooldown = spec.cooldown; b.status = 'running'; defence.shots++;
     if (b.kind === 'laser') {
       let distance: number = spec.range, victim;
       for (const m of [...defence.meteors, ...world.asteroids]) {

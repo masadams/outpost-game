@@ -169,7 +169,7 @@ export class FlightScene extends Phaser.Scene {
     drawMining(g, this.simulation, this.follow.zoom);
     drawTowing(g, this.simulation, this.follow.zoom);
     drawGeology(g, this.simulation, this.follow.zoom);
-    drawColony(g, this.simulation);
+    drawColony(g, this.simulation, this.hud.selectedBuildingId, this.hud.buildPreview);
     drawDefence(g, this.simulation, this.threats, this.follow.zoom);
     drawSurface(g, this.simulation);
     drawCombat(g, this.simulation, this.follow.zoom);

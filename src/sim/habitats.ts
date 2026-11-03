@@ -1,3 +1,4 @@
+import { orderedBuildings, powerFraction } from './power';
 import { HABITAT, HABITATS, isHabitat } from './habitatConfig';
 import { operational, buildingHealth } from './buildingHealth';
 import { policyFor } from './colonyPolicy';
@@ -38,7 +39,7 @@ export function ventHabitat(w: WorldState, b: Building): void {
 /** Essential life support runs before industry and may draw protected charge. Backup charging may not. */
 export function stepHabitats(w: WorldState, dt: number): void {
   const c = w.colony;
-  for (const b of [...c.buildings].sort((a, b) => a.id - b.id)) {
+  for (const b of orderedBuildings(c)) {
     if (!isHabitat(b.kind) || !b.habitat) continue;
     const spec = HABITATS[b.kind], h = b.habitat;
     h.powered = false; h.backup = false;
@@ -47,22 +48,22 @@ export function stepHabitats(w: WorldState, dt: number): void {
     h.oxygen -= leak; c.oxygenUsed += leak;
     if (!b.enabled) { b.status = 'disabled'; continue; }
     c.demand += spec.power;
-    const required = spec.power * dt;
-    if (c.energy + h.energy + 1e-9 < required) { b.status = 'no power'; continue; }
-    const grid = Math.min(c.energy, required), backup = required - grid;
+    const required = spec.power * dt, allowed = required * powerFraction(b); b.requestedPower = spec.power;
+    if (Math.min(c.energy, allowed) + h.energy + 1e-9 < required) { b.status = 'no power'; continue; }
+    const grid = Math.min(c.energy, allowed), backup = required - grid;
     c.energy = Math.max(0, c.energy - grid); h.energy = Math.max(0, h.energy - backup);
-    h.powered = true; h.backup = backup > 1e-9;
+    b.gridPower = grid / dt; h.powered = true; h.backup = backup > 1e-9;
     const fill = Math.min(spec.capacity - h.oxygen, c.products.oxygen, spec.fillRate * dt);
     h.oxygen += fill; c.products.oxygen = Math.max(0, c.products.oxygen - fill);
     b.status = h.oxygen <= spec.capacity * HABITAT.minimumFraction + 1e-9 ? c.products.oxygen <= 1e-9 ? 'no feedstock' : 'pressurizing' :
       h.oxygen < spec.capacity * HABITAT.warningFraction ? 'air low' : 'breathable';
   }
   // Fund every dome's essential load before spending spare grid energy on backup charging.
-  for (const b of [...c.buildings].sort((a, b) => a.id - b.id)) {
-    if (!isHabitat(b.kind) || !b.habitat?.powered) continue;
+  for (const b of orderedBuildings(c)) {
+    if (!isHabitat(b.kind) || !b.habitat?.powered || powerFraction(b) < 1) continue;
     const spec = HABITATS[b.kind], h = b.habitat;
     const charge = Math.max(0, Math.min(spec.power * dt, spec.power * HABITAT.backupSeconds - h.energy, c.energy - policyFor(c).energyReserve));
-    if (h.energy < spec.power * HABITAT.backupSeconds - 1e-9) c.demand += spec.power;
-    h.energy += charge; c.energy = Math.max(0, c.energy - charge);
+    if (h.energy < spec.power * HABITAT.backupSeconds - 1e-9) { c.demand += spec.power; b.requestedPower = (b.requestedPower ?? 0) + spec.power; }
+    b.gridPower = (b.gridPower ?? 0) + charge / dt; h.energy += charge; c.energy = Math.max(0, c.energy - charge);
   }
 }

@@ -1,3 +1,5 @@
+import { createCommand } from '../sim/commandConfig';
+import { validCommand } from './validateCommand';
 import { HABITATS, HABITAT, isHabitat } from '../sim/habitatConfig';
 import { createSurfaceDeposits } from '../sim/geology';
 import { createTowing } from '../sim/towingConfig';
@@ -40,7 +42,7 @@ function validWorld(value: unknown): value is WorldState {
   if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable'].includes(b.status))) return false;
+    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited'].includes(b.status))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, HABITATS[b.kind].capacity) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
@@ -54,16 +56,16 @@ function validWorld(value: unknown): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
 }
 export function encodeCheckpoint(world: WorldState): string {
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 9, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
+  return JSON.stringify({ version: 10, environment: { radius: WORLD.radius, model: 'atmospheric-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
+  if (!object(envelope) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(envelope.version as number) || !object(envelope.world)) throw new Error('Checkpoint is invalid or uses an unsupported version');
   if (envelope.version !== 1 && (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'atmospheric-flight-1')) throw new Error('Checkpoint environment is incompatible');
   if ((envelope.version as number) < 3) envelope.world.defence = createDefence();
   if ((envelope.version as number) < 4) {
@@ -78,6 +80,10 @@ export function decodeCheckpoint(text: string): WorldState {
   if ((envelope.version as number) < 9) {
     if (!object(envelope.world.colony)) throw new Error('Checkpoint colony is invalid');
     envelope.world.colony.oxygenUsed = 0;
+  }
+  if ((envelope.version as number) < 10) {
+    if (!object(envelope.world.colony)) throw new Error('Checkpoint colony is invalid');
+    envelope.world.colony.command = createCommand();
   }
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;

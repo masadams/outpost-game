@@ -1,0 +1,11 @@
+# Task 007G — Central Command
+
+Implement Phase 7.75 after merged habitats #16. Give the player a cohesive Command panel from ship or surface: generation/storage/requested/delivered power, real facility caps, deterministic drag/native priority ordering, map/selection with world highlighting, remote enable/recipe/scheduling/targets/turret automation, physically valid supplied service, observed economy flows and paid construction orders. Keep flight/life-support/threat warnings visible.
+
+Continuous factories/rigs scale paid energy and work together; solar caps reduce generation. Life-support grid caps consume existing finite backup for any shortfall. Turrets/service retain explicit burst energy costs and protected reserves; no misleading continuous dial. Ordering applies within each dispatch class: essential support, backup charging, industry, turret bursts. No arbitrary energy creation or changed material recipes.
+
+Queue at most 16 sites within the 48-facility total. Validate pad/terminal/footings/deposits and reserve future footprints. Deduct supplies on enqueue; one stationary, living, grounded astronaut within 96 m executes 8 seconds of work per order. The first unpaused order blocks on invalid/unavailable work; pause yields to later orders. Cancel returns only the unworked fraction if storage fits, once. Revalidate before completion. The existing instant manual construction route remains compatible; remote queueing never teleports buildings or crew. No construction drones or remote repairs.
+
+Save version 10 retains priorities, caps, paid queue work and elapsed simulation time; migrate v1–9 with an empty queue. UI selection/drag and stock-rate sampling are transient. Native controls must not steer/fire, retain logical focus through priority changes, and show the selected facility's actual dial value. Pause permits inspection/selection; all simulation edits wait for resume by disabling controls. Research/navigation arrive with their actual later systems, without placeholder buttons. Single-facility selection is deliberate; group editing remains future polish.
+
+Run build, typecheck, unit tests and the full production browser suite. Open a feature PR with model, playtest and live captures. Follow user merge authorization; otherwise do not merge automatically. Next: Phase 7.9 nearby-space discovery and destinations.
