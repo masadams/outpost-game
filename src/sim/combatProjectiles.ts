@@ -17,7 +17,7 @@ export function damageShip(world: WorldState, damage: number): void {
 }
 function missileBlast(world: WorldState, at: Vec, damage: number): void {
   for (const d of world.combat.enemies) if (Math.hypot(d.position.x - at.x, d.position.y - at.y) <= 64 && lineOfSight(at, d.position)) d.hull = Math.max(0, d.hull - damage);
-  for (const b of [...world.asteroids, ...world.defence.meteors]) if (Math.hypot(b.position.x - at.x, b.position.y - at.y) <= 55 + b.radius && lineOfSight(at, b.position)) b.health -= damage / 50;
+  for (const b of [...world.asteroids, ...world.defence.meteors, ...world.exploration.sites]) if (Math.hypot(b.position.x - at.x, b.position.y - at.y) <= 55 + b.radius && lineOfSight(at, b.position)) b.health -= damage / 50;
 }
 export function stepCombatProjectiles(world: WorldState, dt: number, starts: CombatStarts): void {
   const c = world.combat, remaining: CombatProjectile[] = [];
@@ -35,7 +35,7 @@ export function stepCombatProjectiles(world: WorldState, dt: number, starts: Com
       const t = surfaceHit({ x: start.x - previous.x, y: start.y - previous.y }, { x: p.position.x - position.x, y: p.position.y - position.y }, radius + 1.5);
       if (t !== null && (hit === null || t < hit)) { hit = t; victim = candidate; }
     };
-    for (const b of world.asteroids) test(b.position, starts.rocks.get(b.id) ?? b.position, b.radius, { kind: 'rock', body: b });
+    for (const b of [...world.asteroids, ...world.exploration.sites]) test(b.position, starts.rocks.get(b.id) ?? b.position, b.radius, { kind: 'rock', body: b });
     for (const b of world.defence.meteors) test(b.position, starts.meteors.get(b.id) ?? b.position, b.radius, { kind: 'meteor', body: b });
     if (p.owner === 'ship') {
       for (const d of c.enemies) if (d.hull > 0) test(d.position, starts.enemies.get(d.id) ?? d.position, 9, { kind: 'drone', body: d });

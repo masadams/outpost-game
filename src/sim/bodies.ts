@@ -5,7 +5,9 @@ import { surfaceHit, type Ship } from './physics';
 import { integrateVelocity } from './environment';
 import { type Resource } from './resources';
 
-export interface Body { id: number; position: Vec; velocity: Vec; radius: number; mass: number; resource: Resource }
+import type { BeltId } from './explorationConfig';
+
+export interface Body { belt?: BeltId; id: number; position: Vec; velocity: Vec; radius: number; mass: number; resource: Resource }
 export interface Asteroid extends Body { stage: number; health: number; maxHealth: number }
 export interface Pickup extends Body {}
 
