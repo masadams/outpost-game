@@ -1,6 +1,6 @@
 # Task 010 — Nearby worlds (Phase 8.5)
 
-Status: implemented for verification/review on `feat/nearby-worlds` after merged shield PR #20. The live simulation and production browser demonstrate the full supplied transfer/landing/work/mining/return route. Final full-suite/CI checks and merge remain before marking the roadmap milestone complete.
+Status: merged in [PR #21](https://github.com/masadams/outpost-game/pull/21). Final typecheck, 380 unit tests, build and all 33 production-browser scenarios passed, including the complete supplied transfer/landing/work/mining/return route. Continue with [Task 011](CODEX_TASK_011.md); broader balance and human handling review remain open.
 
 Follow AGENTS.md, GAME_DESIGN.md and the [worlds model](docs/NEARBY_WORLDS.md). Legacy saves may be reset. Keep the existing single continuous world and 60 Hz simulation.
 
