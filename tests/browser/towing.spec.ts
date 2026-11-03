@@ -6,7 +6,9 @@ import { encodeCheckpoint } from '../../src/persistence/checkpoint';
 
 test('fabricates a paid tow rig using native controls and preserves the equipment across reset/reload', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); await page.goto('/');
-  await page.keyboard.press('i'); const panel = page.locator('.towing-panel'), hud = page.locator('#hud');
+  const panel = page.locator('.towing-panel'), hud = page.locator('#hud');
+  await expect(hud).toHaveAttribute('data-state', 'landed');
+  await page.keyboard.press('i'); await expect(panel).toBeVisible();
   await expect(panel).toHaveAttribute('data-equipped', 'false');
   await page.getByRole('button', { name: 'Fabricate tow rig · home pad', exact: true }).focus(); await page.keyboard.press('Enter');
   await expect(panel).toHaveAttribute('data-equipped', 'true'); await expect(hud).toHaveAttribute('data-state', 'landed');

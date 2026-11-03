@@ -7,6 +7,7 @@ import { encodeCheckpoint } from '../../src/persistence/checkpoint';
 test('builds a solar-powered large dome over home, holds suit air, disables safely and restores the checkpoint', async ({ page }) => {
   test.setTimeout(70000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/'); const hud = page.locator('#hud'), oxygen = page.locator('[data-instrument="oxygen"]');
+  await expect(hud).toHaveAttribute('data-state', 'landed');
   await page.keyboard.press('f'); await page.keyboard.down('d');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 10000, intervals: [50] }).toBeGreaterThan(90);
   await page.keyboard.up('d'); await page.waitForTimeout(450); await page.keyboard.press('b'); await page.keyboard.press('Enter');
