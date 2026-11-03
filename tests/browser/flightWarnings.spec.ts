@@ -22,31 +22,38 @@ test('shows landing and fuel lights with distinct real audio, pause/mute safety 
       if (destination instanceof AudioDestinationNode) {
         const analyser = destination.context.createAnalyser(); analyser.fftSize = 2048;
         Reflect.apply(connect, this, [analyser]); Reflect.apply(connect, analyser, [destination]); const data = new Float32Array(analyser.fftSize);
-        Object.assign(window, { warningRms: () => { analyser.getFloatTimeDomainData(data); return Math.sqrt(data.reduce((sum, v) => sum + v * v, 0) / data.length); } }); return destination;
+        const rms = () => { analyser.getFloatTimeDomainData(data); return Math.sqrt(data.reduce((sum, v) => sum + v * v, 0) / data.length); };
+        let peak = 0; setInterval(() => { peak = Math.max(peak, rms()); }, 10);
+        Object.assign(window, { warningRms: rms, warningPeak: () => peak, clearWarningPeak: () => { peak = 0; } }); return destination;
       }
       return Reflect.apply(connect, this, [destination, ...args]);
     } as typeof AudioNode.prototype.connect;
   });
   const tones = () => page.evaluate(() => (window as unknown as { warningTones: number[] }).warningTones);
   const rms = () => page.evaluate(() => (window as unknown as { warningRms?: () => number }).warningRms?.() ?? 0);
+  const peak = () => page.evaluate(() => (window as unknown as { warningPeak?: () => number }).warningPeak?.() ?? 0);
   await page.goto('/'); const hud = page.locator('#hud'), alert = page.locator('#flight-alert'), descent = page.locator('[data-instrument="radial"]');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(alert).toContainText('DESCENT HIGH');
   for (const key of ['radial', 'drift', 'tilt', 'spin', 'fuel']) await expect(page.locator(`[data-instrument="${key}"]`)).toHaveAttribute('data-level', 'critical');
   await expect(descent).toContainText('! DESCENT HIGH');
   await page.keyboard.press('p');
-  await expect.poll(tones).toContain(880); await expect.poll(rms, { intervals: [20], timeout: 2000 }).toBeGreaterThan(0.00005);
+  await expect(hud).toHaveAttribute('data-state', 'flying');
+  await expect.poll(tones).toContain(880); await expect.poll(peak, { intervals: [20], timeout: 2000 }).toBeGreaterThan(0.00005);
   expect(await descent.evaluate(e => getComputedStyle(e).animationName)).toBe('caution-pulse');
-  await page.keyboard.press('p'); await expect.poll(rms).toBeLessThan(0.00001);
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect.poll(rms).toBeLessThan(0.00001);
   expect(await descent.evaluate(e => getComputedStyle(e).animationName)).toBe('none');
   await page.emulateMedia({ reducedMotion: 'reduce' }); await page.keyboard.press('p');
-  expect(await descent.evaluate(e => getComputedStyle(e).animationName)).toBe('none'); await page.keyboard.press('p');
+  await expect(hud).toHaveAttribute('data-state', 'flying');
+  expect(await descent.evaluate(e => getComputedStyle(e).animationName)).toBe('none'); await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
   // Load a legitimate checkpoint in orbit for isolated fuel-tone verification, with no engine loops.
   await page.evaluate(text => localStorage.setItem('outpost.checkpoint.v1', text), checkpoint(false));
   await page.keyboard.press('l'); await expect(alert).toContainText('LOW FUEL'); await expect(hud).toHaveAttribute('data-approach', 'false');
+  await page.evaluate(() => (window as unknown as { clearWarningPeak: () => void }).clearWarningPeak());
   const before = (await tones()).length; await page.keyboard.press('p');
+  await expect(hud).toHaveAttribute('data-state', 'flying');
   await expect.poll(async () => (await tones()).slice(before)).toContain(420);
   await expect.poll(async () => (await tones()).slice(before)).toContain(310);
-  await expect.poll(rms, { intervals: [20] }).toBeGreaterThan(0.00005);
+  await expect.poll(peak, { intervals: [20] }).toBeGreaterThan(0.00005);
   await page.keyboard.press('m'); await expect.poll(rms).toBeLessThan(0.00001); await expect(alert).toContainText('LOW FUEL');
   expect(errors).toEqual([]);
 });
