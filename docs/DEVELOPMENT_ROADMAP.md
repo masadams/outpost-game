@@ -123,7 +123,7 @@ The user requested color-coded landing telemetry, warning lights/pulsing and low
 
 ## Mobile logistics (Task 007E)
 
-[Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence on `feat/asteroid-towing`, stacked on PR #14 for review. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
+[Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) on `feat/asteroid-towing`, stacked on PR #14 for review. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
 
 ## Phase 7.5 — Habitat domes and life support (next: Task 007F)
 
