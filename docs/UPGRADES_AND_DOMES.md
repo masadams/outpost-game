@@ -7,7 +7,7 @@ Ship upgrades were already listed broadly in Phase 8. This makes the categories 
 | Order | Milestone | Depends on |
 |---|---|---|
 | Now: Task 007E | Paid physical asteroid towing, first utility equipment | Flight, mining, material reserves and checkpoints |
-| Next: Phase 7.5 / Task 007F | Oxygen habitat domes and life-support coverage | Power, ice → oxygen supply, surface placement, suit safety |
+| Implemented for review: Phase 7.5 / Task 007F | Oxygen habitat domes and life-support coverage | Power, ice → oxygen supply, surface placement, suit safety |
 | Phase 7.75 | Central Command console, remote facilities, power allocation, queues and economy | Habitat/building foundation |
 | Phase 7.9 | Nearby belts, destinations and navigation | Towing and Command |
 | Phase 8.1 | Ship upgrade fabrication and progression | Stable logistics/economy and supplied service |
@@ -32,7 +32,7 @@ Unlock/fabrication requirements belong to Phase 8 progression. Replacement/salva
 
 ## Oxygen habitat domes — Phase 7.5
 
-The user requested a dome covering an area where the astronaut can work without draining suit oxygen. Start with two configurable sizes, provisionally **40 m and 80 m surface spans**, with defined ceiling heights. Final sizes, fabrication costs, buffer capacities, power and oxygen rates are chosen and documented in Task 007F before implementation.
+The user requested a dome covering an area where the astronaut can work without draining suit oxygen. Start with two configurable sizes, **40 m and 160 m surface spans**, with 20 m / 45 m ceilings. Task 007F replaces the provisional 80 m large span so its footings can clear the home pad and terminals. See [implemented rates and limits](HABITATS.md).
 
 The intended behavior is concrete:
 

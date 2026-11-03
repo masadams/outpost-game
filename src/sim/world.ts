@@ -1,4 +1,5 @@
 import { createSurfaceDeposits, type SurfaceDeposit } from './geology';
+import { consumeHabitatAir } from './habitats';
 import { createTowing, type TowingState } from './towingConfig';
 import { applyTowAction, isTowAction, resolveTow, stepTow } from './towing';
 import { createCombat, type CombatState, type CombatAction } from './combatConfig';
@@ -61,7 +62,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepShip(world.ship, piloting ? input : { thrust: false, turn: 0 }, dt);
   if (!piloting) {
     const controlling = !!controlledTurret(world);
-    stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn, jump: !controlling && !!input.jump }, dt);
+    stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn, jump: !controlling && !!input.jump }, dt, consumeHabitatAir(world, dt));
     if (nearbyStation(world)?.kind !== 'depot') world.depotOpen = false;
     if (interact) interactSurface(world);
   } else {

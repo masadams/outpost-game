@@ -1,4 +1,6 @@
 import { BLUEPRINTS, PRODUCTS } from './colonyConfig';
+import { HABITATS, isHabitat } from './habitatConfig';
+import { ventHabitat } from './habitats';
 import { availableProduct } from './colonyPolicy';
 import { energyCapacity, oreCapacity, productCapacity, nearbyBuilding } from './colony';
 import { WORLD } from './config';
@@ -22,10 +24,10 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
   let hit = false;
   for (const b of world.colony.buildings) {
     const distance = Math.abs(wrap(b.angle - angle)) * WORLD.radius;
-    const reach = radius + BLUEPRINTS[b.kind].halfWidth;
+    const reach = radius + (isHabitat(b.kind) ? HABITATS[b.kind].halfSpan : BLUEPRINTS[b.kind].halfWidth);
     if (distance >= reach || !operational(b)) continue;
     b.health = Math.max(0, buildingHealth(b) - damage * (1 - distance / reach)); hit = true;
-    if (!operational(b)) { b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
+    if (!operational(b)) { ventHabitat(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
   const n = { x: Math.sin(angle), y: -Math.cos(angle) };
   const at = { x: n.x * WORLD.radius, y: n.y * WORLD.radius };

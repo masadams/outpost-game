@@ -1,3 +1,5 @@
+import { HABITATS, isHabitat } from '../sim/habitatConfig';
+import { habitatContains, habitatSource } from '../sim/habitats';
 import { inventoryMass } from '../sim/resources';
 import { heading } from '../sim/math';
 import { WORLD } from '../sim/config';
@@ -9,7 +11,7 @@ export type Cue = 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup'
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
-  return { space: flightRegion(world.ship.position) === 'space', towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
+  return { habitat: !!habitatSource(world), space: flightRegion(world.ship.position) === 'space', towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: { ...world.astronaut.position }, cargo: inventoryMass(world.ship.cargo), unloaded: world.unloaded,
@@ -45,6 +47,7 @@ export class AudioDirector {
     if (next.impacts > prev.impacts || (next.buildingHull < prev.buildingHull && next.buildings.size === prev.buildings.size)) cues.push('impact');
     if (prev.state === 'landed' && next.state === 'flying') cues.push('launch');
     if (prev.state === 'flying' && next.state === 'landed') cues.push('land');
+    if (onFoot && prev.mode === 'astronaut' && prev.habitat !== next.habitat) cues.push('airlock');
     if (prev.mode !== next.mode) { cues.push('airlock'); this.footDistance = 0; }
     else if (onFoot && alive) {
       if (prev.grounded && !next.grounded) cues.push('jump');
@@ -71,7 +74,7 @@ export class AudioDirector {
     })) cues.push('production');
     const safety = flightSafety(world.ship), fuelLevel = safety.instruments.fuel.level;
     const landing = alive && !onFoot && safety.urgent, fuel = alive && !onFoot && next.state === 'flying' && (fuelLevel === 'caution' || fuelLevel === 'critical');
-    const generic = alive && (next.threats > 0 || (onFoot ? next.oxygen < 30 : next.state === 'flying' && next.hull < 25));
+    const generic = alive && (next.threats > 0 || (onFoot ? (!next.habitat && next.oxygen < 30) || world.colony.buildings.some(b => isHabitat(b.kind) && b.habitat?.powered && habitatContains(b, world.astronaut.position) && (b.status === 'air low' || b.habitat.backup && b.habitat.energy / HABITATS[b.kind].power <= 3)) : next.state === 'flying' && next.hull < 25));
     const fuelFirst = fuel && (fuelLevel === 'critical' || !generic);
     const key = landing ? 'landing' : fuelFirst ? `fuel-${fuelLevel}` : generic ? 'generic' : '';
     this.alarmTime += Math.max(0, seconds);

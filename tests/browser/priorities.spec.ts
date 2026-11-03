@@ -8,7 +8,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   await page.getByRole('button', { name: 'Colony', exact: true }).click();
   await page.locator('.policy-controls summary').focus(); await page.keyboard.press('Enter');
   await expect(policy).toHaveAttribute('open', '');
-  const powerUp = page.getByRole('button', { name: 'Raise Defence / service power reserve', exact: true });
+  const powerUp = page.getByRole('button', { name: 'Raise Essential systems power reserve', exact: true });
   for (let i = 0; i < 4; i++) await powerUp.click();
   await expect(page.locator('[data-policy-value="energyReserve"]')).toHaveText('20');
   await expect(hud).toHaveAttribute('data-mode', 'ship'); await expect(policy).toHaveAttribute('open', '');
@@ -21,7 +21,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(145);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await expect(page.locator('.machine')).toContainText('power reserved'); await expect(hud).toHaveAttribute('data-depot', '0.00');
-  const powerDown = page.getByRole('button', { name: 'Lower Defence / service power reserve', exact: true });
+  const powerDown = page.getByRole('button', { name: 'Lower Essential systems power reserve', exact: true });
   for (let i = 0; i < 4; i++) await powerDown.click();
   await expect.poll(async () => Number(await hud.getAttribute('data-depot')), { timeout: 6000 }).toBeGreaterThan(0);
   for (let i = 0; i < 16; i++) await page.getByRole('button', { name: 'Raise Ship delivery room reserve', exact: true }).click();
@@ -37,7 +37,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   await expect(hud).toHaveAttribute('data-buildings', '2'); await page.keyboard.press('b');
   await page.keyboard.press('p'); await expect(componentsUp).toBeDisabled(); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(8); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
+  expect(saved.version).toBe(9); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/colony-priorities.png' });
   await page.keyboard.press('r'); await expect(page.locator('[data-policy-value="deliveryReserve"]')).toHaveText('0');

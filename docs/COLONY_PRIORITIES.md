@@ -4,7 +4,7 @@ Open **Colony → Resource priorities** while on foot or piloting. The native di
 
 | Reserve | Step | Meaning |
 |---|---:|---|
-| Defence / service power | 5 kJ | Rigs, refineries and fuel processors leave this battery charge untouched. Turrets and supplied service can spend it. |
+| Essential systems power | 5 kJ | Rigs, refineries and fuel processors leave this battery charge untouched. Turrets, supplied service and habitat life support can spend it; habitat backup charging cannot. |
 | Ship delivery room | 25 kg | Rigs leave this much physical raw-ore capacity empty; ship unloads may use it. |
 | Turret alloy | 5 kg | Construction, building/ship repair, ship rearm and recovery spend only alloy above this floor. Turrets can spend the reserve. |
 | Turret components | 1 kg | The same material protection for components. |

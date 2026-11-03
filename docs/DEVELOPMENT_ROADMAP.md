@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Phases 0–6, presentation foundations, planetary mining, scheduling and resource priorities are merged through PR #13. Landing feedback PR #14 is green and open against main. Task 007E implements paid physical asteroid towing and clearer atmosphere/space cues, stacked for review. Command, neighborhood discovery and multi-world milestones are now explicit. Oxygen habitats are scheduled next in Phase 7.5; explicit ship progression and shield domes follow in Phase 8. The full Phase 9 overhaul remains required.
+**Status:** Phases 0–6, presentation foundations, planetary mining, scheduling and resource priorities are merged through PR #13. Landing feedback PR #14 is green and open against main. Task 007E implements paid physical asteroid towing and clearer atmosphere/space cues, stacked for review. Command, neighborhood discovery and multi-world milestones are now explicit. Oxygen habitats are implemented for review in Phase 7.5; explicit ship progression and shield domes follow in Phase 8. The full Phase 9 overhaul remains required.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous circular planetoid and surrounding space; no separate flight/surface scenes.
 
@@ -125,15 +125,15 @@ The user requested color-coded landing telemetry, warning lights/pulsing and low
 
 [Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) on `feat/asteroid-towing`, stacked on PR #14 for review. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
 
-## Phase 7.5 — Habitat domes and life support (next: Task 007F)
+## Phase 7.5 — Habitat domes and life support (Task 007F, implemented for review)
 
-Explicitly requested by the user. Follow towing before the wider Phase 8 progression work. See [the upgrade/dome schedule](UPGRADES_AND_DOMES.md).
-- [ ] Define small/large surface coverage and ceiling heights, initially considering 40 m / 80 m spans; tune costs, oxygen buffers and kg/s demand.
-- [ ] Place dome coverage over existing colony areas with valid foundations and curved-surface geometry.
-- [ ] Powered, supplied breathable zones pause suit oxygen depletion only while crew is inside and air is available.
-- [ ] Consume oxygen for pressurization, area-dependent losses and crew; preserve finite buffers and avoid overlap/double-consumption exploits.
-- [ ] Warn on shortage, power loss or breach, then resume suit air safely; no free suit refill or healing.
-- [ ] Show habitat/suit-air source, coverage, buffer/demand and failure feedback; save, pause and test all transitions.
+Implemented on `feat/oxygen-habitats`. See [Task 007F](../CODEX_TASK_007F.md) and [the habitat model/playtest](HABITATS.md). Explicitly requested by the user. Follow towing before the wider Phase 8 progression work. See [the upgrade/dome schedule](UPGRADES_AND_DOMES.md).
+- [x] Define small/large surface coverage and ceiling heights, 40 m / 160 m spans; tune costs, oxygen buffers and kg/s demand.
+- [x] Place dome coverage over existing colony areas with valid foundations and curved-surface geometry.
+- [x] Powered, supplied breathable zones pause suit oxygen depletion only while crew is inside and air is available.
+- [x] Consume oxygen for pressurization, area-dependent losses and crew; preserve finite buffers and avoid overlap/double-consumption exploits.
+- [x] Warn on shortage, power loss or breach, then resume suit air safely; no free suit refill or healing.
+- [x] Show habitat/suit-air source, coverage, buffer/demand and failure feedback; save, pause and test all transitions.
 **Exit:** Crew can work inside a supplied dome without draining suit air, and loses that benefit predictably when supply/coverage fails.
 
 ## Phase 7.75 — Central Command console
@@ -219,7 +219,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 **Exit:** Stable documented playable release.
 
 ## Immediate next action
-Review landing feedback PR #14 and the towing slice, then playtest alpha 0.9 using [PLAYTEST.md](PLAYTEST.md), especially latch eligibility, hauling, cable strain and return/mining flow. Then implement habitats → Command console → nearby belts/destinations → ship progression/shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
+Review landing feedback PR #14 and the towing slice, then playtest alpha 0.10 using [PLAYTEST.md](PLAYTEST.md), especially latch eligibility, hauling, cable strain and return/mining flow. Review habitats, then implement Command console → nearby belts/destinations → ship progression/shields → nearby worlds. Complete the full graphics/UX/UI overhaul, reliability/content and release phases afterward. The full Phase 9 graphics/UX/UI overhaul, accessibility options and human evaluation remain required before reliability playtesting.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.
