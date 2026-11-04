@@ -159,3 +159,7 @@ These are **not** mandatory features; preserve them as ideas so they are not for
 
 ## 11. Relationship to the roadmap
 This document explains the **feeling and experiential progression** that each [roadmap](MASTER_ROADMAP.md) phase should deliver. It should remain descriptive rather than turning into a giant task list. Detailed tasks and their acceptance criteria belong in the roadmap; systems, philosophy and open ideas belong in the bible; actual shipped behavior belongs in current feature docs.
+
+
+## 12. Distinctiveness across every scale
+See [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md). The sense of scale is not an excuse to build increasingly large feature lists: each new horizon should emerge from interactions already meaningful at small scale. A rock worth recovering in the opening can become an orbital navigation hazard, a captured mine or a historical landmark later. The first mining sortie, physical storm and first interplanetary expedition deserve exceptional polish before breadth. Players should describe **what they made happen** rather than only the size of the map.
