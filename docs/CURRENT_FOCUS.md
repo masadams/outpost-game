@@ -18,7 +18,7 @@ This is the bible's first signature slice: **the excellent mining sortie**. The 
 | # | Step | Status |
 |---|---|---|
 | 1 | Ground rules: rewrite AGENTS.md, archive task specs, write this page, log decisions | Done |
-| 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel | In progress |
+| 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel. Mockup 1: [docs/mockups/ui-rebuild.html](mockups/ui-rebuild.html) | In review |
 | 3 | Feature visibility: new games show only the focus set below; other systems remain in code, hidden | Not started |
 | 4 | Rebuild UI layer in Preact on shared design tokens, implementing the agreed mockups | Not started |
 | 5 | Polish and hands-on playtest the first mining sortie until it's fun | Not started |

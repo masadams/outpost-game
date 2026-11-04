@@ -1,0 +1,908 @@
+<title>Outpost UI Rebuild</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a fixed 1600x900 game "screen" scaled to the page width, with mode tabs above and design notes below.
+   Deliberately single dark theme: this is a game HUD in space. */
+:root {
+  color-scheme: dark;
+  --space: #060c17;
+  --page: #0a1220;
+  --panel: rgba(9, 21, 35, 0.88);
+  --panel-solid: #0c1a2b;
+  --raised: #12263a;
+  --line: #22405a;
+  --text: #dde9f0;
+  --muted: #8ea6b8;
+  --mint: #7fe6d3;
+  --mint-dim: rgba(127, 230, 211, 0.16);
+  --amber: #ffbf6b;
+  --red: #ff7070;
+  --green: #92e6a0;
+  --ore: #d99b5c;
+  --display: "Chakra Petch", "Bahnschrift", "DIN Alternate", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+[hidden] { display: none !important; }
+html, body { background: var(--page); color: var(--text); }
+body {
+  font-family: var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.page { max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }
+header.intro { display: grid; gap: 6px; }
+.eyebrow { font: 600 12px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; color: var(--mint); }
+h1 { font: 700 clamp(26px, 4vw, 40px)/1.05 var(--display); letter-spacing: .04em; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; color: var(--muted); max-width: 70ch; line-height: 1.5; }
+
+.modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.modes button {
+  font: 600 14px/1 var(--display); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); background: var(--panel-solid); border: 1px solid var(--line);
+  padding: 11px 16px; border-radius: 4px; cursor: pointer; display: flex; gap: 10px; align-items: center;
+}
+.modes button .k { font: 500 11px/1 var(--mono); color: var(--muted); border: 1px solid var(--line); padding: 3px 5px; border-radius: 3px; }
+.modes button[aria-pressed="true"] { color: var(--space); background: var(--mint); border-color: var(--mint); }
+.modes button[aria-pressed="true"] .k { color: var(--space); border-color: rgba(6,12,23,.4); }
+.modes .live { margin-left: auto; align-self: center; font: 500 12px/1 var(--mono); color: var(--muted); }
+button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.wrap { position: relative; width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; background: var(--space); }
+.stage { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; overflow: hidden; user-select: none; }
+.stage canvas { position: absolute; inset: 0; width: 1600px; height: 900px; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.layer > * { pointer-events: auto; }
+.layer[hidden] { display: none !important; }
+
+/* ---------- shared HUD pieces ---------- */
+.hud-card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; backdrop-filter: blur(4px); }
+.label { font: 600 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.icon { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.kbd { font: 500 13px/1 var(--mono); color: var(--muted); border: 1px solid var(--line); border-bottom-width: 2px; padding: 3px 6px; border-radius: 4px; background: var(--space); }
+
+.objective { position: absolute; left: 32px; top: 28px; width: 380px; padding: 16px 18px; display: grid; gap: 10px; }
+.objective .title { font: 600 22px/1.15 var(--display); letter-spacing: .02em; }
+.objective .why { font: 400 16px/1.4 var(--body); color: var(--muted); }
+.meter { height: 8px; background: var(--raised); border-radius: 4px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--mint); border-radius: 4px; transition: width .3s; }
+.objective .count { font: 500 16px/1 var(--mono); color: var(--mint); font-variant-numeric: tabular-nums; }
+
+.corner { position: absolute; right: 32px; top: 28px; display: flex; gap: 10px; }
+.corner button {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer;
+  font: 600 16px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+}
+.corner button:hover { border-color: var(--mint); color: var(--mint); }
+
+.feed { position: absolute; left: 32px; top: 200px; display: grid; gap: 8px; }
+.feed div { font: 500 17px/1 var(--body); padding: 10px 14px; border-left: 3px solid var(--ore); background: var(--panel); border-radius: 0 4px 4px 0; width: max-content; }
+
+/* flight instrument cluster */
+.cluster { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); display: grid; grid-template-columns: 300px 150px 330px; gap: 0; padding: 0; overflow: hidden; }
+.cluster > section { padding: 16px 20px; display: grid; gap: 12px; align-content: center; }
+.cluster > section + section { border-left: 1px solid var(--line); }
+.bar-row { display: grid; grid-template-columns: 72px 1fr 64px; align-items: center; gap: 12px; }
+.bar-row .label { font-size: 13px; }
+.bar { height: 10px; border-radius: 5px; background: var(--raised); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 5px; }
+.bar-row .v { font: 500 17px/1 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.att { display: grid; place-items: center; gap: 8px; }
+.att svg { width: 104px; height: 104px; }
+.att .label { font-size: 12px; }
+.read { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.read div { display: grid; gap: 7px; }
+.read b { font: 500 32px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.read small { font: 400 14px/1 var(--mono); color: var(--muted); margin-left: 3px; }
+.ok { color: var(--green); } .warn { color: var(--amber); } .bad { color: var(--red); }
+
+.prompt { position: absolute; display: flex; align-items: center; gap: 10px; padding: 10px 14px; font: 500 18px/1 var(--body); }
+.substate { position: absolute; left: 32px; bottom: 30px; display: flex; gap: 6px; }
+.substate button { font: 600 13px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; background: var(--panel); color: var(--muted); border: 1px dashed var(--line); padding: 10px 12px; border-radius: 4px; cursor: pointer; }
+.substate button[aria-pressed="true"] { color: var(--mint); border-style: solid; border-color: var(--mint); }
+.substate .cap { align-self: center; font: 400 13px/1.2 var(--body); color: var(--muted); margin-right: 6px; width: 90px; }
+
+.limits { position: absolute; left: 50%; top: 120px; transform: translateX(-50%); display: flex; gap: 10px; }
+.limits div { display: flex; gap: 10px; align-items: center; padding: 10px 16px; font: 500 18px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.limits .label { font-size: 12px; }
+
+/* build mode */
+.resources { position: absolute; left: 32px; top: 28px; display: flex; gap: 0; overflow: hidden; }
+.resources div { display: flex; align-items: center; gap: 10px; padding: 12px 18px; font: 500 19px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.resources div + div { border-left: 1px solid var(--line); }
+.resources .icon { color: var(--muted); }
+.resources .power { color: var(--green); }
+
+.buildbar { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; gap: 10px; padding: 12px; align-items: stretch; }
+.bcard {
+  width: 214px; padding: 14px; display: grid; gap: 10px; text-align: left; cursor: pointer;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-family: var(--body);
+}
+.bcard .top { display: flex; align-items: center; gap: 10px; }
+.bcard .icon { width: 30px; height: 30px; color: var(--mint); }
+.bcard .name { font: 600 18px/1.1 var(--display); letter-spacing: .03em; }
+.bcard .kbd { margin-left: auto; }
+.bcard .cost { font: 400 15px/1.35 var(--body); color: var(--muted); }
+.bcard .desc { font: 400 15px/1.35 var(--body); color: var(--text); }
+.bcard em { font-style: normal; color: var(--red); }
+.bcard[aria-pressed="true"] { border-color: var(--mint); background: #133246; box-shadow: inset 0 0 0 1px var(--mint); }
+.bcard.blocked .icon { color: var(--muted); }
+.bcard.blocked .name { color: var(--muted); }
+.buildbar .more { display: grid; place-items: center; width: 130px; padding: 10px; font: 400 14px/1.35 var(--body); color: var(--muted); text-align: center; border: 1px dashed var(--line); border-radius: 6px; }
+.cursor-tip { position: absolute; padding: 10px 14px; font: 500 17px/1.2 var(--body); pointer-events: none; white-space: nowrap; transform: translate(-50%, -100%); }
+.cursor-tip.okb { border-color: var(--green); }
+.cursor-tip.badb { border-color: var(--red); color: var(--red); }
+.hint-line { position: absolute; left: 32px; top: 96px; display: flex; gap: 16px; font: 400 15px/1 var(--body); color: var(--muted); align-items: center; }
+.hint-line span { display: flex; gap: 8px; align-items: center; }
+
+/* full-screen windows */
+.dim { position: absolute; inset: 0; background: rgba(4, 9, 17, .72); }
+.window { position: absolute; inset: 40px 48px; display: grid; grid-template-rows: auto 1fr; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.whead { display: flex; align-items: center; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+.whead h2 { margin: 0; font: 700 26px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.paused { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; font: 600 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--amber); background: rgba(255, 191, 107, .12); border: 1px solid rgba(255, 191, 107, .4); }
+.paused::before { content: ""; width: 10px; height: 12px; border-left: 3px solid currentColor; border-right: 3px solid currentColor; box-sizing: border-box; }
+.whead .close { margin-left: auto; display: flex; gap: 10px; align-items: center; cursor: pointer; font: 600 15px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--text); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; }
+
+.wbody { display: grid; grid-template-columns: 230px 1fr 400px; min-height: 0; }
+.wnav { border-right: 1px solid var(--line); padding: 18px 12px; display: grid; align-content: start; gap: 6px; }
+.wnav button { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 6px; cursor: pointer; text-align: left; font: 600 17px/1 var(--display); letter-spacing: .04em; color: var(--muted); background: transparent; border: 1px solid transparent; }
+.wnav button[aria-pressed="true"] { color: var(--text); background: var(--raised); border-color: var(--line); }
+.wnav button[aria-pressed="true"] .icon { color: var(--mint); }
+.wnav .locked { margin-top: 14px; padding: 13px 14px; border: 1px dashed var(--line); border-radius: 6px; display: grid; gap: 6px; color: var(--muted); }
+.wnav .locked b { font: 600 16px/1 var(--display); letter-spacing: .04em; display: flex; gap: 10px; align-items: center; }
+.wnav .locked span { font: 400 14px/1.35 var(--body); }
+
+.wmain { padding: 22px 26px; display: grid; align-content: start; gap: 22px; overflow: auto; min-width: 0; }
+.wmain h3, .insp h3 { margin: 0; font: 600 14px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.res-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.res { background: var(--raised); border-radius: 6px; padding: 14px; display: grid; gap: 8px; }
+.res .n { font: 500 28px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.res .n small { font-size: 15px; color: var(--muted); }
+.res .t { display: flex; gap: 8px; align-items: center; font: 500 15px/1 var(--body); color: var(--muted); }
+.res .d { font: 400 14px/1 var(--mono); color: var(--green); }
+.power-card { background: var(--raised); border-radius: 6px; padding: 16px; display: grid; gap: 12px; }
+.pw-row { display: grid; grid-template-columns: 140px 1fr 110px; gap: 14px; align-items: center; font: 500 16px/1 var(--body); }
+.pw-row .v { font: 500 17px/1 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.flow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.flow .node { background: var(--raised); border-radius: 6px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; font: 500 16px/1 var(--body); }
+.flow .arrow { color: var(--muted); font: 500 20px/1 var(--mono); }
+.flow .node.machine { border: 1px solid var(--mint); }
+
+.rows { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 34px 1fr auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 6px; background: var(--raised); border: 1px solid transparent; cursor: pointer; text-align: left; color: var(--text); font: 500 17px/1.2 var(--body); }
+.row .icon { width: 28px; height: 28px; color: var(--mint); }
+.row small { display: block; font: 400 14px/1.3 var(--body); color: var(--muted); margin-top: 3px; }
+.row[aria-pressed="true"] { border-color: var(--mint); }
+.chip { font: 600 12px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; padding: 7px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+
+.insp { border-left: 1px solid var(--line); padding: 22px 24px; display: grid; align-content: start; gap: 18px; overflow: auto; }
+.insp .big { display: flex; gap: 14px; align-items: center; }
+.insp .big .icon { width: 44px; height: 44px; color: var(--mint); }
+.insp .big b { font: 700 24px/1.1 var(--display); letter-spacing: .03em; display: block; }
+.insp p { margin: 0; font: 400 16px/1.5 var(--body); color: var(--muted); }
+.why { border-left: 3px solid var(--amber); background: rgba(255, 191, 107, .08); padding: 12px 14px; border-radius: 0 6px 6px 0; font: 500 16px/1.45 var(--body); color: var(--text); }
+.why b { color: var(--amber); }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; font: 400 16px/1.2 var(--body); }
+.kv span:nth-child(even) { font: 500 16px/1.2 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { cursor: pointer; font: 600 15px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; padding: 13px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); color: var(--text); }
+.btn.primary { background: var(--mint); color: var(--space); border-color: var(--mint); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* map */
+.mapbody { display: grid; grid-template-columns: 1fr 400px; min-height: 0; }
+.mapbody canvas { position: static; width: 100%; height: 100%; display: block; cursor: pointer; }
+.mapcv { position: relative; min-width: 0; }
+.legend { position: absolute; left: 18px; bottom: 16px; display: flex; gap: 18px; font: 400 14px/1 var(--body); color: var(--muted); }
+.legend span { display: flex; gap: 8px; align-items: center; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.state { font: 600 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+
+/* notes below the stage */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--panel-solid); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.note h3 { margin: 0; font: 600 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--mint); }
+.note ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--text); line-height: 1.45; font-size: 15px; }
+.note li::marker { color: var(--muted); }
+.note.q h3 { color: var(--amber); }
+.foot { color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) { .meter > i { transition: none; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-map" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="9.5" ry="4.2" transform="rotate(-25 12 12)"/><circle cx="19.6" cy="8.2" r="1.3"/></symbol>
+    <symbol id="i-base" viewBox="0 0 24 24"><path d="M3 19h18"/><path d="M5 19v-4a7 7 0 0 1 14 0v4"/><path d="M10 19v-3h4v3"/><path d="M12 8V4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-solar" viewBox="0 0 24 24"><path d="M3 15l3-8h12l3 8z"/><path d="M9 7l-1.5 8M15 7l1.5 8M4.5 11h15"/><path d="M12 15v5M8 20h8"/></symbol>
+    <symbol id="i-battery" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="15" rx="2"/><path d="M9 3h6"/><path d="M12.5 8l-2.5 4.5h4L11.5 17"/></symbol>
+    <symbol id="i-storage" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v10l-9 4-9-4z"/><path d="M3 8l9 4 9-4M12 12v10"/></symbol>
+    <symbol id="i-refinery" viewBox="0 0 24 24"><path d="M3 20V11l5 3V11l5 3V6h4v14z"/><path d="M17 6V3h3v17"/><path d="M3 20h18"/></symbol>
+    <symbol id="i-ore" viewBox="0 0 24 24"><path d="M5 15l2-7 6-3 6 4 1 7-6 4-7-1z"/><path d="M9 11l4 2 3-3"/></symbol>
+    <symbol id="i-alloy" viewBox="0 0 24 24"><path d="M3 16l4-6h14l-4 6z"/><path d="M3 16v3h14v-3M17 19l4-6v-3"/></symbol>
+    <symbol id="i-wire" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><path d="M20 12h2"/></symbol>
+    <symbol id="i-comp" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></symbol>
+    <symbol id="i-fuel" viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></symbol>
+    <symbol id="i-ship" viewBox="0 0 24 24"><path d="M12 2l4 9v6H8v-6z"/><path d="M8 17l-3 4M16 17l3 4M10 17v2h4v-2"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 10a1.5 1.5 0 0 0 1.3 2h11.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7.5 15h9"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+  <header class="intro">
+    <span class="eyebrow">Outpost · UI rebuild · mockup 1</span>
+    <h1>Four screens, one world</h1>
+    <p>A clickable sketch of the rebuilt interface for the first mining sortie. Switch modes with the tabs, or keys 1–4 outside Build. Inside the screen, the buttons work too: Map, Base and Esc. All numbers are sample values, not game data.</p>
+  </header>
+
+  <nav class="modes" aria-label="Screen mode">
+    <button id="m-flight" data-mode="flight" aria-pressed="true"><span class="k">1</span>Flight</button>
+    <button id="m-build" data-mode="build" aria-pressed="false"><span class="k">2</span>Surface · Build</button>
+    <button id="m-base" data-mode="base" aria-pressed="false"><span class="k">3</span>Base</button>
+    <button id="m-map" data-mode="map" aria-pressed="false"><span class="k">4</span>Map</button>
+    <span class="live" id="liveState">World: running</span>
+  </nav>
+
+  <div class="wrap" id="wrap">
+    <div class="stage" id="stage">
+      <canvas id="world" width="1600" height="900"></canvas>
+
+      <!-- FLIGHT -->
+      <div class="layer" id="L-flight">
+        <div class="objective hud-card">
+          <span class="label">Objective</span>
+          <div class="title" id="objTitle">Mine ore and bring it home</div>
+          <div class="meter"><i id="objBar" style="width:30%"></i></div>
+          <div class="count" id="objCount">12 / 40 kg ore</div>
+        </div>
+        <div class="corner">
+          <button data-go="map"><svg class="icon"><use href="#i-map"/></svg>Map <span class="kbd">M</span></button>
+          <button data-go="base"><svg class="icon"><use href="#i-base"/></svg>Base <span class="kbd">B</span></button>
+          <button data-go="menu"><svg class="icon"><use href="#i-menu"/></svg><span class="kbd">Esc</span></button>
+        </div>
+        <div class="feed" id="feed"></div>
+        <div class="prompt hud-card" id="minePrompt" style="left:1040px; top:218px;"><span class="kbd">Space</span> Hold to mine · 38 kg left</div>
+        <div class="limits" id="limits" hidden>
+          <div class="hud-card"><span class="label">Descent</span><span id="limVs" class="warn">3.6 m/s</span><span class="label">max 3</span></div>
+          <div class="hud-card"><span class="label">Drift</span><span id="limDr" class="ok">0.6 m/s</span><span class="label">max 2</span></div>
+          <div class="hud-card"><span class="label">Tilt</span><span id="limTl" class="ok">4°</span><span class="label">max 10°</span></div>
+        </div>
+        <div class="cluster hud-card">
+          <section>
+            <div class="bar-row"><span class="label">Fuel</span><div class="bar"><i id="bFuel" style="width:72%;background:var(--mint)"></i></div><span class="v" id="vFuel">72%</span></div>
+            <div class="bar-row"><span class="label">Hull</span><div class="bar"><i style="width:100%;background:var(--green)"></i></div><span class="v">100%</span></div>
+            <div class="bar-row"><span class="label">Cargo</span><div class="bar"><i id="bCargo" style="width:6%;background:var(--ore)"></i></div><span class="v" id="vCargo">12 kg</span></div>
+          </section>
+          <section class="att">
+            <svg viewBox="0 0 100 100" aria-label="Attitude: ship nose relative to local up">
+              <circle cx="50" cy="50" r="46" fill="#0b1726" stroke="#22405a" stroke-width="2"/>
+              <path d="M50 4 v10" stroke="#8ea6b8" stroke-width="2"/>
+              <g id="attShip"><path d="M50 22 L60 58 L50 52 L40 58 Z" fill="none" stroke="#7fe6d3" stroke-width="3" stroke-linejoin="round"/></g>
+              <g id="attVel"><line x1="50" y1="50" x2="64" y2="76" stroke="#ffbf6b" stroke-width="3" stroke-linecap="round"/><circle cx="64" cy="76" r="4" fill="#ffbf6b"/></g>
+            </svg>
+            <span class="label">Nose · <span style="color:var(--amber)">motion</span></span>
+          </section>
+          <section class="read">
+            <div><span class="label">Altitude</span><span><b id="rAlt">312</b><small>m</small></span></div>
+            <div><span class="label">Descent</span><span><b id="rVs" class="ok">−1.2</b><small>m/s</small></span></div>
+            <div><span class="label">Drift</span><span><b id="rDr">8.4</b><small>m/s</small></span></div>
+          </section>
+        </div>
+        <div class="substate">
+          <span class="cap">Mockup states</span>
+          <button id="s-mine" aria-pressed="true">Mining</button>
+          <button id="s-land" aria-pressed="false">Landing</button>
+        </div>
+      </div>
+
+      <!-- BUILD -->
+      <div class="layer" id="L-build" hidden>
+        <div class="resources hud-card">
+          <div><svg class="icon"><use href="#i-ore"/></svg>46</div>
+          <div><svg class="icon"><use href="#i-alloy"/></svg>6</div>
+          <div><svg class="icon"><use href="#i-wire"/></svg>3</div>
+          <div><svg class="icon"><use href="#i-comp"/></svg>1</div>
+          <div class="power"><svg class="icon" style="color:var(--green)"><use href="#i-bolt"/></svg>+2.0 kW</div>
+        </div>
+        <div class="corner">
+          <button data-go="map"><svg class="icon"><use href="#i-map"/></svg>Map <span class="kbd">M</span></button>
+          <button data-go="base"><svg class="icon"><use href="#i-base"/></svg>Base <span class="kbd">B</span></button>
+          <button data-go="menu"><svg class="icon"><use href="#i-menu"/></svg><span class="kbd">Esc</span></button>
+        </div>
+        <div class="cursor-tip hud-card okb" id="tip" hidden></div>
+        <div class="buildbar hud-card" id="buildbar">
+          <button class="bcard" data-b="solar" aria-pressed="true"><span class="top"><svg class="icon"><use href="#i-solar"/></svg><span class="name">Solar array</span><span class="kbd">1</span></span><span class="cost">4 alloy · 2 wire · 1&nbsp;component</span><span class="desc">Makes 4 kW in sunlight</span></button>
+          <button class="bcard" data-b="battery" aria-pressed="false"><span class="top"><svg class="icon"><use href="#i-battery"/></svg><span class="name">Battery</span><span class="kbd">2</span></span><span class="cost">4 alloy · 2 wire · <em>2&nbsp;components</em></span><span class="desc"><em>You have 1 component</em></span></button>
+          <button class="bcard" data-b="storage" aria-pressed="false"><span class="top"><svg class="icon"><use href="#i-storage"/></svg><span class="name">Storage</span><span class="kbd">3</span></span><span class="cost">4 alloy · 1 wire</span><span class="desc">Holds 200 kg more</span></button>
+          <button class="bcard" data-b="refinery" aria-pressed="false"><span class="top"><svg class="icon"><use href="#i-refinery"/></svg><span class="name">Refinery</span><span class="kbd">4</span></span><span class="cost">6 alloy · 3 wire · 1&nbsp;component</span><span class="desc">Turns ore into alloy</span></button>
+          <div class="more">More buildings unlock as you explore</div>
+        </div>
+        <div class="hint-line"><span><span class="kbd">Click</span> place</span><span><span class="kbd">Right-click</span> cancel</span><span><span class="kbd">F</span> board ship</span></div>
+      </div>
+
+      <!-- BASE -->
+      <div class="layer" id="L-base" hidden>
+        <div class="dim"></div>
+        <div class="window" role="dialog" aria-label="Base">
+          <div class="whead">
+            <svg class="icon" style="width:30px;height:30px;color:var(--mint)"><use href="#i-base"/></svg>
+            <h2>Selene Outpost</h2>
+            <span class="paused">Paused while open</span>
+            <button class="close" data-go="back">Close <span class="kbd">Esc</span></button>
+          </div>
+          <div class="wbody">
+            <nav class="wnav" aria-label="Base sections">
+              <button data-tab="overview" aria-pressed="true"><svg class="icon"><use href="#i-grid"/></svg>Overview</button>
+              <button data-tab="buildings" aria-pressed="false"><svg class="icon"><use href="#i-refinery"/></svg>Buildings</button>
+              <button data-tab="ship" aria-pressed="false"><svg class="icon"><use href="#i-ship"/></svg>Ship</button>
+              <div class="locked"><b><svg class="icon"><use href="#i-lock"/></svg>Research</b><span>Unlocks when you find something worth studying.</span></div>
+            </nav>
+            <div class="wmain" id="baseMain"></div>
+            <aside class="insp" id="baseInsp"></aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div class="layer" id="L-map" hidden>
+        <div class="dim"></div>
+        <div class="window" role="dialog" aria-label="Map">
+          <div class="whead">
+            <svg class="icon" style="width:30px;height:30px;color:var(--mint)"><use href="#i-map"/></svg>
+            <h2>Selene system</h2>
+            <span class="paused">Paused while open</span>
+            <button class="close" data-go="back">Close <span class="kbd">Esc</span></button>
+          </div>
+          <div class="mapbody">
+            <div class="mapcv">
+              <canvas id="mapcv" width="1102" height="738"></canvas>
+              <div class="legend"><span><i style="background:var(--mint)"></i>You</span><span><i style="background:var(--ore)"></i>Ore</span><span><i style="background:var(--muted)"></i>Detected, not surveyed</span></div>
+            </div>
+            <aside class="insp" id="mapInsp"></aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="notes" id="notes"></section>
+  <p class="foot">Fonts in this mockup come from Google Fonts for convenience. The game would bundle open-licensed font files so it still runs offline. Mockup 1 for review; not wired to the simulation.</p>
+</div>
+
+<script>
+(() => {
+  const W = 1600, H = 900;
+  const stage = document.getElementById('stage');
+  const wrap = document.getElementById('wrap');
+  const cv = document.getElementById('world');
+  const ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let scale = 1;
+
+  function fit() {
+    scale = wrap.clientWidth / W;
+    stage.style.transform = `scale(${scale})`;
+    wrap.style.height = (H * scale) + 'px';
+  }
+  new ResizeObserver(fit).observe(wrap);
+  fit();
+
+  // ---------- state ----------
+  const S = { mode: 'flight', prev: 'flight', sub: 'mine', t: 0, cargo: 12, building: 'solar', mouse: null,
+              baseTab: 'overview', baseSel: 'refinery', mapSel: 'belt', placed: [] };
+
+  // ---------- world drawing ----------
+  const R = 2400;
+  const rnd = (seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647)(42);
+  const stars = Array.from({ length: 220 }, () => [rnd() * W, rnd() * H, rnd() * 1.4 + .3, rnd()]);
+  const craters = Array.from({ length: 26 }, () => [(rnd() - .5) * 0.9, rnd() * 140 + 20, rnd() * 40 + 10]);
+  const rockShape = Array.from({ length: 11 }, (_, i) => 0.72 + rnd() * 0.38);
+
+  const cams = {
+    mine:  { x: 140, y: -R - 250, z: 1.0 },
+    land:  { x: 0,   y: -R - 70,  z: 1.9 },
+    build: { x: 30,  y: -R - 40,  z: 2.4 },
+  };
+  let cam = cams.mine;
+  const sx = (wx) => (wx - cam.x) * cam.z + W / 2;
+  const sy = (wy) => (wy - cam.y) * cam.z + H / 2;
+  const onSurface = (a, h = 0) => [(R + h) * Math.sin(a), -(R + h) * Math.cos(a)];
+
+  function drawSky() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#050a14'); g.addColorStop(1, '#0d2038');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (const [x, y, r, p] of stars) {
+      const tw = reduce ? 1 : 0.6 + 0.4 * Math.sin(S.t * 1.3 + p * 20);
+      ctx.globalAlpha = 0.35 + 0.5 * p * tw; ctx.fillStyle = '#cfe3ff';
+      ctx.fillRect(x, y, r, r);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPlanet() {
+    const cx = sx(0), cy = sy(0), r = R * cam.z;
+    const glow = ctx.createRadialGradient(cx, cy, r * 0.99, cx, cy, r + 70 * cam.z);
+    glow.addColorStop(0, 'rgba(120,190,220,.35)'); glow.addColorStop(1, 'rgba(120,190,220,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx, cy, r + 70 * cam.z, 0, Math.PI * 2); ctx.fill();
+    const g = ctx.createRadialGradient(cx, cy - r, 10, cx, cy - r, 900 * cam.z);
+    g.addColorStop(0, '#6f8790'); g.addColorStop(1, '#2b3d47');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(210,235,240,.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(20,35,45,.35)'; ctx.lineWidth = 10 * cam.z;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 26 * cam.z, 0, Math.PI * 2); ctx.stroke();
+    for (const [a, depth, size] of craters) {
+      const [wx, wy] = onSurface(a, -depth);
+      ctx.save(); ctx.translate(sx(wx), sy(wy)); ctx.rotate(a);
+      ctx.fillStyle = 'rgba(25,40,50,.35)';
+      ctx.beginPath(); ctx.ellipse(0, 0, size * cam.z, size * 0.45 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function atSurface(a, fn) {
+    const [wx, wy] = onSurface(a);
+    ctx.save(); ctx.translate(sx(wx), sy(wy)); ctx.rotate(a); ctx.scale(cam.z, cam.z); fn(); ctx.restore();
+  }
+
+  function drawPad(highlight) {
+    atSurface(0, () => {
+      ctx.fillStyle = highlight || '#7fe6d3';
+      ctx.fillRect(-45, -3, 90, 4);
+      ctx.strokeStyle = '#7fe6d3'; ctx.lineWidth = 1.5;
+      for (const x of [-48, 48]) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, -26); ctx.stroke();
+        ctx.fillStyle = (Math.floor(S.t * 2) % 2 && !reduce) ? '#7fe6d3' : '#2a6b62';
+        ctx.beginPath(); ctx.arc(x, -27, 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+  }
+
+  function drawDepot() {
+    atSurface(0.042, () => {
+      ctx.strokeStyle = '#ffbf6b'; ctx.fillStyle = '#2a2a24'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-14, -18); ctx.lineTo(8, -18); ctx.lineTo(14, -10); ctx.lineTo(14, 0); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ffbf6b'; ctx.fillRect(-7, -13, 12, 6);
+    });
+  }
+
+  function solarArt(alpha = 1, color = '#8fd1ff') {
+    ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -10); ctx.stroke();
+    ctx.fillStyle = 'rgba(70,130,190,.55)';
+    ctx.beginPath(); ctx.moveTo(-14, -9); ctx.lineTo(14, -16); ctx.lineTo(14, -12); ctx.lineTo(-14, -5); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  function boxArt(kind, alpha = 1, color = '#8fd1ff') {
+    ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.fillStyle = 'rgba(30,50,70,.8)';
+    if (kind === 'battery') { ctx.fillRect(-7, -16, 14, 16); ctx.strokeRect(-7, -16, 14, 16); ctx.fillRect(-3, -19, 6, 3); }
+    else if (kind === 'storage') { ctx.fillRect(-12, -12, 24, 12); ctx.strokeRect(-12, -12, 24, 12); ctx.beginPath(); ctx.moveTo(-12, -6); ctx.lineTo(12, -6); ctx.stroke(); }
+    else { ctx.fillRect(-14, -12, 22, 12); ctx.strokeRect(-14, -12, 22, 12); ctx.fillRect(8, -24, 5, 24); ctx.strokeRect(8, -24, 5, 24); }
+    ctx.globalAlpha = 1;
+  }
+  const footprint = { solar: 30, battery: 16, storage: 26, refinery: 30 };
+  function drawBuildingAt(a, kind, alpha, color) { atSurface(a, () => kind === 'solar' ? solarArt(alpha, color) : boxArt(kind, alpha, color)); }
+
+  function drawShip(x, y, rot, size, thrust) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(size / 56, size / 56);
+    if (thrust) {
+      const f = reduce ? 1 : 0.75 + Math.random() * 0.5;
+      const g = ctx.createLinearGradient(0, 18, 0, 18 + 34 * f);
+      g.addColorStop(0, 'rgba(255,220,150,.95)'); g.addColorStop(1, 'rgba(255,120,60,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-7, 18); ctx.lineTo(0, 18 + 38 * f); ctx.lineTo(7, 18); ctx.fill();
+    }
+    ctx.lineJoin = 'round'; ctx.lineWidth = 2.4; ctx.strokeStyle = '#e8f4f6'; ctx.fillStyle = '#1a3346';
+    ctx.beginPath(); ctx.moveTo(0, -28); ctx.lineTo(11, -6); ctx.lineTo(12, 12); ctx.lineTo(-12, 12); ctx.lineTo(-11, -6); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#7fe6d3'; ctx.beginPath(); ctx.arc(0, -8, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#e8f4f6'; ctx.beginPath();
+    ctx.moveTo(-10, 10); ctx.lineTo(-19, 26); ctx.moveTo(10, 10); ctx.lineTo(19, 26);
+    ctx.moveTo(-23, 26); ctx.lineTo(-15, 26); ctx.moveTo(15, 26); ctx.lineTo(23, 26); ctx.stroke();
+    ctx.fillStyle = '#5a6b75'; ctx.fillRect(-6, 12, 12, 6);
+    ctx.restore();
+  }
+
+  function drawRock(x, y, r, rot) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.beginPath();
+    rockShape.forEach((k, i) => { const a = i / rockShape.length * Math.PI * 2; const px = Math.cos(a) * r * k, py = Math.sin(a) * r * k; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+    ctx.closePath(); ctx.fillStyle = '#4a3a2e'; ctx.fill(); ctx.strokeStyle = '#d99b5c'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#e8b47a';
+    for (const [dx, dy] of [[-8, -6], [10, 4], [-2, 12]]) { ctx.beginPath(); ctx.arc(dx * r / 34, dy * r / 34, 3, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+
+  function brackets(x, y, r, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5; const k = 12;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      ctx.beginPath(); ctx.moveTo(x + dx * r, y + dy * (r - k)); ctx.lineTo(x + dx * r, y + dy * r); ctx.lineTo(x + dx * (r - k), y + dy * r); ctx.stroke();
+    }
+  }
+
+  function drawAstronaut(a, h) {
+    atSurface(a, () => {
+      ctx.translate(0, -h);
+      ctx.strokeStyle = '#e8f4f6'; ctx.lineWidth = 1.6; ctx.fillStyle = '#ffbf6b';
+      ctx.beginPath(); ctx.arc(0, -11, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, -3); ctx.moveTo(0, -3); ctx.lineTo(-2.5, 0); ctx.moveTo(0, -3); ctx.lineTo(2.5, 0);
+      ctx.moveTo(-3, -6.5); ctx.lineTo(3, -6.5); ctx.stroke();
+    });
+  }
+
+  // ---------- frame ----------
+  function frameFlight() {
+    const target = S.sub === 'land' ? cams.land : cams.mine;
+    cam = target;
+    drawSky(); drawPlanet(); drawPad(S.sub === 'land' ? '#ffbf6b' : null); drawDepot();
+    drawBuildingAt(-0.03, 'solar', 1);
+    const bob = reduce ? 0 : Math.sin(S.t * 1.6) * 3;
+    if (S.sub === 'mine') {
+      const shipX = sx(-60), shipY = sy(-R - 300) + bob;
+      const rx = sx(250) + (reduce ? 0 : Math.sin(S.t * .4) * 4), ry = sy(-R - 430);
+      // coast path
+      ctx.setLineDash([3, 9]); ctx.strokeStyle = 'rgba(255,191,107,.6)'; ctx.lineWidth = 2;
+      ctx.beginPath(); let px = shipX, py = shipY, vx = 8, vy = -3;
+      ctx.moveTo(px, py); for (let i = 0; i < 40; i++) { vy += 0.28; px += vx; py += vy; ctx.lineTo(px, py); if (py > sy(-R) - 8) break; }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#ffbf6b'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+      // beam
+      if (!reduce || true) {
+        const pulse = reduce ? 1 : 0.6 + 0.4 * Math.sin(S.t * 18);
+        ctx.strokeStyle = `rgba(127,230,211,${0.35 + 0.5 * pulse})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(shipX + 14, shipY - 18); ctx.lineTo(rx - 10, ry + 8); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,220,160,.9)';
+        for (let i = 0; i < 6; i++) { const k = (S.t * 3 + i / 6) % 1; ctx.fillRect(rx - 14 - k * 30, ry + 6 + k * 24 + Math.sin(i * 7) * 6, 3, 3); }
+      }
+      drawRock(rx, ry, 40, S.t * 0.15);
+      brackets(rx, ry, 56, '#d99b5c');
+      drawShip(shipX, shipY, 0.5, 60, false);
+      ctx.strokeStyle = '#ffbf6b'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(shipX, shipY); ctx.lineTo(shipX + 48, shipY - 18); ctx.stroke();
+    } else {
+      const shipY = sy(-R - 70) + (reduce ? 0 : Math.sin(S.t * 0.8) * 5);
+      ctx.strokeStyle = 'rgba(255,191,107,.55)'; ctx.setLineDash([4, 7]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sx(4), shipY + 40); ctx.lineTo(sx(0), sy(-R) - 4); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(255,191,107,.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(sx(0), sy(-R) - 2, 50 * cam.z, 9 * cam.z, 0, 0, Math.PI * 2); ctx.stroke();
+      drawShip(sx(4), shipY, 0.07, 78, true);
+    }
+  }
+
+  function frameBuild() {
+    cam = cams.build;
+    drawSky(); drawPlanet(); drawPad(); drawDepot();
+    drawBuildingAt(-0.03, 'solar', 1);
+    for (const p of S.placed) drawBuildingAt(p.a, p.kind, 1);
+    drawShip(sx(0), sy(-R) - 26 * cam.z * 0.6 - 6, 0, 58, false);
+    drawAstronaut(0.012, 0);
+    const tip = document.getElementById('tip');
+    if (S.mouse) {
+      const a = Math.asin(Math.max(-1, Math.min(1, ((S.mouse.x - W / 2) / cam.z + cam.x) / R)));
+      const fp = footprint[S.building] / R;
+      const blockers = [{ a: 0, w: 52 / R, why: 'Too close to the landing pad' }, { a: 0.042, w: 16 / R, why: 'Overlaps the depot' }, { a: -0.03, w: 16 / R, why: 'Overlaps the solar array' },
+        ...S.placed.map(p => ({ a: p.a, w: footprint[p.kind] / R / 2, why: 'Overlaps a building' }))];
+      const hit = blockers.find(b => Math.abs(a - b.a) < b.w + fp / 2);
+      const unaffordable = S.building === 'battery';
+      const bad = hit || unaffordable;
+      const color = bad ? '#ff7070' : '#92e6a0';
+      atSurface(a, () => {
+        ctx.fillStyle = bad ? 'rgba(255,112,112,.18)' : 'rgba(146,230,160,.18)';
+        ctx.fillRect(-footprint[S.building] / 2, -2, footprint[S.building], 4);
+        ctx.strokeStyle = color; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+        ctx.strokeRect(-footprint[S.building] / 2, -30, footprint[S.building], 30); ctx.setLineDash([]);
+      });
+      drawBuildingAt(a, S.building, 0.75, color);
+      S.ghost = { a, ok: !bad };
+      const [wx, wy] = onSurface(a, 40);
+      tip.hidden = false; tip.style.left = sx(wx) + 'px'; tip.style.top = (sy(wy) - 20) + 'px';
+      tip.className = 'cursor-tip hud-card ' + (bad ? 'badb' : 'okb');
+      tip.textContent = unaffordable ? 'Needs 1 more component' : hit ? hit.why : 'Click to place · ' + { solar: 'Solar array', storage: 'Storage', refinery: 'Refinery' }[S.building];
+    } else { tip.hidden = true; S.ghost = null; }
+  }
+
+  // ---------- map ----------
+  const mcv = document.getElementById('mapcv'), mctx = mcv.getContext('2d');
+  const mapObjs = {
+    home: { x: 420, y: 380, r: 70, name: 'Selene', kind: 'Home world', state: 'Explored', stateColor: 'var(--green)',
+      kv: [['Distance', '0.4 km'], ['Gravity', '1.6 m/s²'], ['Atmosphere', 'Thin'], ['Your buildings', '3']],
+      body: 'Your outpost and landing pad are here.', action: 'Set course home' },
+    belt: { x: 615, y: 255, r: 40, name: 'Rubble arc', kind: 'Ore cluster', state: 'Surveyed', stateColor: 'var(--green)',
+      kv: [['Distance', '1.8 km'], ['Closing speed', '+12 m/s'], ['Ore left', 'about 210 kg'], ['Fuel there and back', 'about 30%']],
+      body: 'Loose rock drifting above the pad. Easy pickings for a first sortie.', action: 'Set as target' },
+    nacre: { x: 920, y: 470, r: 30, name: 'Unknown moon', kind: 'Moon', state: 'Detected', stateColor: 'var(--muted)',
+      kv: [['Distance', 'about 14 km'], ['Gravity', 'unknown'], ['Atmosphere', 'unknown'], ['Ore', 'unknown']],
+      body: 'Something large in a wide orbit. You will need more fuel, or a better engine, to reach it and get back.', action: 'Set as target' },
+  };
+  function drawMap() {
+    const w = mcv.width, h = mcv.height;
+    mctx.fillStyle = '#060c17'; mctx.fillRect(0, 0, w, h);
+    mctx.strokeStyle = 'rgba(34,64,90,.5)'; mctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 60) { mctx.beginPath(); mctx.moveTo(x, 0); mctx.lineTo(x, h); mctx.stroke(); }
+    for (let y = 0; y < h; y += 60) { mctx.beginPath(); mctx.moveTo(0, y); mctx.lineTo(w, y); mctx.stroke(); }
+    const H0 = mapObjs.home;
+    mctx.strokeStyle = 'rgba(142,166,184,.35)'; mctx.setLineDash([6, 8]);
+    mctx.beginPath(); mctx.ellipse(H0.x, H0.y, 520, 230, -0.1, 0, Math.PI * 2); mctx.stroke(); mctx.setLineDash([]);
+    mctx.fillStyle = '#2f4450'; mctx.beginPath(); mctx.arc(H0.x, H0.y, H0.r, 0, Math.PI * 2); mctx.fill();
+    mctx.strokeStyle = '#9fc4d0'; mctx.lineWidth = 2; mctx.stroke();
+    // pad marker
+    mctx.fillStyle = '#7fe6d3'; mctx.fillRect(H0.x - 6, H0.y - H0.r - 4, 12, 4);
+    // ore arc
+    for (let i = 0; i < 26; i++) {
+      const a = -1.05 + i * 0.03, rr = 260 + Math.sin(i * 3.1) * 14;
+      mctx.fillStyle = '#d99b5c'; mctx.globalAlpha = 0.85;
+      mctx.beginPath(); mctx.arc(H0.x + Math.cos(a) * rr, H0.y + Math.sin(a) * rr * 0.7, 2.5 + (i % 3), 0, Math.PI * 2); mctx.fill();
+    }
+    mctx.globalAlpha = 1;
+    // moon (detected only: uncertainty halo)
+    const N = mapObjs.nacre;
+    mctx.fillStyle = 'rgba(142,166,184,.10)'; mctx.beginPath(); mctx.arc(N.x, N.y, 70, 0, Math.PI * 2); mctx.fill();
+    mctx.strokeStyle = 'rgba(142,166,184,.6)'; mctx.setLineDash([3, 5]); mctx.stroke(); mctx.setLineDash([]);
+    mctx.fillStyle = '#56636d'; mctx.beginPath(); mctx.arc(N.x, N.y, 14, 0, Math.PI * 2); mctx.fill();
+    // ship + coast path
+    mctx.strokeStyle = '#ffbf6b'; mctx.setLineDash([3, 6]); mctx.lineWidth = 2;
+    mctx.beginPath(); mctx.moveTo(470, 270); mctx.quadraticCurveTo(560, 190, 610, 240); mctx.stroke(); mctx.setLineDash([]);
+    mctx.fillStyle = '#7fe6d3'; mctx.beginPath(); mctx.moveTo(470, 258); mctx.lineTo(478, 278); mctx.lineTo(462, 278); mctx.closePath(); mctx.fill();
+    // labels
+    mctx.font = '600 16px "Chakra Petch", sans-serif'; mctx.fillStyle = '#dde9f0';
+    mctx.fillText('SELENE', H0.x - 30, H0.y + H0.r + 26);
+    mctx.fillStyle = '#d99b5c'; mctx.fillText('RUBBLE ARC', 690, 250);
+    mctx.fillStyle = '#8ea6b8'; mctx.fillText('UNKNOWN MOON ?', N.x - 64, N.y + 96);
+    mctx.fillStyle = '#7fe6d3'; mctx.fillText('YOU', 484, 262);
+    // selection
+    const sel = mapObjs[S.mapSel];
+    mctx.strokeStyle = '#7fe6d3'; mctx.lineWidth = 2;
+    const rr = sel.r + 22;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      mctx.beginPath(); mctx.moveTo(sel.x + dx * rr, sel.y + dy * (rr - 14)); mctx.lineTo(sel.x + dx * rr, sel.y + dy * rr); mctx.lineTo(sel.x + dx * (rr - 14), sel.y + dy * rr); mctx.stroke();
+    }
+    // scale bar
+    mctx.fillStyle = '#8ea6b8'; mctx.fillRect(w - 180, h - 30, 120, 2);
+    mctx.font = '400 13px "IBM Plex Mono", monospace'; mctx.fillText('2 km', w - 136, h - 40);
+  }
+  function renderMapInsp() {
+    const o = mapObjs[S.mapSel];
+    document.getElementById('mapInsp').innerHTML = `
+      <h3>Selected</h3>
+      <div class="big"><svg class="icon"><use href="#${S.mapSel === 'belt' ? 'i-ore' : 'i-map'}"/></svg><div><b>${o.name}</b><span class="state" style="color:${o.stateColor}">${o.kind} · ${o.state}</span></div></div>
+      <p>${o.body}</p>
+      <div class="kv">${o.kv.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('')}</div>
+      <div class="actions"><button class="btn primary" data-go="back">${o.action}</button></div>
+      <p style="font-size:14px">Click anything on the map to inspect it. Unknown values fill in when you survey or visit.</p>`;
+  }
+  mcv.addEventListener('click', e => {
+    const r = mcv.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (mcv.width / r.width), y = (e.clientY - r.top) * (mcv.height / r.height);
+    let best = null, bd = 1e9;
+    for (const [k, o] of Object.entries(mapObjs)) { const d = Math.hypot(o.x - x, o.y - y) - o.r; if (d < bd) { bd = d; best = k; } }
+    if (bd < 90) { S.mapSel = best; renderMapInsp(); drawMap(); }
+  });
+
+  // ---------- base window ----------
+  const buildings = {
+    refinery: { icon: 'i-refinery', name: 'Refinery', sub: 'Ore → alloy + wire', chip: ['Stopped', 'var(--amber)'],
+      why: '<b>Stopped:</b> storage is full. Build more storage or use some alloy.', kv: [['Input', '2 kg ore'], ['Output', '1 alloy, 0.5 wire'], ['Time per batch', '6 s'], ['Power', '4 kW']],
+      act: ['Turn off', 'Show in world'] },
+    solar: { icon: 'i-solar', name: 'Solar array', sub: 'Generates power in sunlight', chip: ['Running', 'var(--green)'],
+      why: null, kv: [['Output now', '4.0 kW'], ['Sunlight', '100%']], act: ['Show in world'] },
+    storage: { icon: 'i-storage', name: 'Storage', sub: '200 kg', chip: ['Full', 'var(--amber)'],
+      why: '<b>Full:</b> 200 / 200 kg. New refinery output has nowhere to go.', kv: [['Ore', '46 kg'], ['Alloy', '6 kg'], ['Other', '148 kg']], act: ['Show in world'] },
+    depot: { icon: 'i-base', name: 'Depot', sub: 'Unload cargo, refuel', chip: ['Ready', 'var(--green)'],
+      why: null, kv: [['Fuel stored', '120 kg'], ['Refuel rate', '10 kg/s']], act: ['Show in world'] },
+  };
+  function renderBase() {
+    const main = document.getElementById('baseMain'), insp = document.getElementById('baseInsp');
+    document.querySelectorAll('.wnav [data-tab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === S.baseTab)));
+    if (S.baseTab === 'overview') {
+      main.innerHTML = `
+        <h3>Resources</h3>
+        <div class="res-grid">
+          ${[['i-ore', 'Ore', '46', 'kg', '+12 incoming'], ['i-alloy', 'Alloy', '6', '', ''], ['i-wire', 'Wire', '3', '', ''], ['i-comp', 'Components', '1', '', ''], ['i-fuel', 'Fuel', '120', 'kg', '']]
+            .map(([i, n, v, u, d]) => `<div class="res"><span class="t"><svg class="icon"><use href="#${i}"/></svg>${n}</span><span class="n">${v}<small> ${u}</small></span><span class="d">${d || '&nbsp;'}</span></div>`).join('')}
+        </div>
+        <h3>Power</h3>
+        <div class="power-card">
+          <div class="pw-row"><span>Generating</span><div class="bar"><i style="width:80%;background:var(--green)"></i></div><span class="v">4.0 kW</span></div>
+          <div class="pw-row"><span>Using</span><div class="bar"><i style="width:40%;background:var(--mint)"></i></div><span class="v">2.0 kW</span></div>
+          <div class="pw-row"><span>Battery</span><div class="bar"><i style="width:0%"></i></div><span class="v" style="color:var(--muted)">none built</span></div>
+        </div>
+        <h3>Production</h3>
+        <div class="flow">
+          <span class="node"><svg class="icon" style="color:var(--ore)"><use href="#i-ore"/></svg>Ore 46 kg</span><span class="arrow">→</span>
+          <span class="node machine"><svg class="icon" style="color:var(--amber)"><use href="#i-refinery"/></svg>Refinery · stopped</span><span class="arrow">→</span>
+          <span class="node"><svg class="icon"><use href="#i-alloy"/></svg>Alloy</span><span class="node"><svg class="icon"><use href="#i-wire"/></svg>Wire</span>
+        </div>`;
+      insp.innerHTML = `
+        <h3>Needs attention</h3>
+        <div class="why"><b>Refinery stopped.</b> Storage is full. Build another Storage, or spend alloy on a building.</div>
+        <div class="actions"><button class="btn" data-tab="buildings">View refinery</button></div>
+        <h3>Next goal</h3>
+        <p>Build a Battery so the outpost keeps running when the sun is behind Selene.</p>
+        <div class="kv"><span>Alloy</span><span>6 / 4 ✓</span><span>Wire</span><span>3 / 2 ✓</span><span>Components</span><span style="color:var(--red)">1 / 2</span></div>`;
+    } else if (S.baseTab === 'buildings') {
+      main.innerHTML = `<h3>Buildings · 4</h3><div class="rows">${Object.entries(buildings).map(([k, b]) => `
+        <button class="row" data-sel="${k}" aria-pressed="${k === S.baseSel}"><svg class="icon"><use href="#${b.icon}"/></svg>
+        <span>${b.name}<small>${b.sub}</small></span><span class="chip" style="color:${b.chip[1]}">${b.chip[0]}</span></button>`).join('')}</div>`;
+      const b = buildings[S.baseSel];
+      insp.innerHTML = `
+        <div class="big"><svg class="icon"><use href="#${b.icon}"/></svg><div><b>${b.name}</b><span class="chip" style="color:${b.chip[1]}">${b.chip[0]}</span></div></div>
+        ${b.why ? `<div class="why">${b.why}</div>` : ''}
+        <div class="kv">${b.kv.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('')}</div>
+        <div class="actions">${b.act.map((a, i) => `<button class="btn ${i === b.act.length - 1 ? '' : ''}" data-go="${a === 'Show in world' ? 'build' : ''}">${a}</button>`).join('')}</div>`;
+    } else {
+      main.innerHTML = `
+        <h3>Your lander</h3>
+        <div class="power-card">
+          <div class="pw-row"><span>Fuel</span><div class="bar"><i style="width:72%;background:var(--mint)"></i></div><span class="v">72%</span></div>
+          <div class="pw-row"><span>Hull</span><div class="bar"><i style="width:100%;background:var(--green)"></i></div><span class="v">100%</span></div>
+          <div class="pw-row"><span>Cargo</span><div class="bar"><i style="width:6%;background:var(--ore)"></i></div><span class="v">12 / 200 kg</span></div>
+        </div>
+        <h3>Handling</h3>
+        <div class="kv" style="max-width:520px"><span>Mass now</span><span>412 kg</span><span>Thrust</span><span>18.2 kN</span><span>Lift margin at home</span><span>2.8×</span><span>Full-hold lift margin</span><span>2.1×</span></div>`;
+      insp.innerHTML = `
+        <h3>At the pad</h3>
+        <p>You are away from the pad. Land to refuel, unload or repair.</p>
+        <div class="actions"><button class="btn" disabled>Refuel</button><button class="btn" disabled>Unload</button></div>
+        <h3>Ship parts</h3>
+        <p>Engine, tank and hold upgrades appear here once you can build them.</p>`;
+    }
+  }
+  stage.addEventListener('click', e => {
+    const tab = e.target.closest('[data-tab]'); if (tab) { S.baseTab = tab.dataset.tab; if (S.baseTab === 'buildings') S.baseSel = 'refinery'; renderBase(); return; }
+    const sel = e.target.closest('[data-sel]'); if (sel) { S.baseSel = sel.dataset.sel; renderBase(); return; }
+    const go = e.target.closest('[data-go]'); if (go && go.dataset.go) { navigate(go.dataset.go); }
+  });
+
+  // ---------- build interaction ----------
+  cv.addEventListener('mousemove', e => {
+    if (S.mode !== 'build') return;
+    const r = cv.getBoundingClientRect();
+    S.mouse = { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale };
+  });
+  cv.addEventListener('mouseleave', () => { S.mouse = null; });
+  cv.addEventListener('click', () => {
+    if (S.mode === 'build' && S.ghost && S.ghost.ok) {
+      S.placed.push({ a: S.ghost.a, kind: S.building });
+      toast('Placed ' + { solar: 'Solar array', storage: 'Storage', refinery: 'Refinery' }[S.building] + ' · crew walking over to build it');
+    }
+  });
+  cv.addEventListener('contextmenu', e => { if (S.mode === 'build') { e.preventDefault(); S.mouse = null; } });
+  document.getElementById('buildbar').addEventListener('click', e => {
+    const c = e.target.closest('[data-b]'); if (!c) return; selectBuilding(c.dataset.b);
+  });
+  function selectBuilding(b) {
+    S.building = b;
+    document.querySelectorAll('.bcard').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.b === b)));
+  }
+  document.querySelector('.bcard[data-b="battery"]').classList.add('blocked');
+
+  // ---------- flight substates ----------
+  function setSub(s) {
+    S.sub = s;
+    document.getElementById('s-mine').setAttribute('aria-pressed', String(s === 'mine'));
+    document.getElementById('s-land').setAttribute('aria-pressed', String(s === 'land'));
+    document.getElementById('minePrompt').hidden = s !== 'mine';
+    document.getElementById('limits').hidden = s !== 'land';
+    document.getElementById('objTitle').textContent = s === 'land' ? 'Land on the pad to unload' : 'Mine ore and bring it home';
+  }
+  document.getElementById('s-mine').onclick = () => setSub('mine');
+  document.getElementById('s-land').onclick = () => setSub('land');
+
+  const feed = document.getElementById('feed');
+  function toast(msg) {
+    const target = S.mode === 'build' ? document.getElementById('L-build') : feed;
+    const d = document.createElement('div'); d.textContent = msg;
+    if (S.mode === 'build') { d.className = 'hud-card'; Object.assign(d.style, { position: 'absolute', left: '32px', top: '110px', padding: '10px 14px', font: '500 17px/1 var(--body)', borderLeft: '3px solid var(--green)' }); }
+    target.appendChild(d); setTimeout(() => d.remove(), 2600);
+  }
+
+  // ---------- navigation ----------
+  const notes = {
+    flight: [
+      ['What changed', ['Only three buttons on screen: Map, Base and Menu. Sound, zoom, coast path and help move into the menu or onto keys.', 'One objective card with a progress bar replaces the objectives list and the status strip.', 'Instruments are large numbers and bars. The attitude ball shows your nose and your direction of motion together.', 'The ship is drawn at least about 60 px tall, and the camera zooms in near the ground.']],
+      ['Context, not clutter', ['A prompt appears next to the thing you can act on, like the rock you are mining.', 'Switch to the Landing state: touchdown limits appear only when you are close to the pad, colored green or amber as you approach.', 'Pickups show as short messages that fade.']],
+      ['Question for you', ['Keep the round attitude ball, or show tilt as a number only?', 'Should the coast path be on by default for new players?']],
+    ],
+    build: [
+      ['What changed', ['Building happens in the world: pick a card, move the mouse along the ground, and a ghost shows where it goes.', 'Green means it fits. Red explains why not, right at the cursor, like "Too close to the landing pad".', 'Cards you cannot afford stay visible and say exactly what is missing.']],
+      ['Scope for the first sortie', ['Only four buildings: Solar array, Battery, Storage and Refinery.', 'Resources sit in one strip at the top: ore, alloy, wire, components and net power.', 'After placing, your astronaut walks over and builds it. You see the work happen.']],
+      ['Question for you', ['Should building stay on foot only, or also work from the landed ship?']],
+    ],
+    base: [
+      ['What changed', ['Base is one full-screen window, and it pauses the game. Nothing can crash while you plan.', 'Three sections to start: Overview, Buildings and Ship. Research shows as locked, with a hint about how to unlock it, instead of a 19-node tree on day one.', 'The right side always answers "what needs me?" in plain words.']],
+      ['Plain language', ['"Stopped: storage is full. Build more storage or use some alloy."', 'replaces', '"Insufficient unreserved local stock to fund paid order."']],
+      ['Question for you', ['Is pausing here right for you, or should Base pause only while the ship is flying?']],
+    ],
+    map: [
+      ['What changed', ['The map pauses too. A big chart with your coast path, ore and known bodies; click anything to inspect it.', 'Unknown things show as unknown. The moon is "Detected", with a fuzzy halo and "unknown" values until you survey it.', 'One clear action per target: Set as target.']],
+      ['Why it matters', ['This is where the bible\'s discovery idea shows up first: the moon is visible but not yet understood.', 'Fuel there and back is an estimate in plain words, not a guarantee.']],
+      ['Question for you', ['Should the map open as a full window (as shown), or as a large overlay you can fly with?']],
+    ],
+  };
+  function renderNotes() {
+    document.getElementById('notes').innerHTML = notes[S.mode].map(([h, items], i) =>
+      `<div class="note ${i === 2 ? 'q' : ''}"><h3>${h}</h3><ul>${items.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('');
+  }
+
+  function navigate(target) {
+    if (target === 'back') target = S.prev;
+    if (target === 'menu') { toast('Menu would open here (resume, save, settings, sound, controls)'); return; }
+    if (!['flight', 'build', 'base', 'map'].includes(target)) return;
+    if (target === 'base' || target === 'map') { if (S.mode === 'flight' || S.mode === 'build') S.prev = S.mode; }
+    S.mode = target;
+    for (const m of ['flight', 'build', 'base', 'map']) {
+      document.getElementById('L-' + m).hidden = m !== target;
+      document.getElementById('m-' + m).setAttribute('aria-pressed', String(m === target));
+    }
+    // full-screen windows sit over the last live world view, frozen
+    document.getElementById('liveState').textContent = (target === 'base' || target === 'map') ? 'World: paused' : 'World: running';
+    if (target === 'base') renderBase();
+    if (target === 'map') { renderMapInsp(); drawMap(); }
+    renderNotes();
+  }
+  document.querySelectorAll('.modes [data-mode]').forEach(b => b.onclick = () => navigate(b.dataset.mode));
+
+  addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input, textarea, select')) return;
+    const k = e.key.toLowerCase();
+    if (['1', '2', '3', '4'].includes(k) && S.mode !== 'build') { navigate(['flight', 'build', 'base', 'map'][+k - 1]); return; }
+    if (S.mode === 'build' && ['1', '2', '3', '4'].includes(k)) { selectBuilding(['solar', 'battery', 'storage', 'refinery'][+k - 1]); return; }
+    if (k === 'm') navigate(S.mode === 'map' ? 'back' : 'map');
+    else if (k === 'b') navigate(S.mode === 'base' ? 'back' : 'base');
+    else if (k === 'escape') { if (S.mode === 'base' || S.mode === 'map') navigate('back'); }
+  });
+
+  // ---------- loop ----------
+  let last = performance.now(), mined = 0;
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const paused = S.mode === 'base' || S.mode === 'map';
+    if (!paused) S.t += dt;
+    if (!paused) {
+      if (S.mode === 'flight' && S.sub === 'mine') {
+        mined += dt;
+        if (mined > 1.4) { mined = 0; S.cargo = S.cargo >= 40 ? 12 : S.cargo + 2; toast('+2 kg ore'); }
+        document.getElementById('vCargo').textContent = S.cargo + ' kg';
+        document.getElementById('bCargo').style.width = (S.cargo / 200 * 100) + '%';
+        document.getElementById('objBar').style.width = (S.cargo / 40 * 100) + '%';
+        document.getElementById('objCount').textContent = S.cargo + ' / 40 kg ore';
+        document.getElementById('rAlt').textContent = Math.round(300 + Math.sin(S.t * 1.6) * 3);
+        document.getElementById('rVs').textContent = (Math.cos(S.t * 1.6) * -1.2).toFixed(1).replace('-', '−');
+        document.getElementById('rDr').textContent = '8.4';
+        document.getElementById('attShip').setAttribute('transform', 'rotate(29 50 50)');
+        document.getElementById('attVel').setAttribute('transform', 'rotate(-90 50 50)');
+      } else if (S.mode === 'flight' && S.sub === 'land') {
+        const phase = (S.t % 8) / 8;
+        const vs = 3.9 - phase * 3.2, alt = Math.max(0, 70 - phase * 66);
+        document.getElementById('rAlt').textContent = Math.round(alt);
+        const vsEl = document.getElementById('rVs'); vsEl.textContent = '−' + vs.toFixed(1); vsEl.className = vs > 3 ? 'warn' : 'ok';
+        const lv = document.getElementById('limVs'); lv.textContent = vs.toFixed(1) + ' m/s'; lv.className = vs > 3 ? 'warn' : 'ok';
+        document.getElementById('rDr').textContent = '0.6';
+        document.getElementById('attShip').setAttribute('transform', 'rotate(4 50 50)');
+        document.getElementById('attVel').setAttribute('transform', 'rotate(-30 50 50)');
+        document.getElementById('objCount').textContent = '40 / 40 kg ore · unload at the depot';
+        document.getElementById('objBar').style.width = '100%';
+      }
+    }
+    if (S.mode === 'flight') frameFlight();
+    else if (S.mode === 'build') frameBuild();
+    else if (!paused) frameFlight();
+    // base/map: leave the last world frame frozen underneath
+    requestAnimationFrame(loop);
+  }
+
+  setSub('mine');
+  navigate('flight');
+  frameFlight();
+  requestAnimationFrame(loop);
+})();
+</script>
