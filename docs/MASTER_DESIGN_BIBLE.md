@@ -283,3 +283,7 @@ The strongest design test: **Is the next action motivated by something the playe
 - Work in reviewable PRs, with a small vertical slice before broad content expansion.
 - After design discussions, amend this bible before building major new systems.
 - Do not mark speculative features as implemented without evidence from code and tests.
+
+
+## 19. Distinctive experience and competitive positioning
+Read [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md) as the canonical creative filter for future features. Avoid competing through sheer quantity of ship parts, buildings, factions or planets. Favor physical systemic depth, discovery-driven engineering, a persistent history, and the same continuous experience from first asteroid to multi-star civilization. Treat **asteroids as multipurpose physical objects** that may be mined, studied, destroyed, redirected, deflected or captured—not just hazards or ore pickups. Prioritize the three signature vertical slices (excellent mining sortie, physical asteroid storm, first other-world expedition). A major signature mechanic should generally satisfy at least three of four: physical consequence, meaningful discovery, interesting decision, growing scale. Supporting infrastructure need not pass that creative threshold.
