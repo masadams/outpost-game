@@ -167,3 +167,9 @@ Outpost's plausible defensible combination:
 
 ### Design position (2026-11-04)
 Prefer **depth through interacting systems** over breadth through content volume. The studio-scale ambition is allowed to grow, but only on a foundation of exceptionally good hand-scale experiences.
+
+
+## 10. Inhabited outposts as an integration test
+The [adopted systems direction](MASTER_DESIGN_BIBLE.md#20-adopted-systems-direction--2026-11-04) makes planetary workers physical inhabitants. A supplied habitat lets a crew reach a construction site, build cooling/power infrastructure and maintain a remote mine; a blackout or crater changes that work and may require shelter, repair or rescue. Practical working range and productivity emerge from travel, work, air and safety. Habitats must earn their purpose through these relationships.
+
+Apply the same four-part gate; workers are not an exemption or a request for a large colony-management catalogue. [S1–S6](MASTER_ROADMAP.md#integrated-systems-vertical-slices-s0s6) must prove interactions in a small setting before adding worker needs, recipes, worlds or autonomous fleets. Preserve the three signature experience priorities. Avoid a 2D facsimile of No Man's Sky or Factorio: scale should grow from consequential engineering and discoveries.
