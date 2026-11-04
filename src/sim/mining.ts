@@ -1,6 +1,6 @@
 import { cargoMass } from './shipMass';
 import { planets, clearTerrain, STATIC_SYSTEM, type SystemFrame } from './celestial';
-import { equipped, miningStats, tractorStats, cargoCapacity } from './shipStats';
+import { miningStats, tractorStats, cargoCapacity } from './shipStats';
 import { shipMass as totalShipMass } from './shipMass';
 import { dot, heading, length, type Vec } from './math';
 import { type Asteroid, type Pickup } from './bodies';
@@ -20,9 +20,9 @@ export function rayCircle(origin: Vec, direction: Vec, center: Vec, radius: numb
 export function fireLaser(ship: Ship, asteroids: Asteroid[], dt: number, system: SystemFrame = STATIC_SYSTEM): Beam | null {
   if (ship.state !== 'flying') return null;
   const spec = miningStats(ship);
-  if (equipped(ship, 'mining')) {
-    if (ship.armament.overheated || ship.armament.energy + 1e-9 < 6 * dt) return null;
-    ship.armament.energy = Math.max(0, ship.armament.energy - 6 * dt); ship.armament.heat = Math.min(100, ship.armament.heat + 4 * dt);
+  if (spec.power > 0) {
+    if (ship.armament.overheated || ship.armament.energy + 1e-9 < spec.power * dt) return null;
+    ship.armament.energy = Math.max(0, ship.armament.energy - spec.power * dt); ship.armament.heat = Math.min(100, ship.armament.heat + spec.heat * dt);
     if (ship.armament.heat >= 100) ship.armament.overheated = true;
   }
   const direction = heading(ship.angle);
@@ -81,9 +81,10 @@ export function tractor(ship: Ship, pickup: Pickup, dt: number, system = STATIC_
 
 /** Charge the field once per fixed step, independently of how many pickups it influences. */
 export function powerTractor(ship: Ship, dt: number): boolean {
-  if (!equipped(ship, 'tractor')) return true;
-  if (ship.armament.overheated || ship.armament.energy + 1e-9 < 3 * dt) return false;
-  ship.armament.energy = Math.max(0, ship.armament.energy - 3 * dt); ship.armament.heat = Math.min(100, ship.armament.heat + 2 * dt);
+  const spec = tractorStats(ship);
+  if (spec.power === 0) return true;
+  if (ship.armament.overheated || ship.armament.energy + 1e-9 < spec.power * dt) return false;
+  ship.armament.energy = Math.max(0, ship.armament.energy - spec.power * dt); ship.armament.heat = Math.min(100, ship.armament.heat + spec.heat * dt);
   if (ship.armament.heat >= 100) ship.armament.overheated = true;
   return true;
 }

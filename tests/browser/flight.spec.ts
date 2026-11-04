@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { WORLD } from '../../src/sim/config';
 test('launch, coast, pause, restart and resize in a real browser', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));

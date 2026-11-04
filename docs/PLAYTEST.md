@@ -92,3 +92,7 @@ Use [alpha 0.17 direct controls](DIRECT_CONTROLS.md): Ship/Build/Manage/Map; cho
 ## Progression and scarcity follow-up
 
 Use [alpha 0.18 goals and budget](PROGRESSION_GOALS.md). Open Objectives, choose a tracked goal and follow its native link to the real controls. Try this while paused: no fuel/materials/time should be spent and Defence must not start a drill. Expand the Selene starter-route budget, compare its remaining bill before/after paid queues, research and a cargo upgrade, and test a protected-material shortfall. Moon stock and ship freight must not appear as home fabrication stock. Work inside a supplied habitat, save partway through the 20-second goal, reload paused and resume; disable/exhaust its air and verify progress stops while suit air decreases. Record whether the next action and production chain are understandable and whether meaningful flight/mining still occupies most play time.
+
+## Alpha 0.19 handoff
+
+Start with [the title/menu, ten-node tree, sixteen-part catalogue and readiness route](PLAYTEST_ALPHA019.md). Use New Game for this development format. Continue requires a current checkpoint and loads paused. Test part replacement/downgrades, real changes to handling/tool power/heat, the optional recovery allowance, supplied recovery/refuelling and menu focus/silence. Human findings are required before treating the game as balanced or release-ready.

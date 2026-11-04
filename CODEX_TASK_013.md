@@ -13,3 +13,5 @@ Wider economy/event/recovery tuning, measured human 60/40 balance, representativ
 ## Implementation and verification
 
 Alpha 0.18 implements the scoped goals/budget slice. Typecheck, all 418 unit tests and the production build pass locally. Native goal links and supported layouts pass browser checks; the ordinary paid construction/crew-dispatch → partial save/reload → habitat disable/resume → completed milestone route passes after correcting its input sequence to native activation. All four existing direct-control browser cases also pass. The complete suite now has 46 scenarios; full CI on the PR head remains required before merge.
+
+Merged in [PR #24](https://github.com/masadams/outpost-game/pull/24) after Flight checks #115 passed typecheck, 418 unit tests, build and all 46 browser scenarios on `b4a26971d187cbaf64cba2740932654a5b4686ef`. Task 014 expands the research catalogue; the original four-project description is the alpha 0.18 milestone.

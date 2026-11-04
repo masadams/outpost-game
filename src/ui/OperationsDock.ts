@@ -21,6 +21,7 @@ export class OperationsDock {
   private playerMode = '';
   private manual = false;
   private view: DockView | null = null;
+  private renderedView: DockView | null = null;
   constructor() {
     this.nav.className = 'dock-nav'; this.nav.setAttribute('aria-label', 'Operations panels');
     this.nav.innerHTML = `<button data-panel="cargo" aria-controls="operations-dock">Ship [I]</button><button data-panel="colony" aria-controls="operations-dock">Build</button><button data-panel="command" aria-controls="operations-dock">Manage</button><button data-panel="navigation" aria-controls="operations-dock">Map</button>`;
@@ -59,8 +60,10 @@ export class OperationsDock {
     this.root.hidden = this.view === null; this.root.dataset.panel = this.view ?? 'closed';
     this.heading.textContent = this.view ? ({cargo:'Ship / Cargo',combat:'Ship / Weapons',defence:'Ship / Defence',colony:'Build',command:'Manage colony',navigation:'Map',objectives:'Objectives'} as const)[this.view] : '';
     const ship=['cargo','combat','defence'].includes(this.view??'');this.shipTabs.hidden=!ship;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
+    const changed=this.renderedView!==this.view;this.renderedView=this.view;
     const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation, objectives: this.objectives };
     for (const [view, section] of Object.entries(sections)) section.hidden = view !== this.view;
+    if(changed)this.root.scrollTop=0;
     for (const button of Array.from(this.nav.querySelectorAll('button'))) {
       const selected = button.dataset.panel === this.view || button.dataset.panel==='cargo'&&ship;
       button.setAttribute('aria-expanded', String(selected)); button.classList.toggle('selected', selected);

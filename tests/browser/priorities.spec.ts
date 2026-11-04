@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('manages reserves from ship and surface, protects production/storage/materials and restores policy', async ({ page }) => {
@@ -37,7 +38,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   await expect(hud).toHaveAttribute('data-buildings', '2'); await page.keyboard.press('b');
   await page.keyboard.press('p'); await expect(componentsUp).toBeDisabled(); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(17); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
+  expect(saved.version).toBe(18); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/colony-priorities.png' });
   await page.keyboard.press('r'); await expect(page.locator('[data-policy-value="deliveryReserve"]')).toHaveText('0');

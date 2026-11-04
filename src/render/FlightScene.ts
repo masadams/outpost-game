@@ -1,10 +1,11 @@
+import { GameMenu, type MenuAction } from '../ui/GameMenu';
 import { screenToWorld } from './pointer';
 import { drawCrewOrder } from './crewOrders';
 import { VisualEffects } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
 import { RenderBudget } from './budget';
 import { drawShip } from './ship';
-import { readPresentation, applyPresentation } from '../preferences/presentation';
+import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
 import { planetAt, planets, CELESTIAL } from '../sim/celestial';
@@ -29,7 +30,7 @@ import { drawSurface } from './surface';
 import { drawColony } from './colony';
 import { applyColonyAction, type ColonyAction } from '../sim/colony';
 import { notify } from '../sim/messages';
-import { readCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
+import { inspectCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
 import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
 import { SoundControls } from '../ui/SoundControls';
@@ -62,6 +63,8 @@ export class FlightScene extends Phaser.Scene {
   private stars!: Phaser.GameObjects.Graphics;
   private map!: Phaser.GameObjects.Graphics;
   private paused = false;
+  private menu!:GameMenu;
+  private hasRun=false;
   private hudTime = 0;
   private colonyActions: ColonyAction[] = [];
   private audio!: GameAudio;
@@ -88,7 +91,7 @@ export class FlightScene extends Phaser.Scene {
       this.setPaused(open ? true : this.pausedBeforeSettings);
     });
     this.applySettings();
-    this.soundControls = new SoundControls(this.audio, () => this.help.toggle(), () => this.settings.toggle(), () => { this.setPaused(!this.paused); (document.activeElement as HTMLElement)?.blur(); },this.preferences);
+    this.soundControls = new SoundControls(this.audio, () => this.help.toggle(), () => this.settings.toggle(), () => { this.setPaused(!this.paused); (document.activeElement as HTMLElement)?.blur(); },this.preferences,()=>{this.setPaused(true);this.menu.open('pause');});
     this.flightTools = new FlightTools(action => this.viewAction(action),this.preferences);
     this.loadCheckpoint(false);
     this.audio.reset(this.simulation);this.effects.reset(this.simulation);
@@ -100,7 +103,7 @@ export class FlightScene extends Phaser.Scene {
     this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.art]);
     this.map = this.add.graphics();
     this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
-      if(this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
+      if(this.menu?.isOpen||this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
       const at=screenToWorld(pointer,{...this.follow,width:this.scale.width,height:this.scale.height});
       const local=activeWorld(this.simulation);this.hud.setBuildPointer(local,at,this.follow.zoom);
       if(pointer.rightButtonDown()){
@@ -118,23 +121,37 @@ export class FlightScene extends Phaser.Scene {
     const blur = () => this.setPaused(true), visibility = () => { if (document.hidden) this.setPaused(true); };
     window.addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
     const wheel = (event: WheelEvent) => {
-      if (this.help.isOpen || this.settings.isOpen) return;
+      if (this.menu?.isOpen || this.help.isOpen || this.settings.isOpen) return;
       this.follow.zoomBy(Math.exp(-Math.max(-300, Math.min(300, event.deltaY)) * 0.002)); event.preventDefault();
     };
     this.game.canvas.addEventListener('wheel', wheel, { passive: false });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility);
       this.game.canvas.removeEventListener('pointerenter',enter);this.game.canvas.removeEventListener('pointerleave',leave);this.game.canvas.removeEventListener('contextmenu',contextMenu);
-      this.settings.destroy(); this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
+      this.menu.destroy();this.settings.destroy(); this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
+    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=inspectCheckpoint(localStorage);return {hasSave:!!save.world,saveStatus:save.source==='previous'?'Previous checkpoint available · latest checkpoint missing or invalid · Continue loads the older flight paused':save.world?'Checkpoint available · Continue loads paused':'No checkpoint yet · start a new game',hasRun:this.hasRun};}catch{return {hasSave:false,saveStatus:'Checkpoint unavailable or incompatible · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
+    this.setPaused(true);this.menu.open('title');
+  }
+  private newGame():void{
+    const invalid=!this.hasRun&&this.simulation.notice.message.includes('CHECKPOINT INVALID');this.simulation=createWorld();if(invalid)notify(this.simulation,'CHECKPOINT INVALID · NEW RUNTIME STARTED · OLD SAVE KEPT');this.hasRun=true;this.menu.close();this.hud.closeDock();this.hud.clearBuildPointer();this.setPaused(false);this.follow.reset(this.ship,this.simulation.system);this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.prediction=null;this.threats=[];
+  }
+  private menuAction(action:MenuAction):void{
+    if(action==='new'){this.newGame();return;}
+    if(action==='resume'){if(this.hasRun){this.menu.close();this.setPaused(false);}return;}
+    if(action==='continue'){if(this.loadCheckpoint(true)){this.hasRun=true;this.menu.close();this.setPaused(true);}else this.menu.message('Cannot load this checkpoint · current runtime kept');return;}
+    if(action==='save'){if(this.hasRun){try{writeCheckpoint(localStorage,this.simulation);this.menu.message('Checkpoint saved');}catch{this.menu.message('Save failed · storage unavailable or state invalid');}}return;}
+    if(action==='title'){this.menu.open('title');return;}
+    if(action==='settings')this.settings.toggle();
+    if(action==='controls')this.help.toggle();
   }
   private applySettings(): void {
     this.follow.reducedMotion=this.preferences.reducedMotion;this.follow.rotate=this.preferences.cameraRotation;
     this.audio.setMix(this.preferences.effectsVolume,this.preferences.musicVolume);
   }
   private viewAction(action: ViewAction): void {
-    if (this.help.isOpen || this.settings.isOpen) return;
+    if (this.menu?.isOpen || this.help.isOpen || this.settings.isOpen) return;
     if (action === 'trajectory') { this.flightTools.trajectory = !this.flightTools.trajectory; this.prediction = null; this.threats = []; }
     else if (action === 'autoZoom') this.follow.autoZoom();
     else this.follow.zoomBy(action === 'zoomIn' ? 1.25 : 0.8);
@@ -145,16 +162,16 @@ export class FlightScene extends Phaser.Scene {
   }
   update(_time: number, delta: number): void {
     if (this.keys.mute()) this.audio.toggleMute();
-    if (!this.settings.isOpen && this.keys.help()) this.help.toggle();
-    if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else this.hud.closeDock(); }
-    if (!this.settings.isOpen && !this.help.isOpen && this.keys.restart()) { this.simulation = createWorld(); this.setPaused(false); this.follow.reset(this.ship, this.simulation.system); this.audio.reset(this.simulation);this.effects.reset(this.simulation); this.prediction = null; this.threats = []; }
-    if (!this.settings.isOpen && !this.help.isOpen && this.keys.save()) {
+    if (!this.settings.isOpen && (!this.menu.isOpen||this.help.isOpen) && this.keys.help()) this.help.toggle();
+    if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else if(!this.menu.isOpen){if(this.hud.dockOpen)this.hud.closeDock();else{this.setPaused(true);this.menu.open('pause');}} }
+    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.restart()) this.newGame();
+    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
       catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
     }
-    if (!this.settings.isOpen && !this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
-    if (!this.settings.isOpen && !this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
-    if (!this.settings.isOpen && !this.help.isOpen) {
+    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
+    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
+    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen) {
       for(const a of this.keys.planningActions()){const local=activeWorld(this.simulation);applyColonyAction(local,a);if(a.type==='toggleBuild'&&local.colony.buildOpen)this.hud.openBuild();}
       if (this.keys.inventory()) this.hud.toggleDock('cargo');
       if (this.keys.trajectory()) this.viewAction('trajectory');
@@ -195,16 +212,18 @@ export class FlightScene extends Phaser.Scene {
       root.dataset.drawSamples=String(this.budget.report('draw').samples);root.dataset.starCount=this.preferences.quality==='low'?'80':'240';root.dataset.effectCap=this.preferences.reducedMotion?'0':this.preferences.quality==='low'?'8':'24';
     }
   }
-  private loadCheckpoint(requested: boolean): void {
+  private loadCheckpoint(requested: boolean): boolean {
     try {
-      const saved = readCheckpoint(window.localStorage);
+      const selection = inspectCheckpoint(window.localStorage), saved = selection.world;
       if (saved) {
+        if(selection.source==='previous')notify(saved,'PREVIOUS CHECKPOINT LOADED · LATEST MISSING OR INVALID · P TO RESUME');
         this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
         this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship,saved.system);
         this.audio.reset(saved);this.effects.reset(saved); this.audio.silence();
-        this.prediction = null; this.threats = [];
+        this.prediction = null; this.threats = [];return true;
       } else if (requested) notify(this.simulation, 'NO CHECKPOINT · PRESS K TO SAVE');
     } catch { notify(this.simulation, 'CHECKPOINT INVALID OR STORAGE UNAVAILABLE · CURRENT WORLD KEPT'); }
+    return false;
   }
   private draw(): void {
     const { width, height } = this.scale;

@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 
 const sizes = [[900, 600], [1280, 800], [1920, 1080]] as const;
 test('keeps desktop controls inside the viewport and leaves a clear central flight corridor', async ({ page }) => {

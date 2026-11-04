@@ -1,0 +1,29 @@
+import { expect,test } from '@playwright/test';
+import { createWorld } from '../../src/sim/world';
+import { encodeCheckpoint, SAVE_KEY, PREVIOUS_SAVE_KEY } from '../../src/persistence/checkpoint';
+const menu=(page:import('@playwright/test').Page)=>page.getByRole('dialog',{name:'Outpost game menu',exact:true});
+function snapshot(fuel:number){const w=createWorld();w.ship.fuel=fuel;w.colony.products.alloy=19;return encodeCheckpoint(w);}
+
+test('offers an older validated flight, loads it paused across reloads and only repairs storage on explicit save',async({page})=>{
+ const previous=snapshot(210);await page.addInitScript(({previous,primaryKey,previousKey})=>{if(!sessionStorage.getItem('recovery-seeded')){localStorage.setItem(primaryKey,'{broken');localStorage.setItem(previousKey,previous);sessionStorage.setItem('recovery-seeded','1');}},{previous,primaryKey:SAVE_KEY,previousKey:PREVIOUS_SAVE_KEY});
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ for(let i=0;i<2;i++){
+  await page.goto('/');await expect(menu(page)).toContainText('Previous checkpoint available');await menu(page).getByRole('button',{name:'Continue',exact:true}).click();await expect(page.locator('#hud')).toHaveAttribute('data-state','paused');await expect(page.locator('#hud')).toHaveAttribute('data-fuel','210.00');await expect(page.locator('.status')).toContainText('PREVIOUS CHECKPOINT LOADED');const time=await page.locator('#hud').getAttribute('data-time');await page.keyboard.down('w');await page.waitForTimeout(250);await page.keyboard.up('w');await expect(page.locator('#hud')).toHaveAttribute('data-time',time!);await expect(page.locator('#sound-panel')).toHaveAttribute('data-loops','0');expect(await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY)).toBe('{broken');
+ }
+ await page.getByRole('button',{name:'Open game menu',exact:true}).click();await menu(page).getByRole('button',{name:'Save checkpoint',exact:true}).click();await expect(menu(page).locator('.menu-status')).toHaveText('Checkpoint saved');const slots=await page.evaluate(({primaryKey,previousKey})=>({primary:JSON.parse(localStorage.getItem(primaryKey)!),previous:localStorage.getItem(previousKey)}),{primaryKey:SAVE_KEY,previousKey:PREVIOUS_SAVE_KEY});expect(slots.primary.world.ship.fuel).toBe(210);expect(slots.primary.world.colony.products.alloy).toBe(19);expect(slots.previous).toBe(previous);expect(errors).toEqual([]);
+});
+
+for(const failedKey of [PREVIOUS_SAVE_KEY,SAVE_KEY])test(`keeps the last good flight and reports a failed ${failedKey} write in menu and keyboard saves`,async({page})=>{
+ await page.addInitScript(({primary,previous,primaryKey,previousKey,failedKey})=>{
+  localStorage.setItem(primaryKey,primary);localStorage.setItem(previousKey,previous);const original=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(key:string,value:string){if(this===localStorage&&key===failedKey)throw new DOMException('Quota exceeded','QuotaExceededError');return original.call(this,key,value);};
+ },{primary:snapshot(180),previous:snapshot(210),primaryKey:SAVE_KEY,previousKey:PREVIOUS_SAVE_KEY,failedKey});
+ await page.goto('/');await menu(page).getByRole('button',{name:'New Game',exact:true}).click();await page.getByRole('button',{name:'Open game menu',exact:true}).click();await menu(page).getByRole('button',{name:'Save checkpoint',exact:true}).click();await expect(menu(page).locator('.menu-status')).toContainText('Save failed');await expect(page.locator('#hud')).toHaveAttribute('data-fuel','240.00');
+ const primary=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!),SAVE_KEY);expect(primary.world.ship.fuel).toBe(180);
+ await menu(page).getByRole('button',{name:'Resume',exact:true}).click();await page.keyboard.press('p');await expect(page.locator('#hud')).toHaveAttribute('data-state','paused');await page.keyboard.press('k');await expect(page.locator('.status')).toContainText('CHECKPOINT SAVE FAILED');expect(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).world.ship.fuel,SAVE_KEY)).toBe(180);
+ await page.keyboard.press('l');await expect(page.locator('#hud')).toHaveAttribute('data-state','paused');await expect(page.locator('#hud')).toHaveAttribute('data-fuel','180.00');
+});
+
+test('keeps the current runtime when both saved copies fail validation and leaves New Game available',async({page})=>{
+ await page.goto('/');await menu(page).getByRole('button',{name:'New Game',exact:true}).click();await page.keyboard.press('p');await expect(page.locator('#hud')).toHaveAttribute('data-state','paused');const before=await page.locator('#hud').getAttribute('data-time');await page.evaluate(({primaryKey,previousKey})=>{localStorage.setItem(primaryKey,'{broken');localStorage.setItem(previousKey,JSON.stringify({version:17,world:{}}));},{primaryKey:SAVE_KEY,previousKey:PREVIOUS_SAVE_KEY});await page.keyboard.press('l');await expect(page.locator('.status')).toContainText('CURRENT WORLD KEPT');await expect(page.locator('#hud')).toHaveAttribute('data-time',before!);await expect(page.locator('#hud')).toHaveAttribute('data-fuel','240.00');await page.getByRole('button',{name:'Open game menu',exact:true}).click();await menu(page).getByRole('button',{name:'Return to title',exact:true}).click();await expect(menu(page).getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await menu(page).getByRole('button',{name:'New Game',exact:true}).click();await expect(page.locator('#hud')).toHaveAttribute('data-state','landed');expect(await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY)).toBe('{broken');
+});

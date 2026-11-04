@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('builds a powered surface rig, stops and resumes extraction, and preserves finite reserves', async ({ page }) => {
@@ -10,8 +11,9 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await page.keyboard.press('b'); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
   await page.keyboard.press('t'); await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click();
-  await expect(page.locator('.build-site').filter({ hasText: 'Site clear' })).toBeVisible();
-  await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.getByText('Nearby manual placement · Q/T/Enter', { exact: true }).click();
+  await expect(page.locator('details').filter({ has: page.getByText('Nearby manual placement · Q/T/Enter', { exact: true }) }).locator('.placement')).toContainText('Site clear');
+  await page.getByRole('button', { name: 'Place [Enter]', exact: true }).click(); await expect(hud).toHaveAttribute('data-buildings', '2');
   await expect.poll(async () => Number(await hud.getAttribute('data-depot')), { timeout: 8000 }).toBeGreaterThan(0);
   await expect(page.locator('.ground-survey')).toHaveAttribute('data-resource', 'iron');
   await page.keyboard.press('b'); await page.keyboard.down('d');
@@ -27,7 +29,7 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   const reserve = await page.locator('.ground-survey').getAttribute('data-remaining'), ore = await hud.getAttribute('data-depot');
   await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(17); expect(saved.world.surfaceDeposits[0].remaining).toBeLessThan(180);
+  expect(saved.version).toBe(18); expect(saved.world.surfaceDeposits[0].remaining).toBeLessThan(180);
   expect(saved.world.colony.buildings[1].depositId).toBe(1);
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/planetary-mining.png' });

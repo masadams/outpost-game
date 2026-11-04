@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { createWorld } from '../../src/sim/world';
 import { WORLD } from '../../src/sim/config';
 import { encodeCheckpoint } from '../../src/persistence/checkpoint';

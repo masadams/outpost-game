@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test } from './game';
 import { TestPilot } from '../helpers/pilot';
 import { createShip } from '../../src/sim/physics';
 import { planetAt, relative, surfacePosition, type BodyId } from '../../src/sim/celestial';
@@ -66,7 +67,7 @@ test('flies to the moving moon, builds supplied mining, saves both colonies, car
   await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
   await tap(page, 't'); await page.getByLabel('Blueprint category', { exact: true }).selectOption('power'); await page.locator('[data-select="solar"]').click({ force: true }); await advance(page, 100); await tap(page, 'Enter'); await expect(hud).toHaveAttribute('data-buildings', '2'); await tap(page, 'b');
   await advance(page, 8000); await tap(page, 'p'); await tap(page, 'k');
-  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(save.version).toBe(17); expect(save.world.objectives.completed).toContain('moonWork');expect(save.world.moon.depot.ice).toBeGreaterThan(0); expect(save.world.depot.ice).toBe(0); expect(save.world.moon.surfaceDeposits[0].remaining).toBeLessThan(180); expect(save.world.colony.buildings).toHaveLength(0);
+  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(save.version).toBe(18); expect(save.world.objectives.completed).toContain('moonWork');expect(save.world.moon.depot.ice).toBeGreaterThan(0); expect(save.world.depot.ice).toBe(0); expect(save.world.moon.surfaceDeposits[0].remaining).toBeLessThan(180); expect(save.world.colony.buildings).toHaveLength(0);
   await page.getByRole('button', { name: 'Manage', exact: true }).click({ force: true }); await advance(page, 100);
   await expect(page.locator('#command-console')).toContainText('COMMAND · NACRE COLONY');
   await page.getByRole('combobox', { name: 'Command colony', exact: true }).selectOption('home'); await advance(page, 100); await expect(page.locator('#command-console')).toContainText('COMMAND · SELENE COLONY');

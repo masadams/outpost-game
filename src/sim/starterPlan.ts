@@ -3,11 +3,13 @@ import { TECHNOLOGIES, UPGRADES, PROGRESSION } from './progressionConfig';
 import { availableProduct, policyFor } from './colonyPolicy';
 import { operational } from './buildingHealth';
 import { emptyInventory, RESOURCES } from './resources';
+import { RECOVERY } from './combatConfig';
+import { fittedPart } from './shipStats';
 import type { WorldState } from './world';
 
 /** Remaining bill for a home solar/refinery → materials research → cargo-rack route.
  * Paid orders count as committed work, never as completed/working facilities. */
-export function starterPlan(source: WorldState) {
+export function starterPlan(source: WorldState,includeRecovery=false) {
   const w = source.rootWorld ?? source, c = w.colony;
   const required = Object.fromEntries(PRODUCTS.map(p => [p, 0])) as ProductInventory;
   const missing: string[] = [], pending: string[] = [];
@@ -24,8 +26,9 @@ export function starterPlan(source: WorldState) {
     if (project) pending.push('Applied materials: paid research queued');
     else { add(TECHNOLOGIES.materials.cost); missing.push('Applied materials research'); }
   }
-  const equipped = w.ship.equipment.includes('cargo');
+  const equipped = !!fittedPart(w.ship,'hold');
   if (!equipped) { add(UPGRADES.cargo.cost); missing.push('Cargo rack'); }
+  if(includeRecovery){add(RECOVERY.cost);missing.push('Recovery spare-parts allowance (not reserved)');}
   const rows = PRODUCTS.filter(p => required[p] > 0).map(product => {
     const usable = availableProduct(c, product), need = required[product];
     return { product, need, usable, shortfall: Math.max(0, need - usable) };

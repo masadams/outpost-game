@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('shows a live coast path and supports keyboard, wheel and button zoom while paused', async ({ page }) => {

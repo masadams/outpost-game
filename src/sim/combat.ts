@@ -2,8 +2,8 @@ import { colonyWorld } from './localWorld';
 import { planetAt } from './celestial';
 import { cargoMass } from './shipMass';
 import { nearestPlanet, relative, surfacePosition } from './celestial';
-import { equipped } from './shipStats';
-import { createCombat, SHIP_WEAPONS, type CombatAction, type Drone } from './combatConfig';
+import { cannonStats, thermalStats } from './shipStats';
+import { createCombat, SHIP_WEAPONS, RECOVERY, type CombatAction, type Drone } from './combatConfig';
 import { createShip, telemetry } from './physics';
 import { shipMass } from './shipMass';
 import { heading, length, localAngle, wrap } from './math';
@@ -32,16 +32,16 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     world = colonyWorld(world, 'home');
     if (s.state !== 'crashed') { notify(world, 'RECOVERY IS FOR A LOST SHIP · LAND AND E FOR SERVICE'); return; }
     const stock = world.colony.products;
-    if (stock.alloy < 8 || stock.components < 2) { notify(world, 'RECOVERY NEEDS 8 ALLOY + 2 COMPONENTS · L LOADS CHECKPOINT · R RESETS'); return; }
-    if (availableProduct(world.colony, 'alloy') < 8 || availableProduct(world.colony, 'components') < 2) { notify(world, 'RECOVERY MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN COLONY'); return; }
-    stock.alloy -= 8; stock.components -= 2; c.lostCargo += cargoMass(s); c.recoveries++;
+    if (stock.alloy < RECOVERY.cost.alloy || stock.components < RECOVERY.cost.components) { notify(world, `RECOVERY NEEDS ${RECOVERY.cost.alloy} ALLOY + ${RECOVERY.cost.components} COMPONENTS · L LOADS CHECKPOINT · R RESETS`); return; }
+    if (availableProduct(world.colony, 'alloy') < RECOVERY.cost.alloy || availableProduct(world.colony, 'components') < RECOVERY.cost.components) { notify(world, 'RECOVERY MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN BUILD'); return; }
+    stock.alloy -= RECOVERY.cost.alloy; stock.components -= RECOVERY.cost.components; c.lostCargo += cargoMass(s); c.recoveries++;
     releaseTow(world, true);
     c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
-    const recovered = createShip(), home = planetAt('home', world.system); recovered.ground = 'home'; recovered.position = surfacePosition(home, 0, WORLD.shipRadius); recovered.velocity = { ...home.velocity }; recovered.hull = 30; recovered.fuel = Math.min(s.fuel, 20);
+    const recovered = createShip(), home = planetAt('home', world.system); recovered.ground = 'home'; recovered.position = surfacePosition(home, 0, WORLD.shipRadius); recovered.velocity = { ...home.velocity }; recovered.hull = RECOVERY.hull; recovered.fuel = Math.min(s.fuel, RECOVERY.fuel);
     recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig; recovered.equipment = [...s.equipment];
     world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { ...home.velocity }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
     world.defence.controlled = null; world.colony.buildOpen = false; world.depotOpen = false;
-    notify(world, 'RECOVERED AT HOME · CARGO LOST · HULL 30 · E USES SUPPLIES TO SERVICE'); return;
+    notify(world, `RECOVERED AT HOME · CARGO LOST · HULL ${RECOVERY.hull} · E USES SUPPLIES TO SERVICE`); return;
   }
   if (world.playerMode !== 'ship' || s.state !== 'flying' || telemetry(s, WORLD.shipRadius, world.system).altitude < 200) { notify(world, 'LAUNCH ABOVE 200 m BEFORE STARTING A PATROL · SAVE WITH K FIRST'); return; }
   if (c.enemies.length || c.projectiles.length) { notify(world, 'FINISH OR DISENGAGE THE CURRENT PATROL FIRST'); return; }
@@ -58,7 +58,7 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
 }
 function fireShip(world: WorldState): void {
   const s = world.ship, a = s.armament, spec = SHIP_WEAPONS[a.selected], c = world.combat;
-  const boosted = a.selected === 'cannon' && equipped(s, 'coil'), energy = boosted ? 12 : spec.energy, heat = boosted ? 22 : spec.heat, damage = boosted ? 24 : spec.damage;
+  const shot = a.selected === 'cannon' ? cannonStats(s) : spec, { energy, heat, damage } = shot;
   if (world.playerMode !== 'ship' || s.state !== 'flying' || a.cooldown > 1e-9 || a.overheated || a.energy + 1e-9 < energy || a[a.selected] < 1 || c.projectiles.length >= 96) return;
   const n = heading(s.angle), at = { x: s.position.x + n.x * 13, y: s.position.y + n.y * 13 };
   const target = a.selected === 'missile' ? c.enemies.filter(d => d.hull > 0 && Math.hypot(d.position.x - at.x, d.position.y - at.y) < 1400 &&
@@ -73,9 +73,9 @@ export function stepCombat(world: WorldState, fire: boolean, dt: number, starts:
   const c = world.combat, s = world.ship, a = s.armament;
   c.furthestAltitude = Math.max(c.furthestAltitude, telemetry(s, WORLD.shipRadius, world.system).altitude);
   c.flashes = c.flashes.filter(f => (f.life -= dt) > 0);
-  a.cooldown = Math.max(0, a.cooldown - dt); a.heat = Math.max(0, a.heat - (equipped(s, 'cooling') ? 30 : 20) * dt);
+  a.cooldown = Math.max(0, a.cooldown - dt); a.heat = Math.max(0, a.heat - thermalStats(s).cooling * dt);
   if (a.overheated && a.heat <= 35) a.overheated = false;
-  if (s.state !== 'crashed') a.energy = Math.min(100, a.energy + (equipped(s, 'cooling') ? 9 : 12) * dt);
+  if (s.state !== 'crashed') a.energy = Math.min(100, a.energy + thermalStats(s).recharge * dt);
   const enemyStarts = new Map(c.enemies.map(d => [d.id, { ...d.position }])), live: Drone[] = [];
   for (const d of c.enemies) {
     const old = enemyStarts.get(d.id)!, result = stepDrone(world, d, dt);

@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('builds and controls a turret, defends an opt-in drill, then saves the resolved world', async ({ page }) => {

@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { createWorld } from '../../src/sim/world';
 import { applyColonyAction } from '../../src/sim/colony';
 import { WORLD } from '../../src/sim/config';
@@ -27,7 +28,7 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   await page.getByRole('button', { name: 'Enable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText('HABITAT AIR');
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(17); expect(saved.world.colony.buildings[1].habitat.oxygen).toBeGreaterThan(.6);
+  expect(saved.version).toBe(18); expect(saved.world.colony.buildings[1].habitat.oxygen).toBeGreaterThan(.6);
   expect(saved.world.colony.products.oxygen).toBeLessThan(2); expect(saved.world.colony.oxygenUsed).toBeGreaterThan(0);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(oxygen).toContainText('HABITAT AIR');
   expect(await hud.getAttribute('data-oxygen')).toBe(saved.world.astronaut.oxygen.toFixed(2)); expect(errors).toEqual([]);
