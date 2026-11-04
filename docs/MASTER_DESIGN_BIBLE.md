@@ -6,6 +6,24 @@
 
 > **North star:** Begin with one small lander and a precarious outpost. By learning to fly, mine, build, research, and explore, develop a persistent network of ships, installations, and settlements across a vast, physically navigable 2D universe. The same player who commands an interstellar industrial network can still manually pilot a fragile lander down to an unexplored world.
 
+## Defining identity — agreed core principle (2026-11-04)
+
+> **Don't just explore space. Engineer it.**
+
+Outpost's reason to play is **creative engineering through interacting physical systems**: players understand the universe, invent solutions with the machinery available, and build a civilization whose persistent history reflects their own decisions. Every object has a purpose the player can discover—or invent. This identity governs every major feature and future development decision.
+
+**Implement capabilities rather than prescribed solutions.** Favor a smaller set of multipurpose physical components with understandable properties over a large catalogue of isolated, single-purpose mechanics. An engine produces thrust, a laser transfers energy, a cable applies tension, a battery stores electrical energy and a sensor measures the world. Useful combinations and real constraints should let players devise approaches the developer did not explicitly script.
+
+**Central pillars and proof tests:**
+- **Multipurpose engineering and player-invented solutions:** Do components support multiple useful applications, and can a player combine or repurpose them to solve a problem? Mounts, mass, fuel, energy, heat and interface clarity provide constraints; an arbitrary free-form editor is not required.
+- **Emergent ingenuity:** Can players discover a viable, understandable solution that was not prescribed by a mission, recipe or single unlock? Look for “I discovered I could do this,” beyond “I finally unlocked this.”
+- **Physical satisfaction:** Are flying, mining, constructing and manipulating objects enjoyable even without progression rewards? Each individual system—including research and exploration—must be excellent in its own right.
+- **Personal persistent history:** Can players revisit and tell a causal story about something they actually built, changed, saved or destroyed? Their infrastructure, scars and recovered objects should retain meaning across travel and current-version save/load.
+
+**Overriding priority: depth, ingenuity and excellent gameplay before expansion in scale.** Prove these qualities in the first mining flight, physical asteroid storm and other-world expedition before multiplying planets, modules or technologies. A larger universe must grow from compelling small-scale interactions.
+
+These are agreed design principles and evaluation criteria, not claims of implemented behavior. The [distinctiveness document](DISTINCTIVE_EXPERIENCE.md#10-agreed-identity-and-proof-tests) supplies review evidence; the [roadmap](MASTER_ROADMAP.md#core-identity-acceptance-gate-all-phases) makes the gate actionable. Existing pillars, the four-part feature test and open decisions below remain in force.
+
 ## 1. Authority and document conventions
 This document captures the agreed **vision**, candidate mechanics, and open design decisions from brainstorming. It does not assert that every described mechanic is built. The repository's code, tests, and feature-specific docs are authoritative for **current implementation**. This bible guides design; [MASTER_ROADMAP.md](MASTER_ROADMAP.md) decomposes that vision into phases and implementable slices.
 
@@ -176,6 +194,17 @@ Candidate facilities by function:
 
 Buildings should be introduced in response to needs. The first Observatory's warning creates demand for tracking and defense; defending creates demand for power; impacts leave resources that support new technology. Introduce buildings with clear inputs, outputs, control affordances, range/power constraints and persistent states.
 
+### 9.1 Planetary energy and thermal engineering
+**Preferred direction:** Expand power and infrastructure into a branching energy discipline. See [Planetary Energy Systems](ENERGY_SYSTEMS.md) for generation roles, planetary suitability, fuel/waste, grids, storage, cooling, recovery and testable accounting contracts. These are future design directions; the present alpha's solar, finite storage, per-colony energy and dispatch remain the foundation.
+
+Solar/batteries support cheap modular bootstrap industry; radioisotope generators sustain low-load remote equipment; fission supplies fuel-dependent industrial baseload; surveyed geothermal sites and atmospheric wind offer local alternatives. Fusion is an **exploratory late-game option**, not an unlimited universal upgrade. Planetary illumination, darkness, atmosphere, weather, accessible geology and ambient temperature determine sensible combinations. Earlier technologies retain roles at small or isolated sites.
+
+Generation is only part of the system. Capacity and discharge rate are separate storage limits; connections can constrain delivery; essential loads and restart reserves compete with industry and defense. Introduce physical districts/relays progressively from the existing shared bus, with clear placement and failure feedback. No remote-view action transfers electricity between worlds.
+
+Waste heat ties generators, industry, weapons, habitats and ships together. Vacuum installations need radiative rejection; atmospheric cooling depends on the actual environment. Coolant transfers heat to a finite sink. Fission retains residual heat after shutdown; fuel, spent material and service supplies require real inventories. Start with warnings, derating and recoverable shutdowns; hazardous cascades remain an open severity decision.
+
+Energy should deepen the three signature slices: power the first useful construction, budget defense bursts through an asteroid storm and prepare a self-sufficient expedition. Prototype simple reserve/cooling choices before broad technology content. Exact fuel recipes, thermal detail, failure severity and optional storage families are unresolved, not implementation commitments.
+
 ## 10. Asteroid storm and planetary defense — signature system
 The storm is an **event involving physical bodies**, not an animated damage roll.
 
@@ -274,6 +303,14 @@ This is a summary of repository documentation, **not an independently completed 
 | D-10 | Narrative mysteries | Optional ancient structures/signals and degree of authored content |
 | D-11 | Save determinism | Boundary between reproducible event seeds and persisted event outcomes |
 | D-12 | Multiplayer | Explicitly deferred; do not constrain first-game design without evidence |
+| D-13 | Water, fluids and life-support scope | Agreed: simple conserved fluids with shared finite inputs. Exact conversions, connections, phase changes and expanded habitation remain open |
+| D-14 | Shared planetary environment | Prefer correlated surveyed conditions used by flight, power, cooling and geology; simulation depth TBD |
+| D-15 | Foundations, excavation and structure | Extend current terrain/placement first; underground space, collapse and structural simulation exploratory |
+| D-16 | Failure severity and recovery | Agreed: recoverable failures as the initial baseline, with warnings, derating and safe shutdown. Escalation beyond this baseline needs explicit review; exact recovery/fallback rules remain open |
+| D-17 | Manufacturing depth and resource exhaustion | Prefer short meaningful chains and geology-linked deposits; depletion/renewal and bootstrap guarantees TBD |
+| D-18 | Automation operating contract | Agreed: bounded automation with finite supplies and explicit operating limits. Exact jobs, abort thresholds, communications and attention policy remain open |
+
+See [Cross-cutting Gameplay Design Questions](DESIGN_QUESTIONS.md) for prioritized prompts, proposed starting points and prototype tests. The four starting directions for D-08, D-13, D-16 and D-18 were agreed on 2026-11-04; detailed implementation rules remain open. Resolve player identity and the remaining time/failure contracts before committing detailed remote energy operations. Other recommendations remain proposals.
 
 ## 17. Product test: what success feels like
 The first 10–15 minutes teach a viable sortie, resource collection, landing and a meaningful construction choice. In the first extended session, the player discovers a looming event, understands how to prepare and survives it with consequential outcomes. Subsequent play creates genuine reasons to explore a moon, modify a ship and establish new infrastructure. At late game, the player has a living network of useful facilities, yet manual flight, difficult landings and local exploration remain fun.
