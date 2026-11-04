@@ -13,7 +13,7 @@ export function recoveryReadiness(source:WorldState){
  const w=source.rootWorld??source;
  const rows=(['alloy','components'] as const).map(product=>({product,need:RECOVERY.cost[product],stock:w.colony.products[product],usable:availableProduct(w.colony,product),shortfall:Math.max(0,RECOVERY.cost[product]-availableProduct(w.colony,product))}));
  const repairHull=w.ship.state==='crashed'?RECOVERY.hull:w.ship.hull;
- return {rows,funded:rows.every(r=>r.shortfall<=1e-9),canRecover:w.ship.state==='crashed'&&rows.every(r=>r.shortfall<=1e-9),hull:RECOVERY.hull,fuel:Math.min(w.ship.fuel,RECOVERY.fuel),lostCargo:cargoMass(w.ship),repairAlloy:Math.max(0,100-repairHull)/10,
+ return {rows,funded:rows.every(r=>r.usable>=r.need),canRecover:w.ship.state==='crashed'&&rows.every(r=>r.usable>=r.need),hull:RECOVERY.hull,fuel:Math.min(w.ship.fuel,RECOVERY.fuel),lostCargo:cargoMass(w.ship),repairAlloy:Math.max(0,100-repairHull)/10,
   rearmAlloy:(SHIP_WEAPONS.cannon.capacity-w.ship.armament.cannon)*SHIP_WEAPONS.cannon.alloy+(SHIP_WEAPONS.missile.capacity-w.ship.armament.missile)*SHIP_WEAPONS.missile.alloy,
   rearmComponents:(SHIP_WEAPONS.missile.capacity-w.ship.armament.missile)*SHIP_WEAPONS.missile.components};
 }

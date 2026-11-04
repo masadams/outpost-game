@@ -3,10 +3,11 @@ import { BLUEPRINTS } from '../sim/colonyConfig';
 import { fuelCapacity } from '../sim/shipStats';
 import type { WorldState } from '../sim/world';
 const fmt=(n:number)=>Number(n.toFixed(2));
+const shortage=(n:number)=>n>0&&n<.01?'&lt;0.01':fmt(n);
 export function readinessPanel(w:WorldState,paused:boolean,requested:number):string{
- const recovery=recoveryReadiness(w),fuel=fuelPlan(w,requested),short=recovery.rows.filter(r=>r.shortfall>1e-9);
- return `<p class="readiness-summary" data-recovery-funded="${recovery.funded}">HOME RECOVERY · ${recovery.funded?'Parts funded':short.map(r=>`short ${fmt(r.shortfall)} kg ${r.product}`).join(' · ')}</p><details class="readiness-panel" data-preserve-open><summary>Expedition readiness & refuelling</summary>
- <h3>Recovery at Selene</h3>${recovery.rows.map(r=>`<p data-recovery-material="${r.product}">${r.product}: need ${r.need} kg · usable ${fmt(r.usable)} / ${fmt(r.stock)} kg · short ${fmt(r.shortfall)} kg</p>`).join('')}
+ const recovery=recoveryReadiness(w),fuel=fuelPlan(w,requested),short=recovery.rows.filter(r=>r.shortfall>0);
+ return `<p class="readiness-summary" data-recovery-funded="${recovery.funded}">HOME RECOVERY · ${recovery.funded?'Parts funded':short.map(r=>`short ${shortage(r.shortfall)} kg ${r.product}`).join(' · ')}</p><details class="readiness-panel" data-preserve-open><summary>Expedition readiness & refuelling</summary>
+ <h3>Recovery at Selene</h3>${recovery.rows.map(r=>`<p data-recovery-material="${r.product}">${r.product}: need ${r.need} kg · usable ${fmt(r.usable)} / ${fmt(r.stock)} kg · short ${shortage(r.shortfall)} kg</p>`).join('')}
  <p>Recovery returns the ship home at ${recovery.hull}% hull and at most ${recovery.fuel.toFixed(1)} kg of its remaining fuel. Fitted parts survive; ${fmt(recovery.lostCargo)} kg cargo would be lost. Capacity upgrades are never filled.</p>
  <p>Full hull repair afterward: up to ${fmt(recovery.repairAlloy)} additional alloy. Full rearm: ${fmt(recovery.rearmAlloy)} alloy + ${fmt(recovery.rearmComponents)} components. These use the same stock; funded recovery alone does not cover them.</p>
  ${w.ship.state==='crashed'?`<button ${paused||!recovery.canRecover?'disabled':''} data-colony="recoverShip">Recover ship with home supplies</button>`:''}

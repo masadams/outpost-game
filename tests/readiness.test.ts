@@ -46,3 +46,9 @@ it('constructs supplied industry, pays recovery/repair and manufactures finite f
  const refinery=w.colony.buildings.find(b=>b.kind==='refinery')!;for(let i=0;i<3;i++)applyFacilityAction(w,refinery,{type:'cycleRecipe'});tick(w,180);refuelShip(w,w.ship.position);
  expect(w.depot.ice).toBe(0);expect(w.ship.fuel).toBeCloseTo(31.25);expect(w.colony.products.fuel).toBe(0);expect(w.colony.products.water).toBeCloseTo(0);expect(w.colony.products.oxygen).toBeCloseTo(4.75);expect(w.ship.fuel+w.colony.products.water+w.colony.products.oxygen).toBeCloseTo(36);expect(w.defence.wave).toBe(0);
 });
+
+it('matches the recovery executor exactly when stock is fractionally below its price',()=>{
+ const w=createWorld();w.ship.state='crashed';w.ship.hull=0;w.colony.products.alloy=RECOVERY.cost.alloy-1e-10;
+ expect(recoveryReadiness(w).funded).toBe(false);expect(recoveryReadiness(w).canRecover).toBe(false);
+ const stock={...w.colony.products};applyCombatAction(w,{type:'recoverShip'});expect(w.combat.recoveries).toBe(0);expect(w.colony.products).toEqual(stock);
+});
