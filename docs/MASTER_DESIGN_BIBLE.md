@@ -1,5 +1,5 @@
 # OUTPOST — Master Game Design Bible
-**Version:** 1.0 (vision draft)  
+**Version:** 1.1 (adopted systems direction; tuning open)  
 **Date:** 2026-11-04  
 **Status:** Living design reference, not an implementation claim  
 **Related:** [Phased roadmap](MASTER_ROADMAP.md) · [Current design](GAME_DESIGN.md) · [Alpha progression](PROGRESSION.md) · [README](../README.md)
@@ -9,7 +9,10 @@
 ## 1. Authority and document conventions
 This document captures the agreed **vision**, candidate mechanics, and open design decisions from brainstorming. It does not assert that every described mechanic is built. The repository's code, tests, and feature-specific docs are authoritative for **current implementation**. This bible guides design; [MASTER_ROADMAP.md](MASTER_ROADMAP.md) decomposes that vision into phases and implementable slices.
 
-Each feature has one of three design statuses:
+Design statuses distinguish commitment from tuning:
+- **Agreed direction** — adopted by the user; implementation timing, fidelity and values still require a reviewed slice.
+
+Other feature statuses:
 - **Core principle** — protect this unless explicitly superseded.
 - **Preferred direction** — strong candidate, needs prototyping or balancing.
 - **Exploratory** — attractive possibility, not committed.
@@ -211,7 +214,7 @@ Ships should feel physically different. Empty cargo capacity is not free cargo; 
 ### 11.2 Operations and recovery
 Docking, latching, towing, fuel transfer, salvage and damaged equipment should obey meaningful restrictions. Running out of fuel may strand the ship in a persistent orbit/trajectory rather than instantly deleting it. Options include rescue flights, refuelling missions, recovery towing or abandonment.
 
-**Open:** whether the player inhabits a single pilot with mortality or commands a network of ships/astronauts; this choice affects remote control, rescue, death and progression.
+**Agreed:** planetary workers physically inhabit, build and maintain outposts (section 20). **Open:** player embodiment, switching control, recruitment and mortality; a populated settlement does not settle those questions.
 
 ## 12. Industrial expansion, logistics and automation
 Early play is hands-on: fly, mine, collect, land, unload, refine, build. Later tools reduce repetition:
@@ -246,7 +249,8 @@ Support mouse/keyboard controls already in the alpha. Player-facing explanations
 The repository reports an Alpha 0.19 preparation state, including:
 - Single-player 2D piloting, radial gravity, atmosphere transitions and manual landings.
 - Ship/surface controls, mining and fracture, ore collection, tractor/tow rig.
-- EVA, oxygen habitat mechanics and resource-based colony construction.
+- Surface astronaut/suit oxygen, oxygen habitats and resource-based colony construction. Free-flight EVA remains future work.
+- Paid construction queues and optional physical dispatch of the existing astronaut: actual walking, stationary work, low-air stop and manual override; not yet a population of autonomous workers.
 - Refining, fuel, power/storage/repair services and Command management.
 - Research lab, ten technologies and sixteen parts across eight slots.
 - Navigation to local orbital sites / nearby moon; finite resources and salvage.
@@ -264,9 +268,9 @@ This is a summary of repository documentation, **not an independently completed 
 | D-04 | Control and automation ceiling | Manual skill stays useful; exact fleet-control capability TBD |
 | D-05 | Combat / hostile factions | Natural hazards primary; optional hostile machines/ships versus deeper faction warfare |
 | D-06 | Start seed variability | Fair but varied starting systems versus fixed home world |
-| D-07 | World terrain geometry | Current radial 2D planetary model should be extended consistently; planet size, wrap and deformability TBD |
+| D-07 | Terrain representation and support fidelity | Persistent excavation/craters and simplified support are agreed; radial geometry, underground representation and failure rules need prototypes |
 | D-08 | Time acceleration | Rules when nearby hazards, automation and physical simulation are active |
-| D-09 | Late-game industrial scope | Automation, carriers, colony packages and replication limits |
+| D-09 | Late-game industrial scope | Moderate processing/manufacturing and earned automation agreed; recipe depth, carriers, packages and replication limits open |
 | D-10 | Narrative mysteries | Optional ancient structures/signals and degree of authored content |
 | D-11 | Save determinism | Boundary between reproducible event seeds and persisted event outcomes |
 | D-12 | Multiplayer | Explicitly deferred; do not constrain first-game design without evidence |
@@ -287,3 +291,59 @@ The strongest design test: **Is the next action motivated by something the playe
 
 ## 19. Distinctive experience and competitive positioning
 Read [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md) as the canonical creative filter for future features. Avoid competing through sheer quantity of ship parts, buildings, factions or planets. Favor physical systemic depth, discovery-driven engineering, a persistent history, and the same continuous experience from first asteroid to multi-star civilization. Treat **asteroids as multipurpose physical objects** that may be mined, studied, destroyed, redirected, deflected or captured—not just hazards or ore pickups. Prioritize the three signature vertical slices (excellent mining sortie, physical asteroid storm, first other-world expedition). A major signature mechanic should generally satisfy at least three of four: physical consequence, meaningful discovery, interesting decision, growing scale. Supporting infrastructure need not pass that creative threshold.
+
+
+## 20. Adopted systems direction — 2026-11-04
+The user adopted the major-system recommendations in the [Brainstorm Outpost Progression discussion](chatgpt-conversation://6aeb57e7-1360-83e9-b3c6-3553aab735be), explicitly including planetary workers and useful habitats. The commitments below are **agreed direction**, not claims of implemented mechanics or approval of every possible subsystem. Exact fidelity, quantities and rollout remain open. [Roadmap slices S0–S6](MASTER_ROADMAP.md#integrated-systems-vertical-slices-s0s6) turn them into bounded experiments.
+
+**Overriding gate:** physical consequence, meaningful discovery, interesting decision, growing scale. Signature features should normally satisfy at least three; explain exceptions for supporting infrastructure. Optimize interaction depth over breadth. Outpost must avoid becoming a 2D facsimile of No Man's Sky or Factorio. Prove a small world worth inhabiting before multiplying planets, recipes or worker needs.
+
+| System | Agreed direction and useful interaction | Details still open |
+|---|---|---|
+| Environment | Atmosphere/density, pressure, temperature, sunlight and radiation change flight, equipment and habitability; wind/weather where they create choices | Spatial resolution, gas composition, weather severity and exposure model |
+| Thermal / waste heat | Engines, emitters, reactors and industry produce heat; storage, transfer and rejection limit sustained output, especially in vacuum | Thermal nodes, radiator sizing, coolant abstraction and damage thresholds |
+| Water / liquids | Mine ice, process/store water and gases, consume them in life support, fuel and industry with simplified fluid handling | Tanks versus shared stocks, pipes, phase changes and leakage fidelity |
+| Terrain / structures | Persistent excavation, underground space and impact craters introduced progressively; simple foundations, support/connectivity and repairable component damage with bounded salvage | Surface/volume representation, collapse extent, bracing and underground pressure boundaries |
+| Geology / industry | Planet conditions inform finite mineral distribution; moderate chains from ore to useful materials/components and applications | Recipe counts, specialist facilities, chemistry and local processing efficiencies |
+| Power | Solar/storage, radioisotope, fission, geothermal, suitable atmospheric wind and late fusion form a diverse portfolio | Unlock order, rates, fuel availability and distribution topology |
+| Logistics | Physical local haulage and ship freight connect buildings/worlds; local processing competes with hauling raw material | Local bus replacement, vehicles, routing, loading and throughput |
+| Sensors | Radar tracks motion, telescopes find distant objects, prospectors reveal geology, probes measure local conditions | Coverage, uncertainty, scan times and sensor fusion |
+| Communications | Relays carry observations, commands and operational status; autonomous policies bridge interruptions | Range, line of sight, latency and control-switch rules; avoid frustrating loss of agency |
+| Time / interstellar travel | Travel consumes world time; acceleration and advanced propulsion reduce empty waiting while retaining consequences | Drive mechanism, distance compression, warp safety and interstellar clock semantics |
+| Automation | Earned, supplied tools reduce repeated work while manual flight/building remain useful | Scheduling, autonomy ceiling, remote exceptions and recovery policies |
+| Workers / population | People physically travel, build, operate where useful, maintain and repair structures; habitats support their lives and working reach | Recruitment, roles, staffing requirements, rest/food, mortality and population cap |
+
+### 20.1 Workers and habitats are a coupled physical system
+Extend [direct crew controls](DIRECT_CONTROLS.md), [paid Command work](COMMAND.md) and [oxygen habitats](HABITATS.md); preserve their resource accounting and manual control. Current alpha dispatch controls the existing astronaut, not a newly implemented labour population. Current domes provide paid breathable coverage, not complete shelters, residential capacity or automatic suit refills.
+
+A future job follows **plan → reserve local inputs → assign reachable equipped worker → travel → perform supplied work → commit result → return/service or take another safe job**. Construction, maintenance, repairs, hauling and selected equipment operations use the same job vocabulary. Each job exposes its executor, location/world, required materials/tools/power, travel/work estimate and blocked reason. Delivered material and paid work remain distinct; cancellation, damage and reassignment must have explicit escrow/salvage rules.
+
+Workers are world occupants with position, health, suit supplies and travel constraints. They cannot construct from orbit, teleport between planets or finish work while travelling. Ships carry workers and supplies with real capacity/mass costs. Surface walking is the starting extension; free-flight EVA, airlocks and orbital work come later with propulsion, oxygen, access and rescue constraints. Not every machine needs a permanently staffed operator: define which jobs require people and which supplied machines already run unattended.
+
+Habitats provide **oxygen, adequate pressure, thermal shelter, appropriate radiation protection, power-dependent life support and finite living/crew capacity**. Shelter/protection must be explicitly engineered; current breathable roofs do not already provide it. Population capacity is limited by usable habitable space and actual life-support throughput, not a free production multiplier. Food/rest may use a simple settlement supply model if prototypes justify them; dozens of individual needs are outside the intended direction.
+
+Practical worker range comes from safe routes, travel speed, suit endurance, return/service margin, tools and environmental exposure. Habitats, shelters and supplied service points extend that reach. Productivity emerges from time spent travelling, working, resupplying and sheltering, plus equipment availability. Moving a habitat closer to a remote work site can reduce travel and increase useful work; an arbitrary global efficiency aura cannot substitute for this.
+
+Orders should estimate a safe return before departure, re-evaluate conditions during work and visibly stop/re-route/seek shelter when the configured safety margin fails. The current alpha low-air stop does not automatically return a worker or guarantee survival. The future safety policy needs explicit prototypes for blocked paths, depleted shelters, lost power/communications and rescue. Explain risk before dispatch; allow manual intervention without concealing costs.
+
+### 20.2 Power, heat and industry must create alternatives
+Solar depends on illumination, distance and local conditions; batteries store rather than generate energy. Radioisotope units suit small remote loads; fission provides sustained output at fuel, shielding, cooling and maintenance cost. Geothermal depends on surveyed geology; wind requires suitable atmosphere/weather; fusion is a costly late capability. No source is universally best, and these are staged options rather than a requirement to ship all generators at once.
+
+Use a small material chain such as **finite ore/ice → alloy/wire/water/oxygen → components/fuel → equipment, shelter or repair** before adding specialization. Retain existing alpha recipes, ship thermal trade-offs and colony grids until a reviewed extension changes them. A refinery's heat, a radiator's siting, crew access and a supply route should interact; a vast conveyor catalogue or chemistry simulator is not the objective.
+
+### 20.3 Time, information and remote work share one causal world
+Elapsed simulation time advances production, wear, crew consumption, travel, orbital motion and hazards consistently. Pause advances none. Time acceleration cannot grant free production or skip an unsafe encounter. Coarse remote simulation may aggregate jobs but must retain worker availability, transport time, supplies, outages and event outcomes; it cannot turn workers into abstract bonuses.
+
+Sensors report measured/estimated knowledge, not perfect omniscience. Communications loss makes displayed information stale and queues or rejects new commands explicitly; supplied local safety policies continue according to a declared autonomy model. Exact light-speed delays remain open. Remote planning should remain usable without pretending that a command instantly moves cargo or labour.
+
+### 20.4 Remaining decision register
+| ID | Open implementation choice | Evidence needed before locking it |
+|---|---|---|
+| D-13 | Worker acquisition, roles, control, death/recovery and staffing | Small crew playtest; preserve a recovery path without mandatory micromanagement |
+| D-14 | Habitat capacity, occupancy, shelter, service and safe work radius | S1 travel/air/outage measurements; no passive aura |
+| D-15 | Environmental/thermal resolution and pressure volumes | S2 vacuum/atmosphere comparison and bounded performance |
+| D-16 | Excavation, underground geometry and support failure | S3 permanent crater, undermined foundation and repair trial |
+| D-17 | Moderate manufacturing depth and logistics topology | S4 raw-versus-processed freight comparison |
+| D-18 | Communication interruption and local autonomy | S5 stale-data, queued-order and emergency behavior trial |
+
+D-01/D-02/D-08 still govern interstellar drive, scale and accelerated time. Adopting interstellar travel does not choose an FTL method. These open details do not reopen the agreed systems direction.

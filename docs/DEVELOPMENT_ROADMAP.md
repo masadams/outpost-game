@@ -4,6 +4,9 @@
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
+## Long-horizon systems planning
+The [planning bible section 20](MASTER_DESIGN_BIBLE.md#20-adopted-systems-direction--2026-11-04) records the user's adopted environmental, terrain, moderate industry, power, logistics, sensors, communications, time/travel and physical worker direction. The [integrated S0–S6 slices](MASTER_ROADMAP.md#integrated-systems-vertical-slices-s0s6) extend existing paid crew work and oxygen habitats into useful inhabited settlements. These are future reviewed slices, not completed alpha milestones or a replacement for current release work. Implementation values and fidelity remain open.
+
 ## Progress rules
 - [ ] means not completed; [x] means implemented, tested and merged.
 - Work on one milestone at a time; document deviations and known issues.
