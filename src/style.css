@@ -42,8 +42,8 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
 .instruments strong small { font-size: 10px; }
 #flight-status { position: fixed; bottom: 151px; left: 24px; right: 184px; font-size: 10px; line-height: 1.5; color: #b3d1e0; width: fit-content; max-width: calc(100vw - 208px); background: #091925b0; padding: 3px 6px; }
 #combat-status { position: absolute; bottom: 43px; left: 24px; right: 184px; font-size: 10px; color: var(--mint); letter-spacing: .6px; }
-footer { position: absolute; bottom: 16px; left: 24px; right: 184px; font-size: 10px; color: var(--muted); }
-footer p { margin: 0; line-height: 1.5; }
+#hud > footer { position: absolute; bottom: 16px; left: 24px; right: 184px; font-size: 10px; color: var(--muted); }
+#hud > footer p { margin: 0; line-height: 1.5; }
 #operations-dock { position: absolute; top: 116px; right: 24px; width: 320px; max-height: calc(100vh - 300px); overflow-y: auto; pointer-events: auto; background: var(--panel); border: 1px solid var(--edge); font-size: 11px; line-height: 1.7; scrollbar-color: #557485 #091925; box-shadow: 0 12px 24px #02070c55; }
 .dock-heading { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--edge); background: #102432; z-index: 1; letter-spacing: 2px; color: var(--mint); font-size: 10px; }
 .dock-heading button { padding: 4px 6px; font-size: 10px; letter-spacing: 0; }
@@ -89,7 +89,7 @@ footer p { margin: 0; line-height: 1.5; }
   .instruments strong { font-size: 15px; }
   #flight-status { left: 16px; right: 16px; bottom: 147px; max-width: calc(100vw - 32px); }
   #combat-status { left: 16px; right: 16px; bottom: 46px; font-size: 9px; }
-  footer { left: 16px; right: 16px; bottom: 14px; font-size: 9px; }
+  #hud > footer { left: 16px; right: 16px; bottom: 14px; font-size: 9px; }
 }
 @media (max-width: 560px) {
   h1 { font-size: 18px; } #hud-context { font-size: 9px; }
@@ -244,7 +244,7 @@ h1 { font-size: 21px; letter-spacing: 2px; }
 #flight-status { left: 20px; right: auto; bottom: calc(100px + var(--telemetry-height)); max-width: min(34vw,520px); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #navigation-guidance { left: 20px; bottom: calc(126px + var(--telemetry-height)); max-width: min(34vw,520px); font-size: 12px; }
 #combat-status { left: 20px; font-size: 11px; }
-footer { left: 20px; font-size: 11px; }
+#hud > footer { left: 20px; font-size: 11px; }
 #settings, #help { background: #091925; color: #e3eff2; width: min(820px,calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid var(--mint); border-radius: 8px; font-size: calc(13px * var(--text-scale)); padding: 24px; line-height: 1.6; }
 #settings::backdrop, #help::backdrop { background: #030812eb; }
 #settings h2, #help h2 { font-size: 1.35em; color: var(--mint); }
@@ -272,7 +272,7 @@ footer { left: 20px; font-size: 11px; }
  #sound-panel input { width: 42px; }
  #flight-tools button { padding: 7px 5px; }
  #flight-tools span { min-width: 60px; }
- footer { bottom: 12px; max-height: 32px; overflow: auto; font-size: 10px; }
+ #hud > footer { bottom: 12px; max-height: 32px; overflow: auto; font-size: 10px; }
  #combat-status { bottom: 38px; font-size: 10px; }
 }
 @media (max-width:1100px) { #flight-region { display: inline-block; font-size: 9px; margin-left: 3px; padding: 3px; } h1 { letter-spacing: 1px; font-size: 19px; } }
@@ -339,3 +339,142 @@ footer { left: 20px; font-size: 11px; }
 #objective-panel .budget-spares { display:flex;gap:8px;align-items:center;line-height:1.4; }
 
 #objective-panel article, #objective-panel button { scroll-margin-top:56px; }
+
+/* Large planning workspace. World placement stays compact; flight keeps its own HUD. */
+.ui-icon { width:22px;height:22px;flex:0 0 22px;vertical-align:middle; }
+.sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;}
+#operations-dock[data-expanded=true] {position:fixed;top:84px;left:3vw;right:3vw;width:auto;max-width:1600px;margin-inline:auto;height:calc(100dvh - 108px);max-height:none;background:#091923f5;z-index:25;box-shadow:0 0 0 100vmax #02090eaa,0 20px 80px #000b;}
+#operations-dock[data-expanded=true] > section {padding:18px 24px;}
+.dock-heading {gap:8px;}
+.dock-heading > span {margin-right:auto;}
+.dock-heading button {font-size:12px;white-space:nowrap;}
+#command-console .manage-sections {display:flex;gap:6px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--edge);margin-bottom:10px;}
+#command-console .manage-sections button {display:flex;align-items:center;gap:8px;width:auto;flex:1;justify-content:center;padding:10px 12px;margin:0;white-space:nowrap;}
+#command-console button[aria-pressed=true] {border-color:var(--mint);background:#174039;box-shadow:inset 0 -2px var(--mint);}
+#command-console > [data-workspace-page][hidden] {display:none;}
+#command-console > details[data-workspace-page] > summary {display:none;}
+.workspace-intro {display:flex;gap:16px;justify-content:space-between;align-items:center;}
+#command-console .workspace-intro h2 {font-size:1.5em;line-height:1.3;margin:8px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+#command-console .workspace-intro h2 small {font-size:.6em;color:var(--dim);}
+#command-console .workspace-intro label {min-width:170px;letter-spacing:0;}
+.workspace-hint,.tree-caption {color:#9bb1bf;font-size:.9em;line-height:1.6;}
+.research-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,340px);gap:20px;align-items:start;}
+.tree-legend {display:flex;flex-wrap:wrap;gap:12px;font-size:.85em;padding:10px 0;color:#b4cbd4;}
+.tree-viewport {overflow:auto;overscroll-behavior:contain;border:1px solid var(--edge);border-radius:8px;background:radial-gradient(#47617344 1px,transparent 1px) 0 0/18px 18px,#07131d;height:clamp(280px,54vh,680px);scrollbar-color:#6d9d9b #0b202d;scroll-padding:18px;}
+.tech-board {position:relative;width:1050px;height:680px;}
+.tree-connections {position:absolute;width:1050px;height:680px;pointer-events:none;overflow:visible;}
+.tree-connections path {fill:none;stroke:#435765;stroke-width:2;}
+.tree-connections path.unlocked {stroke:#6bbfa2;stroke-width:3;}
+#command-console button.tech-node {position:absolute;width:182px;height:112px;display:grid;grid-template-columns:24px 1fr;gap:4px 8px;align-content:center;text-align:left;padding:10px;margin:0;background:#102534;border:1px solid #4a606f;border-radius:6px;line-height:1.3;font-size:calc(12px * var(--text-scale));}
+#command-console .tech-node .ui-icon {grid-row:1/3;color:#a2c9cd;}
+#command-console .tech-node strong {font-weight:500;overflow-wrap:anywhere;}
+#command-console .tech-node small {font-size:.8em;line-height:1.3;}
+#command-console .tech-node[data-state=locked] {border-style:dashed;color:#a2b4c0;}
+#command-console .tech-node[data-state=ready] {border-color:#68b6ba;}
+#command-console .tech-node[data-state=complete] {border-color:#78d2ad;}
+#command-console .tech-node[data-state=queued],#command-console .tech-node[data-state=paused] {border-color:#e5b66e;}
+#command-console .tech-node[data-match=false]:not([aria-pressed=true]) {opacity:.55;}
+#command-console .tech-node:hover,#command-console .tech-node:focus-visible {outline:2px solid #d7edf0;outline-offset:3px;z-index:2;}
+#command-console .selection-inspector {border:1px solid #41616e;border-radius:8px;background:#10232dcc;padding:18px;margin:0;min-width:0;}
+.selection-inspector h2 {display:flex;align-items:center;gap:10px;font-size:1.25em;line-height:1.35;margin:10px 0 18px;}
+.selection-inspector .eyebrow {color:var(--mint);font-size:.8em;letter-spacing:1px;}
+#command-console .selection-inspector h3 {font-size:.9em;color:#b4cbd4;margin:18px 0 8px;}
+#command-console .unlock-list {list-style:none;padding:0;margin:0;}
+.unlock-list li {display:flex;gap:8px;align-items:center;}
+#command-console .unlock-list button {margin:3px 0;background:transparent;border-color:transparent;color:#d3e5e9;}
+#command-console .unlock-list button:hover {border-color:var(--edge);}
+.material-cost {display:flex;flex-wrap:wrap;gap:6px;}
+.cost-chip {display:inline-flex;align-items:center;gap:6px;background:#091923;border:1px solid #3a5663;padding:5px 7px;border-radius:4px;font-size:.88em;}
+.cost-chip .ui-icon {width:16px;height:16px;flex-basis:16px;}
+#command-console .primary-action {margin-top:18px;padding:12px;background:#21423c;border-color:#77bda6;text-align:center;}
+.action-reason {font-size:.85em;color:#e5be88;line-height:1.5;}
+.status-complete {color:var(--mint);}
+.fitting-layout {display:grid;grid-template-columns:180px minmax(180px,1fr) minmax(270px,380px);gap:20px;align-items:start;}
+#command-console .slot-list button {display:flex;align-items:center;gap:10px;padding:12px 8px;margin:0 0 6px;line-height:1.35;}
+#command-console .slot-list small {font-size:.75em;margin-top:4px;color:#9ab4c0;}
+#command-console .part-card {display:flex;align-items:center;gap:12px;min-height:82px;border-radius:5px;margin:0 0 10px;}
+#command-console .part-card small {margin-top:6px;font-size:.8em;}
+#command-console .part-catalogue h3 {margin-top:0;}
+#command-console .slot-select {display:none;}
+#command-console .part-comparison {table-layout:auto;font-size:.85em;}
+.part-comparison caption {text-align:left;color:var(--mint);padding:12px 0;}
+.part-comparison th,.part-comparison td {width:33%;padding:8px 5px!important;}
+.part-tradeoff {color:#e5be88;font-size:.9em;}
+#operations-dock[data-expanded=false] .research-layout,#operations-dock[data-expanded=false] .fitting-layout {grid-template-columns:minmax(0,1fr);}
+#operations-dock[data-expanded=false] .slot-list {display:none;}
+#operations-dock[data-expanded=false] .slot-select {display:block;}
+#operations-dock[data-expanded=false] .workspace-intro {display:block;}
+@media(max-width:1050px){
+ #operations-dock[data-expanded=true] {left:12px;right:12px;top:82px;height:calc(100dvh - 96px);}
+ #operations-dock[data-expanded=true] > section {padding:12px;}
+ .fitting-layout {grid-template-columns:minmax(180px,1fr) minmax(260px,1fr);gap:12px;}
+ .slot-list {grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;}
+ #command-console .slot-list button {font-size:.8em;padding:8px;}
+ #command-console .slot-list small {display:none;}
+ .research-layout {grid-template-columns:minmax(0,1fr) minmax(260px,42%);gap:12px;}
+ #command-console .manage-sections button {padding:8px;font-size:.85em;gap:5px;}
+}
+@media(max-width:680px){.research-layout,.fitting-layout {grid-template-columns:minmax(0,1fr);}.slot-list{grid-template-columns:repeat(2,minmax(0,1fr));}.workspace-intro{display:block;}}
+#operations-dock[data-expanded=true] {top:126px;height:calc(100dvh - 144px);}
+.workspace-toolbar {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+#command-console .workspace-toolbar label {font-size:.8em;color:#9bb1bf;letter-spacing:1px;}
+#command-console .workspace-toolbar select {width:auto;min-width:140px;margin:0;padding:5px 8px;}
+.workspace-live {margin-left:auto;color:#c8b88e;font-size:.8em;}
+#command-console > .command-alert {margin:8px 0;font-size:.85em;}
+@media(max-width:1050px){#operations-dock[data-expanded=true]{top:126px;height:calc(100dvh - 140px);}}
+#operations-dock[data-expanded=true] {top:16px;left:16px;right:16px;height:calc(100dvh - 32px);background:#091923;}
+#operations-dock > .dock-nav {position:static;width:auto;grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 14px;margin:0;border-bottom:1px solid var(--edge);background:#102432;}
+#command-console .tech-node strong,#command-console .part-card strong {font-size:1em;line-height:1.35;}
+#command-console:not([data-page=facilities]) > .command-alert[data-quiet=true] {display:none;}
+.tree-viewport {height:clamp(260px,calc(100dvh - 380px),680px);}
+#command-console .selection-inspector {max-height:max(260px,calc(100dvh - 350px));overflow:auto;overscroll-behavior:contain;scrollbar-color:#6d9d9b #0b202d;}
+@media(max-width:1050px){#operations-dock[data-expanded=true]{top:10px;left:10px;right:10px;height:calc(100dvh - 20px);}}
+#command-console button.workspace-live {margin:0 0 0 auto;width:auto;white-space:nowrap;font-size:.8em;}
+#operations-dock[data-expanded=true] > .dock-nav {position:sticky;top:46px;z-index:5;}
+#operations-dock[data-expanded=true] .manage-sections {position:sticky;top:94px;z-index:4;background:#091923;}
+#command-console .tech-node[data-state=researching] {border-color:#e5b66e;}
+#hud:has(> #operations-dock[data-expanded=true]:not([hidden])) {z-index:30;}
+#operations-dock #sound-panel {position:static;max-width:none;margin-left:auto;gap:4px;}
+#operations-dock .dock-heading > span {margin-right:0;white-space:nowrap;}
+#operations-dock #sound-panel button {font-size:11px;padding:6px;}
+#operations-dock #sound-panel label {font-size:11px;}
+#operations-dock #sound-panel input {width:42px;}
+#operations-dock > .dock-nav {grid-template-columns:repeat(5,minmax(0,1fr));}
+#operations-dock .dock-nav #objectives {position:static;width:auto;max-width:none;min-width:0;font:inherit;padding:7px 3px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:1050px){#operations-dock .dock-heading {gap:4px;font-size:11px;padding:8px;}#operations-dock #sound-panel {font-size:10px;}#operations-dock #sound-panel > button:first-child {width:auto;}#operations-dock #sound-panel label {display:none;}#operations-dock .dock-heading button {font-size:10px;}}
+#command-console .selection-inspector {display:flex;flex-direction:column;overflow:hidden;padding:0;max-height:max(300px,calc(100dvh - 350px));}
+.inspector-body {padding:18px;overflow:auto;min-height:0;overscroll-behavior:contain;scrollbar-color:#6d9d9b #0b202d;}
+.inspector-actions {flex:0 0 auto;padding:12px 18px;background:#122b35;border-top:1px solid #41616e;}
+#command-console .inspector-actions .primary-action {margin:0;}
+#command-console .inspector-actions .action-reason {margin:8px 0 0;}
+#operations-dock[data-expanded=false] .dock-heading {gap:4px;font-size:10px;letter-spacing:.2px;padding:8px;}
+#operations-dock[data-expanded=false] .dock-heading button {font-size:10px;padding:4px;}
+#operations-dock .dock-nav #objectives[aria-expanded=true] {border-color:var(--mint);background:#174039;}
+/* Inspector actions are part of the window, not the flight HUD's fixed footer. */
+#hud .inspector-actions {position:static;inset:auto;width:auto;max-width:none;font:inherit;letter-spacing:normal;}
+#command-console .selection-inspector {max-height:max(260px,calc(100dvh - 420px));}
+@media(max-height:750px) and (min-width:681px){
+ #command-console:is([data-page=research],[data-page=equipment]) {display:grid;grid-template-columns:130px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:12px;align-items:start;}
+ #command-console:is([data-page=research],[data-page=equipment]) > .workspace-toolbar {grid-column:1/-1;grid-row:1;}
+ #command-console:is([data-page=research],[data-page=equipment]) > .manage-sections {grid-column:1;grid-row:2;flex-direction:column;align-self:start;top:96px;border-bottom:0;padding:8px 0;}
+ #command-console:is([data-page=research],[data-page=equipment]) .manage-sections button {width:100%;justify-content:flex-start;font-size:.75em;padding:10px 6px;white-space:normal;}
+ #command-console:is([data-page=research],[data-page=equipment]) > [data-workspace-page]:not([hidden]) {grid-column:2;grid-row:2;}
+ #command-console:is([data-page=research],[data-page=equipment]) > .command-alert {grid-column:1/-1;grid-row:3;}
+ #command-console .workspace-intro .eyebrow {display:none;}
+ #command-console .workspace-intro h2 {font-size:1.2em;margin:4px 0;}
+ #command-console .workspace-intro p {font-size:.8em;}
+ #command-console .workspace-hint {font-size:.75em;margin:6px 0;}
+}
+/* Short desktops keep a full-height inspector beside the map/catalogue. */
+@media(max-height:750px) and (min-width:681px){
+ #command-console:is([data-page=research],[data-page=equipment]) {grid-template-columns:130px minmax(0,1fr) minmax(260px,38%);grid-template-rows:auto auto auto auto auto;}
+ #command-console:is([data-page=research],[data-page=equipment]) > .manage-sections {grid-row:2 / span 4;}
+ #command-console > .research-panel:not([hidden]),#command-console > .equipment-panel:not([hidden]),#command-console .research-layout,#command-console .fitting-layout {display:contents;}
+ #command-console .workspace-intro {grid-column:2;grid-row:2;display:block;}
+ #command-console .research-panel > .workspace-hint {grid-column:2;grid-row:3;}
+ #command-console .research-layout > div {grid-column:2;grid-row:4 / span 2;}
+ #command-console .slot-list {grid-column:2;grid-row:3;grid-template-columns:repeat(2,minmax(0,1fr));}
+ #command-console .part-catalogue {grid-column:2;grid-row:4 / span 2;}
+ #command-console .selection-inspector {grid-column:3;grid-row:2 / span 4;position:sticky;top:140px;max-height:calc(100dvh - 180px);}
+ #command-console:is([data-page=research],[data-page=equipment]) > .command-alert {grid-row:6;}
+}

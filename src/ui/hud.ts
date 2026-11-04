@@ -71,16 +71,16 @@ export class Hud {
   get dockOpen():boolean{return !this.dock.root.hidden;}
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
-    this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
+    this.dock.objectiveButton=this.objectives.root;this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
     this.dock.onBuild=()=>onColonyAction({type:'buildMode',open:true});this.dock.onLeaveBuild=()=>onColonyAction({type:'buildMode',open:false});
     this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
     if(el.id==='build-category'){this.category=el.value as BuildCategory;if(this.latestWorld)this.update(this.latestWorld,this.root.dataset.state==='paused');}});
     this.dock.cargo.addEventListener('change',e=>{const input=e.target as HTMLInputElement;if(input.id==='fuel-plan-amount'){this.fuelPlanAmount=input.value===''?NaN:Number(input.value);}});
     this.dock.objectives.append(this.objectives.content);
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
-    this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
+    this.command = new CommandConsole(onColonyAction,this.preferences); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.19</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.20</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
       <div id="surface-frame"></div><section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div><div id="crew-order-status" hidden><span></span><button type="button">Stop crew order</button></div></section>
       <div id="combat-status"></div>
@@ -108,7 +108,7 @@ export class Hud {
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;
     this.root.dataset.time = world.system.time.toFixed(4); this.root.dataset.x = world.ship.position.x.toFixed(4); this.root.dataset.y = world.ship.position.y.toFixed(4);
     this.root.dataset.vx = world.ship.velocity.x.toFixed(4); this.root.dataset.vy = world.ship.velocity.y.toFixed(4); this.root.dataset.angle = world.ship.angle.toFixed(5); this.root.dataset.spin = world.ship.angularVelocity.toFixed(5);
-    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.19`);
+    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.20`);
     setText(this.root.querySelector('#hud-context')!,context.label + ' · ' + colonyPlanet(world).label);
     setText(this.root.querySelector('.context-hint')!,controlHint(context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
     setText(this.root.querySelector('#surface-frame')!,`SURFACE FRAME · ${colonyPlanet(world).label.toUpperCase()} · ${world.playerMode==='astronaut'?'CREW':'SHIP'}`);

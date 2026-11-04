@@ -1,8 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Progression goals/budget merged in [PR #24](https://github.com/masadams/outpost-game/pull/24) after 418 unit tests and all 46 production-browser scenarios passed in CI. [Task 014](../CODEX_TASK_014.md) implements the requested research/ship-parts expansion, start menu and readiness slice for a merged playtest handoff. See [alpha 0.19 catalogue and route](PLAYTEST_ALPHA019.md). Human feel/pacing/UI, hardware and remaining reliability/content/release acceptance stay open.
-**Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
-**Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
+**Status:** Research/parts, menus/readiness and checkpoint recovery are merged in [PR #25](https://github.com/masadams/outpost-game/pull/25). User feedback prioritizes reducing menu density: [Task 016](../CODEX_TASK_016.md) implements a large tabbed management workspace, connected research map, selected-item inspectors and four new branches/six parts. See [workspace design/playtest](MANAGEMENT_WORKSPACE.md). Human feel, pace, hardware and remaining content/release acceptance stay open.
 
 ## Progress rules
 - [ ] means not completed; [x] means implemented, tested and merged.
@@ -205,7 +203,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Phase 10 — Saves, reliability and content
 
-[Task 015](../CODEX_TASK_015.md) begins current-format checkpoint recovery: one previous valid copy, visible paused fallback and storage-failure regression coverage. It is included with Task 014 in a combined PR pending CI and user review. See [storage guarantees and playtest](CHECKPOINT_RECOVERY.md). Legacy compatibility remains deferred.
+[Task 015](../CODEX_TASK_015.md) begins current-format checkpoint recovery: one previous valid copy, visible paused fallback and storage-failure regression coverage. It was merged with Task 014 in PR #25. See [storage guarantees and playtest](CHECKPOINT_RECOVERY.md). Legacy compatibility remains deferred.
 **Dependencies:** Core mechanics stable.
 - [ ] Reliable save/load and corruption recovery near completion. Development saves may be reset; legacy compatibility is deferred by user direction.
 - [ ] Persist ship, world, inventory, buildings, damage, resources and events.
@@ -223,7 +221,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Review the combined Task 014/015 PR after CI, leave merging to the user under their latest instruction, then hand the build over for the requested playtest. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
+Review Task 016 after automated checks, then playtest the management window, tech map and fitting flow. Leave merging to the user. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

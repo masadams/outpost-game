@@ -1,5 +1,5 @@
-import { BINDING_LABELS, BINDING_SLOTS, bindingError, keyLabel, defaultPresentation, applyPresentation, type BindingSlot, type PresentationPreferences } from '../preferences/presentation';
-const fromCode = (code: string): string => code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? ['ZERO','ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE'][Number(code.slice(5))] : ({ ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT',Space:'SPACE',ShiftLeft:'SHIFT',ShiftRight:'SHIFT',Enter:'ENTER',Escape:'ESC',Backspace:'BACKSPACE',Minus:'MINUS',Equal:'PLUS' })[code] ?? '';
+import { BINDING_LABELS, BINDING_SLOTS, bindingError, keyLabel, physicalKey, defaultPresentation, applyPresentation, type BindingSlot, type PresentationPreferences } from '../preferences/presentation';
+
 export class Settings {
   readonly dialog = document.createElement('dialog');
   private capture: BindingSlot|null = null;
@@ -24,7 +24,7 @@ export class Settings {
     d.querySelector('#reset-presentation')!.addEventListener('click',()=>{Object.assign(preferences,defaultPresentation(matchMedia('(prefers-reduced-motion: reduce)').matches));this.capture=null;this.save();});
     d.addEventListener('keydown',e=>{
       e.stopPropagation();
-      if(this.capture){e.preventDefault();if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;const key=fromCode(e.code);const error=bindingError(preferences.bindings,this.capture,key);if(error){this.message(error);return;}preferences.bindings[this.capture]=key;this.capture=null;this.save();this.message('Control updated.');}
+      if(this.capture){e.preventDefault();if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;const key=physicalKey(e.code);const error=bindingError(preferences.bindings,this.capture,key);if(error){this.message(error);return;}preferences.bindings[this.capture]=key;this.capture=null;this.save();this.message('Control updated.');}
     });
     d.addEventListener('keyup',e=>e.stopPropagation());
   }

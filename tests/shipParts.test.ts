@@ -15,13 +15,13 @@ import { WORLD,STEP } from '../src/sim/config';
 const shop=()=>{const w=createWorld();w.asteroids=[];w.exploration.sites=[];w.colony.research.completed=[...TECH_IDS];w.colony.products={alloy:100,wire:100,components:100,water:0,oxygen:0,fuel:0};w.colony.energy=20;return w;};
 const fit=(w:ReturnType<typeof shop>,id:UpgradeId)=>{w.colony.energy=20;applyEquipment(w,{type:'equipment',upgrade:id,operation:'install'});};
 const starts=(w:ReturnType<typeof shop>)=>({ship:{...w.ship.position},suit:{...w.astronaut.position},rocks:new Map(),meteors:new Map()});
-it('defines a complete acyclic research tree and two real material-funded alternatives per slot',()=>{
- expect(TECH_IDS).toHaveLength(10);expect(UPGRADE_IDS).toHaveLength(16);
+it('defines a complete acyclic research tree and material-funded alternatives per slot',()=>{
+ expect(TECH_IDS).toHaveLength(14);expect(UPGRADE_IDS).toHaveLength(22);
  for(const [index,id]of TECH_IDS.entries()){
   const spec=TECHNOLOGIES[id];expect(spec.seconds).toBeGreaterThan(0);expect(UPGRADE_IDS.some(part=>UPGRADES[part].tech===id)).toBe(true);
   for(const requirement of spec.requires)expect(TECH_IDS.indexOf(requirement)).toBeLessThan(index);
  }
- for(const slot of PART_SLOTS)expect(UPGRADE_IDS.filter(id=>UPGRADES[id].slot===slot)).toHaveLength(2);
+ for(const slot of PART_SLOTS)expect(UPGRADE_IDS.filter(id=>UPGRADES[id].slot===slot).length).toBeGreaterThanOrEqual(2);
  for(const id of UPGRADE_IDS)expect(Object.values(UPGRADES[id].cost).reduce((sum,n)=>sum+n,0)).toBe(UPGRADES[id].mass);
 });
 it.each(PART_SLOTS)('replaces the %s part atomically with paid mass and hull-scaled salvage without refills',slot=>{
@@ -80,6 +80,19 @@ it('persists exclusive advanced parts, rejects duplicate slots/prerequisite skip
  w.ship.state='crashed';w.ship.fuel=300;applyCombatAction(w,{type:'recoverShip'});expect(w.ship.equipment).toEqual(['efficientEngine','surveyTank']);expect(w.ship.fuel).toBe(20);expect(w.ship.hull).toBe(30);
 });
 it('has identical advanced flight/tool outcomes at 30 and 144 renderer frames per second',()=>{
- const runs=[30,144].map(fps=>{const w=shop(),clock=new FixedClock();w.ship.equipment=UPGRADE_IDS.filter(id=>!BASE_UPGRADE_IDS.includes(id as typeof BASE_UPGRADE_IDS[number]));for(let i=0;i<fps*4;i++)clock.advance(1/fps,dt=>stepWorld(w,{thrust:true,turn:0,mine:true,tractor:true},dt));return w;});
+ const runs=[30,144].map(fps=>{const w=shop(),clock=new FixedClock();w.ship.equipment=PART_SLOTS.map(slot=>UPGRADE_IDS.filter(id=>UPGRADES[id].slot===slot).at(-1)!);for(let i=0;i<fps*4;i++)clock.advance(1/fps,dt=>stepWorld(w,{thrust:true,turn:0,mine:true,tractor:true},dt));return w;});
  expect(runs[0]).toEqual(runs[1]);
+});
+it('uses the ion drive in actual thrust/fuel integration and blocks a loaded lightweight downgrade',()=>{
+ const s=createShip();s.equipment=['ionDrive'];s.state='flying';s.position.y=-4000;stepShip(s,{thrust:true,turn:0},1);expect(s.fuel).toBeCloseTo(239.6);expect(engineStats(s).thrust).toBe(12600);
+ const w=shop();fit(w,'bulkHold');w.ship.cargo.iron=221;w.colony.energy=20;const stock={...w.colony.products};applyEquipment(w,{type:'equipment',upgrade:'lightHold',operation:'install'});expect(w.ship.equipment).toEqual(['bulkHold']);expect(w.colony.products).toEqual(stock);w.ship.cargo.iron=220;fit(w,'lightHold');expect(cargoCapacity(w.ship)).toBe(220);expect(w.ship.cargo.iron).toBe(220);
+});
+it('pays industrial mining and tractor loads with the advertised short reach and actual momentum exchange',()=>{
+ const s=createShip();s.equipment=['stripMiner'];s.state='flying';s.position.y=-4000;s.armament.energy=20;
+ const rock={id:99,position:{x:0,y:-4300},velocity:{x:0,y:0},radius:10,mass:20,resource:'iron' as const,health:1,maxHealth:1,stage:0};
+ fireLaser(s,[rock],.1);expect(rock.health).toBeCloseTo(.74);expect(s.armament.energy).toBeCloseTo(18.6);expect(s.armament.heat).toBeCloseTo(1.2);rock.position.y=-4400;expect(fireLaser(s,[rock],.1)?.targetId).toBeNull();
+ s.equipment=['broadTractor'];const mass=shipMass(s),energy=s.armament.energy,heat=s.armament.heat;const p={id:100,position:{x:300,y:-4000},velocity:{x:0,y:0},radius:2,mass:2,resource:'iron' as const};expect(powerTractor(s,.1)).toBe(true);tractor(s,p,.1);expect(s.armament.energy).toBeCloseTo(energy-.9);expect(s.armament.heat).toBeCloseTo(heat+.7);expect(p.velocity.x).toBeCloseTo(-4.2);expect(s.velocity.x*mass+p.velocity.x*p.mass).toBeCloseTo(0);
+});
+it('runs the efficient coil and recharge-focused cooling loop through actual combat stepping',()=>{
+ const w=shop();fit(w,'efficientCoil');fit(w,'capacitorCooler');w.ship.state='flying';w.ship.position.y=-4000;stepCombat(w,true,STEP,starts(w));expect(w.combat.projectiles[0].damage).toBe(21);expect(w.ship.armament).toMatchObject({energy:94,heat:12,cannon:39});w.ship.armament.energy=0;w.ship.armament.heat=70;stepCombat(w,false,1,starts(w));expect(w.ship.armament.energy).toBe(16);expect(w.ship.armament.heat).toBe(46);expect(decodeCheckpoint(encodeCheckpoint(w)).ship.equipment).toEqual(['efficientCoil','capacitorCooler']);
 });

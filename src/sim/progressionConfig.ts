@@ -1,6 +1,6 @@
 import type { BodyId } from './celestial';
 import type { ProductInventory } from './colonyConfig';
-export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites'] as const;
+export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor'] as const;
 export type TechId = typeof TECH_IDS[number];
 export interface Technology { label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
 export const TECHNOLOGIES: Record<TechId, Technology> = {
@@ -14,9 +14,13 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   thermal: { label: 'Thermal engineering', seconds: 35, requires: ['propulsion', 'extraction'], cost: { alloy: 10, wire: 6, components: 3 } },
   ballistics: { label: 'Advanced ballistics', seconds: 45, requires: ['combat'], cost: { alloy: 12, wire: 6, components: 4 } },
   composites: { label: 'Layered composites', seconds: 45, requires: ['materials', 'combat'], cost: { alloy: 12, wire: 5, components: 4 } },
+  ionics: { label:'Ion propulsion', seconds:55, requires:['orbital','thermal'], cost:{alloy:16,wire:8,components:5} },
+  lightweight: { label:'Lightweight structures', seconds:50, requires:['logistics','composites'], cost:{alloy:14,wire:6,components:5} },
+  industrial: { label:'Industrial extraction', seconds:55, requires:['precision','thermal'], cost:{alloy:16,wire:8,components:5} },
+  reactor: { label:'Cell engineering', seconds:50, requires:['thermal','orbital'], cost:{alloy:14,wire:8,components:5} },
 };
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
-export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour'] as const;
+export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler'] as const;
 export type UpgradeId = typeof UPGRADE_IDS[number];
 export const PART_SLOTS = ['drive','tank','hold','mining','tractor','weapon','cooling','armour'] as const;
 export type PartSlot = typeof PART_SLOTS[number];
@@ -39,6 +43,12 @@ export const UPGRADES: Record<UpgradeId, Upgrade> = {
   heavyCoil: { slot:'weapon', label:'Heavy cannon coil', tech:'ballistics', cost:{alloy:12,wire:5,components:4}, mass:21, benefit:'30 cannon damage', tradeoff:'16 kJ + 28 heat/shot; ammunition and recoil still count' },
   cryoCooling: { slot:'cooling', label:'Cryogenic cooler', tech:'thermal', cost:{alloy:10,wire:6,components:4}, mass:20, benefit:'40 heat/s cooling', tradeoff:'Only 6 kW cell recharge; cooling draws power away from the cell' },
   layeredArmour: { slot:'armour', label:'Layered armour', tech:'composites', cost:{alloy:18,wire:4,components:4}, mass:26, benefit:'35% less incoming hull damage', tradeoff:'Heavy plating; no healing or protection from catastrophic landings' },
+  ionDrive: {slot:'drive',label:'Ion cruise drive',tech:'ionics',cost:{alloy:12,wire:8,components:4},mass:24,benefit:'12.6 kN thrust · 0.40 kg/s burn',tradeoff:'Lowest peak thrust; efficient cruising needs longer braking and ascent planning'},
+  lightHold: {slot:'hold',label:'Lightweight hold',tech:'lightweight',cost:{alloy:7,wire:3,components:2},mass:12,benefit:'220 kg shared ore/freight capacity',tradeoff:'80 kg less space than Bulk hold; 16 kg less dry mass'},
+  stripMiner: {slot:'mining',label:'Strip mining head',tech:'industrial',cost:{alloy:14,wire:7,components:4},mass:25,benefit:'360 m beam · 2.6× mining rate',tradeoff:'Short reach · 14 kW cell draw + 12 heat/s; close, power-hungry work'},
+  broadTractor: {slot:'tractor',label:'Industrial tractor',tech:'industrial',cost:{alloy:12,wire:7,components:4},mass:23,benefit:'320 m field · 42 m/s² force limit',tradeoff:'9 kW + 7 heat/s; strong pull with shorter reach than Precision tractor'},
+  efficientCoil: {slot:'weapon',label:'Efficient cannon coil',tech:'reactor',cost:{alloy:6,wire:3,components:1},mass:10,benefit:'21 cannon damage · 6 kJ + 12 heat/shot',tradeoff:'Lower damage than Cannon coil; same ammunition, recoil and firing interval'},
+  capacitorCooler: {slot:'cooling',label:'Capacitor cooling loop',tech:'reactor',cost:{alloy:10,wire:5,components:3},mass:18,benefit:'24 heat/s cooling · 16 kW cell recharge',tradeoff:'Less cooling than Cooling pump; prioritizes cell recovery over sustained heat removal'},
 };
 export const PROGRESSION = { labPower: 4, fabricationEnergy: 20, salvageFraction: .5 } as const;
 export interface ResearchProject { funding: BodyId; tech: TechId; progress: number; paused: boolean }

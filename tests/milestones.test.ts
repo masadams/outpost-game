@@ -74,7 +74,7 @@ it('preserves active milestone progress through current saves and rejects malfor
 });
 it('records research/interception results rather than starting drills or issuing rewards',()=>{
  const w=createWorld(),before=structuredClone(w);observeObjectives(w);expect(w).toEqual(before);
- w.colony.research.completed=['materials','propulsion','extraction'];observeObjectives(w);expect(objectiveProgress(w,'research')).toMatchObject({value:3,target:10});expect(w.objectives.completed).not.toContain('research');
+ w.colony.research.completed=['materials','propulsion','extraction'];observeObjectives(w);expect(objectiveProgress(w,'research')).toMatchObject({value:3,target:TECH_IDS.length});expect(w.objectives.completed).not.toContain('research');
  w.colony.research.completed.push('combat');observeObjectives(w);expect(w.objectives.completed).not.toContain('research');w.colony.research.completed=[...TECH_IDS];w.defence.intercepted=1;observeObjectives(w);expect(w.objectives.completed).toEqual(['research','defence']);expect(w.defence.wave).toBe(0);expect(w.colony.products).toEqual(before.colony.products);
 });
 it('funds the advertised home route with the finite kit and real powered research, then installs at home',()=>{
@@ -93,11 +93,11 @@ it('rounds fractional material shortfalls up to real whole refinery cycles',()=>
  const w=createWorld();w.colony.products.alloy=25.5;const plan=starterPlan(w);expect(plan.rows.find(r=>r.product==='alloy')!.shortfall).toBe(.5);expect(plan.raw.find(r=>r.resource==='iron')!.need).toBe(1);
 });
 
-it('records the research milestone only after all ten paid powered projects actually finish',()=>{
- const w=worker();w.colony.products.alloy=100;w.colony.products.wire=100;w.colony.products.components=100;
+it('records the research milestone only after all fourteen paid powered projects actually finish',()=>{
+ const w=worker();w.colony.buildings=[completedBuilding(1,'storage',480/1800,w)];w.colony.nextId=2;w.colony.products.alloy=200;w.colony.products.wire=200;w.colony.products.components=200;
  applyCommandAction(w,{type:'queueBuild',kind:'solar',angle:200/1800});applyCommandAction(w,{type:'queueBuild',kind:'researchLab',angle:120/1800});tick(w,17);applyCrewOrder(w,{type:'crewOrder',operation:'walk',angle:0});tick(w,15);stepWorld(w,{thrust:false,turn:0,board:true},1/60);expect(w.playerMode).toBe('ship');
  for(const tech of TECH_IDS){
   applyResearch(w,{type:'researchStart',tech});expect(w.objectives.completed).not.toContain('research');tick(w,TECHNOLOGIES[tech].seconds+1);
  }
- expect(w.objectives.completed).toContain('research');expect(w.colony.research.energyUsed).toBeCloseTo(1240);expect(w.colony.products).toMatchObject({alloy:4,wire:51,components:73});expect(w.defence.wave).toBe(0);
+ expect(w.objectives.completed).toContain('research');expect(w.colony.research.energyUsed).toBeCloseTo(2080);expect(w.colony.products).toMatchObject({alloy:44,wire:121,components:153});expect(w.defence.wave).toBe(0);
 });

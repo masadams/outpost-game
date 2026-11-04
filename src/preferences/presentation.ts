@@ -30,3 +30,5 @@ export function controlHint(text: string, p: PresentationPreferences): string {
   const aliases: Record<string,BindingSlot> = { Space:'SPACE',Shift:'SHIFT',Enter:'ENTER',Backspace:'BACKSPACE',Esc:'ESC', BACKSPACE:'BACKSPACE', SPACE:'SPACE', SHIFT:'SHIFT', ENTER:'ENTER', ESC:'ESC' };
   return text.replace(/\b(?:Space|Shift|Enter|Backspace|Esc|BACKSPACE|SPACE|SHIFT|ENTER|ESC|[A-Z])\b/g, word => { const slot=aliases[word]??word as BindingSlot; return keyLabel(p.bindings[slot]??slot); });
 }
+
+export const physicalKey = (code: string): string => code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? ['ZERO','ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE'][Number(code.slice(5))] : ({ ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT',Space:'SPACE',ShiftLeft:'SHIFT',ShiftRight:'SHIFT',Enter:'ENTER',Escape:'ESC',Backspace:'BACKSPACE',Minus:'MINUS',Equal:'PLUS' })[code] ?? '';
