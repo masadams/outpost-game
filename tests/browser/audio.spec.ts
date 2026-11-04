@@ -1,5 +1,6 @@
 import { installAudioProbe } from '../helpers/audioProbe';
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 
 test('audio unlocks after input, produces a signal, silences on pause/mute and persists settings', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));

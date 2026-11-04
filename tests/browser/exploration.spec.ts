@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { createWorld } from '../../src/sim/world';
 import { encodeCheckpoint } from '../../src/persistence/checkpoint';
 import { WORLD } from '../../src/sim/config';
@@ -22,7 +23,7 @@ test('charts a finite neighborhood, selects targets while paused and keeps fligh
     }); expect(issues).toEqual({ clipped: false, overlap: false });
   }
   await page.setViewportSize({ width: 1280, height: 800 }); await page.locator('#operations-dock').evaluate(e => e.scrollTop = 0); await page.screenshot({ path: 'docs/screenshots/neighborhood-chart.png' });
-  await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(saved.version).toBe(17); expect(saved.world.exploration.selected).toBe('survey');
+  await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(saved.version).toBe(18); expect(saved.world.exploration.selected).toBe('survey');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(guidance).toHaveAttribute('data-target', 'survey');
   await page.getByRole('button', { name: 'Map', exact: true }).click(); await page.getByRole('button', { name: 'Return to home pad', exact: true }).click(); await expect(guidance).toHaveAttribute('data-target', 'home'); expect(errors).toEqual([]);
 });

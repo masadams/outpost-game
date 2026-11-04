@@ -11,7 +11,7 @@ export const OBJECTIVES = [
   { id: 'moonWork', group: 'expedition', link: 'map', label: 'Work on Nacre', hint: 'Load finite rig/solar freight in Ship / Cargo, select Nacre in Map, fly and land manually. Unload supplies, leave the ship and run a local mining rig.' },
   { id: 'return', group: 'expedition', link: 'map', label: 'Return from the moon', hint: 'Board and fly home after working on Nacre. Plan around terrain and land on the home pad. E delivers any carried ore.' },
   { id: 'habitat', group: 'colony', link: 'build', label: 'Work under supplied air', hint: 'Supply and power a habitat, then spend 20 cumulative seconds inside on foot. Refine ice into oxygen. A shield supplies no air; a stopped or empty dome does not count.' },
-  { id: 'research', group: 'colony', link: 'research', label: 'Complete the research tree', hint: 'Fund and power all four research projects in Manage. Equipment and shield fabrication still require their own materials and energy.' },
+  { id: 'research', group: 'colony', link: 'research', label: 'Complete the research tree', hint: 'Fund and power all ten research projects in Manage. Equipment and shield fabrication still require their own materials and energy.' },
   { id: 'defence', group: 'colony', link: 'defence', label: 'Intercept a threat', hint: 'Save first. Supply a turret or use the ship laser to intercept an incoming meteor. Start a defence drill only when prepared; opening this panel does not start one.' },
 ] as const;
 export type ObjectiveId = typeof OBJECTIVES[number]['id'];

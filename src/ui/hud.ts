@@ -1,3 +1,4 @@
+import { readinessPanel } from './readiness';
 import { BLUEPRINTS } from '../sim/colonyConfig';
 import { isolateControlKeys } from './controlKeys';
 import { orderError } from '../sim/construction';
@@ -51,6 +52,7 @@ export class Hud {
   private latestWorld:WorldState|null=null;
   private pointerDraft:BuildDraft|null=null;
   private pointerTip=document.createElement('div');
+  private fuelPlanAmount=20;
   private category:BuildCategory='power';
   private lastBlueprint='';
   get pointerBuilding():boolean{return this.dock.root.dataset.panel==='colony'&&!!this.latestWorld?.colony.buildOpen;}
@@ -66,17 +68,19 @@ export class Hud {
   toggleDock(view: DockView): void { this.dock.toggle(view); }
   selectFacility(body: import('../sim/celestial').BodyId,id:number):void {this.dock.open('command');this.command.selectFacility(body,id);}
   openBuild():void{this.dock.open('colony');}
+  get dockOpen():boolean{return !this.dock.root.hidden;}
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
     this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
     this.dock.onBuild=()=>onColonyAction({type:'buildMode',open:true});this.dock.onLeaveBuild=()=>onColonyAction({type:'buildMode',open:false});
     this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
     if(el.id==='build-category'){this.category=el.value as BuildCategory;if(this.latestWorld)this.update(this.latestWorld,this.root.dataset.state==='paused');}});
+    this.dock.cargo.addEventListener('change',e=>{const input=e.target as HTMLInputElement;if(input.id==='fuel-plan-amount'){this.fuelPlanAmount=input.value===''?NaN:Number(input.value);}});
     this.dock.objectives.append(this.objectives.content);
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
     this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.18</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.19</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
       <div id="surface-frame"></div><section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div><div id="crew-order-status" hidden><span></span><button type="button">Stop crew order</button></div></section>
       <div id="combat-status"></div>
@@ -89,6 +93,7 @@ export class Hud {
     this.dock.root.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (!button || button.disabled) return;
+      if(['command','colony'].includes(button.dataset.readinessView??'')){const view=button.dataset.readinessView as 'command'|'colony';if(view==='command')this.command.showLocal();this.dock.open(view);if(view==='colony')this.dock.onBuild?.();if(event.detail===0)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();else button.blur();return;}
       const action = actionFromButton(button);
       if (action) {
         if (event.detail > 0 || action.type === 'controlTurret') button.blur();
@@ -103,7 +108,7 @@ export class Hud {
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;
     this.root.dataset.time = world.system.time.toFixed(4); this.root.dataset.x = world.ship.position.x.toFixed(4); this.root.dataset.y = world.ship.position.y.toFixed(4);
     this.root.dataset.vx = world.ship.velocity.x.toFixed(4); this.root.dataset.vy = world.ship.velocity.y.toFixed(4); this.root.dataset.angle = world.ship.angle.toFixed(5); this.root.dataset.spin = world.ship.angularVelocity.toFixed(5);
-    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.18`);
+    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.19`);
     setText(this.root.querySelector('#hud-context')!,context.label + ' · ' + colonyPlanet(world).label);
     setText(this.root.querySelector('.context-hint')!,controlHint(context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
     setText(this.root.querySelector('#surface-frame')!,`SURFACE FRAME · ${colonyPlanet(world).label.toUpperCase()} · ${world.playerMode==='astronaut'?'CREW':'SHIP'}`);
@@ -121,7 +126,7 @@ export class Hud {
     flightAlert.hidden = !flightMessage; flightAlert.dataset.level = safety.level;
     this.root.dataset.approach = String(!onFoot && safety.approach);
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
-    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · R TO RESTART' :
+    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · L CHECKPOINT · R NEW RUNTIME' :
       !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? world.notice.message :
       world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
       onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : habitatNotice(world)) :
@@ -182,7 +187,7 @@ export class Hud {
       <div class="cargo-meter"><i style="width:${cargo / cargoCapacity(world.ship) * 100}%"></i></div>
       ${RESOURCES.map(type => `<div class="resource"><span>${RESOURCE_INFO[type].label}</span><span>${world.ship.cargo[type].toFixed(1)} / ${world.depot[type].toFixed(1)}</span></div>`).join('')}
       ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${controlHint(objective,this.preferences)}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser ${miningStats(world.ship).range} m</small>` : 'Field depleted'}</div>
-      <small>${cargo >= cargoCapacity(world.ship) ? 'HOLD FULL · return and unload' : world.tractorActive ? `TRACTOR ACTIVE · ${tractorStats(world.ship).range} m` : 'C: tractor · SPACE: laser'}</small>`}${towingPanel(world, this.root.dataset.state === 'paused')}${freightPanel(world, this.root.dataset.state === 'paused')}`);
+      <small>${cargo >= cargoCapacity(world.ship) ? 'HOLD FULL · return and unload' : world.tractorActive ? `TRACTOR ACTIVE · ${tractorStats(world.ship).range} m` : 'C: tractor · SPACE: laser'}</small>`}${readinessPanel(world,this.root.dataset.state==='paused',this.fuelPlanAmount)}${towingPanel(world, this.root.dataset.state === 'paused')}${freightPanel(world, this.root.dataset.state === 'paused')}`);
     this.root.dataset.cargo = cargo.toFixed(2); this.root.dataset.depot = stored.toFixed(2);
     this.root.dataset.asteroids = String(world.asteroids.length); this.root.dataset.pickups = String(world.pickups.length);
     this.root.dataset.mining = world.beam ? 'active' : 'idle';

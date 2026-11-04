@@ -1,5 +1,7 @@
 import type { Vec } from './math';
 
+export const RECOVERY = {cost:{alloy:8,components:2},hull:30,fuel:20} as const;
+
 export const SHIP_WEAPONS = {
   cannon: { speed: 260, damage: 18, energy: 8, heat: 16, interval: 0.18, life: 5, mass: 0.1, alloy: 0.1, components: 0, capacity: 40 },
   missile: { speed: 150, damage: 55, energy: 25, heat: 38, interval: 1.2, life: 12, mass: 1.25, alloy: 1, components: 0.25, capacity: 2 },

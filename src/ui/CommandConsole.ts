@@ -1,7 +1,8 @@
+import { PART_SLOTS, TECH_IDS, type PartSlot, type TechId } from '../sim/progressionConfig';
 import type { BodyId } from '../sim/celestial';
 import { colonyPlanet, colonyWorld, activeWorld } from '../sim/localWorld';
 import { shieldDetails, shieldPanel } from './shields';
-import { progressionPanel, progressionAction } from './progression';
+import { progressionPanel, progressionAction, type ResearchFilter } from './progression';
 import { orderError } from '../sim/construction';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type ProductInventory, type BuildType } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity, recipeFor, type ColonyAction } from '../sim/colony';
@@ -30,7 +31,11 @@ export class CommandConsole {
   private world: WorldState | null = null;
   private requestedSelection: number|null=null;
   private selectionByKeyboard=false;
+  private partSlot:PartSlot='hold';
+  private researchFilter:ResearchFilter='available';
+  private requestedTech:TechId|null=null;
   private requestedSection: { name: 'research'|'equipment'; keyboard: boolean } | null = null;
+  showLocal():void{this.body='local';this.requestedSection=null;this.requestedTech=null;}
   openSection(name: 'research'|'equipment', keyboard=false): void { this.body='home'; this.requestedSection={name,keyboard}; }
   private sampleTime = 0;
   private previous = new Map<string, number>();
@@ -40,6 +45,7 @@ export class CommandConsole {
     this.root.addEventListener('click', e => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button'); if (!button || button.disabled) return;
       const d = button.dataset, id = Number(d.id);
+      if(d.techFocus&&TECH_IDS.includes(d.techFocus as TechId)){this.researchFilter='all';this.requestedTech=d.techFocus as TechId;if(e.detail>0)button.blur();return;}
       if(d.section){const name={facilities:'Facilities',research:'Research',economy:'Economy'}[d.section as 'facilities'];const target=Array.from(this.root.querySelectorAll<HTMLDetailsElement>('details')).find(el=>el.querySelector('summary')?.textContent?.startsWith(name));if(target){target.open=true;target.scrollIntoView({block:'start'});if(e.detail===0)target.querySelector('summary')?.focus({preventScroll:true});}if(e.detail>0)button.blur();return;}
       if (d.locate) { this.selected = Number(d.locate);this.requestedSelection=this.selected;this.selectionByKeyboard=e.detail===0;if(e.detail>0)button.blur();return; }
       if (this.paused) return;
@@ -57,6 +63,7 @@ export class CommandConsole {
       if (e.detail > 0) button.blur();
     });
     this.root.addEventListener('change', e => {
+      const view=e.target as HTMLSelectElement;if(view.id==='equipment-slot'&&PART_SLOTS.includes(view.value as PartSlot)){this.partSlot=view.value as PartSlot;return;}if(view.id==='research-filter'&&['available','all','complete'].includes(view.value)){this.researchFilter=view.value as ResearchFilter;return;}
       const el = e.target as HTMLInputElement;
       if (el.id === 'command-body' && ['home', 'moon', 'local'].includes(el.value)) { this.body = el.value as typeof this.body; if (this.world) this.update(activeWorld(this.world), this.paused); return; }
       if (el.id === 'shield-accents') this.shieldAccents = el.checked;
@@ -118,7 +125,7 @@ export class CommandConsole {
       <p>Commit ${Object.entries(BLUEPRINTS[this.blueprint].cost).map(([p, q]) => `${q} ${p}`).join(' · ')}</p><p class="command-site-status">${siteError ?? 'Site clear · ghost preview in world'}</p>
       <label for="command-site">Site · metres along surface from this pad</label><input ${disabled} id="command-site" type="number" min="-1000" max="1000" step="1" value="${this.site}"><button ${disabled || siteError ? 'disabled' : ''} data-enqueue="true">Queue paid construction</button>
       ${c.command.queue.map(o => `<article class="command-order" data-order="${o.id}"><p>#${o.id} ${BLUEPRINTS[o.kind].label} · ${Math.round(o.angle * colonyPlanet(w).radius)} m<br>${escapeText(o.status)}<br>Unworked refund: ${Object.entries(BLUEPRINTS[o.kind].cost).map(([p, q]) => `${fmt(q * Math.max(0, 1 - o.progress / CONSTRUCTION_SECONDS))} ${p}`).join(' · ')}</p><progress aria-label="Order ${o.id} progress" max="${CONSTRUCTION_SECONDS}" value="${o.progress}"></progress><button ${disabled} data-order="pause" data-id="${o.id}">${o.paused ? 'Resume' : 'Pause'} order ${o.id}</button><button ${disabled} data-order="cancel" data-id="${o.id}">Cancel order ${o.id}</button></article>`).join('')}</details>
-      ${progressionPanel(w, paused)}${shieldPanel(w, this.shieldAccents)}
+      ${progressionPanel(w, paused,this.partSlot,this.researchFilter)}${shieldPanel(w, this.shieldAccents)}
       <details data-preserve-open><summary>Economy · stocks and observed flow</summary><p>Ore ${fmt(inventoryMass(w.depot))} / ${oreCapacity(c)} kg · products ${productCapacity(c)} kg each</p><small>Net stock change / simulated second; includes deliveries, construction, refunds and habitat transfers. No offline production. — means sampling.</small><table><thead><tr><th>Stock</th><th>kg</th><th>usable</th><th>kg/s</th></tr></thead><tbody>${stockRows}</tbody></table><p>Protected energy ${policy.energyReserve} kJ · delivery room ${policy.deliveryReserve} kg<br>Habitat oxygen spent ${fmt(c.oxygenUsed)} kg</p><small>Set reserves in Build → Resource priorities.</small></details>`);
     const slider = this.root.querySelector<HTMLInputElement>('#command-limit');
     if (slider && document.activeElement !== slider && selected) slider.value = String(selected.dispatch?.limit ?? 100);
@@ -126,6 +133,7 @@ export class CommandConsole {
       const next = this.root.querySelector<HTMLButtonElement>(`[data-focus="${focused}"]`);
       if (next && document.activeElement !== next) (next.disabled ? this.root.querySelector<HTMLButtonElement>(`[data-focus="select-${next.dataset.id}"]`) : next)?.focus({ preventScroll: true });
     }
+    if(this.requestedTech){const tech=this.root.querySelector<HTMLElement>(`[data-tech="${this.requestedTech}"]`);if(tech){tech.scrollIntoView({block:'start'});tech.focus({preventScroll:true});this.requestedTech=null;}}
     if(this.requestedSection){const request=this.requestedSection;const prefix=request.name==='research'?'Research':'Ship equipment';const section=Array.from(this.root.querySelectorAll<HTMLDetailsElement>('details')).find(d=>d.querySelector('summary')?.textContent?.startsWith(prefix));if(section){section.open=true;section.scrollIntoView({block:'start'});if(request.keyboard)section.querySelector('summary')?.focus({preventScroll:true});this.requestedSection=null;}}
     if(reveal){const card=this.root.querySelector<HTMLElement>('.command-machine');if(card){const details=card.closest('details');if(details)details.open=true;card.scrollIntoView({block:'start'});if(keyboard){const control=card.querySelector<HTMLButtonElement>('button:not(:disabled)');if(control)control.focus({preventScroll:true});else{card.tabIndex=-1;card.focus({preventScroll:true});}}}this.selectionByKeyboard=false;}
   }

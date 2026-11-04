@@ -24,5 +24,5 @@ export function serviceCombatAtPad(world: WorldState): void {
   const rounds = resupplyArmament(world);
   if (repair > 0 || rounds > 0) notify(world, `SHIP SERVICE · HULL +${repair.toFixed(0)} · AMMO +${rounds} · MATERIALS CONSUMED`);
   else if ((s.hull < 100 || s.armament.cannon < SHIP_WEAPONS.cannon.capacity || s.armament.missile < SHIP_WEAPONS.missile.capacity) &&
-    (availableProduct(world.colony, 'alloy') < world.colony.products.alloy || availableProduct(world.colony, 'components') < world.colony.products.components)) notify(world, 'SHIP SERVICE · MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN COLONY');
+    (availableProduct(world.colony, 'alloy') < world.colony.products.alloy || availableProduct(world.colony, 'components') < world.colony.products.components)) notify(world, 'SHIP SERVICE · MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN BUILD');
 }

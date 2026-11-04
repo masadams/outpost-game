@@ -23,6 +23,7 @@ export class Keyboard {
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
     for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'R', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'N', 'G', 'U', 'Q', 'T', 'ENTER', 'X', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'O', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC', 'Y']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
+        if(name==='ESC'&&event.key==='Escape'&&event.target instanceof HTMLElement&&event.target.closest('dialog'))return;
         if (!(this.gameplayFocus() && ['W','UP','SPACE','SHIFT','C'].includes(name)) && !this.typing() && !event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
       });
     }

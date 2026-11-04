@@ -318,3 +318,24 @@ footer { left: 20px; font-size: 11px; }
 #objective-panel details { margin-block:12px;padding-block:8px;border-top:1px solid var(--edge); }
 #objective-panel .route-budget p { border-left:2px solid var(--edge);padding-left:8px; }
 #objective-panel .budget-shortfall { color:var(--amber); }
+
+#game-menu { width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;background:#091925f5;color:#d9e8ed;border:1px solid var(--mint);border-radius:8px;padding:24px; }
+#game-menu::backdrop { background:#020910df; }
+#game-menu .menu-brand { text-align:center; }
+#game-menu h1 { font-size:32px;letter-spacing:5px;line-height:1.3; }
+#game-menu nav { display:grid;gap:8px;margin-block:18px; }
+#game-menu button { width:100%;padding:10px; }
+#game-menu small { display:block;line-height:1.6; }
+#game-menu .menu-status { color:var(--amber);line-height:1.5; }
+#research-filter, #equipment-slot { width:100%;padding:8px;background:#102535;color:#d9e8ed;border:1px solid var(--edge);font:inherit; }
+.tech-overview small { display:block;line-height:1.5;margin-bottom:10px; }
+#command-console [data-tech], #command-console [data-upgrade] { scroll-margin-top:56px; }
+
+.readiness-summary { border-left:2px solid var(--mint);padding-left:8px; }
+.readiness-summary[data-recovery-funded=false] { color:var(--amber);border-color:var(--amber); }
+.readiness-panel p { line-height:1.5;overflow-wrap:anywhere; }
+#fuel-plan-amount { width:100%;background:#102535;color:#d9e8ed;padding:8px;border:1px solid var(--edge);font:inherit; }
+.readiness-panel button { width:100%;white-space:normal;margin-block:5px; }
+#objective-panel .budget-spares { display:flex;gap:8px;align-items:center;line-height:1.4; }
+
+#objective-panel article, #objective-panel button { scroll-margin-top:56px; }

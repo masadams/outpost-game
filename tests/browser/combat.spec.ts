@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 
 test('launches, pauses an opt-in drone encounter, fires with heat/ammo feedback, and reloads combat progress', async ({ page }) => {
   test.setTimeout(90000);

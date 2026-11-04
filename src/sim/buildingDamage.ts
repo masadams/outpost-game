@@ -52,7 +52,7 @@ export function repairBuilding(world: WorldState): void {
   const b = nearbyBuilding(world);
   if (!b || !world.astronaut.grounded || world.astronaut.health <= 0) { notify(world, 'STAND WITHIN 18 m OF A FACILITY TO REPAIR'); return; }
   const amount = Math.min(100 - buildingHealth(b), availableProduct(world.colony, 'alloy') * 10);
-  if (amount <= 0) { notify(world, operational(b) && buildingHealth(b) === 100 ? 'FACILITY UNDAMAGED' : 'REPAIR NEEDS UNRESERVED ALLOY · LOWER RESERVES IN COLONY'); return; }
+  if (amount <= 0) { notify(world, operational(b) && buildingHealth(b) === 100 ? 'FACILITY UNDAMAGED' : 'REPAIR NEEDS UNRESERVED ALLOY · LOWER RESERVES IN BUILD'); return; }
   b.health = Math.min(100, buildingHealth(b) + amount); world.colony.products.alloy = Math.max(0, world.colony.products.alloy - amount / 10); b.status = 'idle';
   notify(world, `FACILITY REPAIRED · +${amount.toFixed(0)} HULL`);
 }

@@ -47,7 +47,7 @@ it('uses a versioned storage key, reports missing checkpoints and propagates una
   expect(() => writeCheckpoint({ setItem: () => { throw new Error('Quota exceeded'); } }, createWorld())).toThrow('Quota exceeded');
 });
 
-it.each([1, 7, 13, 14, 15, 16, 18])('rejects incompatible development save version %i without migrating it', version => {
+it.each([1, 7, 13, 14, 15, 16, 17, 19])('rejects incompatible development save version %i without migrating it', version => {
   const save = JSON.parse(encodeCheckpoint(createWorld())); save.version = version;
   expect(() => decodeCheckpoint(JSON.stringify(save))).toThrow('incompatible with this development build');
 });

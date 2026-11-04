@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Direct colony controls / alpha 0.17 merged in [PR #23](https://github.com/masadams/outpost-game/pull/23) after typecheck, build, 401 unit tests and all 43 production-browser scenarios passed in CI. [Task 013](../CODEX_TASK_013.md) implements the next Phase 8 slice: longer-term milestones, live progress/control links and a finite starter-route budget. Human/hardware review, wider economy/event/recovery balance, reliability/content and release remain open.
+**Status:** Progression goals/budget merged in [PR #24](https://github.com/masadams/outpost-game/pull/24) after 418 unit tests and all 46 production-browser scenarios passed in CI. [Task 014](../CODEX_TASK_014.md) implements the requested research/ship-parts expansion, start menu and readiness slice for a merged playtest handoff. See [alpha 0.19 catalogue and route](PLAYTEST_ALPHA019.md). Human feel/pacing/UI, hardware and remaining reliability/content/release acceptance stay open.
 **Source of truth:** This document tracks scope, progress, dependencies, and acceptance criteria. Update in every feature PR.  
 **Vision:** Single-player retro 2D arcade spaceflight, asteroid mining, combat and colony building. Approximately **60% flight/mining/combat and 40% construction/management**. One continuous Cartesian neighborhood with Selene, Nacre and surrounding space; no separate flight/surface scenes.
 
@@ -161,11 +161,11 @@ Merged in #18; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget
 
 ## Phase 8 — Progression and balancing
 **Dependencies:** Phases 2–7, life support, Command and neighborhood discovery.
-- [ ] Technology/unlock progression for ship, mining, energy and defences.
+- [x] Technology/unlock progression: Task 014 expands to ten paid prerequisite nodes and sixteen real parts in eight exclusive slots, including propulsion, logistics, extraction, thermal power tradeoffs and combat/armour; Combat engineering retains shield unlocks.
 - [x] Merged #19: Phase 8.1 / [Task 008](../CODEX_TASK_008.md), merged from `feat/ship-progression`; see [actual progression/playtest](PROGRESSION.md). Includes powered labs and paid prerequisite research plus explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
 - [x] Phase 8.2 / merged #20: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
-- [ ] Meaningful tradeoffs: cargo mass vs manoeuvrability; fuel vs range; power vs defence.
-- [ ] Resource scarcity, hazards, escalating events and recovery loops.
+- [x] Physical tradeoffs implemented and tested: cargo/part mass versus acceleration, efficient versus high-thrust drives, empty added tank capacity, tool/weapon heat and cell draw, cooling versus recharge and armour weight. Human tuning remains open.
+- [ ] Wider scarcity/event/recovery tuning: Task 014 adds honest home recovery and local refuelling budgets plus a tested supplied recovery/repair/manufacture/refuel loop. Threats remain opt-in; wider campaign balance remains open.
 - [x] Mission/objective system with onboarding and longer-term goals: [Task 013](../CODEX_TASK_013.md) adds eight observed-result goals, live tracking/control links and a read-only starter-route material/energy budget; implemented in this milestone; final CI and merge evidence belong to its implementation PR. See [model and limits](PROGRESSION_GOALS.md).
 - [ ] Balance toward 60% action / 40% building.
 **Exit:** Engaging multi-session progression with clear short- and long-term goals.
@@ -221,7 +221,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Continue the wider economy/event/recovery balance, then current-format reliability/content work after [Task 013](../CODEX_TASK_013.md). Record human full-loop feedback and representative hardware performance before release. The master plan has not ended; legacy save migrations remain deferred.
+Finish verification and merge Task 014, then hand the build to the user for the requested playtest. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

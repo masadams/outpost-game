@@ -1,7 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './game';
 import { createWorld } from '../../src/sim/world';
 import { encodeCheckpoint } from '../../src/persistence/checkpoint';
-import { TECH_IDS, UPGRADE_IDS, UPGRADES } from '../../src/sim/progressionConfig';
+import { TECH_IDS, BASE_UPGRADE_IDS, UPGRADES } from '../../src/sim/progressionConfig';
 import { WORLD } from '../../src/sim/config';
 
 test('builds a powered lab, earns research with real work and fabricates cargo equipment at home', async ({ page }) => {
@@ -14,9 +15,9 @@ test('builds a powered lab, earns research with real work and fabricates cargo e
   const start = page.getByRole('button', { name: 'Research Applied materials', exact: true }); await start.focus(); await page.keyboard.press('Space'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   const progress = console.locator('[data-project="materials"] progress'); await expect.poll(async () => Number(await progress.getAttribute('value')), { timeout: 15000 }).toBeGreaterThan(2);
   await page.keyboard.press('p'); await page.keyboard.press('k'); const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(save.version).toBe(17); expect(save.world.colony.products.alloy).toBe(14); expect(save.world.colony.research.queue[0].progress).toBeGreaterThan(2); expect(save.world.colony.research.completed).toEqual([]);
+  expect(save.version).toBe(18); expect(save.world.colony.products.alloy).toBe(14); expect(save.world.colony.research.queue[0].progress).toBeGreaterThan(2); expect(save.world.colony.research.completed).toEqual([]);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Manage', exact: true }).click(); await console.locator('summary').filter({ hasText: 'Research ·' }).click();
-  await page.keyboard.press('p'); await expect(console.locator('[data-tech="materials"] h3')).toHaveText('Applied materials · complete', { timeout: 45000 });
+  await page.keyboard.press('p');await expect(console.locator('[data-project="materials"]')).toHaveCount(0,{timeout:45000});await page.getByLabel('Research view',{exact:true}).selectOption('complete');await expect(console.locator('[data-tech="materials"] h3')).toHaveText('Applied materials · complete');
   await expect(console.locator('[data-project="materials"]')).toHaveCount(0); await page.keyboard.press('Escape');
   await page.keyboard.down('a'); await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 15000, intervals: [100] }).toBeLessThan(10);
   await page.keyboard.up('a'); await page.waitForTimeout(450); await page.keyboard.press('f'); await expect(hud).toHaveAttribute('data-mode', 'ship');
@@ -36,14 +37,14 @@ test('compares and installs bounded modules, fills a paid extended tank and safe
   await page.addInitScript(text => { if (!sessionStorage.getItem('equipment-fixture')) { localStorage.setItem('outpost.checkpoint.v1', text); sessionStorage.setItem('equipment-fixture', 'yes'); } }, encodeCheckpoint(w));
   await page.goto('/'); const hud = page.locator('#hud'), console = page.locator('#command-console'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name: 'Manage', exact: true }).click(); await console.locator('summary').filter({ hasText: 'Ship equipment ·' }).click();
-  await expect(page.getByRole('button', { name: 'Fabricate High-thrust engine', exact: true })).toBeDisabled(); await page.keyboard.press('p');
-  for (const id of UPGRADE_IDS) { await page.getByRole('button', { name: `Fabricate ${UPGRADES[id].label}`, exact: true }).click(); await expect(console.locator(`[data-upgrade="${id}"]`)).toHaveAttribute('data-installed', 'true'); }
+  await page.getByLabel('Ship part slot',{exact:true}).selectOption('drive');await expect(page.getByRole('button', { name: 'Fabricate High-thrust engine', exact: true })).toBeDisabled(); await page.keyboard.press('p');
+  for (const id of BASE_UPGRADE_IDS) { await page.getByLabel('Ship part slot',{exact:true}).selectOption(UPGRADES[id].slot);await expect(console.locator(`[data-upgrade="${id}"]`)).toBeVisible(); await page.getByRole('button', { name: `Fabricate ${UPGRADES[id].label}`, exact: true }).click(); await expect(console.locator(`[data-upgrade="${id}"]`)).toHaveAttribute('data-installed', 'true'); }
   await expect(console.locator('.equipment-panel')).toContainText('modules 98 kg'); await expect(console.locator('.equipment-panel')).toContainText('/ 320 kg');
   await page.keyboard.press('Escape'); await page.keyboard.press('e'); await expect(hud).toHaveAttribute('data-fuel', '320.00');
-  await page.getByRole('button', { name: 'Manage', exact: true }).click(); await page.getByRole('button', { name: 'Remove Extended fuel tank', exact: true }).click();
+  await page.getByRole('button', { name: 'Manage', exact: true }).click();await page.getByLabel('Ship part slot',{exact:true}).selectOption('tank'); await page.getByRole('button', { name: 'Remove Extended fuel tank', exact: true }).click();
   await expect(console.locator('[data-upgrade="tank"]')).toHaveAttribute('data-installed', 'false'); await expect(hud).toHaveAttribute('data-fuel', '240.00');
   await page.keyboard.press('p'); await page.keyboard.press('k'); const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(save.world.ship.equipment).toHaveLength(7); expect(save.world.colony.products.fuel).toBe(80); expect(save.world.colony.energy).toBe(40); expect(save.world.ship.armament.cannon).toBe(40); expect(save.world.ship.hull).toBe(100);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Manage', exact: true }).click(); await console.locator('summary').filter({ hasText: 'Ship equipment ·' }).click();
-  await expect(console.locator('[data-upgrade="engine"]')).toHaveAttribute('data-installed', 'true'); await expect(console.locator('[data-upgrade="tank"]')).toHaveAttribute('data-installed', 'false'); expect(errors).toEqual([]);
+  await page.getByLabel('Ship part slot',{exact:true}).selectOption('drive');await expect(console.locator('[data-upgrade="engine"]')).toHaveAttribute('data-installed', 'true'); await page.getByLabel('Ship part slot',{exact:true}).selectOption('tank');await expect(console.locator('[data-upgrade="tank"]')).toHaveAttribute('data-installed', 'false'); expect(errors).toEqual([]);
 });
