@@ -208,3 +208,20 @@ See Bible D-01–D-12. Priority for near-term discussion: **interstellar mechani
 | 2026-11-04 | Large seeded, persistent multi-star continuous 2D universe | Preferred direction |
 | 2026-11-04 | First Observatory-triggered asteroid-storm vertical slice | Preferred milestone |
 | 2026-11-04 | Advanced continuous drive vs compressed time/distance vs jumps | Open |
+
+
+## Distinctive-experience quality gate (applies to all phases)
+See [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md). Feature proposals must explain how they strengthen the physical simulation, discovery-driven engineering, consequential choices and/or the intimate-to-civilizational scale progression. A signature mechanic should usually meet at least 3 of 4 qualities; supporting accessibility, reliability and infrastructure features are exempt. Prioritize polish of the first mining flight, the first real asteroid storm, and the first physical expedition to another world before broad content expansion.
+
+### Additions to Phase 1 signature slice
+- [ ] Offer more than one viable response to storm hazards, including physical ship interception or trajectory modification where feasible.
+- [ ] Preserve fragment motion and meaningful consequences; interception is not a magical delete operation.
+- [ ] Allow a valuable object to become salvage or a future industrial opportunity rather than only a defense score.
+
+### Additions to Phase 3 research and engineering
+- [ ] Evaluate multi-application engineering principles (emitters, cooling, sensors, materials) rather than redundant isolated upgrades.
+- [ ] Test trade-offs of dual-use mining/defense/ship hardware before increasing module count.
+
+### Additions to Phase 7 persistent identity
+- [ ] Support memorable player-origin stories, e.g. asteroid threatening home → deflected/captured → mined → used as station site (advanced, exploratory).
+- [ ] Test whether a player can recount a distinctive emergent event, not merely list available mechanics.
