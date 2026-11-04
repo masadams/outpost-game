@@ -163,3 +163,8 @@ This document explains the **feeling and experiential progression** that each [r
 
 ## 12. Distinctiveness across every scale
 See [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md). The sense of scale is not an excuse to build increasingly large feature lists: each new horizon should emerge from interactions already meaningful at small scale. A rock worth recovering in the opening can become an orbital navigation hazard, a captured mine or a historical landmark later. The first mining sortie, physical storm and first interplanetary expedition deserve exceptional polish before breadth. Players should describe **what they made happen** rather than only the size of the map.
+
+### Agreed identity across the expanding horizon — 2026-11-04
+**Don't just explore space. Engineer it.** Scale is earned by inventing solutions with multipurpose physical components, not merely unlocking larger versions. A small set of understandable capabilities should keep yielding new applications as the player's responsibility grows.
+
+Evaluate every horizon for **emergent ingenuity**, **physical satisfaction** and **personal persistent history**, using the [distinctiveness proof tests](DISTINCTIVE_EXPERIENCE.md#10-agreed-identity-and-proof-tests) and [roadmap gate](MASTER_ROADMAP.md#core-identity-acceptance-gate-all-phases). Ask what the player figured out, whether the act itself was enjoyable, and which recognizable object or place now tells that story. An early lander, repaired outpost or redirected rock should remain a personal landmark. Depth, ingenuity and excellent gameplay precede expansion in scale; the ultimate civilization should feel like something the player learned how to build, piece by piece.

@@ -2,6 +2,8 @@
 **Version:** 1.0 · **Date:** 2026-11-04 · **Status:** Proposed, subject to code audit.  
 **Companion:** [Master Design Bible](MASTER_DESIGN_BIBLE.md) and [Scale and Experience](SCALE_AND_EXPERIENCE.md).
 
+> **Core identity: Don't just explore space. Engineer it.** Every phase should deepen creative engineering, player-invented solutions and personal persistent history. Depth, ingenuity and excellent gameplay come before breadth. Apply the [identity acceptance gate](#core-identity-acceptance-gate-all-phases) alongside all existing exits.
+
 ## Conventions
 This is a long-horizon dependency map, not a release promise or proof of implementation. Before working on a slice, inspect current code and classify it as **Verified existing / Partial / Not started / Deferred**. Unchecked items are design-tracking items, not statements that the current alpha lacks them. P0 = essential to phase; P1 = enhancement; P2 = exploratory.
 
@@ -299,3 +301,26 @@ Design detail: [Planetary Energy Systems](ENERGY_SYSTEMS.md). These unchecked re
 - [ ] Playtest a blackout/black-start, cooling failure and supply interruption with a visible recovery path.
 - [ ] Compare two useful power mixes on contrasting sites and test that no generator universally dominates.
 - [ ] Follow AGENTS.md prototype-save policy: support current-version saves; defer legacy migrations until later development. Earlier roadmap migration entries remain long-term work.
+
+## Core identity acceptance gate (all phases)
+**Agreed core principle, 2026-11-04:** [Don't just explore space. Engineer it.](MASTER_DESIGN_BIBLE.md#defining-identity--agreed-core-principle-2026-11-04) These unchecked items are future review requirements, not completed playtests. Retain the existing four-part distinctive-experience gate and phase exits; this gate adds evidence for the identity rather than replacing them.
+
+Before accepting a major signature slice or materially expanding its content:
+- [ ] **Capabilities, not prescribed solutions:** Identify the physical capabilities and at least two useful applications or combinations of the relevant components. Explain mass, fuel, energy, heat, mounting and recovery constraints; prefer reusing existing machinery over adding an isolated solution mechanic.
+- [ ] **Emergent ingenuity:** Present a physical problem with more than one viable response. Observe players without prescribing the answer and record an independently invented approach, why it works and whether it depends on a scripted exception. Refine and retest if only the intended solution appears.
+- [ ] **Physical satisfaction:** Playtest flying, mining, constructing and object manipulation without leaning on progression rewards. Record handling, feedback, clarity and enjoyment problems, then resolve material weaknesses before multiplying content. Research and exploration also need satisfying decisions and discovery in their own right.
+- [ ] **Personal persistent history:** Record a player account of something they built, changed, saved or destroyed. Revisit the relevant object/site after travel and current-version save/load; verify that its meaningful state and causal consequences remain recognizable.
+- [ ] **Depth before scale:** Review evidence across the first mining flight, physical storm and other-world expedition before substantial expansion into more planets, technology tiers or components. Specify what a larger scope adds to agency rather than merely counting new content.
+
+Use the [distinctiveness proof-test table](DISTINCTIVE_EXPERIENCE.md#10-agreed-identity-and-proof-tests) in PR/playtest notes: setup, player action, observed outcome, unresolved weakness and next adjustment. Automated physics, economy and persistence checks accompany human evidence; they do not establish enjoyment or ingenuity. Supporting accessibility, reliability and infrastructure work may explain an indirect contribution instead of passing every creative test independently.
+
+### Minimal phase applications (extend existing slices)
+- **Phase 1:** Compare physical interception, deflection where supported, protection or evacuation instead of prescribing one turret count. Preserve meaningful fragments, damage and recovery history; unavailable responses remain proposals until prototyped.
+- **Phase 3:** Demonstrate useful component reuse across roles, with real trade-offs. A dual-use mining/defense tool or a tug repurposed for deflection is an example, not a requirement to build both.
+- **Phases 4–5:** Retain the identity and consequences of player-built assets through local/remote transitions and earned automation. Logistics must support new inventions without removing the satisfying manual core.
+- **Phases 6–7:** Expand only after the small-scale proof holds. Captured-asteroid stations, converted ships and other advanced combinations remain illustrative/exploratory under existing scope rules.
+
+### Recorded identity decision
+| Date | Decision | Status |
+|---|---|---|
+| 2026-11-04 | “Don't just explore space. Engineer it.”; multipurpose physical components, player-invented solutions and capabilities rather than prescribed answers; emergent ingenuity, physical satisfaction and personal persistent history as proof tests; depth before scale | Agreed core identity and evaluation criteria; implementation evidence still required |

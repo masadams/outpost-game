@@ -6,6 +6,24 @@
 
 > **North star:** Begin with one small lander and a precarious outpost. By learning to fly, mine, build, research, and explore, develop a persistent network of ships, installations, and settlements across a vast, physically navigable 2D universe. The same player who commands an interstellar industrial network can still manually pilot a fragile lander down to an unexplored world.
 
+## Defining identity — agreed core principle (2026-11-04)
+
+> **Don't just explore space. Engineer it.**
+
+Outpost's reason to play is **creative engineering through interacting physical systems**: players understand the universe, invent solutions with the machinery available, and build a civilization whose persistent history reflects their own decisions. Every object has a purpose the player can discover—or invent. This identity governs every major feature and future development decision.
+
+**Implement capabilities rather than prescribed solutions.** Favor a smaller set of multipurpose physical components with understandable properties over a large catalogue of isolated, single-purpose mechanics. An engine produces thrust, a laser transfers energy, a cable applies tension, a battery stores electrical energy and a sensor measures the world. Useful combinations and real constraints should let players devise approaches the developer did not explicitly script.
+
+**Central pillars and proof tests:**
+- **Multipurpose engineering and player-invented solutions:** Do components support multiple useful applications, and can a player combine or repurpose them to solve a problem? Mounts, mass, fuel, energy, heat and interface clarity provide constraints; an arbitrary free-form editor is not required.
+- **Emergent ingenuity:** Can players discover a viable, understandable solution that was not prescribed by a mission, recipe or single unlock? Look for “I discovered I could do this,” beyond “I finally unlocked this.”
+- **Physical satisfaction:** Are flying, mining, constructing and manipulating objects enjoyable even without progression rewards? Each individual system—including research and exploration—must be excellent in its own right.
+- **Personal persistent history:** Can players revisit and tell a causal story about something they actually built, changed, saved or destroyed? Their infrastructure, scars and recovered objects should retain meaning across travel and current-version save/load.
+
+**Overriding priority: depth, ingenuity and excellent gameplay before expansion in scale.** Prove these qualities in the first mining flight, physical asteroid storm and other-world expedition before multiplying planets, modules or technologies. A larger universe must grow from compelling small-scale interactions.
+
+These are agreed design principles and evaluation criteria, not claims of implemented behavior. The [distinctiveness document](DISTINCTIVE_EXPERIENCE.md#10-agreed-identity-and-proof-tests) supplies review evidence; the [roadmap](MASTER_ROADMAP.md#core-identity-acceptance-gate-all-phases) makes the gate actionable. Existing pillars, the four-part feature test and open decisions below remain in force.
+
 ## 1. Authority and document conventions
 This document captures the agreed **vision**, candidate mechanics, and open design decisions from brainstorming. It does not assert that every described mechanic is built. The repository's code, tests, and feature-specific docs are authoritative for **current implementation**. This bible guides design; [MASTER_ROADMAP.md](MASTER_ROADMAP.md) decomposes that vision into phases and implementable slices.
 
@@ -306,3 +324,8 @@ The strongest design test: **Is the next action motivated by something the playe
 
 ## 19. Distinctive experience and competitive positioning
 Read [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md) as the canonical creative filter for future features. Avoid competing through sheer quantity of ship parts, buildings, factions or planets. Favor physical systemic depth, discovery-driven engineering, a persistent history, and the same continuous experience from first asteroid to multi-star civilization. Treat **asteroids as multipurpose physical objects** that may be mined, studied, destroyed, redirected, deflected or captured—not just hazards or ore pickups. Prioritize the three signature vertical slices (excellent mining sortie, physical asteroid storm, first other-world expedition). A major signature mechanic should generally satisfy at least three of four: physical consequence, meaningful discovery, interesting decision, growing scale. Supporting infrastructure need not pass that creative threshold.
+
+### Applying the defining identity in feature reviews
+Alongside the existing four-part test, every major proposal must explain which reusable capabilities it adds, what alternatives the player can invent, how the physical interaction feels, and what durable personal history it can produce. Signature slices require observed playtest evidence for emergent ingenuity, physical satisfaction and personal history before substantial breadth expansion. Supporting accessibility, reliability and infrastructure may enable these pillars indirectly; explain that contribution rather than forcing every support feature into a creativity score.
+
+An approaching asteroid illustrates the intent: interception, deflection, protection, evacuation or accepting an impact should be meaningful alternatives where the supported simulation permits them. Repurposing mining hardware for defense, using a cargo tug for deflection, converting an old ship into a station or building around a captured asteroid are illustrative future possibilities, not newly committed mechanics. Preserve their physical costs and prototype the smallest useful interaction first.

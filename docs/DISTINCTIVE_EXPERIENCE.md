@@ -2,6 +2,10 @@
 **Version:** 1.0 · **Date:** 2026-11-04 · **Status:** Living creative direction, not a claim of unique invention  
 **Read with:** [Master Design Bible](MASTER_DESIGN_BIBLE.md) · [Scale & Experience](SCALE_AND_EXPERIENCE.md) · [Master Roadmap](MASTER_ROADMAP.md)
 
+> **Agreed defining identity: Don't just explore space. Engineer it.**
+>
+> Creative engineering with multipurpose physical components, player-invented solutions and a universe that remembers the player's actions. Implement capabilities rather than prescribed solutions. See [the agreed proof tests](#10-agreed-identity-and-proof-tests).
+
 ## 1. Why this document exists
 
 OUTPOST must not become an under-resourced facsimile of a larger studio's space game. More planets, recipes, buildings, technology tiers or enemy factions are not a distinctive identity. The goal is a **small number of unusually deep, satisfying and interacting systems** that produce stories not explicitly scripted by the developer.
@@ -167,3 +171,20 @@ Outpost's plausible defensible combination:
 
 ### Design position (2026-11-04)
 Prefer **depth through interacting systems** over breadth through content volume. The studio-scale ambition is allowed to grow, but only on a foundation of exceptionally good hand-scale experiences.
+
+## 10. Agreed identity and proof tests
+**Decision recorded 2026-11-04:** “Don't just explore space. Engineer it.” is Outpost's core identity. Multipurpose engineering is a central pillar: prioritize understandable, composable physical capabilities over isolated mechanics with a single sanctioned use. Player ingenuity should arise from consistent interactions and constraints, rather than a special scripted action for every imagined solution.
+
+Apply these tests alongside Section 6's four-part feature test. Its three-of-four rule remains a useful proposal filter; it cannot substitute for evidence that the experience delivers this identity.
+
+| Proof test | Evidence to seek in a playable signature slice | Failure signal |
+|---|---|---|
+| **Emergent ingenuity** | A player invents a viable approach from interacting capabilities without being told a prescribed solution; record the setup, actions and physical reason it works | Every successful player follows the same turret count, recipe or unlock script |
+| **Physical satisfaction** | Flying, mining, constructing and manipulating objects are enjoyable before rewards; observe handling, feedback, clarity and player desire to repeat | The activity is tolerated only to fill a bar or unlock a larger version |
+| **Personal persistent history** | The player recounts something they built, changed, saved or destroyed and can revisit its recognizable consequences after travel and current-version save/load | Progress is only a list of unlocks; objects and consequences reset or lose their causal meaning |
+
+**Component review:** Name each proposed component's physical capability, useful applications and costs. Ask whether existing machinery could supply it first. Engines, lasers, cables, batteries and sensors illustrate a shared grammar; they do not require implementing every imaginable combination. Different applications retain mounting, mass, power, heat, fabrication and safety constraints. Interfaces must make experimentation understandable and recovery possible.
+
+**Small prototype:** Offer one physical problem with at least two viable approaches using the available components, without a mandatory solution prompt. Observe unfamiliar players, record any independently invented approach, and ask them to explain both its physical cause and the lasting result. Automated accounting checks support this evidence; they cannot prove ingenuity or enjoyment. If no unscripted solution emerges, refine the interactions and repeat before claiming that criterion passed.
+
+**Depth before scale:** Test these qualities across the first mining flight, storm and expedition. Flying, mining, building, researching and exploration must each be excellent before their scope expands. Do not require late-game asteroid stations or an enormous module editor to prove the early identity. Supporting accessibility, reliability and infrastructure can contribute indirectly; document how they enable the pillars.
