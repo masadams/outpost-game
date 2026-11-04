@@ -1,8 +1,8 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Research/parts, menus/readiness and checkpoint recovery are merged in [PR #25](https://github.com/masadams/outpost-game/pull/25). User feedback prioritizes reducing menu density: [Task 016](../CODEX_TASK_016.md) implements a large tabbed management workspace, connected research map, selected-item inspectors and four new branches/six parts. The same UI review branch includes the requested compact instrument console with secondary diagnostics on demand. See [workspace design/playtest](MANAGEMENT_WORKSPACE.md). Human feel, pace, hardware and remaining content/release acceptance stay open.
+**Status:** Research/parts, menus/readiness and checkpoint recovery are merged in [PR #25](https://github.com/masadams/outpost-game/pull/25). User feedback prioritizes reducing menu density: [Task 016](archive/tasks/CODEX_TASK_016.md) implements a large tabbed management workspace, connected research map, selected-item inspectors and four new branches/six parts. The same UI review branch includes the requested compact instrument console with secondary diagnostics on demand. See [workspace design/playtest](MANAGEMENT_WORKSPACE.md). Human feel, pace, hardware and remaining content/release acceptance stay open.
 
-[Task 017](../CODEX_TASK_017.md) adds three progressive researched flight computers, physical automatic landing/return/navigation, researched in-place facility tiers II/III and optional clickable labels with focused control windows. It follows the open Task 016 branch for separate user review; neither PR is merged automatically. See [controls, limits and playtest](AUTOMATION_FACILITIES.md).
+[Task 017](archive/tasks/CODEX_TASK_017.md) adds three progressive researched flight computers, physical automatic landing/return/navigation, researched in-place facility tiers II/III and optional clickable labels with focused control windows. It follows the open Task 016 branch for separate user review; neither PR is merged automatically. See [controls, limits and playtest](AUTOMATION_FACILITIES.md).
 
 ## Long-horizon systems planning
 The [planning bible section 20](MASTER_DESIGN_BIBLE.md#20-adopted-systems-direction--2026-11-04) records the user's adopted environmental, terrain, moderate industry, power, logistics, sensors, communications, time/travel and physical worker direction. The [integrated S0–S6 slices](MASTER_ROADMAP.md#integrated-systems-vertical-slices-s0s6) extend existing paid crew work and oxygen habitats into useful inhabited settlements. These are future reviewed slices, not completed alpha milestones or a replacement for current release work. Implementation values and fidelity remain open.
@@ -83,7 +83,7 @@ Merged in PR #5 after review and successful CI. Includes six facilities, preview
 
 ## Phase 5 — Planetary defence (Missile Command influence)
 
-Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) and merged after green CI and explicit user authorization. See [Task 005](../CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
+Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) and merged after green CI and explicit user authorization. See [Task 005](archive/tasks/CODEX_TASK_005.md) and [defence playtest/model notes](DEFENCE.md). Includes opt-in deterministic drills, shared environmental dynamics, early warning/path prediction, powered manual/automatic laser/flak/missile turrets, dangerous fragments, ship-laser interception, persistent damage/repair and version-3 checkpoints. Shields remain optional later work.
 **Dependencies:** Phases 1, 4.
 - [x] Incoming meteors/asteroids with actual world trajectories.
 - [x] Radar early warning and trajectory indicators.
@@ -96,7 +96,7 @@ Implemented in [PR #8](https://github.com/masadams/outpost-game/pull/8) and merg
 
 ## Phase 6 — Ship combat and threats
 
-Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) and merged into main after PR #8, with green CI and explicit user authorization. See [Task 006](../CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
+Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) and merged into main after PR #8, with green CI and explicit user authorization. See [Task 006](archive/tasks/CODEX_TASK_006.md) and [combat notes](COMBAT.md). Includes opt-in capped drone patrols, shared environmental dynamics, cannon/guided missile weapons, finite ammunition/mass/recoil/heat/energy, telegraphed AI, supplied repair/rearm/recovery and version-4 checkpoints. Full normal-input fight/return/repair regressions cover both weapons. The [initial presentation audit](PRESENTATION_AUDIT.md) starts the Phase 9 discovery work; it is not human usability approval.
 **Dependencies:** Phases 1–2, 5.
 - [x] Ship weapon systems, heat/energy/ammo balancing and hit feedback.
 - [x] Enemy spacecraft/hostile drones with readable AI behaviours.
@@ -106,12 +106,12 @@ Implemented in [PR #9](https://github.com/masadams/outpost-game/pull/9) and merg
 
 ## Pre-automation presentation foundation (Task 006A)
 
-Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and merged into main. See [Task 006A](../CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
+Implemented in [PR #10](https://github.com/masadams/outpost-game/pull/10) and merged into main. See [Task 006A](archive/tasks/CODEX_TASK_006A.md), [visual direction and wireframes](PRESENTATION_DIRECTION.md) and desktop reference captures. Includes a single contextual operations dock, clear central flight corridor, bottom telemetry/radar, focus/help/pause-safe panel navigation and cached planet shading. This completes the initial direction/layout prototype, not the full Phase 9 overhaul or human usability study.
 
 ## Phase 7 — Automation and logistics
 **Dependencies:** Phases 2, 4–6.
 
-The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_007A.md) implemented the first slice in merged [PR #11](https://github.com/masadams/outpost-game/pull/11): ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). [Task 007B](../CODEX_TASK_007B.md) adds opt-in refinery scheduling next, with desired-stock targets, fair recipe rotation, cycle preservation and version-6 checkpoints. See [automation rules](AUTOMATION.md). [Task 007C](../CODEX_TASK_007C.md) adds protected power, delivery room and turret materials on `feat/colony-priorities`, based on main after PR #12 merged. See [resource priorities](COLONY_PRIORITIES.md). These slices do not complete Phase 7.
+The user requested planetary mining rigs/buildings. [Task 007A](archive/tasks/CODEX_TASK_007A.md) implemented the first slice in merged [PR #11](https://github.com/masadams/outpost-game/pull/11): ten finite seams, powered buildable extraction, survey/placement feedback, existing refinery/fuel integration and version-5 checkpoints. See [the model and playtest route](PLANETARY_MINING.md). [Task 007B](archive/tasks/CODEX_TASK_007B.md) adds opt-in refinery scheduling next, with desired-stock targets, fair recipe rotation, cycle preservation and version-6 checkpoints. See [automation rules](AUTOMATION.md). [Task 007C](archive/tasks/CODEX_TASK_007C.md) adds protected power, delivery room and turret materials on `feat/colony-priorities`, based on main after PR #12 merged. See [resource priorities](COLONY_PRIORITIES.md). These slices do not complete Phase 7.
 - [x] Finite planetary deposits and powered surface rigs connected to colony storage.
 - [x] Opt-in refinery scheduling with configurable stock targets (merged [PR #12](https://github.com/masadams/outpost-game/pull/12)).
 - [ ] Earned automation: refinery scheduling, auto turrets and resource logistics.
@@ -122,15 +122,15 @@ The user requested planetary mining rigs/buildings. [Task 007A](../CODEX_TASK_00
 
 ## Flight feedback before mobile logistics (Task 007D)
 
-The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](../CODEX_TASK_007D.md) is implemented in [PR #14](https://github.com/masadams/outpost-game/pull/14) on `feat/landing-warning-instruments`, retargeted onto main after resource-priority PR #13 merged. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Merged in [PR #14](https://github.com/masadams/outpost-game/pull/14).
+The user requested color-coded landing telemetry, warning lights/pulsing and low-fuel sound. [Task 007D](archive/tasks/CODEX_TASK_007D.md) is implemented in [PR #14](https://github.com/masadams/outpost-game/pull/14) on `feat/landing-warning-instruments`, retargeted onto main after resource-priority PR #13 merged. It adds shared touchdown-limit cues, spin telemetry, low-clearance/off-pad feedback, distinct paced alarms and pause/reduced-motion behavior. See [thresholds and validation](FLIGHT_WARNINGS.md). Physics and save formats are unchanged; the full Phase 9 overhaul remains required. Merged in [PR #14](https://github.com/masadams/outpost-game/pull/14).
 
 ## Mobile logistics (Task 007E)
 
-[Task 007E](../CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) merged after PR #14. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
+[Task 007E](archive/tasks/CODEX_TASK_007E.md) implements a paid 25 kg ship utility towing rig, physically coupled breakable cable, supply/mass costs, controls/feedback and version-8 persistence in [PR #15](https://github.com/masadams/outpost-game/pull/15) merged after PR #14. Towing moves existing rocks; normal mining/collection/unload remains necessary. See [the model and playtest](TOWING.md). Autonomous drones and reeling remain deferred. The bounded field remains fully simulated; existing colony production/automatic defence continues while the pilot flies.
 
 ## Phase 7.5 — Habitat domes and life support (Task 007F, merged #16)
 
-Merged in [PR #16](https://github.com/masadams/outpost-game/pull/16) with green CI and user authorization. See [Task 007F](../CODEX_TASK_007F.md) and [the habitat model/playtest](HABITATS.md). Explicitly requested by the user. Follow towing before the wider Phase 8 progression work. See [the upgrade/dome schedule](UPGRADES_AND_DOMES.md).
+Merged in [PR #16](https://github.com/masadams/outpost-game/pull/16) with green CI and user authorization. See [Task 007F](archive/tasks/CODEX_TASK_007F.md) and [the habitat model/playtest](HABITATS.md). Explicitly requested by the user. Follow towing before the wider Phase 8 progression work. See [the upgrade/dome schedule](UPGRADES_AND_DOMES.md).
 - [x] Define small/large surface coverage and ceiling heights, 40 m / 160 m spans; tune costs, oxygen buffers and kg/s demand.
 - [x] Place dome coverage over existing colony areas with valid foundations and curved-surface geometry.
 - [x] Powered, supplied breathable zones pause suit oxygen depletion only while crew is inside and air is available.
@@ -141,7 +141,7 @@ Merged in [PR #16](https://github.com/masadams/outpost-game/pull/16) with green 
 
 ## Phase 7.75 — Central Command console (Task 007G, merged #17)
 
-Merged in #17; see [Task 007G](../CODEX_TASK_007G.md) and [model/playtest](COMMAND.md). Requested by the user to replace walking between facilities for routine control. Follow habitat buildings, before adding more progression/economy complexity. See [the functional plan](COMMAND_AND_EXPLORATION.md) and [concept wireframe](mockups/command-console.svg).
+Merged in #17; see [Task 007G](archive/tasks/CODEX_TASK_007G.md) and [model/playtest](COMMAND.md). Requested by the user to replace walking between facilities for routine control. Follow habitat buildings, before adding more progression/economy complexity. See [the functional plan](COMMAND_AND_EXPLORATION.md) and [concept wireframe](mockups/command-console.svg).
 - [x] Cohesive spacecraft-style overview, colony selection/map and persistent critical warnings.
 - [x] Remote facility enable/disable, recipes/targets, turret automation and supplied service management.
 - [x] Power flow diagram, generation/demand/storage/capacity meters, actual versus requested allocation, per-facility caps and dispatch priorities.
@@ -154,7 +154,7 @@ Merged in #17; see [Task 007G](../CODEX_TASK_007G.md) and [model/playtest](COMMA
 
 ## Phase 7.9 — Nearby belts, destinations and discovery (Task 007H, merged #18)
 
-Merged in #18; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget measurements](NEIGHBORHOOD.md). Promoted from optional late expansion in response to the user's empty-neighborhood feedback. Improve the immediate neighborhood before wider ship progression; see [the exploration plan](COMMAND_AND_EXPLORATION.md).
+Merged in #18; see [Task 007H](archive/tasks/CODEX_TASK_007H.md) and [model/playtest/budget measurements](NEIGHBORHOOD.md). Promoted from optional late expansion in response to the user's empty-neighborhood feedback. Improve the immediate neighborhood before wider ship progression; see [the exploration plan](COMMAND_AND_EXPLORATION.md).
 - [x] Distinct finite resource belts/clusters with useful mining/towing opportunities and persistent depletion.
 - [x] Survey beacons, derelict/salvage, docking/service or anomaly sites with meaningful supplied interactions.
 - [x] Overview chart, destination selection, range/bearing/relative-motion markers and clear home-return navigation.
@@ -165,17 +165,17 @@ Merged in #18; see [Task 007H](../CODEX_TASK_007H.md) and [model/playtest/budget
 ## Phase 8 — Progression and balancing
 **Dependencies:** Phases 2–7, life support, Command and neighborhood discovery.
 - [x] Technology/unlock progression: Task 014 expands to ten paid prerequisite nodes and sixteen real parts in eight exclusive slots, including propulsion, logistics, extraction, thermal power tradeoffs and combat/armour; Combat engineering retains shield unlocks.
-- [x] Merged #19: Phase 8.1 / [Task 008](../CODEX_TASK_008.md), merged from `feat/ship-progression`; see [actual progression/playtest](PROGRESSION.md). Includes powered labs and paid prerequisite research plus explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
+- [x] Merged #19: Phase 8.1 / [Task 008](archive/tasks/CODEX_TASK_008.md), merged from `feat/ship-progression`; see [actual progression/playtest](PROGRESSION.md). Includes powered labs and paid prerequisite research plus explicit ship equipment/fabrication UI; engines, tanks, cargo, mining/tractor, weapons/armour/cooling and utility upgrades with finite costs, real mass/capacity/fuel tradeoffs, replacement limits and persistent recovery behavior.
 - [x] Phase 8.2 / merged #20: small/large powered shield domes with finite charge, impact cost, recharge/breach behavior and tested friendly/towing interactions; shield coverage supplies no oxygen.
 - [x] Physical tradeoffs implemented and tested: cargo/part mass versus acceleration, efficient versus high-thrust drives, empty added tank capacity, tool/weapon heat and cell draw, cooling versus recharge and armour weight. Human tuning remains open.
 - [ ] Wider scarcity/event/recovery tuning: Task 014 adds honest home recovery and local refuelling budgets plus a tested supplied recovery/repair/manufacture/refuel loop. Threats remain opt-in; wider campaign balance remains open.
-- [x] Mission/objective system with onboarding and longer-term goals: [Task 013](../CODEX_TASK_013.md) adds eight observed-result goals, live tracking/control links and a read-only starter-route material/energy budget; implemented in this milestone; final CI and merge evidence belong to its implementation PR. See [model and limits](PROGRESSION_GOALS.md).
+- [x] Mission/objective system with onboarding and longer-term goals: [Task 013](archive/tasks/CODEX_TASK_013.md) adds eight observed-result goals, live tracking/control links and a read-only starter-route material/energy budget; implemented in this milestone; final CI and merge evidence belong to its implementation PR. See [model and limits](PROGRESSION_GOALS.md).
 - [ ] Balance toward 60% action / 40% building.
 **Exit:** Engaging multi-session progression with clear short- and long-term goals.
 
 ## Phase 8.5 — Nearby planets and moons
 
-Explicitly requested by the user; a bounded first neighborhood before the full presentation/reliability/release phases. Merged in [PR #21](https://github.com/masadams/outpost-game/pull/21); see [Task 010](../CODEX_TASK_010.md), the [world model and route](NEARBY_WORLDS.md), and [multi-world requirements](COMMAND_AND_EXPLORATION.md).
+Explicitly requested by the user; a bounded first neighborhood before the full presentation/reliability/release phases. Merged in [PR #21](https://github.com/masadams/outpost-game/pull/21); see [Task 010](archive/tasks/CODEX_TASK_010.md), the [world model and route](NEARBY_WORLDS.md), and [multi-world requirements](COMMAND_AND_EXPLORATION.md).
 - [x] Define distinct planets/moons, atmospheres, gravity, motion, resources and interactions.
 - [x] Consistent multi-body gravity, finite cores, moving reference frames and swept surface/pad contacts.
 - [x] Body-relative building/habitat/shield placement, walking, docking, towing and camera/local-up transitions.
@@ -208,7 +208,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Phase 10 — Saves, reliability and content
 
-[Task 015](../CODEX_TASK_015.md) begins current-format checkpoint recovery: one previous valid copy, visible paused fallback and storage-failure regression coverage. It was merged with Task 014 in PR #25. See [storage guarantees and playtest](CHECKPOINT_RECOVERY.md). Legacy compatibility remains deferred.
+[Task 015](archive/tasks/CODEX_TASK_015.md) begins current-format checkpoint recovery: one previous valid copy, visible paused fallback and storage-failure regression coverage. It was merged with Task 014 in PR #25. See [storage guarantees and playtest](CHECKPOINT_RECOVERY.md). Legacy compatibility remains deferred.
 **Dependencies:** Core mechanics stable.
 - [ ] Reliable save/load and corruption recovery near completion. Development saves may be reset; legacy compatibility is deferred by user direction.
 - [ ] Persist ship, world, inventory, buildings, damage, resources and events.

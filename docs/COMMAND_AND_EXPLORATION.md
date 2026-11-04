@@ -1,6 +1,6 @@
 # Command console and a populated neighborhood — scheduled expansion
 
-These are explicit milestones requested by the user. The current prototype still has one planet and a finite asteroid field; the central console is now implemented in [Task 007G](../CODEX_TASK_007G.md), and the nearby belts/sites/navigation slice is implemented in [Task 007H](../CODEX_TASK_007H.md). Additional worlds remain **planned**; see [actual discovery rules](NEIGHBORHOOD.md). See [the actual Command rules](COMMAND.md). Atmosphere/space indication is improved in the current towing slice.
+These are explicit milestones requested by the user. The current prototype still has one planet and a finite asteroid field; the central console is now implemented in [Task 007G](archive/tasks/CODEX_TASK_007G.md), and the nearby belts/sites/navigation slice is implemented in [Task 007H](archive/tasks/CODEX_TASK_007H.md). Additional worlds remain **planned**; see [actual discovery rules](NEIGHBORHOOD.md). See [the actual Command rules](COMMAND.md). Atmosphere/space indication is improved in the current towing slice.
 
 ## Updated sequence
 
@@ -8,7 +8,7 @@ These are explicit milestones requested by the user. The current prototype still
 2. Phase 7.5: oxygen habitat domes and supplied breathable coverage (merged #16).
 3. Phase 7.75: central Command console, implemented for review on `feat/command-console`.
 4. Phase 7.9: finite mining arcs, physical survey/salvage/fuel sites and live navigation, implemented for review on `feat/neighborhood-discovery`.
-5. Phase 8.1: powered lab research and eight paid ship modules in Command, implemented in [Task 008](../CODEX_TASK_008.md); Phase 8.2 shields remain next.
+5. Phase 8.1: powered lab research and eight paid ship modules in Command, implemented in [Task 008](archive/tasks/CODEX_TASK_008.md); Phase 8.2 shields remain next.
 6. Phase 8.5: nearby planets/moons with consistent multi-body flight, navigation and persistence.
 7. Phase 9: the full graphics/UX/UI/audio overhaul across all these systems.
 8. Phases 10–11: save/reliability/content hardening, playtests, then release and later expansion.

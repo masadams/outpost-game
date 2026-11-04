@@ -221,27 +221,13 @@ Known limitations: a fixed non-rotating planet, no mutual object gravity, lift, 
 Next: review the management workspace and playtest the complete flight/mining/colony/research loop. Use handling, menu, economy and pacing feedback to prioritize the remaining reliability/content and release work. See [the development roadmap](docs/DEVELOPMENT_ROADMAP.md).
 
 ## Start here
-- [Master development roadmap](docs/DEVELOPMENT_ROADMAP.md) — authoritative phases, task checkboxes, dependencies, exit criteria and progress.
-- [Design decisions](docs/DECISIONS.md) — confirmed choices versus unresolved questions.
-- [Game design](docs/GAME_DESIGN.md) — gameplay vision, mechanics and core loop.
-- [Codex Task 001](CODEX_TASK.md) — first playable planetary flight prototype specification.
-- [Codex Task 002](CODEX_TASK_002.md) — mining/cargo iteration scope and acceptance criteria.
-- [Codex Task 003](CODEX_TASK_003.md) — astronaut and surface interaction scope.
-- [Task 007E](CODEX_TASK_007E.md) — first paid utility upgrade and physical asteroid towing.
-- [Command and exploration plan](docs/COMMAND_AND_EXPLORATION.md) — remote management, space content and multi-world flight.
-- [Command concept](docs/mockups/command-console.svg) — planned power/operations/economy layout.
-- [Upgrade/dome schedule](docs/UPGRADES_AND_DOMES.md) — habitat coverage, ship equipment and shield domes.
-- [Task 007D](CODEX_TASK_007D.md) — landing/fuel warning lights and audio feedback.
-- [Task 007C](CODEX_TASK_007C.md) — protected colony power, delivery room and turret materials.
-- [Task 007B](CODEX_TASK_007B.md) — opt-in refinery scheduling and shared-stock targets.
-- [Task 007A](CODEX_TASK_007A.md) — finite planetary deposits and powered extraction.
-- [Task 006A](CODEX_TASK_006A.md) — pre-automation presentation foundation.
-- [Visual direction](docs/PRESENTATION_DIRECTION.md) — palette, wireframes and live layout references.
-- [Codex Task 006](CODEX_TASK_006.md) — ship combat, supplied recovery and combat saves.
-- [Presentation audit](docs/PRESENTATION_AUDIT.md) — initial findings for the required graphics/UX/UI overhaul.
-- [Codex Task 005](CODEX_TASK_005.md) — planetary defence and building damage scope.
-- [Codex Task 004](CODEX_TASK_004.md) — colony construction, economy and checkpoint scope.
-- [Agent instructions](AGENTS.md) — technical architecture, coding and testing conventions.
+- [Current focus](docs/CURRENT_FOCUS.md) — what is being built now and what is out of scope.
+- [Master design bible](docs/MASTER_DESIGN_BIBLE.md) — identity, pillars and open design decisions.
+- [Master roadmap](docs/MASTER_ROADMAP.md) — phases and vertical slices.
+- [Design decisions](docs/DECISIONS.md) — decision log.
+- [Development roadmap](docs/DEVELOPMENT_ROADMAP.md) — shipped milestone history.
+- [Agent instructions](AGENTS.md) — architecture, coding, UI and writing conventions.
+- [Archived task specs](docs/archive/tasks/) — completed Tasks 001–017 (historical).
 
 ## Core experience
 Launch from a small circular moon, fly in a continuous 2D world with radial gravity and inertia, mine asteroids, fight threats, land, walk around, build/refuel a colony and defend it from incoming meteors. No separate flight/surface minigames.
