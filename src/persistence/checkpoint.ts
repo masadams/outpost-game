@@ -1,3 +1,5 @@
+import {validAutopilot} from '../sim/autopilot';
+import {validBuildingUpgrade} from '../sim/buildingUpgrades';
 import { validCrewOrder } from '../sim/crewOrders';
 import { validObjectives } from '../sim/objectives';
 import { planetAt, relative, relativeVelocity } from '../sim/celestial';
@@ -22,6 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
+export const SAVE_VERSION=19;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -49,7 +52,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
     if (Math.abs(Math.hypot(r.x, r.y) - p.radius - WORLD.shipRadius) > .2 || Math.hypot(v.x, v.y) > .5) return false;
   }
   if (remote && (!object(world.moon) || JSON.stringify(world.moon.colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, 'moon'), false))) return false;
-  if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world)) return false;
+  if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world) || !validAutopilot(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;
   if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
   if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > cargoCapacity(world.ship) + 1e-6) return false;
@@ -59,6 +62,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
     number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'research staffed', 'shield active', 'shield charging', 'shield breached'].includes(b.status))) return false;
+  if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, HABITATS[b.kind].capacity) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
@@ -77,16 +81,17 @@ function validWorld(value: unknown, remote = true): value is WorldState {
 export function encodeCheckpoint(world: WorldState): string {
   world = world.rootWorld ?? world;
   if (!validWorld(world)) throw new Error('World state cannot be saved');
-  return JSON.stringify({ version: 18, environment: { radius: WORLD.radius, model: 'binary-flight-1' }, world });
+  return JSON.stringify({ version: SAVE_VERSION, environment: { radius: WORLD.radius, model: 'binary-flight-1' }, world });
 }
 export function decodeCheckpoint(text: string): WorldState {
   if (text.length > 1_000_000) throw new Error('Checkpoint is too large');
   const envelope: unknown = JSON.parse(text);
-  if (!object(envelope) || envelope.version !== 18 || !object(envelope.world)) throw new Error('Checkpoint is incompatible with this development build · R starts a new world');
+  if (!object(envelope) || envelope.version !== SAVE_VERSION || !object(envelope.world)) throw new Error('Checkpoint is incompatible with this development build · R starts a new world');
   if (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'binary-flight-1') throw new Error('Checkpoint environment is incompatible');
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
   world.moon.colony.research = world.colony.research;
+  if(world.autopilot.program){world.autopilot.program=null;world.autopilot.status='Checkpoint loaded · automation disarmed';}
   world.combat.flashes = [];
   world.defence.controlled = null; world.defence.beams = [];
   world.buttons = { board: false, interact: false }; world.astronaut.jumpHeld = false; world.beam = null; world.tractorActive = false;

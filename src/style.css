@@ -478,3 +478,28 @@ h1 { font-size: 21px; letter-spacing: 2px; }
  #command-console .selection-inspector {grid-column:3;grid-row:2 / span 4;position:sticky;top:140px;max-height:calc(100dvh - 180px);}
  #command-console:is([data-page=research],[data-page=equipment]) > .command-alert {grid-row:6;}
 }
+/* Flight computers, direct facility controls and optional world labels. */
+.ship-tabs {grid-template-columns:repeat(4,minmax(0,1fr));}
+.autopilot-console {font-size:calc(12px * var(--text-scale));}
+.autopilot-console h2 {display:flex;align-items:center;gap:8px;}
+.autopilot-options {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:16px 0;}
+.autopilot-card {padding:16px;background:#102832;border:1px solid var(--edge);border-radius:6px;}
+.autopilot-card h2 {font-size:1.15em;}
+.autopilot-card p {font-size:.9em;line-height:1.6;}
+.autopilot-card .eyebrow {font-size:.8em;color:#a1c4c8;}
+.autopilot-status {border-left:3px solid var(--mint);padding:10px;background:#132a34;}
+#hud .instrument-bezel .autopilot-disengage {margin:0;color:var(--mint);border-color:#6b9e9f;}
+#operations-dock[data-expanded=false] .autopilot-options {grid-template-columns:1fr;}
+#operations-dock[data-inspection=true] {position:fixed;top:126px;left:auto;right:20px;width:min(420px,calc(100vw - 40px));height:auto;max-height:calc(100dvh - 154px);z-index:25;}
+#operations-dock[data-inspection=true] .manage-sections,#operations-dock[data-inspection=true] .command-flow,#operations-dock[data-inspection=true] .command-flow+small,#operations-dock[data-inspection=true] .command-map,#operations-dock[data-inspection=true] .command-list,#operations-dock[data-inspection=true] [data-workspace-page=facilities]>small,#operations-dock[data-inspection=true] .workspace-toolbar label,#operations-dock[data-inspection=true] .workspace-toolbar select {display:none;}
+.full-command-link {display:none!important;}
+#operations-dock[data-inspection=true] .full-command-link {display:block!important;}
+.facility-upgrade {border-top:1px solid var(--edge);padding-top:10px;margin-top:14px;}
+#building-labels {position:absolute;inset:0;pointer-events:none;z-index:-1;}
+#building-labels button {position:absolute;pointer-events:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(11px * var(--text-scale));padding:4px 6px;background:#081b24ed;border:1px solid #698591;color:#c8dfe4;}
+#building-labels button[aria-pressed=true] {border-color:#edbd7e;color:#edbd7e;}
+.tech-board,.tree-connections {height:952px;}
+@media(max-width:1050px){.autopilot-options{grid-template-columns:1fr;}#operations-dock[data-inspection=true]{right:12px;}}
+
+/* Label controls belong to facility administration; keep research/fitting toolbars focused. */
+#command-console:not([data-page=facilities]) .workspace-toolbar [data-building-labels] {display:none;}

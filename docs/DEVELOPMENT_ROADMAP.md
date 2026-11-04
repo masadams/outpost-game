@@ -2,6 +2,8 @@
 
 **Status:** Research/parts, menus/readiness and checkpoint recovery are merged in [PR #25](https://github.com/masadams/outpost-game/pull/25). User feedback prioritizes reducing menu density: [Task 016](../CODEX_TASK_016.md) implements a large tabbed management workspace, connected research map, selected-item inspectors and four new branches/six parts. The same UI review branch includes the requested compact instrument console with secondary diagnostics on demand. See [workspace design/playtest](MANAGEMENT_WORKSPACE.md). Human feel, pace, hardware and remaining content/release acceptance stay open.
 
+[Task 017](../CODEX_TASK_017.md) adds three progressive researched flight computers, physical automatic landing/return/navigation, researched in-place facility tiers II/III and optional clickable labels with focused control windows. It follows the open Task 016 branch for separate user review; neither PR is merged automatically. See [controls, limits and playtest](AUTOMATION_FACILITIES.md).
+
 ## Progress rules
 - [ ] means not completed; [x] means implemented, tested and merged.
 - Work on one milestone at a time; document deviations and known issues.
@@ -221,7 +223,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Review Task 016 after automated checks, then playtest the management window, tech map and fitting flow. Leave merging to the user. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
+Review Task 016 (PR #26) and its stacked Task 017 follow-up, then playtest the management window, tech map, fitting flow, earned autopilot and facility administration. Leave merging to the user. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

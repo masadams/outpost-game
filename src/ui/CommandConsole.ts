@@ -1,3 +1,5 @@
+import {applyPresentation} from '../preferences/presentation';
+import {buildingUpgradePanel} from './buildingUpgrade';
 import { physicalKey, type PresentationPreferences } from '../preferences/presentation';
 import { icon } from './icons';
 import { PART_SLOTS, TECH_IDS, UPGRADE_IDS, UPGRADES, type UpgradeId, type PartSlot, type TechId } from '../sim/progressionConfig';
@@ -44,6 +46,7 @@ export class CommandConsole {
   private renderedPage:ManagePage|null=null;
   private requestedSection: { name: 'research'|'equipment'; keyboard: boolean } | null = null;
   showLocal():void{this.body='local';this.requestedSection=null;this.requestedTech=null;}
+  inspectPart(part:UpgradeId):void{this.body='home';this.partSlot=UPGRADES[part].slot;this.selectedPart=part;this.page='equipment';this.requestedSection={name:'equipment',keyboard:true};}
   openSection(name: 'research'|'equipment', keyboard=false): void { this.body='home'; this.page=name;this.requestedSection={name,keyboard}; }
   private sampleTime = 0;
   private previous = new Map<string, number>();
@@ -53,6 +56,7 @@ export class CommandConsole {
     this.root.addEventListener('click', e => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button'); if (!button || button.disabled) return;
       const d = button.dataset, id = Number(d.id);
+      if(d.buildingLabels){this.preferences.buildingLabels=!this.preferences.buildingLabels;applyPresentation(this.preferences);this.refresh();return;}
       if(d.page&&d.page in PAGES){this.page=d.page as ManagePage;if(this.page==='research')this.requestedTech=this.selectedTech;this.refresh();return;}
       if(d.partSlot&&PART_SLOTS.includes(d.partSlot as PartSlot)){this.chooseSlot(d.partSlot as PartSlot);this.refresh();return;}
       if(d.partFocus&&UPGRADE_IDS.includes(d.partFocus as UpgradeId)){this.selectedPart=d.partFocus as UpgradeId;this.refresh();return;}
@@ -60,6 +64,7 @@ export class CommandConsole {
       if(d.techFocus&&TECH_IDS.includes(d.techFocus as TechId)){this.page='research';this.selectedTech=d.techFocus as TechId;this.requestedTech=this.selectedTech;this.refresh();return;}
       if (d.locate) { this.selected = Number(d.locate);this.requestedSelection=this.selected;this.selectionByKeyboard=e.detail===0;if(e.detail>0)button.blur();return; }
       if (this.paused) return;
+      if(d.upgradeBuilding){const level=Number(d.upgradeTier);if(level===2||level===3)this.dispatch({type:'upgradeBuilding',id:Number(d.upgradeBuilding),level});if(e.detail>0)button.blur();return;}
       const progress = progressionAction(button); if (progress) { this.dispatch(progress); if (e.detail > 0) button.blur(); return; }
       let action: CommandAction | undefined;
       if (d.remote) action = { type: 'remote', id, operation: d.remote as RemoteOperation };
@@ -127,14 +132,14 @@ export class CommandConsole {
     const warn = c.buildings.filter(b => ['wrecked', 'no power', 'air low', 'no feedstock', 'power reserved', 'output full', 'shield breached', 'shield charging'].includes(b.status));
     const action = (operation: RemoteOperation, label: string) => `<button ${disabled} data-id="${selected!.id}" data-remote="${operation}">${label}</button>`;
     const recipe = selected ? recipeFor(selected) : null;
-    const card = selected ? `<article class="command-machine" data-selected="${selected.id}"><h3>#${selected.id} · ${BLUEPRINTS[selected.kind].label}</h3><p>${selected.status} · hull ${fmt(selected.health ?? 100)}%</p>
+    const card = selected ? `<article class="command-machine" data-selected="${selected.id}"><h3>#${selected.id} · ${BLUEPRINTS[selected.kind].label}</h3><p class="facility-location">${colonyPlanet(w).label} · local grid and inventory</p><p>${selected.status} · hull ${fmt(selected.health ?? 100)}%</p>
       ${!['battery', 'storage'].includes(selected.kind) ? action('toggle', selected.enabled ? 'Disable selected' : 'Enable selected') : '<small>Passive capacity · no switch</small>'}
       ${ratedPower(selected) ? `<label for="command-limit">Power limit · ${selected.dispatch?.limit ?? 100}% of ${ratedPower(selected)} kW</label><input ${disabled} id="command-limit" aria-label="Selected facility power limit" data-limit="${selected.id}" type="range" min="0" max="100" step="10" value="${selected.dispatch?.limit ?? 100}"><p>Grid actual ${fmt(selected.gridPower ?? 0)} / request ${fmt(selected.requestedPower ?? 0)} kW</p>` : isTurret(selected.kind) ? `<p>Burst load · ${WEAPONS[selected.kind].energy} kJ / shot · protected materials allowed</p>${action('auto', `Automatic defence: ${selected.turret?.automatic ? 'on' : 'off'}`)}` : ''}
       ${selected.kind === 'refinery' ? `${action('recipe', 'Next selected recipe')}${action('schedule', `Auto recipes: ${selected.schedule?.enabled ? 'on' : 'off'}`)}${selected.schedule ? SCHEDULE_PRODUCTS.map(p => `<div class="command-target"><span>${p} ${selected.schedule!.targets[p]} kg</span><button ${disabled} aria-label="Lower selected ${p} target" data-id="${selected.id}" data-product="${p}" data-delta="-5">−</button><button ${disabled} aria-label="Raise selected ${p} target" data-id="${selected.id}" data-product="${p}" data-delta="5">+</button></div>`).join('') : ''}` : ''}
       ${recipe ? `<p>${recipe.label} · ${fmt(selected.progress)} / ${recipe.seconds} work s</p><small>Paid cycle progress is retained when throttled or starved; changing the manual recipe discards work.</small>` : ''}
-      ${selected.kind === 'service' ? action('service', 'Request supplied service') + '<small>2 kJ + actual supplies. Crew within 18 m or landed ship within 80 m; no remote healing.</small>' : ''}${habitatDetails(selected)}${shieldDetails(selected)}</article>` : '<p>No facilities yet. Queue a supplied site below.</p>';
+      ${selected.kind === 'service' ? action('service', 'Request supplied service') + '<small>2 kJ + actual supplies. Crew within 18 m or landed ship within 80 m; no remote healing.</small>' : ''}${habitatDetails(selected)}${shieldDetails(selected)}${buildingUpgradePanel(w,selected,paused)}</article>` : '<p>No facilities yet. Queue a supplied site below.</p>';
     const stockRows = [...stocks].map(([p, q]) => `<tr><th>${p}</th><td>${fmt(q)}</td><td>${PRODUCTS.includes(p as keyof ProductInventory) ? fmt(availableProduct(c, p as keyof ProductInventory)) : '—'}</td><td>${this.rates.has(p) ? `${(this.rates.get(p)! >= 0 ? '+' : '') + this.rates.get(p)!.toFixed(2)}` : '—'}</td></tr>`).join('');
-    patchMarkup(this.root, `<div class="workspace-toolbar"><label for="command-body">COMMAND · ${colonyPlanet(w).label.toUpperCase()} COLONY</label><select id="command-body" aria-label="Command colony"><option value="local" ${this.body === 'local' ? 'selected' : ''}>Nearby world</option><option value="home" ${this.body === 'home' ? 'selected' : ''}>Selene · home</option><option value="moon" ${this.body === 'moon' ? 'selected' : ''}>Nacre · moon</option></select><span class="workspace-live">${paused?'Ⅱ Paused · inspect only':'● Live · [P] pause'}</span></div><nav class="manage-sections" aria-label="Manage sections">${Object.entries(PAGES).map(([page,[symbol,label]])=>`<button data-page="${page}" aria-pressed="${page===this.page}">${icon(symbol)}<span>${label}</span></button>`).join('')}</nav>
+    patchMarkup(this.root, `<div class="workspace-toolbar"><label for="command-body">COMMAND · ${colonyPlanet(w).label.toUpperCase()} COLONY</label><select id="command-body" aria-label="Command colony"><option value="local" ${this.body === 'local' ? 'selected' : ''}>Nearby world</option><option value="home" ${this.body === 'home' ? 'selected' : ''}>Selene · home</option><option value="moon" ${this.body === 'moon' ? 'selected' : ''}>Nacre · moon</option></select><button data-building-labels="true" aria-pressed="${this.preferences.buildingLabels}">Building labels: ${this.preferences.buildingLabels?'on':'off'}</button><span class="workspace-live">${paused?'Ⅱ Paused · inspect only':'● Live · [P] pause'}</span></div><button class="full-command-link" data-full-command="true">Open full colony management</button><nav class="manage-sections" aria-label="Manage sections">${Object.entries(PAGES).map(([page,[symbol,label]])=>`<button data-page="${page}" aria-pressed="${page===this.page}">${icon(symbol)}<span>${label}</span></button>`).join('')}</nav>
       <div class="command-flow" data-workspace-page="facilities"><span>SOLAR ${fmt(c.generation)} kW</span><b>↓</b><span>BUS ${fmt(c.energy)} / ${energyCapacity(c)} kJ</span><meter aria-label="Colony energy" min="0" max="${energyCapacity(c)}" value="${c.energy}"></meter><b>↓</b><span>LOAD ${fmt(c.demand)} kW · ${remaining}</span></div>
       <small data-workspace-page="facilities">Life support → shield upkeep → backup and shield charging → priority industry → turret bursts. Charging uses spare unreserved charge. Requested load is conditional; time-to-shortfall is an estimate.</small>
       <p class="command-alert" data-quiet="${!warn.length&&!w.defence.meteors.length&&!w.combat.enemies.length}" role="status">${w.defence.meteors.length || w.combat.enemies.length ? 'THREATS ACTIVE · ' : ''}${warn.length ? `${warn.length} facility alerts · ${warn.slice(0, 3).map(b => `#${b.id} ${b.status}`).join(' · ')}` : 'Facilities nominal'}</p>

@@ -1,5 +1,6 @@
 /** Original inline line icons. Labels carry meaning; icons are decorative. */
 const paths:Record<string,string>={
+ avionics:'M5 5h14v14H5zM9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M19 9h3M2 15h3M19 15h3',
  wire:'M5 3v5a4 4 0 0 0 8 0V5a3 3 0 0 1 6 0v13M3 3h4M17 21h4',
  components:'M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4',
  research:'M9 3h6M10 3v6l-6 10a1 1 0 0 0 1 2h14a1 1 0 0 0 1-2L14 9V3M8 15h8',

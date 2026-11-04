@@ -1,3 +1,4 @@
+import {applyAutopilotAction} from '../sim/autopilot';
 import { GameMenu, type MenuAction } from '../ui/GameMenu';
 import { screenToWorld } from './pointer';
 import { drawCrewOrder } from './crewOrders';
@@ -80,7 +81,7 @@ export class FlightScene extends Phaser.Scene {
   constructor() { super('flight'); }
   create(): void {
     applyPresentation(this.preferences);
-    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
+    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
@@ -187,6 +188,7 @@ export class FlightScene extends Phaser.Scene {
     }
     const onFoot = this.simulation.playerMode === 'astronaut';
     this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot, this.simulation.system);
+    this.hud.updateBuildingLabels(this.simulation,{...this.follow,width:this.scale.width,height:this.scale.height});
     if(this.pointerInside){this.hud.setBuildPointer(activeWorld(this.simulation),screenToWorld(this.input.activePointer,{...this.follow,width:this.scale.width,height:this.scale.height}),this.follow.zoom);this.hud.showBuildTip(this.input.activePointer.x,this.input.activePointer.y);}
     this.predictionTime += delta / 1000;
     if (this.simulation.towing.targetId !== null) this.prediction = null;

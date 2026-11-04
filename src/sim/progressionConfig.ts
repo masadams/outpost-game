@@ -1,8 +1,8 @@
 import type { BodyId } from './celestial';
 import type { ProductInventory } from './colonyConfig';
-export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor'] as const;
+export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems'] as const;
 export type TechId = typeof TECH_IDS[number];
-export interface Technology { label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
+export interface Technology { facilityTier?: 2|3; label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
 export const TECHNOLOGIES: Record<TechId, Technology> = {
   materials: { label: 'Applied materials', seconds: 15, requires: [], cost: { alloy: 4, wire: 2, components: 1 } },
   propulsion: { label: 'Propulsion systems', seconds: 20, requires: ['materials'], cost: { alloy: 6, wire: 3, components: 1 } },
@@ -18,13 +18,18 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   lightweight: { label:'Lightweight structures', seconds:50, requires:['logistics','composites'], cost:{alloy:14,wire:6,components:5} },
   industrial: { label:'Industrial extraction', seconds:55, requires:['precision','thermal'], cost:{alloy:16,wire:8,components:5} },
   reactor: { label:'Cell engineering', seconds:50, requires:['thermal','orbital'], cost:{alloy:14,wire:8,components:5} },
+  flightControl:{label:'Flight control',seconds:30,requires:['materials','propulsion'],cost:{alloy:8,wire:6,components:3}},
+  navigation:{label:'Return guidance',seconds:40,requires:['flightControl','orbital'],cost:{alloy:12,wire:8,components:4}},
+  autonomy:{label:'Autonomous navigation',seconds:60,requires:['navigation','precision'],cost:{alloy:18,wire:12,components:6}},
+  infrastructure:{facilityTier:2,label:'Infrastructure retrofits',seconds:35,requires:['materials','logistics'],cost:{alloy:10,wire:6,components:3}},
+  industrialSystems:{facilityTier:3,label:'Advanced facility systems',seconds:45,requires:['infrastructure','thermal'],cost:{alloy:14,wire:8,components:4}},
 };
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
-export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler'] as const;
+export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler', 'landingComputer', 'returnComputer', 'navigationComputer'] as const;
 export type UpgradeId = typeof UPGRADE_IDS[number];
-export const PART_SLOTS = ['drive','tank','hold','mining','tractor','weapon','cooling','armour'] as const;
+export const PART_SLOTS = ['drive','tank','hold','mining','tractor','weapon','cooling','armour','avionics'] as const;
 export type PartSlot = typeof PART_SLOTS[number];
-export const SLOT_LABELS: Record<PartSlot,string> = {drive:'Drive',tank:'Fuel tank',hold:'Cargo hold',mining:'Mining head',tractor:'Tractor',weapon:'Cannon',cooling:'Cooling',armour:'Armour'};
+export const SLOT_LABELS: Record<PartSlot,string> = {drive:'Drive',tank:'Fuel tank',hold:'Cargo hold',mining:'Mining head',tractor:'Tractor',weapon:'Cannon',cooling:'Cooling',armour:'Armour',avionics:'Flight computer'};
 export interface Upgrade { slot: PartSlot; label: string; tech: TechId; cost: Partial<ProductInventory>; mass: number; benefit: string; tradeoff: string }
 export const UPGRADES: Record<UpgradeId, Upgrade> = {
   engine: { slot: 'drive', label: 'High-thrust engine', tech: 'propulsion', cost: { alloy: 8, wire: 4, components: 2 }, mass: 14, benefit: '18.2 kN thrust (was 14)', tradeoff: '1.04 kg/s burn (was 0.8) · more thrust, same exhaust efficiency' },
@@ -49,6 +54,9 @@ export const UPGRADES: Record<UpgradeId, Upgrade> = {
   broadTractor: {slot:'tractor',label:'Industrial tractor',tech:'industrial',cost:{alloy:12,wire:7,components:4},mass:23,benefit:'320 m field · 42 m/s² force limit',tradeoff:'9 kW + 7 heat/s; strong pull with shorter reach than Precision tractor'},
   efficientCoil: {slot:'weapon',label:'Efficient cannon coil',tech:'reactor',cost:{alloy:6,wire:3,components:1},mass:10,benefit:'21 cannon damage · 6 kJ + 12 heat/shot',tradeoff:'Lower damage than Cannon coil; same ammunition, recoil and firing interval'},
   capacitorCooler: {slot:'cooling',label:'Capacitor cooling loop',tech:'reactor',cost:{alloy:10,wire:5,components:3},mass:18,benefit:'24 heat/s cooling · 16 kW cell recharge',tradeoff:'Less cooling than Cooling pump; prioritizes cell recovery over sustained heat removal'},
+  landingComputer:{slot:'avionics',label:'Landing computer',tech:'flightControl',cost:{alloy:4,wire:3,components:1},mass:8,benefit:'Automatic landing from a prepared local pad approach',tradeoff:'1 kW active cell draw; manual approach required, uses real fuel'},
+  returnComputer:{slot:'avionics',label:'Return computer',tech:'navigation',cost:{alloy:8,wire:5,components:2},mass:15,benefit:'Landing plus automatic return home and touchdown',tradeoff:'2 kW active cell draw; more mass, normal fuel and collision risks'},
+  navigationComputer:{slot:'avionics',label:'Navigation computer',tech:'autonomy',cost:{alloy:14,wire:8,components:4},mass:26,benefit:'Landing, return home and selected-destination flight',tradeoff:'3 kW active cell draw; heaviest computer, no automatic mining or resource transfers'},
 };
 export const PROGRESSION = { labPower: 4, fabricationEnergy: 20, salvageFraction: .5 } as const;
 export interface ResearchProject { funding: BodyId; tech: TechId; progress: number; paused: boolean }
