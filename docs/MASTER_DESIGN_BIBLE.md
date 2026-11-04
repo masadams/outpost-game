@@ -276,19 +276,19 @@ This is a summary of repository documentation, **not an independently completed 
 | D-05 | Combat / hostile factions | Natural hazards primary; optional hostile machines/ships versus deeper faction warfare |
 | D-06 | Start seed variability | Fair but varied starting systems versus fixed home world |
 | D-07 | World terrain geometry | Current radial 2D planetary model should be extended consistently; planet size, wrap and deformability TBD |
-| D-08 | Time acceleration | Rules when nearby hazards, automation and physical simulation are active |
+| D-08 | Time acceleration | Agreed: one consistent simulation clock for local/remote operations; pause freezes all. Acceleration interruption and safety rules remain open |
 | D-09 | Late-game industrial scope | Automation, carriers, colony packages and replication limits |
 | D-10 | Narrative mysteries | Optional ancient structures/signals and degree of authored content |
 | D-11 | Save determinism | Boundary between reproducible event seeds and persisted event outcomes |
 | D-12 | Multiplayer | Explicitly deferred; do not constrain first-game design without evidence |
-| D-13 | Water, fluids and life-support scope | Prefer conserved shared inputs and simple tanks/links; detailed piping, phase changes and food TBD |
+| D-13 | Water, fluids and life-support scope | Agreed: simple conserved fluids with shared finite inputs. Exact conversions, connections, phase changes and expanded habitation remain open |
 | D-14 | Shared planetary environment | Prefer correlated surveyed conditions used by flight, power, cooling and geology; simulation depth TBD |
 | D-15 | Foundations, excavation and structure | Extend current terrain/placement first; underground space, collapse and structural simulation exploratory |
-| D-16 | Failure severity and recovery | Prefer warnings, safe shutdown and recoverable local damage; cascades, contamination and fallback rules TBD |
+| D-16 | Failure severity and recovery | Agreed: recoverable failures as the initial baseline, with warnings, derating and safe shutdown. Escalation beyond this baseline needs explicit review; exact recovery/fallback rules remain open |
 | D-17 | Manufacturing depth and resource exhaustion | Prefer short meaningful chains and geology-linked deposits; depletion/renewal and bootstrap guarantees TBD |
-| D-18 | Automation operating contract | Prefer bounded paid jobs with reserve/abort rules; autonomy, communications and attention policy TBD |
+| D-18 | Automation operating contract | Agreed: bounded automation with finite supplies and explicit operating limits. Exact jobs, abort thresholds, communications and attention policy remain open |
 
-See [Cross-cutting Gameplay Design Questions](DESIGN_QUESTIONS.md) for prioritized prompts, proposed starting points and prototype tests. Resolve player identity, shared time and failure/recovery before committing detailed remote energy operations. Recommendations are not accepted decisions.
+See [Cross-cutting Gameplay Design Questions](DESIGN_QUESTIONS.md) for prioritized prompts, proposed starting points and prototype tests. The four starting directions for D-08, D-13, D-16 and D-18 were agreed on 2026-11-04; detailed implementation rules remain open. Resolve player identity and the remaining time/failure contracts before committing detailed remote energy operations. Other recommendations remain proposals.
 
 ## 17. Product test: what success feels like
 The first 10–15 minutes teach a viable sortie, resource collection, landing and a meaningful construction choice. In the first extended session, the player discovers a looming event, understands how to prepare and survives it with consequential outcomes. Subsequent play creates genuine reasons to explore a moon, modify a ship and establish new infrastructure. At late game, the player has a living network of useful facilities, yet manual flight, difficult landings and local exploration remain fun.

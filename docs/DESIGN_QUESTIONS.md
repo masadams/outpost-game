@@ -1,14 +1,23 @@
 # Cross-cutting Gameplay Design Questions
 **Date:** 2026-11-04  
-**Status:** Open discussion backlog. Recommendations below are proposals, not accepted decisions.  
+**Status:** Four starting directions agreed; remaining recommendations and detailed contracts are open.  
 **Related:** [Bible open decisions](MASTER_DESIGN_BIBLE.md#16-open-decisions-do-not-silently-resolve) · [Energy systems](ENERGY_SYSTEMS.md) · [Roadmap](MASTER_ROADMAP.md)
+
+## Agreed starting directions — 2026-11-04
+The user approved these four starting directions. They are design decisions, not claims of implementation or approval of every detailed recommendation below.
+- **Shared time (D-08):** One consistent simulation clock for local and remote processes; pause freezes all. Exact time-acceleration interruptions and travel pacing remain open.
+- **Simple conserved fluids (D-13):** Shared finite material inputs connect relevant fluid uses. Exact resources, conversions, connections and expanded life support remain open.
+- **Recoverable failures (D-16):** Start with warnings, derating, safe shutdown and repairable consequences. More severe cascades or contamination need explicit review; exact recovery costs and fallback rules remain open.
+- **Bounded automation (D-18):** Delegate paid jobs within finite supplies and explicit operating limits. Exact autonomy, abort thresholds, communications and alerts remain open.
+
+Player identity/mortality (D-03), the fleet-control ceiling (D-04), and the other recommendations below remain unresolved. Preserve the questions and prototype tests to refine the accepted directions.
 
 ## Why these questions come first
 The current docs already cover many individual features. The remaining risk is inconsistent rules between systems: a reactor's cooling, a habitat's water, a ship's cargo and a remote factory must belong to the same world. Resolve the minimum contract for each question before implementing the affected slice; none requires stopping polish of the first mining flight.
 
 Existing implementation is a foundation, not an unanswered question. Habitats already have oxygen/backup accounting, freight already has physical mass and per-world inventories, construction has placement constraints, and resources can already deplete. The prompts below concern the scope and interaction of future extensions.
 
-Priority indicates order of discussion, not a promise to implement every recommendation.
+Priority indicates order of discussion, not a promise to implement every recommendation. The agreement above takes precedence over the earlier proposed starting points below; it does not settle every detail in those proposals.
 
 ## 1. Who is the player, and what does losing them mean? — P0
 **Bible:** D-03 and D-04.  
@@ -109,4 +118,4 @@ Priority indicates order of discussion, not a promise to implement every recomme
 ## Discussion order and decision protocol
 Start with **player identity, shared time and failure/recovery**, because these define what the player can lose and what they must manage. Then settle the minimum water/environment/material contracts for the energy prototypes. Terrain and automation can be bounded now and expanded only after their related slices prove useful.
 
-For each answer, record: chosen rule, rejected alternative and reason, affected documents, smallest prototype and success condition. Update the bible and roadmap; do not treat a recommendation in this file as approval. Retain D-01–D-12 and their rationale. The energy questions in ENERGY_SYSTEMS remain linked here rather than spawning contradictory parallel decisions.
+For each answer, record: chosen rule, rejected alternative and reason, affected documents, smallest prototype and success condition. Update the bible and roadmap; do not treat an unresolved recommendation in this file as approval. The four agreed directions above are the exception; further detail still needs a recorded decision. Retain D-01–D-12 and their rationale. The energy questions in ENERGY_SYSTEMS remain linked here rather than spawning contradictory parallel decisions.

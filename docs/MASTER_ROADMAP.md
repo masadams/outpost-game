@@ -268,6 +268,10 @@ See Bible D-01–D-18 and [Cross-cutting Gameplay Design Questions](DESIGN_QUEST
 | 2026-11-04 | Large seeded, persistent multi-star continuous 2D universe | Preferred direction |
 | 2026-11-04 | First Observatory-triggered asteroid-storm vertical slice | Preferred milestone |
 | 2026-11-04 | Advanced continuous drive vs compressed time/distance vs jumps | Open |
+| 2026-11-04 | One consistent simulation clock for local and remote processes; pause freezes all (D-08) | Agreed starting direction; acceleration rules open |
+| 2026-11-04 | Simple conserved fluids and shared finite inputs (D-13) | Agreed starting direction; resource/connection detail open |
+| 2026-11-04 | Recoverable failures with warnings, derating and safe shutdown (D-16) | Agreed initial baseline; greater severity requires review |
+| 2026-11-04 | Bounded automation with paid jobs, finite supplies and explicit limits (D-18) | Agreed starting direction; autonomy thresholds open |
 
 
 ## Distinctive-experience quality gate (applies to all phases)

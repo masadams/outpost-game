@@ -18,6 +18,8 @@ Current foundation inspected for this design:
 All numerical examples below illustrate design accounting, not adopted balance values. Existing alpha costs and operating rules remain authoritative until a specific implementation slice changes them.
 
 ## 2. Core contracts and progression
+**Agreed starting directions (2026-11-04):** Use one consistent simulation clock, simple conserved fluids, recoverable failures and bounded automation. These decisions guide future energy slices; detailed acceleration rules, material/connection models, recovery costs and automation thresholds remain open in [the discussion backlog](DESIGN_QUESTIONS.md). More severe cascades or contamination are outside the initial failure baseline and require explicit review.
+
 **Core principles:** finite inputs, local consequences, legible shortages, recoverable setbacks and several viable solutions. Electricity is local to a connected installation; opening a remote colony view does not move energy. Export requires a real carrier, battery cargo or an explicitly built transmission system.
 
 **Preferred progression:** solar plus batteries → remote radioisotope capability and/or surveyed wind/geothermal opportunities → fission-backed industrial grids → advanced storage, distribution and cooling → optional late fusion. This is a branching capability landscape, not a mandatory replacement ladder. Wind and geothermal depend on the world; research knowledge alone does not create suitable sites.
