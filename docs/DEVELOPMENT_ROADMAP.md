@@ -204,6 +204,8 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 
 ## Phase 10 — Saves, reliability and content
+
+[Task 015](../CODEX_TASK_015.md) begins current-format checkpoint recovery: one previous valid copy, visible paused fallback and storage-failure regression coverage. It is a local follow-up to Task 014 pending remote authorization and CI. See [storage guarantees and playtest](CHECKPOINT_RECOVERY.md). Legacy compatibility remains deferred.
 **Dependencies:** Core mechanics stable.
 - [ ] Reliable save/load and corruption recovery near completion. Development saves may be reset; legacy compatibility is deferred by user direction.
 - [ ] Persist ship, world, inventory, buildings, damage, resources and events.
@@ -221,7 +223,7 @@ The existing procedural sound, mute/volume controls and H guide provide the base
 
 ## Immediate next action
 
-Finish verification and merge Task 014, then hand the build to the user for the requested playtest. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
+Resolve remote destination authorization, run CI and merge Task 014 plus the Task 015 checkpoint-recovery follow-up, then hand the build to the user for the requested playtest. Use feedback on research/parts, menus, handling, pace and readiness to prioritize remaining economy/content/reliability work before release. No legacy migrations are required during this prototype phase.
 
 ## Risks to watch
 - Camera rotation and world/screen coordinate transforms.

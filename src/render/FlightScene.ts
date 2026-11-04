@@ -30,7 +30,7 @@ import { drawSurface } from './surface';
 import { drawColony } from './colony';
 import { applyColonyAction, type ColonyAction } from '../sim/colony';
 import { notify } from '../sim/messages';
-import { readCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
+import { inspectCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
 import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
 import { SoundControls } from '../ui/SoundControls';
@@ -131,7 +131,7 @@ export class FlightScene extends Phaser.Scene {
       this.menu.destroy();this.settings.destroy(); this.audio.destroy(); this.soundControls.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
-    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=readCheckpoint(localStorage);return {hasSave:!!save,saveStatus:save?'Checkpoint available · Continue loads paused':'No checkpoint yet · start a new game',hasRun:this.hasRun};}catch{return {hasSave:false,saveStatus:'Checkpoint unavailable or incompatible · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
+    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=inspectCheckpoint(localStorage);return {hasSave:!!save.world,saveStatus:save.source==='previous'?'Previous checkpoint available · latest checkpoint missing or invalid · Continue loads the older flight paused':save.world?'Checkpoint available · Continue loads paused':'No checkpoint yet · start a new game',hasRun:this.hasRun};}catch{return {hasSave:false,saveStatus:'Checkpoint unavailable or incompatible · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
     this.setPaused(true);this.menu.open('title');
   }
   private newGame():void{
@@ -214,8 +214,9 @@ export class FlightScene extends Phaser.Scene {
   }
   private loadCheckpoint(requested: boolean): boolean {
     try {
-      const saved = readCheckpoint(window.localStorage);
+      const selection = inspectCheckpoint(window.localStorage), saved = selection.world;
       if (saved) {
+        if(selection.source==='previous')notify(saved,'PREVIOUS CHECKPOINT LOADED · LATEST MISSING OR INVALID · P TO RESUME');
         this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
         this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship,saved.system);
         this.audio.reset(saved);this.effects.reset(saved); this.audio.silence();

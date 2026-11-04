@@ -44,7 +44,7 @@ it('uses a versioned storage key, reports missing checkpoints and propagates una
   const storage = { setItem: (key: string, text: string) => { items.set(key, text); }, getItem: (key: string) => items.get(key) ?? null };
   expect(readCheckpoint(storage)).toBeNull(); writeCheckpoint(storage, createWorld()); expect(items.has(SAVE_KEY)).toBe(true);
   expect(readCheckpoint(storage)?.colony.products.alloy).toBe(28);
-  expect(() => writeCheckpoint({ setItem: () => { throw new Error('Quota exceeded'); } }, createWorld())).toThrow('Quota exceeded');
+  expect(() => writeCheckpoint({ getItem: () => null, setItem: () => { throw new Error('Quota exceeded'); } }, createWorld())).toThrow('Quota exceeded');
 });
 
 it.each([1, 7, 13, 14, 15, 16, 17, 19])('rejects incompatible development save version %i without migrating it', version => {

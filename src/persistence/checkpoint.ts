@@ -23,6 +23,7 @@ import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
+export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
 const object = (value: unknown): value is RecordValue => value !== null && typeof value === 'object' && !Array.isArray(value);
 const number = (value: unknown, min = 0, max = 1e9): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
@@ -92,7 +93,30 @@ export function decodeCheckpoint(text: string): WorldState {
   world.notice = { message: 'CHECKPOINT LOADED · P TO RESUME', time: 3 };
   return world;
 }
-export function writeCheckpoint(storage: Pick<Storage, 'setItem'>, world: WorldState): void { storage.setItem(SAVE_KEY, encodeCheckpoint(world)); }
-export function readCheckpoint(storage: Pick<Storage, 'getItem'>): WorldState | null {
-  const text = storage.getItem(SAVE_KEY); return text === null ? null : decodeCheckpoint(text);
+type CheckpointStorage = Pick<Storage, 'getItem' | 'setItem'>;
+export interface CheckpointSelection { world: WorldState | null; source: 'checkpoint' | 'previous' | null }
+/** Reads never repair or overwrite storage. Only current-format, fully validated snapshots are usable. */
+export function inspectCheckpoint(storage: Pick<Storage, 'getItem'>): CheckpointSelection {
+  const primary = storage.getItem(SAVE_KEY);
+  if (primary !== null) {
+    try { return { world: decodeCheckpoint(primary), source: 'checkpoint' }; } catch { /* Try the previous good checkpoint. */ }
+  }
+  const previous = storage.getItem(PREVIOUS_SAVE_KEY);
+  if (previous !== null) {
+    try { return { world: decodeCheckpoint(previous), source: 'previous' }; } catch { /* Both slots are unusable. */ }
+  }
+  if (primary !== null || previous !== null) throw new Error('No valid current-format checkpoint');
+  return { world: null, source: null };
 }
+export function writeCheckpoint(storage: CheckpointStorage, world: WorldState): void {
+  const next = encodeCheckpoint(world); // Validate before touching either slot.
+  const current = storage.getItem(SAVE_KEY);
+  if (current === next) return; // Repeated saves must not replace the previous distinct checkpoint.
+  let valid = false;
+  if (current !== null) { try { decodeCheckpoint(current); valid = true; } catch { /* Never rotate corrupt/incompatible data over a good backup. */ } }
+  // Each localStorage write is atomic. If rotation fails, leave the primary untouched;
+  // if the primary write fails, the old primary is untouched and any valid backup survives.
+  if (valid) storage.setItem(PREVIOUS_SAVE_KEY, current!);
+  storage.setItem(SAVE_KEY, next);
+}
+export function readCheckpoint(storage: Pick<Storage, 'getItem'>): WorldState | null { return inspectCheckpoint(storage).world; }
