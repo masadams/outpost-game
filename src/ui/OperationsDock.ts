@@ -8,6 +8,9 @@ export class OperationsDock {
   readonly nav = document.createElement('nav');
   private shipTabs=document.createElement('nav');
   readonly root = document.createElement('aside');
+  readonly autopilot = document.createElement('section');
+  private inspection=false;
+  private inspectionTitle='Facility controls';
   readonly cargo = document.createElement('section');
   readonly objectives = document.createElement('section');
   readonly colony = document.createElement('section');
@@ -20,7 +23,7 @@ export class OperationsDock {
   private playerMode = '';
   private manual = false;
   private view: DockView | null = null;
-  private expanded = new Set<DockView>(['command','objectives','navigation']);
+  private expanded = new Set<DockView>(['command','objectives','navigation','autopilot']);
   objectiveButton:HTMLButtonElement|null=null;
   private objectiveHost:HTMLElement|null=null;
   private tools:HTMLElement|null=null;
@@ -32,16 +35,16 @@ export class OperationsDock {
   constructor() {
     this.nav.className = 'dock-nav'; this.nav.setAttribute('aria-label', 'Operations panels');
     this.nav.innerHTML = `<button data-panel="cargo" aria-controls="operations-dock">Ship [I]</button><button data-panel="colony" aria-controls="operations-dock">Build</button><button data-panel="command" aria-controls="operations-dock">Manage</button><button data-panel="navigation" aria-controls="operations-dock">Map</button>`;
-    this.shipTabs.className='ship-tabs';this.shipTabs.setAttribute('aria-label','Ship systems');this.shipTabs.innerHTML='<button data-panel="cargo">Cargo</button><button data-panel="combat">Weapons</button><button data-panel="defence">Defence</button>';
+    this.shipTabs.className='ship-tabs';this.shipTabs.setAttribute('aria-label','Ship systems');this.shipTabs.innerHTML='<button data-panel="cargo">Cargo</button><button data-panel="combat">Weapons</button><button data-panel="defence">Defence</button><button data-panel="autopilot">Flight computer</button>';
 
     this.root.id = 'operations-dock'; this.root.setAttribute('aria-label', 'Operations'); this.root.hidden = true;
     const header = this.header; header.className = 'dock-heading';
     const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close [Esc]'; close.setAttribute('aria-label', 'Close operations panel'); close.onclick = () => this.close();
-    this.sizeButton.type='button';this.sizeButton.onclick=()=>{if(this.view){if(this.expanded.has(this.view))this.expanded.delete(this.view);else this.expanded.add(this.view);this.render();}};header.append(this.heading,this.sizeButton,close); this.root.append(header,this.shipTabs);
+    this.sizeButton.type='button';this.sizeButton.onclick=()=>{if(this.inspection){this.inspection=false;this.expanded.add('command');this.render();return;}if(this.view){if(this.expanded.has(this.view))this.expanded.delete(this.view);else this.expanded.add(this.view);this.render();}};header.append(this.heading,this.sizeButton,close); this.root.append(header,this.shipTabs);
     this.cargo.className = 'mining'; this.cargo.setAttribute('aria-label', 'Cargo and mining telemetry');
     this.colony.className = 'colony-panel'; this.colony.setAttribute('aria-label', 'Colony construction and production');
     this.combat.id = 'combat-content'; this.defence.id = 'defence-content';
-    this.root.append(this.cargo, this.colony, this.combat, this.defence, this.command, this.navigation, this.objectives);
+    this.root.append(this.cargo, this.autopilot, this.colony, this.combat, this.defence, this.command, this.navigation, this.objectives);
     const choose=(event:MouseEvent)=>{const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button[data-panel]');if(!button)return;const view=button.dataset.panel as DockView;if(view==='colony'&&this.view==='colony'&&!this.buildActive){this.onBuild?.();if(event.detail>0)button.blur();return;}if(this.shipTabs.contains(button))this.open(view);else this.toggle(view);if(view==='colony'&&this.view==='colony')this.onBuild?.();if(event.detail>0)button.blur();};
     this.nav.addEventListener('click',choose);this.shipTabs.addEventListener('click',choose);
     isolateControlKeys(this.nav); isolateControlKeys(this.root);
@@ -54,8 +57,9 @@ export class OperationsDock {
       this.render();
     }
   }
-  open(view: DockView): void {this.manual=true;this.view=view;this.render();}
-  toggle(view: DockView): void { this.manual = true; this.view = this.view === view ? null : view; this.render(); }
+  inspectFacility(label:string):void{this.inspectionTitle=label;this.manual=true;this.view='command';this.inspection=true;this.render();}
+  open(view: DockView): void {this.inspection=false;this.manual=true;this.view=view;this.render();}
+  toggle(view: DockView): void { if(this.inspection&&view==='command'){this.open('command');return;}this.inspection=false;this.manual = true; this.view = this.view === view ? null : view; this.render(); }
   close(): void {
     this.manual = true; this.view = null;
     const focused = document.activeElement;
@@ -91,12 +95,14 @@ export class OperationsDock {
   private render(): void {
     if(this.view!=='colony'&&this.buildActive){this.buildActive=false;this.onLeaveBuild?.();}
     this.root.hidden = this.view === null; this.root.dataset.panel = this.view ?? 'closed';
-    const expanded=this.view!==null&&this.expanded.has(this.view);
+    if(this.view!=='command')this.inspection=false;this.root.dataset.inspection=String(this.inspection);
+    const expanded=!this.inspection&&this.view!==null&&this.expanded.has(this.view);
     this.layoutControls(expanded);
-    this.heading.textContent = this.view ? ({cargo:'Ship / Cargo',combat:'Ship / Weapons',defence:'Ship / Defence',colony:'Build',command:'Manage colony',navigation:'Map',objectives:'Objectives'} as const)[this.view] : '';
-    const ship=['cargo','combat','defence'].includes(this.view??'');this.shipTabs.hidden=!ship;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
+    this.heading.textContent = this.view ? ({cargo:'Ship / Cargo',combat:'Ship / Weapons',defence:'Ship / Defence',colony:'Build',command:'Manage colony',navigation:'Map',objectives:'Objectives',autopilot:'Ship / Flight computer'} as const)[this.view] : '';
+    if(this.inspection)this.heading.textContent=this.inspectionTitle;
+    const ship=['cargo','combat','defence','autopilot'].includes(this.view??'');this.shipTabs.hidden=!ship;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
     const changed=this.renderedView!==this.view;this.renderedView=this.view;
-    const sections = { cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation, objectives: this.objectives };
+    const sections = { autopilot:this.autopilot,cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation, objectives: this.objectives };
     for (const [view, section] of Object.entries(sections)) section.hidden = view !== this.view;
     if(changed)this.root.scrollTop=0;
     for (const button of Array.from(this.nav.querySelectorAll<HTMLButtonElement>('button[data-panel]'))) {

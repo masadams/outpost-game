@@ -16,16 +16,16 @@ const shop=()=>{const w=createWorld();w.asteroids=[];w.exploration.sites=[];w.co
 const fit=(w:ReturnType<typeof shop>,id:UpgradeId)=>{w.colony.energy=20;applyEquipment(w,{type:'equipment',upgrade:id,operation:'install'});};
 const starts=(w:ReturnType<typeof shop>)=>({ship:{...w.ship.position},suit:{...w.astronaut.position},rocks:new Map(),meteors:new Map()});
 it('defines a complete acyclic research tree and material-funded alternatives per slot',()=>{
- expect(TECH_IDS).toHaveLength(14);expect(UPGRADE_IDS).toHaveLength(22);
+ expect(TECH_IDS).toHaveLength(19);expect(UPGRADE_IDS).toHaveLength(25);
  for(const [index,id]of TECH_IDS.entries()){
-  const spec=TECHNOLOGIES[id];expect(spec.seconds).toBeGreaterThan(0);expect(UPGRADE_IDS.some(part=>UPGRADES[part].tech===id)).toBe(true);
+  const spec=TECHNOLOGIES[id];expect(spec.seconds).toBeGreaterThan(0);expect(UPGRADE_IDS.some(part=>UPGRADES[part].tech===id)||!!spec.facilityTier).toBe(true);
   for(const requirement of spec.requires)expect(TECH_IDS.indexOf(requirement)).toBeLessThan(index);
  }
  for(const slot of PART_SLOTS)expect(UPGRADE_IDS.filter(id=>UPGRADES[id].slot===slot).length).toBeGreaterThanOrEqual(2);
  for(const id of UPGRADE_IDS)expect(Object.values(UPGRADES[id].cost).reduce((sum,n)=>sum+n,0)).toBe(UPGRADES[id].mass);
 });
 it.each(PART_SLOTS)('replaces the %s part atomically with paid mass and hull-scaled salvage without refills',slot=>{
- const w=shop(),old=BASE_UPGRADE_IDS.find(id=>UPGRADES[id].slot===slot)!,next=UPGRADE_IDS.find(id=>UPGRADES[id].slot===slot&&id!==old)!;
+ const w=shop(),old=UPGRADE_IDS.find(id=>UPGRADES[id].slot===slot)!,next=UPGRADE_IDS.find(id=>UPGRADES[id].slot===slot&&id!==old)!;
  fit(w,old);w.ship.hull=60;w.ship.armament.energy=33;w.ship.armament.heat=17;const mass=shipMass(w.ship),stock={...w.colony.products},fuel=w.ship.fuel;fit(w,next);
  expect(w.ship.equipment).toEqual([next]);expect(shipMass(w.ship)-mass).toBeCloseTo(UPGRADES[next].mass-UPGRADES[old].mass);expect(w.ship.hull).toBe(60);expect(w.ship.fuel).toBe(fuel);expect(w.ship.armament).toMatchObject({energy:33,heat:17});
  for(const p of PRODUCTS)expect(w.colony.products[p]).toBeCloseTo(stock[p]-(UPGRADES[next].cost[p]??0)+(UPGRADES[old].cost[p]??0)*.3);

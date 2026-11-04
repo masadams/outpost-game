@@ -2,7 +2,7 @@
 
 A single-player, retro-inspired 2D spaceflight, asteroid mining, combat and colony-building game. Target balance: **60% action / 40% construction**.
 
-**Status:** Alpha 0.20 management overhaul, based on merged #25: large planning windows, six clear management pages, a connected fourteen-node research tree, selected-item inspectors and twenty-two functional ship parts across eight exclusive slots. See [workspace controls, catalogue additions and playtest](docs/MANAGEMENT_WORKSPACE.md). The bottom HUD now uses a compact gauge console with optional detailed diagnostics; see [instrument controls and previews](docs/INSTRUMENT_CONSOLE.md). Current-format checkpoints retain a previous valid save. Human handling, pacing, hardware and release acceptance remain open.
+**Status:** Alpha 0.21 adds earned flight computers and focused facility administration on the alpha 0.20 management workspace. Nineteen paid technologies unlock twenty-five ship parts across nine exclusive slots and two facility upgrade tiers. Automatic landing, return-home and selected-destination flight use normal physics, propellant and cell power. Optional physical building labels open direct controls. See [automation, upgrades and playtest](docs/AUTOMATION_FACILITIES.md), [management workspace](docs/MANAGEMENT_WORKSPACE.md) and [compact instruments](docs/INSTRUMENT_CONSOLE.md). Human handling, pacing, hardware and release acceptance remain open.
 
 ## Play locally
 
@@ -76,7 +76,7 @@ For other deposits, steer by the nearest-deposit bearing and colored radar blips
 
 ## Research and ship upgrades
 
-Build a **Research lab**, then open **Manage → Research** to spend samples and actual lab power on prerequisite technologies. Fourteen prerequisite-driven technologies unlock twenty-two parts across eight exclusive slots. Select a node in the connected tree to inspect requirements and unlocks. Select a ship slot and part to compare it against the fitted module; replacements atomically pay the full new cost and return hull-scaled salvage. Advanced parts have real thrust/burn, capacity, tool power/heat, cooling and protection tradeoffs. Open **Manage → Ship fitting** at the home-pad ship to compare and fabricate with real mass/materials plus 20 kJ unreserved charge.
+Build a **Research lab**, then open **Manage → Research** to spend samples and actual lab power on prerequisite technologies. Nineteen prerequisite-driven technologies unlock twenty-five parts across nine exclusive slots and two in-place facility upgrade tiers. Select a node in the connected tree to inspect requirements and unlocks. Select a ship slot and part to compare it against the fitted module; replacements atomically pay the full new cost and return hull-scaled salvage. Advanced parts have real thrust/burn, capacity, tool power/heat, cooling and protection tradeoffs. Open **Manage → Ship fitting** at the home-pad ship to compare and fabricate with real mass/materials plus 20 kJ unreserved charge.
 
 Extra capacity arrives empty; tools use actual cell/heat budgets and heavier ships handle differently. Removal uses hull-scaled salvage and storage/range checks; recovery preserves paid equipment without filling it. See [rates, limits and playtest](docs/PROGRESSION.md).
 
@@ -84,7 +84,7 @@ Extra capacity arrives empty; tools use actual cell/heat budgets and heavier shi
 
 ## Explore nearby space
 
-Open **Map** for three finite resource arcs and three physical orbital sites. Select a destination, match total relative velocity, then interact within **120 m / 8 m/s** using E: survey Frost, recover up to 18 kg from the Copper derelict, or take finite fuel from the Far rim tender. The chart, radar, selected marker and persistent range/bearing/closing/ΔV line keep home and moving destinations identifiable. Cargo and fuel transfers pay real mass/momentum costs; no site respawns or autopilot. See [navigation, physics, budgets and playtest](docs/NEIGHBORHOOD.md).
+Open **Map** for three finite resource arcs and three physical orbital sites. Select a destination, match total relative velocity, then interact within **120 m / 8 m/s** using E: survey Frost, recover up to 18 kg from the Copper derelict, or take finite fuel from the Far rim tender. The chart, radar, selected marker and persistent range/bearing/closing/ΔV line keep home and moving destinations identifiable. Cargo and fuel transfers pay real mass/momentum costs; no site respawns; earned navigation computers can rendezvous, with interaction remaining manual. See [navigation, physics, budgets and playtest](docs/NEIGHBORHOOD.md).
 
 ![Neighborhood navigation](docs/screenshots/neighborhood-chart.png)
 
@@ -185,7 +185,7 @@ Save with **K**, launch above 200 m (clear the starter rock with Space), then **
 
 **K** writes one local browser checkpoint. **L** restores it, and page startup automatically loads an existing checkpoint **paused**; press P to resume. Saves include the entire world: facility placement, production timers, energy, raw/manufactured inventories, depleted asteroid field, ship and suit. Thus loading does not recreate already-mined ore. R starts a fresh runtime sandbox while keeping the last checkpoint; L recovers it. Saving the new runtime with K deliberately replaces that checkpoint.
 
-Saves are local to the browser/origin and are not cloud synced. There is no autosave or offline production. K writes the current version-18 checkpoint; L loads it paused, preserving current ship, crew, world, inventory, colony, research/equipment, power priorities, construction, habitat air, shields and active threats. Loading clears held controls and releases manual turret control. During development, older save formats are intentionally unsupported: start a new world with R after an incompatible save. Invalid checkpoints and storage failures leave the live world playable with feedback. Explicit saves retain one previous validated current-format checkpoint. Continue/L identify and load that older flight paused if the latest is absent or invalid; reads never rewrite either slot. Legacy migration remains deferred.
+Saves are local to the browser/origin and are not cloud synced. There is no autosave or offline production. K writes the current version-19 checkpoint; L loads it paused, preserving current ship, crew, world, inventory, colony, research/equipment, power priorities, construction, habitat air, shields and active threats. Loading clears held controls, releases manual turret control and disarms ship automation. During development, older save formats are intentionally unsupported: start a new world with R after an incompatible save. Invalid checkpoints and storage failures leave the live world playable with feedback. Explicit saves retain one previous validated current-format checkpoint. Continue/L identify and load that older flight paused if the latest is absent or invalid; reads never rewrite either slot. Legacy migration remains deferred.
 
 ## Verification
 

@@ -1,3 +1,4 @@
+import {flightComputer} from '../sim/autopilotConfig';
 import { PART_SLOTS,SLOT_LABELS,UPGRADES,UPGRADE_IDS,TECHNOLOGIES,PROGRESSION,type PartSlot,type UpgradeId } from '../sim/progressionConfig';
 import { equipmentError,equipmentPlan,shopError } from '../sim/equipment';
 import { fittedPart,engineStats,miningStats,tractorStats,cannonStats,thermalStats,equipmentMass,cargoCapacity,fuelCapacity,damageFactor } from '../sim/shipStats';
@@ -8,7 +9,7 @@ import { icon } from './icons';
 export function partMetrics(w:WorldState,id:UpgradeId|undefined,slot:PartSlot):[string,number,string][] {
  const ship={...w.ship,equipment:w.ship.equipment.filter(p=>UPGRADES[p].slot!==slot)};if(id)ship.equipment.push(id);
  const e=engineStats(ship),m=miningStats(ship),t=tractorStats(ship),c=cannonStats(ship),cool=thermalStats(ship);
- const metrics:Record<PartSlot,[string,number,string][]>={drive:[['Thrust',e.thrust/1000,'kN'],['Fuel burn',e.burn,'kg/s']],tank:[['Capacity',fuelCapacity(ship),'kg']],hold:[['Capacity',cargoCapacity(ship),'kg']],mining:[['Range',m.range,'m'],['Rate',m.rate,'×'],['Cell draw',m.power,'kW'],['Heat',m.heat,'/s']],tractor:[['Range',t.range,'m'],['Pull',t.acceleration,'m/s²'],['Cell draw',t.power,'kW'],['Heat',t.heat,'/s']],weapon:[['Damage',c.damage,''],['Shot energy',c.energy,'kJ'],['Shot heat',c.heat,'']],cooling:[['Cooling',cool.cooling,'/s'],['Recharge',cool.recharge,'kW']],armour:[['Damage received',damageFactor(ship)*100,'%']]};
+ const metrics:Record<PartSlot,[string,number,string][]>={drive:[['Thrust',e.thrust/1000,'kN'],['Fuel burn',e.burn,'kg/s']],tank:[['Capacity',fuelCapacity(ship),'kg']],hold:[['Capacity',cargoCapacity(ship),'kg']],mining:[['Range',m.range,'m'],['Rate',m.rate,'×'],['Cell draw',m.power,'kW'],['Heat',m.heat,'/s']],tractor:[['Range',t.range,'m'],['Pull',t.acceleration,'m/s²'],['Cell draw',t.power,'kW'],['Heat',t.heat,'/s']],weapon:[['Damage',c.damage,''],['Shot energy',c.energy,'kJ'],['Shot heat',c.heat,'']],cooling:[['Cooling',cool.cooling,'/s'],['Recharge',cool.recharge,'kW']],armour:[['Damage received',damageFactor(ship)*100,'%']],avionics:[['Computer tier',flightComputer(ship).tier,''],['Active cell draw',flightComputer(ship).power,'kW']]};
  return [...metrics[slot],['Dry mass',id?UPGRADES[id].mass:0,'kg']];
 }
 export function shipFitting(w:WorldState,paused:boolean,slot:PartSlot,selected:UpgradeId):string{

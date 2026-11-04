@@ -1,3 +1,4 @@
+import {facilityDamageFactor} from './facilityStats';
 import { colonyWorld } from './localWorld';
 import { nearestPlanet } from './celestial';
 import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
@@ -31,7 +32,7 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
     const distance = Math.abs(wrap(b.angle - angle)) * colonyPlanet(world).radius;
     const reach = radius + (isHabitat(b.kind) ? HABITATS[b.kind].halfSpan : BLUEPRINTS[b.kind].halfWidth);
     if (distance >= reach || !operational(b)) continue;
-    b.health = Math.max(0, buildingHealth(b) - damage * (1 - distance / reach)); hit = true;
+    b.health = Math.max(0, buildingHealth(b) - damage * facilityDamageFactor(b) * (1 - distance / reach)); hit = true;
     if (!operational(b)) { ventHabitat(world, b); drainShield(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
   const n = { x: Math.sin(angle), y: -Math.cos(angle) };
