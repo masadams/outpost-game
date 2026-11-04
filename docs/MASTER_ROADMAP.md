@@ -32,6 +32,12 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 - [ ] Document physics and feature contracts for successors.
 **Exit:** An independent developer can play, reproduce and explain the actual current systems before adding new ones.
 
+### 0C. Energy baseline audit (P0)
+- [ ] Trace generation, finite storage, dispatch, essential reserves and paid habitat backup in current code.
+- [ ] Verify per-world energy isolation, remote ticking and paused/save-restored state; record current units and allocation order.
+- [ ] Classify each proposed item in [Planetary Energy Systems](ENERGY_SYSTEMS.md) as existing, partial, new or deferred before assigning build work.
+**Energy exit:** Document the actual shared-bus/constant-solar baseline and extend it without losing current resource protections.
+
 ## Phase 1 — First discovery-to-defense story
 **Player story:** I built an Observatory, discovered an approaching asteroid storm, prepared for it and recovered new resources afterward.
 ### 1A. Discovery research (P0)
@@ -60,6 +66,14 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 - [ ] P2: missile silos, shield generators, orbital defense.
 **Exit:** A complete playthrough from observation through preparation, real impacts, aftermath and new technological opportunity, with a working save/reload.
 
+### 1F. Energy resilience for the first storm (P0 for reserve/feedback; P1 for thermal prototype)
+- [ ] Extend existing power budgets with demand, stored reserve and defense-burst visibility; distinguish kW supply/rate from kJ capacity.
+- [ ] Give at least two viable preparation choices: extra generation/storage, prioritized loads, manual interception or protected emergency supply.
+- [ ] Prototype simple weapon/industrial cooling warnings and derating only when they improve readable storm decisions; do not require a complete thermal network.
+- [ ] Expose cause of a stopped defense and a recoverable power-restoration action.
+**Dependencies:** 0C, existing paid dispatch and defense, D-16 failure severity before damaging thermal cascades.
+**Energy exit:** Survive a storm under a finite energy budget, explain a deliberate reserve trade-off and restore a damaged/stalled system without free refills. Broad reactors/weather do not block this signature slice.
+
 ## Phase 2 — Nearby worlds and lunar industry
 **Player story:** An observed moon is a physical destination, not a menu.
 ### 2A. Navigation/surveys (P0)
@@ -77,6 +91,14 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 ### 2D. Probes (P1)
 - [ ] Finite survey probes with sensors, propellant and power; remote data return.
 **Exit:** Observe, reach, land or survey, extract an unusual sample, return or transmit knowledge and obtain a meaningful advancement.
+
+### 2E. Expedition energy and site suitability (P1)
+- [ ] Survey illumination/dark intervals, ambient temperature and relevant atmosphere/geology as ranges with uncertainty.
+- [ ] Prototype environmental solar plus batteries on a test world with an explicitly defined rotation/illumination clock; do not silently add nights to existing non-rotating surfaces.
+- [ ] Compare solar/storage with a finite supplied radioisotope package for low-load remote instruments. RTG is not an industrial replacement.
+- [ ] Add finite portable startup storage and verify a remote foothold can recover essential power.
+**Dependencies:** 0C, freight/inventory, D-08 shared clock, D-14 environment; fuel-package fabrication/import must have a bootstrap route.
+**Energy exit:** Two viable expedition kits have different mass, endurance and supply costs; local output cannot appear at home. A blackout can be restarted with paid assets.
 
 ## Phase 3 — Modular ship engineering and fleet identities
 **Player story:** Same mission, multiple genuinely different designs.
@@ -96,6 +118,13 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 - [ ] Detachable payloads, carriers with small landers, orbital shipyards.
 **Exit:** A scout and miner handle differently, have different viable tactics and must manage physical trade-offs. No hidden magical upgrades.
 
+### 3E. Common power and heat grammar (P1)
+- [ ] Use explicit generation, auxiliary demand, charge/discharge limits, heat production and rejection for the modules included in the slice.
+- [ ] Compare exposed radiators in vacuum with appropriate atmospheric cooling using the same environmental inputs.
+- [ ] Prototype heat buffers, warnings, derating and restart behavior across a ship tool and an installation; do not require full fluid simulation.
+**Dependencies:** D-13 fluid scope, D-14 environment, D-16 failure/recovery; existing module costs and controls.
+**Energy exit:** Repeated laser/tool use is limited by paid energy and thermal capacity; disabling, refitting or reloading cannot erase incurred heat or restore charge.
+
 ## Phase 4 — Seeded system and persistent simulation
 **Player story:** Travel to distant bodies; the world remains coherent after departure.
 ### 4A. Deterministic generation (P0)
@@ -114,6 +143,13 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 - [ ] Variable planet sizes, gravity, atmospheres, terrain, resource maps and dense debris regions.
 **Exit:** Identical seed generates identical initial geography in different visits; modified world and inventory persist through relocation and save/load; no physics or production discontinuity.
 
+### 4E. Deterministic energy environments (P1)
+- [ ] Generate correlated stellar flux, illumination cycles, atmosphere/wind bands, temperature and accessible geothermal sites.
+- [ ] Preserve survey uncertainty separately from seeded ground truth; changes in visit order cannot create better generation sites.
+- [ ] Include fair-start energy/material access and explicit night/weather durations in generation validation.
+**Dependencies:** D-06 start variability, D-08 time, D-14 environmental scope and 4A/4C.
+**Energy exit:** A repeated seed yields the same usable site opportunities and forecasts; contrasting worlds support contrasting viable power plans.
+
 ## Phase 5 — Automation, industry and multi-outpost economy
 **Player story:** My remote mine supports the main settlement while I fly somewhere else.
 ### 5A. Multiple outposts (P0)
@@ -128,6 +164,23 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 ### 5D. Autonomous expansion (P2)
 - [ ] Deployable industrial colony package with finite inputs and resource constraints.
 **Exit:** Multiple outposts exchange finite products via time-consuming transport while player performs other tasks; saved inventory cannot duplicate.
+
+### 5E. Local grids, storage and heat rejection (P1)
+- [ ] Evolve shared-bus operation into useful local districts/relays; preview connections and independent islands before requiring detailed cables.
+- [ ] Apply finite link capacity and explicit losses if selected; extend current dispatch/reserves with essential cooling/control dependencies.
+- [ ] Add rate-limited batteries/capacitors, local black-start reserves and understandable outage/thermal forecasts.
+- [ ] Couple generation and heavy industry to bounded cooling loops/sinks. Waste-heat reuse credits only compatible displaced heating demand.
+- [ ] Keep local and coarse simulation consistent across darkness, grid splits, fuel exhaustion and thermal thresholds; advance at event boundaries.
+**Dependencies:** 3E, 4C/4E, D-08, D-13, D-16, D-18.
+**Energy exit:** Breaking a link isolates only the affected district; reserves, load shedding and repair provide alternative responses. No transfer loop creates electricity or cooling capacity.
+
+### 5F. Industrial generation and fuel economy (P1, separate playable slices)
+- [ ] Fission: standardized fuel manufacture/import, startup/auxiliary power, shielding, bounded cooling, residual heat, service and finite spent-fuel storage.
+- [ ] Geothermal: survey/pilot bore, drill startup supplies, site-bound shared yield, heat exchange and readable seismic/drawdown rules if included.
+- [ ] Wind: density-dependent output, correlated weather, calm/storm shutdown and repair; zero generation in vacuum.
+- [ ] Link fuel, spares and waste to real freight and bounded automation, preserving earlier solar/RTG roles.
+**Dependencies:** 5A/5C/5E, D-13–D-18; select fuel recipe and failure severity before reactor implementation.
+**Energy exit:** At least two industrial power mixes are viable on contrasting sites. Shutdown remains possible with full waste storage; cooling/fuel loss is warned and recoverable. No unavoidable supply-chain deadlock.
 
 ## Phase 6 — Multiple star systems and interstellar travel
 **Decision prerequisites:** Resolve travel model, scale/time acceleration and player control of unattended ships before final designs.
@@ -159,6 +212,13 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 ### 7D. Ambitious infrastructure (P2)
 - [ ] Orbital construction, mass drivers, carriers, automated remote industry and possible planetary engineering.
 **Exit:** Different seeds and exploratory choices produce distinct stories, and player-built history survives long after the first homebase.
+
+### 7E. Advanced energy experiments (P2, explicit review before build)
+- [ ] Evaluate fusion only after industrial fuel, cooling and logistics slices work; decide fuel chain, startup/recirculating power, net export, servicing and waste implications.
+- [ ] Consider thermal/chemical storage, specialist stores and power beaming only when they add a distinct useful choice.
+- [ ] Retain efficient small-site options, conventional generation and local backups.
+**Dependencies:** 5E/5F, advanced materials/industry, D-09 scope and energy-specific open decisions.
+**Energy exit:** A paid advanced plant enables a new ambitious project, yet cannot eliminate fuel supply, heat rejection, transmission constraints or the value of simpler outposts.
 
 ## Phase 8 — Quality, onboarding and release readiness
 This work should happen **throughout**, not only at the end.
@@ -198,7 +258,7 @@ This work should happen **throughout**, not only at the end.
 7. Update this roadmap, feature docs and design decision log after acceptance.
 
 ## Decision backlog
-See Bible D-01–D-12. Priority for near-term discussion: **interstellar mechanism, distance/time model, player identity/remote-ship control, initial seed variability, local-to-galactic coordinate system, and how to preserve scale without exhausting the player.** These are open, not blockers for Phase 1.
+See Bible D-01–D-18 and [Cross-cutting Gameplay Design Questions](DESIGN_QUESTIONS.md). Priority for near-term discussion: **interstellar mechanism, distance/time model, player identity/remote-ship control, initial seed variability, local-to-galactic coordinate system, and how to preserve scale without exhausting the player.** These are open, not blockers for Phase 1.
 
 ## Decision log
 | Date | Decision | Status |
@@ -225,3 +285,13 @@ See [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md)
 ### Additions to Phase 7 persistent identity
 - [ ] Support memorable player-origin stories, e.g. asteroid threatening home → deflected/captured → mined → used as station site (advanced, exploratory).
 - [ ] Test whether a player can recount a distinctive emergent event, not merely list available mechanics.
+
+## Energy verification gate (for affected implementation slices)
+Design detail: [Planetary Energy Systems](ENERGY_SYSTEMS.md). These unchecked requirements are proposed work, not test results.
+- [ ] Verify finite energy balance, storage/rate limits, conversion losses and bounded heat transfers; no negative stock or profitable charge/discharge loop.
+- [ ] Verify fuel/heat/waste/partial service state through toggles, demolition, salvage, pause, current-version save/load and local/remote transitions.
+- [ ] Verify deterministic priorities and dependency funding: no full reactor export with unpaid cooling/control; no reserve spent twice.
+- [ ] Verify no free cross-world electricity or cargo, and no entire coarse production interval credited across an interruption.
+- [ ] Playtest a blackout/black-start, cooling failure and supply interruption with a visible recovery path.
+- [ ] Compare two useful power mixes on contrasting sites and test that no generator universally dominates.
+- [ ] Follow AGENTS.md prototype-save policy: support current-version saves; defer legacy migrations until later development. Earlier roadmap migration entries remain long-term work.

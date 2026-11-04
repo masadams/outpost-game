@@ -173,6 +173,17 @@ Candidate facilities by function:
 
 Buildings should be introduced in response to needs. The first Observatory's warning creates demand for tracking and defense; defending creates demand for power; impacts leave resources that support new technology. Introduce buildings with clear inputs, outputs, control affordances, range/power constraints and persistent states.
 
+### 9.1 Planetary energy and thermal engineering
+**Preferred direction:** Expand power and infrastructure into a branching energy discipline. See [Planetary Energy Systems](ENERGY_SYSTEMS.md) for generation roles, planetary suitability, fuel/waste, grids, storage, cooling, recovery and testable accounting contracts. These are future design directions; the present alpha's solar, finite storage, per-colony energy and dispatch remain the foundation.
+
+Solar/batteries support cheap modular bootstrap industry; radioisotope generators sustain low-load remote equipment; fission supplies fuel-dependent industrial baseload; surveyed geothermal sites and atmospheric wind offer local alternatives. Fusion is an **exploratory late-game option**, not an unlimited universal upgrade. Planetary illumination, darkness, atmosphere, weather, accessible geology and ambient temperature determine sensible combinations. Earlier technologies retain roles at small or isolated sites.
+
+Generation is only part of the system. Capacity and discharge rate are separate storage limits; connections can constrain delivery; essential loads and restart reserves compete with industry and defense. Introduce physical districts/relays progressively from the existing shared bus, with clear placement and failure feedback. No remote-view action transfers electricity between worlds.
+
+Waste heat ties generators, industry, weapons, habitats and ships together. Vacuum installations need radiative rejection; atmospheric cooling depends on the actual environment. Coolant transfers heat to a finite sink. Fission retains residual heat after shutdown; fuel, spent material and service supplies require real inventories. Start with warnings, derating and recoverable shutdowns; hazardous cascades remain an open severity decision.
+
+Energy should deepen the three signature slices: power the first useful construction, budget defense bursts through an asteroid storm and prepare a self-sufficient expedition. Prototype simple reserve/cooling choices before broad technology content. Exact fuel recipes, thermal detail, failure severity and optional storage families are unresolved, not implementation commitments.
+
 ## 10. Asteroid storm and planetary defense — signature system
 The storm is an **event involving physical bodies**, not an animated damage roll.
 
@@ -270,6 +281,14 @@ This is a summary of repository documentation, **not an independently completed 
 | D-10 | Narrative mysteries | Optional ancient structures/signals and degree of authored content |
 | D-11 | Save determinism | Boundary between reproducible event seeds and persisted event outcomes |
 | D-12 | Multiplayer | Explicitly deferred; do not constrain first-game design without evidence |
+| D-13 | Water, fluids and life-support scope | Prefer conserved shared inputs and simple tanks/links; detailed piping, phase changes and food TBD |
+| D-14 | Shared planetary environment | Prefer correlated surveyed conditions used by flight, power, cooling and geology; simulation depth TBD |
+| D-15 | Foundations, excavation and structure | Extend current terrain/placement first; underground space, collapse and structural simulation exploratory |
+| D-16 | Failure severity and recovery | Prefer warnings, safe shutdown and recoverable local damage; cascades, contamination and fallback rules TBD |
+| D-17 | Manufacturing depth and resource exhaustion | Prefer short meaningful chains and geology-linked deposits; depletion/renewal and bootstrap guarantees TBD |
+| D-18 | Automation operating contract | Prefer bounded paid jobs with reserve/abort rules; autonomy, communications and attention policy TBD |
+
+See [Cross-cutting Gameplay Design Questions](DESIGN_QUESTIONS.md) for prioritized prompts, proposed starting points and prototype tests. Resolve player identity, shared time and failure/recovery before committing detailed remote energy operations. Recommendations are not accepted decisions.
 
 ## 17. Product test: what success feels like
 The first 10–15 minutes teach a viable sortie, resource collection, landing and a meaningful construction choice. In the first extended session, the player discovers a looming event, understands how to prepare and survives it with consequential outcomes. Subsequent play creates genuine reasons to explore a moon, modify a ship and establish new infrastructure. At late game, the player has a living network of useful facilities, yet manual flight, difficult landings and local exploration remain fun.
