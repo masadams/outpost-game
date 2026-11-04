@@ -10,7 +10,7 @@ test('persists accessible settings and conflict-checked controls without changin
  await page.getByRole('slider',{name:'Music volume',exact:true}).fill('0.4');await page.getByRole('slider',{name:'Effects volume',exact:true}).fill('0.5');
  await page.getByText('Keyboard bindings · click a key to change it',{exact:true}).click();
  await page.getByRole('button',{name:'Change Thrust / jump binding',exact:true}).click();await page.keyboard.press('p');await expect(page.locator('#binding-status')).toContainText('Already assigned');await page.keyboard.press('s');await expect(page.locator('#binding-status')).toHaveText('Control updated.');
- await page.getByRole('button',{name:'Return to game',exact:true}).click();await expect(hud).toHaveAttribute('data-state','landed');await expect(page.locator('.context-hint')).toContainText('S thrust');await expect(hud).toHaveAttribute('data-star-count','80');await expect(hud).toHaveAttribute('data-effect-cap','0');
+ await page.getByRole('button',{name:'Return to game',exact:true}).click();await expect(hud).toHaveAttribute('data-state','landed');await expect(page.locator('.context-hint')).toContainText('S launch');await expect(hud).toHaveAttribute('data-star-count','80');await expect(hud).toHaveAttribute('data-effect-cap','0');
  await page.keyboard.down('w');await page.waitForTimeout(250);await page.keyboard.up('w');await expect(hud).toHaveAttribute('data-fuel','240.00');
  await page.getByRole('button',{name:'Ship [I]',exact:true}).focus();await page.keyboard.press('Space');await expect(page.locator('#operations-dock')).toHaveAttribute('data-panel','cargo');await page.keyboard.down('s');await page.waitForTimeout(250);await page.keyboard.up('s');await expect(hud).toHaveAttribute('data-fuel','240.00');
  await page.keyboard.press('Escape');await page.keyboard.down('s');await expect.poll(async()=>Number(await hud.getAttribute('data-fuel'))).toBeLessThan(240);await page.keyboard.up('s');await page.keyboard.press('p');
@@ -34,7 +34,7 @@ test('keeps enlarged flight instruments and long live panels usable at supported
  await page.addInitScript(text=>localStorage.setItem('outpost.checkpoint.v1',text),encodeCheckpoint(w));
  for(const [width,height] of [[900,600],[1280,800],[1920,1080]]){
   await page.setViewportSize({width,height});await page.goto('/');await page.getByRole('button',{name:'Open settings',exact:true}).click();await page.getByLabel('Text size',{exact:true}).selectOption('1.5');await page.getByRole('button',{name:'Return to game',exact:true}).click();
-  await page.getByRole('button',{name:'Manage',exact:true}).click();await expect(page.locator('#command-console')).toBeVisible();
+  await page.getByRole('button',{name:'Manage',exact:true}).click();await expect(page.locator('#command-console')).toBeVisible();await page.getByRole('button',{name:'Compact operations window',exact:true}).click();
   const issues=await page.evaluate(()=>{
    const errors:string[]=[],sels=['.instruments','#operations-dock','.dock-nav','#flight-tools','#sound-panel','#objectives','.notices'];
    const boxes=sels.map(s=>({s,b:document.querySelector(s)!.getBoundingClientRect()}));
@@ -42,7 +42,7 @@ test('keeps enlarged flight instruments and long live panels usable at supported
    for(const {s,b}of boxes)if(b.left<0||b.top<0||b.right>innerWidth||b.bottom>innerHeight)errors.push(s+' outside');
    for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++)if(intersects(boxes[i].b,boxes[j].b))errors.push(boxes[i].s+' overlaps '+boxes[j].s);
    document.querySelectorAll<HTMLElement>('.instruments label,.instrument-status').forEach(e=>{if(e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1)errors.push('clipped '+e.textContent);});return errors;
-  });expect(issues).toEqual([]);await page.screenshot({path:`docs/screenshots/overhaul-${width}.png`});await page.keyboard.press('Escape');
+  });expect(issues).toEqual([]);await page.getByRole('button',{name:'Expand operations window',exact:true}).click();const dock=page.locator('#operations-dock'),box=await dock.boundingBox();expect(box!.width).toBeGreaterThan(width*.8);expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.y).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(width);expect(box!.y+box!.height).toBeLessThanOrEqual(height);expect(await dock.evaluate(e=>e.scrollWidth>e.clientWidth+1)).toBe(false);await page.screenshot({path:`docs/screenshots/overhaul-${width}.png`});await page.keyboard.press('Escape');
  }
 });
 
@@ -68,5 +68,5 @@ test('selects the clicked physical facility for Command inspection without spend
  await page.addInitScript(text=>localStorage.setItem('outpost.checkpoint.v1',text),save);await page.goto('/');await expect(page.locator('#hud')).toHaveAttribute('data-state','paused');
  await page.mouse.click(640+(point.x-w.ship.position.x)*1.7,800*.53+(point.y-w.ship.position.y)*1.7);
  await expect(page.locator('#operations-dock')).toHaveAttribute('data-panel','command');await expect(page.locator('.command-machine')).toHaveAttribute('data-selected','2');await expect(page.getByRole('button',{name:'Disable selected',exact:true})).toBeDisabled();await expect(page.locator('#hud')).toHaveAttribute('data-time','0.0000');
- await page.screenshot({path:'docs/screenshots/overhaul-facilities.png'});const facilities=page.locator('#command-console details').first();await facilities.locator('summary').click();await page.waitForTimeout(350);expect(await facilities.evaluate((e:HTMLDetailsElement)=>e.open)).toBe(false);
+ await page.screenshot({path:'docs/screenshots/overhaul-facilities.png'});await page.getByRole('button',{name:'Open full colony management',exact:true}).click();await page.getByRole('button',{name:'Economy',exact:true}).click();await expect(page.locator('.command-machine')).toBeHidden();await page.getByRole('button',{name:'Facilities',exact:true}).click();await expect(page.locator('.command-machine')).toHaveAttribute('data-selected','2');await expect(page.locator('#hud')).toHaveAttribute('data-time','0.0000');
 });

@@ -1,3 +1,4 @@
+import {workFactor} from './facilityStats';
 import { colonyWorld } from './localWorld';
 import { TECHNOLOGIES, TECH_IDS, PROGRESSION, type TechId, type ProgressionAction } from './progressionConfig';
 import { PRODUCTS } from './colonyConfig';
@@ -36,12 +37,12 @@ export function applyResearch(w: WorldState, a: Extract<ProgressionAction, { typ
 export function stepResearch(w: WorldState, b: Building, dt: number, staffed: boolean): boolean {
   const r = w.colony.research, p = r.queue.find(p => !p.paused); if (!p) return false;
   if (staffed) { b.status = 'research staffed'; return false; }
-  const spec = TECHNOLOGIES[p.tech], work = Math.min(dt * powerFraction(b), spec.seconds - p.progress);
-  b.requestedPower = PROGRESSION.labPower * powerFraction(b); w.colony.demand += b.requestedPower;
+  const spec = TECHNOLOGIES[p.tech], work = Math.min(dt * powerFraction(b) * workFactor(b), spec.seconds - p.progress);
+  b.requestedPower = PROGRESSION.labPower * powerFraction(b) * workFactor(b); w.colony.demand += b.requestedPower;
   if (work <= 0) { b.status = 'power limited'; return false; }
   const cost = work * PROGRESSION.labPower, block = industrialPowerBlock(w.colony, cost);
   if (block) { b.status = block; return false; }
   w.colony.energy = Math.max(0, w.colony.energy - cost); r.energyUsed += cost; b.gridPower = cost / dt; b.status = 'running'; p.progress += work;
-  if (p.progress + 1e-9 >= spec.seconds) { r.completed.push(p.tech); r.queue = r.queue.filter(q => q !== p); notify(w, `${spec.label.toUpperCase()} COMPLETE · EQUIPMENT UNLOCKED`); }
+  if (p.progress + 1e-9 >= spec.seconds) { r.completed.push(p.tech); r.queue = r.queue.filter(q => q !== p); notify(w, `${spec.label.toUpperCase()} COMPLETE · UNLOCKS AVAILABLE`); }
   return true;
 }

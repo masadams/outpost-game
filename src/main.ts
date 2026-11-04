@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { FlightScene } from './render/FlightScene';
 import './style.css';
+import './ui/instrumentPanel.css';
 
 new Phaser.Game({ type: Phaser.AUTO, parent: 'game', backgroundColor: '#080f1c',
   // The simulation owns time clamping and catch-up; Phaser smoothing can discard time at low rendering rates.

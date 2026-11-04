@@ -1,3 +1,7 @@
+import {BuildingLabels} from './BuildingLabels';
+import {autopilotPanel} from './autopilot';
+import {UPGRADE_IDS,type UpgradeId} from '../sim/progressionConfig';
+import type {PointerView} from '../render/pointer';
 import { readinessPanel } from './readiness';
 import { BLUEPRINTS } from '../sim/colonyConfig';
 import { isolateControlKeys } from './controlKeys';
@@ -18,7 +22,7 @@ import { CommandConsole } from './CommandConsole';
 import { habitatSource } from '../sim/habitats';
 import { habitatNotice } from './habitats';
 import { OperationsDock } from './OperationsDock';
-import { instrumentMarkup } from './instruments';
+import { InstrumentPanel } from './InstrumentPanel';
 import { towingPanel } from './towing';
 import { flightRegion, REGION_LABELS } from '../sim/flightRegion';
 import { flightSafety } from '../sim/flightSafety';
@@ -38,7 +42,7 @@ import type { ColonyAction } from '../sim/colony';
 import { setText, patchMarkup } from './dom';
 export class Hud {
   private root = document.createElement('div');
-  private stats: HTMLElement;
+  private instruments: InstrumentPanel;
   private status: HTMLElement;
   private mining: HTMLElement;
   private colony: HTMLElement;
@@ -53,6 +57,9 @@ export class Hud {
   private pointerDraft:BuildDraft|null=null;
   private pointerTip=document.createElement('div');
   private fuelPlanAmount=20;
+  private labels=new BuildingLabels((body,id)=>this.selectFacility(body,id));
+  private autopilotWasActive=false;
+  updateBuildingLabels(w:WorldState,view:PointerView):void{this.labels.update(w,view,this.preferences.buildingLabels,this.selectedBuildingId,this.preferences.textScale);}
   private category:BuildCategory='power';
   private lastBlueprint='';
   get pointerBuilding():boolean{return this.dock.root.dataset.panel==='colony'&&!!this.latestWorld?.colony.buildOpen;}
@@ -66,33 +73,36 @@ export class Hud {
   private objectives = new Objectives(()=>this.dock.open('objectives'),(link,keyboard)=>{if(link==='research'||link==='equipment'){this.dock.open('command');this.command.openSection(link,keyboard);}else{const view=({cargo:'cargo',build:'colony',map:'navigation',defence:'defence'} as const)[link];this.dock.open(view);if(link==='build')this.dock.onBuild?.();}if(keyboard)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();});
   destroy(): void { this.root.remove(); }
   toggleDock(view: DockView): void { this.dock.toggle(view); }
-  selectFacility(body: import('../sim/celestial').BodyId,id:number):void {this.dock.open('command');this.command.selectFacility(body,id);}
+  selectFacility(body: import('../sim/celestial').BodyId,id:number):void {this.dock.inspectFacility(`#${id} · ${body==='home'?'Selene':'Nacre'}`);this.command.selectFacility(body,id);}
   openBuild():void{this.dock.open('colony');}
   get dockOpen():boolean{return !this.dock.root.hidden;}
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
-    this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
+    this.dock.objectiveButton=this.objectives.root;this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
     this.dock.onBuild=()=>onColonyAction({type:'buildMode',open:true});this.dock.onLeaveBuild=()=>onColonyAction({type:'buildMode',open:false});
     this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
     if(el.id==='build-category'){this.category=el.value as BuildCategory;if(this.latestWorld)this.update(this.latestWorld,this.root.dataset.state==='paused');}});
     this.dock.cargo.addEventListener('change',e=>{const input=e.target as HTMLInputElement;if(input.id==='fuel-plan-amount'){this.fuelPlanAmount=input.value===''?NaN:Number(input.value);}});
     this.dock.objectives.append(this.objectives.content);
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
-    this.command = new CommandConsole(onColonyAction); this.dock.command.append(this.command.root);
+    this.command = new CommandConsole(onColonyAction,this.preferences); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.19</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
+    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.21</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
       <div id="surface-frame"></div><section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div><div id="crew-order-status" hidden><span></span><button type="button">Stop crew order</button></div></section>
       <div id="combat-status"></div>
       <footer><p class="context-hint"></p></footer>`;
-    this.root.append(this.pointerTip, this.objectives.root, this.dock.nav, this.dock.root, this.nav.guidance); document.body.append(this.root);
+    this.root.prepend(this.labels.root);this.root.append(this.pointerTip, this.objectives.root, this.dock.nav, this.dock.root, this.nav.guidance); document.body.append(this.root);
     const crewStatus=this.root.querySelector<HTMLElement>('#crew-order-status')!;isolateControlKeys(crewStatus);crewStatus.querySelector('button')!.addEventListener('click',()=>{onColonyAction({type:'crewOrder',operation:'stop'});(document.activeElement as HTMLElement)?.blur();});
-    this.stats = this.root.querySelector('.instruments')!;
+    this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!,()=>onColonyAction({type:'autopilot',operation:'cancel'}));
     this.status = this.root.querySelector('.status')!;
     this.mining = this.dock.cargo; this.colony = this.dock.colony;
     this.dock.root.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (!button || button.disabled) return;
+      if(button.dataset.fullCommand){this.dock.open('command');if(event.detail>0)button.blur();return;}
+      if(button.dataset.autopilot&&['land','home','navigate','cancel'].includes(button.dataset.autopilot)){onColonyAction({type:'autopilot',operation:button.dataset.autopilot as 'land'|'home'|'navigate'|'cancel'});if(event.detail>0)button.blur();return;}
+      if(button.dataset.fitComputer&&UPGRADE_IDS.includes(button.dataset.fitComputer as UpgradeId)){this.dock.open('command');this.command.inspectPart(button.dataset.fitComputer as UpgradeId);return;}
       if(['command','colony'].includes(button.dataset.readinessView??'')){const view=button.dataset.readinessView as 'command'|'colony';if(view==='command')this.command.showLocal();this.dock.open(view);if(view==='colony')this.dock.onBuild?.();if(event.detail===0)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();else button.blur();return;}
       const action = actionFromButton(button);
       if (action) {
@@ -102,15 +112,17 @@ export class Hud {
     });
   }
   update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
+    const autoActive=world.autopilot.program!==null;if(autoActive&&!this.autopilotWasActive&&this.dock.root.dataset.panel==='autopilot')this.dock.close();this.autopilotWasActive=autoActive;this.root.dataset.autopilot=world.autopilot.program?.phase??'off';
     this.dock.buildActive=world.colony.buildOpen;this.latestWorld=world;if(this.pointerDraft){if(this.pointerDraft.body!==colonyPlanet(world).id)this.clearBuildPointer();else{const error=this.pointerDraft.inputError??orderError(world,world.colony.selected,this.pointerDraft.angle);this.pointerDraft={...this.pointerDraft,kind:world.colony.selected,error,valid:!error};}}if(this.lastBlueprint!==world.colony.selected){this.lastBlueprint=world.colony.selected;if(this.category!=='all')this.category=categoryFor(world.colony.selected);}
     this.root.dataset.crewOrder=world.crewOrder?.type??'none';const crewBar=this.root.querySelector<HTMLElement>('#crew-order-status')!;crewBar.hidden=!world.crewOrder;crewBar.querySelector('span')!.textContent=world.crewOrder?`Crew: ${world.crewOrder.type==='walk'?'walking':'working queue'} · `:'';crewBar.querySelector('button')!.disabled=paused;
     const context = hudContext(world); this.dock.update(context, world.playerMode);
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;
     this.root.dataset.time = world.system.time.toFixed(4); this.root.dataset.x = world.ship.position.x.toFixed(4); this.root.dataset.y = world.ship.position.y.toFixed(4);
     this.root.dataset.vx = world.ship.velocity.x.toFixed(4); this.root.dataset.vy = world.ship.velocity.y.toFixed(4); this.root.dataset.angle = world.ship.angle.toFixed(5); this.root.dataset.spin = world.ship.angularVelocity.toFixed(5);
-    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.19`);
+    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.21`);
     setText(this.root.querySelector('#hud-context')!,context.label + ' · ' + colonyPlanet(world).label);
-    setText(this.root.querySelector('.context-hint')!,controlHint(context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
+    const compactHint=context.key==='flight'?(world.ship.state==='landed'?'W launch · F deploy · I ship · P pause':'W thrust · A/D steer · Space mine · I ship · P pause'):context.key==='surface'?'A/D walk · E interact · F board · B build':context.hint;
+    setText(this.root.querySelector('.context-hint')!,controlHint(compactHint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
     setText(this.root.querySelector('#surface-frame')!,`SURFACE FRAME · ${colonyPlanet(world).label.toUpperCase()} · ${world.playerMode==='astronaut'?'CREW':'SHIP'}`);
     this.objectives.update(world,this.preferences);this.root.dataset.objectives=world.objectives.completed.join(',');
     const ship: Ship = world.ship;
@@ -119,23 +131,25 @@ export class Hud {
     regionBadge.dataset.region = region;
     if (regionBadge.textContent !== REGION_LABELS[region]) regionBadge.textContent = REGION_LABELS[region];
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
-    patchMarkup(this.stats, instrumentMarkup(world));
+    this.instruments.update(world);
     const safety = flightSafety(ship, world.system), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;
     const flightMessage = onFoot || ship.state === 'crashed' ? '' : safety.message;
     if (flightAlert.textContent !== flightMessage) flightAlert.textContent = flightMessage;
     flightAlert.hidden = !flightMessage; flightAlert.dataset.level = safety.level;
     this.root.dataset.approach = String(!onFoot && safety.approach);
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
-    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · L CHECKPOINT · R NEW RUNTIME' :
-      !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? world.notice.message :
+    const noticeText=world.notice.message.replace(/ · P TO RESUME$/,'');
+    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · L CHECKPOINT · R NEW RUNTIME' :
+      !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? noticeText :
       world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
       onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : habitatNotice(world)) :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
       ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : region === 'airless' ? 'AIRLESS FLIGHT · GRAVITY · NO AIR DRAG' : region === 'space' ? 'OPEN SPACE · SHARED GRAVITY' : 'ATMOSPHERIC FLIGHT · GRAVITY + DRAG';
-    const originalNotice=world.notice.time>0?world.notice.message:null;
+    const originalNotice=world.notice.time>0?noticeText:null;
     const shown=originalNotice?message.split(originalNotice).map(part=>controlHint(part,this.preferences)).join(originalNotice):controlHint(message,this.preferences);
     setText(this.status,shown);
+    this.status.dataset.routine=String(!paused&&world.notice.time<=0&&ship.state!=='crashed'&&ship.impact<=0&&world.defence.controlled===null&&(!onFoot||world.astronaut.health>0&&(world.astronaut.oxygen>=30||!!habitatSource(world))));
     this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || !habitatSource(world) && world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;
     this.root.dataset.altitude = t.altitude.toFixed(1);
@@ -150,8 +164,9 @@ export class Hud {
     const incoming = threats.filter(t => t.impact).sort((a, b) => a.seconds - b.seconds)[0];
     const alert = this.root.querySelector('#threat-alert')!;
     const warning = world.defence.meteors.length ? `⚠ ${world.defence.meteors.length} INCOMING${incoming ? ` · IMPACT ${incoming.seconds.toFixed(0)} s` : ''}` : '';
-    const combatStatus = this.root.querySelector('#combat-status')!, arm = ship.armament;
+    const combatStatus = this.root.querySelector<HTMLElement>('#combat-status')!, arm = ship.armament;
     const combatText = world.playerMode === 'ship' ? `${arm.selected.toUpperCase()} ${arm[arm.selected]} · CELL ${arm.energy.toFixed(0)} · HEAT ${arm.heat.toFixed(0)}${arm.overheated ? ' · COOLING LOCK' : ''}` : '';
+    combatStatus.hidden=onFoot||!(world.combat.enemies.length||arm.heat>0||arm.overheated||arm.selected==='missile');
     if (combatStatus.textContent !== combatText) combatStatus.textContent = combatText;
     const hostiles = world.combat.enemies.length ? `${warning ? ' · ' : ''}${world.combat.enemies.length} HOSTILE${world.combat.enemies.every(d => d.state === 'retreat') ? ' · DISENGAGING' : world.combat.enemies.some(d => d.windup > 0) ? ' · DRONE AIMING' : ' · APPROACHING'}` : '';
     const emitters = world.colony.buildings.filter(b => isShield(b.kind)), active = emitters.filter(shieldActive).length;
@@ -161,6 +176,7 @@ export class Hud {
     this.root.dataset.asteroids=String(world.asteroids.length);this.root.dataset.pickups=String(world.pickups.length);this.root.dataset.mining=world.beam?'active':'idle';
     this.updateMining(world);
     this.nav.update(world, paused, !this.dock.navigation.hidden);
+    if(!this.dock.autopilot.hidden)patchMarkup(this.dock.autopilot,autopilotPanel(world,paused));
     if (!this.dock.command.hidden) this.command.update(world, paused);
     const panel = colonyPanel(world, paused,this.pointerDraft,this.category);
     if (this.colonyMarkup !== panel) { patchMarkup(this.colony, panel); this.colonyMarkup = panel; }

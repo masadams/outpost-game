@@ -4,3 +4,7 @@ export function screenToWorld(point:Vec,view:PointerView):Vec {
  const x=(point.x-view.width/2)/view.zoom,y=(point.y-view.height*.53)/view.zoom,c=Math.cos(view.angle),s=Math.sin(view.angle);
  return {x:view.x+x*c-y*s,y:view.y+x*s+y*c};
 }
+export function worldToScreen(point:Vec,view:PointerView):Vec {
+ const x=point.x-view.x,y=point.y-view.y,c=Math.cos(view.angle),s=Math.sin(view.angle);
+ return {x:view.width/2+(x*c+y*s)*view.zoom,y:view.height*.53+(-x*s+y*c)*view.zoom};
+}

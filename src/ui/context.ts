@@ -1,5 +1,5 @@
 import type { WorldState } from '../sim/world';
-export type DockView = 'cargo' | 'colony' | 'combat' | 'defence' | 'command' | 'navigation' | 'objectives';
+export type DockView = 'cargo' | 'colony' | 'combat' | 'defence' | 'command' | 'navigation' | 'objectives' | 'autopilot';
 export interface HudContext { key: string; label: string; view: DockView | null; hint: string }
 /** Presentation decisions only; changing panels never changes the simulation. */
 export function hudContext(w: WorldState): HudContext {

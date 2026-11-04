@@ -5,7 +5,7 @@ import { setText, patchMarkup } from './dom';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { isolateControlKeys } from './controlKeys';
 
-const LINKS: Record<ObjectiveLink, string> = { cargo:'Open Ship / Cargo', build:'Open Build', equipment:'Open Manage / Ship equipment', map:'Open Map', research:'Open Manage / Research', defence:'Open Ship / Defence' };
+const LINKS: Record<ObjectiveLink, string> = { cargo:'Open Ship / Cargo', build:'Open Build', equipment:'Open Manage / Ship fitting', map:'Open Map', research:'Open Manage / Research', defence:'Open Ship / Defence' };
 export class Objectives {
  readonly root = document.createElement('button');
  readonly content = document.createElement('section');
