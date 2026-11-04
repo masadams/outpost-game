@@ -4,6 +4,9 @@
 
 [Task 017](../CODEX_TASK_017.md) adds three progressive researched flight computers, physical automatic landing/return/navigation, researched in-place facility tiers II/III and optional clickable labels with focused control windows. It follows the open Task 016 branch for separate user review; neither PR is merged automatically. See [controls, limits and playtest](AUTOMATION_FACILITIES.md).
 
+## Long-horizon systems planning
+The [planning bible section 20](MASTER_DESIGN_BIBLE.md#20-adopted-systems-direction--2026-11-04) records the user's adopted environmental, terrain, moderate industry, power, logistics, sensors, communications, time/travel and physical worker direction. The [integrated S0–S6 slices](MASTER_ROADMAP.md#integrated-systems-vertical-slices-s0s6) extend existing paid crew work and oxygen habitats into useful inhabited settlements. These are future reviewed slices, not completed alpha milestones or a replacement for current release work. Implementation values and fidelity remain open.
+
 ## Progress rules
 - [ ] means not completed; [x] means implemented, tested and merged.
 - Work on one milestone at a time; document deviations and known issues.
