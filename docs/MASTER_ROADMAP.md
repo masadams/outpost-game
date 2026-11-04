@@ -1,5 +1,5 @@
 # OUTPOST — Master Phased Roadmap
-**Version:** 1.0 · **Date:** 2026-11-04 · **Status:** Proposed, subject to code audit.  
+**Version:** 1.1 · **Date:** 2026-11-04 · **Status:** Adopted systems direction; slices proposed, subject to code audit.  
 **Companion:** [Master Design Bible](MASTER_DESIGN_BIBLE.md) and [Scale and Experience](SCALE_AND_EXPERIENCE.md).
 
 ## Conventions
@@ -17,14 +17,15 @@ This is a long-horizon dependency map, not a release promise or proof of impleme
 | 7. Deep universe | Diverse systems, rare phenomena and living history | Scalable simulation |
 | 8. Quality/release | Complete, coherent and performant experience | Tests/playtests throughout |
 
-Every phase should finish in a playable **vertical slice**, not an isolated infrastructure component.
+Every phase should finish in a playable **vertical slice**, not an isolated infrastructure component. The integrated S0–S6 sequence below supplies cross-phase dependencies; the table is a long-horizon map, not permission to implement every phase in parallel. [DEVELOPMENT_ROADMAP.md](DEVELOPMENT_ROADMAP.md) retains shipped milestone status and release tracking.
 
 ## Phase 0 — Inventory & stabilize the existing alpha
 **Goal:** Preserve shipped work; make the current implementation a dependable foundation.
 ### 0A. Audit (P0)
 - [ ] Inspect code structure, entity IDs, world coordinates, gravity, terrain, event logic, saving and automated tests.
 - [ ] Verify the features described by README, GAME_DESIGN, PROGRESSION and local-world documentation.
-- [ ] Catalogue existing 10 technologies, 16 ship parts/8 slots, mining, tow, EVA, buildings, radar, navigation, defense drills and nearby moon.
+- [ ] Catalogue existing 10 technologies, 16 ship parts/8 slots, mining, tow, surface astronaut/suit, buildings, radar, navigation, defense drills and nearby moon; distinguish future free-flight EVA.
+- [ ] Audit existing paid work queue, real astronaut dispatch, low-air stop/manual override and powered oxygen habitats before population extensions (S0).
 - [ ] Identify duplicates, current gaps, and safe extensions.
 ### 0B. Reliability (P0)
 - [ ] Verify build/tests, representative flight/landing and resource-manufacturing loop, save/load and pause.
@@ -109,7 +110,7 @@ Every phase should finish in a playable **vertical slice**, not an isolated infr
 ### 4C. Persistence (P0)
 - [ ] Local simulation versus coarse remote production versus distant orbit/event state.
 - [ ] Persist changes, constructions, resource extraction, wrecks, craters and events as deltas.
-- [ ] Versioned saves and migration.
+- [ ] Versioned current-format saves; development resets are allowed. Defer legacy migrations until near completion per AGENTS.md.
 ### 4D. Diversity (P1)
 - [ ] Variable planet sizes, gravity, atmospheres, terrain, resource maps and dense debris regions.
 **Exit:** Identical seed generates identical initial geography in different visits; modified world and inventory persist through relocation and save/load; no physics or production discontinuity.
@@ -169,7 +170,7 @@ This work should happen **throughout**, not only at the end.
 ### 8B. Technical quality (P0)
 - [ ] Automated physics/economy/persistence regression tests.
 - [ ] Performance budgets for local collisions, far-away systems, procedural generation and save sizes.
-- [ ] Save migration, focus/pause handling, error recovery and deterministic reproductions.
+- [ ] Current-format save validation, focus/pause handling, error recovery and deterministic reproductions; plan legacy migration only near completion.
 ### 8C. Balance (P0)
 - [ ] Verify opening minute-to-minute action remains enjoyable.
 - [ ] Player grows from one vulnerable lander to large industrial network while retaining hands-on flight.
@@ -198,7 +199,7 @@ This work should happen **throughout**, not only at the end.
 7. Update this roadmap, feature docs and design decision log after acceptance.
 
 ## Decision backlog
-See Bible D-01–D-12. Priority for near-term discussion: **interstellar mechanism, distance/time model, player identity/remote-ship control, initial seed variability, local-to-galactic coordinate system, and how to preserve scale without exhausting the player.** These are open, not blockers for Phase 1.
+See Bible D-01–D-18, including the adopted direction in section 20. Priority for near-term discussion: **interstellar mechanism, distance/time model, player identity/remote-ship control, initial seed variability, local-to-galactic coordinate system, and how to preserve scale without exhausting the player.** These are open, not blockers for Phase 1.
 
 ## Decision log
 | Date | Decision | Status |
@@ -225,3 +226,91 @@ See [Distinctive Experience & Design Differentiation](DISTINCTIVE_EXPERIENCE.md)
 ### Additions to Phase 7 persistent identity
 - [ ] Support memorable player-origin stories, e.g. asteroid threatening home → deflected/captured → mined → used as station site (advanced, exploratory).
 - [ ] Test whether a player can recount a distinctive emergent event, not merely list available mechanics.
+
+
+## Integrated systems vertical slices (S0–S6)
+Read [Bible section 20](MASTER_DESIGN_BIBLE.md#20-adopted-systems-direction--2026-11-04) for **agreed direction** and D-13–D-18 for open details. All items below are **proposed acceptance work**, not newly completed features. Stage gates limit scope: proceed after the preceding playable result has evidence. Preserve the excellent mining sortie, physical storm and first other-world expedition as the quality priorities.
+
+| Slice | Phase integration | Dependency | Bounded player result |
+|---|---|---|---|
+| S0 | Phase 0 | Current alpha | Establish exactly what crew, queues and habitats already do |
+| S1 | Phases 0/5; enrich signature slices | S0 | A small physical crew builds, services and returns to useful habitation |
+| S2 | Phases 1/2/3/5 | S1 | Solve one environmental/power/thermal problem at an outpost |
+| S3 | Phases 1/4/5 | S1; S2 for pressure/shelter effects | Excavation or impact changes terrain, access and support |
+| S4 | Phases 2/5 | S1/S2; S3 only for terrain-dependent recipes | Mine, process, haul and repair through a small industrial chain |
+| S5 | Phases 4/5 | S4 and working sensors | A supplied remote crew operates with limited communications |
+| S6 | Phases 4/6 | S5 and time/drive decisions | Accelerated long travel preserves the originating settlement |
+
+### S0 — Extend the shipped foundation (P0)
+- [ ] Inspect code/tests against [DIRECT_CONTROLS](DIRECT_CONTROLS.md), [COMMAND](COMMAND.md), [HABITATS](HABITATS.md), [NEARBY_WORLDS](NEARBY_WORLDS.md), [AUTOMATION](AUTOMATION.md) and [DEVELOPMENT_ROADMAP](DEVELOPMENT_ROADMAP.md).
+- [ ] Record Verified existing / Partial / Not started / Deferred for each relevant contract. Current docs report paid eight-second stationary work within 96 m, optional real walking dispatch, suit-air stop/manual override, local colony budgets and powered finite oxygen buffers. Verify these rather than inventing replacements.
+- [ ] Distinguish the current controllable astronaut from a population of workers. Distinguish breathable dome coverage from future residential capacity, pressure volumes, shelter and full EVA.
+**Acceptance:** Reproduce a paid dispatch/build, stop/cancel, low-air interruption and dome power/oxygen outage with normal controls; save/load preserves actual progress and supplies. Record actual checks and unresolved gaps. This documentation update does not claim to have run those game checks.
+
+### S1 — First inhabited building site (P0; decide D-13/D-14)
+**Story:** I support a small crew in a habitat, send workers to build a useful structure, then repair it and bring them safely home.
+- [ ] Prototype one additional planetary worker and one home habitat; extend actor/job identity, construction escrow and current dispatch/manual override.
+- [ ] Define explicit recruitment/arrival and transport costs without free workers appearing on a remote planet.
+- [ ] Implement observable assignment, travel, stationary supplied work, completion, service and return. Start with construction and repair; generalize other jobs only after this loop works.
+- [ ] Add finite occupancy/capacity and oxygen/pressure/power support. State which shelter/thermal/radiation properties are present in this slice; defer the rest to S2 visibly.
+- [ ] Show suit budget, estimated travel/work/return margin, destination, worker status and actual blocked reasons. Define safe-return/service behavior beyond today's low-air stop.
+**Acceptance:** Workers visibly traverse the world and complete only supplied reachable work. Moving the habitat or adding a supplied shelter changes useful working time/range. An out-of-range job is refused or pauses with a clear cause. Cut air/power or block the route: work stops and the declared safety policy runs without teleportation, free air or hidden completion. Multiple workers cannot claim one job twice or double-spend escrow. Manual control remains usable; damage/repair and current save continuation retain actor/job state.
+**Gate:** Physical consequence + meaningful decisions + growing scale; useful discovery may arise from surveying a safer route/site. Reject a passive habitat productivity aura.
+
+### S2 — One environmental engineering problem (P0; decide D-15)
+**Story:** A remote vacuum site needs reliable power, heat rejection and protection; I choose between infrastructure layouts.
+- [ ] Share body/site atmosphere, temperature, pressure, sunlight and radiation facts across flight, sensors, workers and equipment; expose uncertainty before surveying.
+- [ ] Begin with lumped thermal budgets and simple exposure/pressure rules, not full fluid dynamics. Track generated/stored/transferred/rejected heat and declared losses.
+- [ ] Extend solar/batteries with one alternative, chosen by a surveyed need (for example fission or geothermal), plus cooling and essential life-support allocation.
+- [ ] Keep radioisotope, suitable wind and fusion in the agreed portfolio; add them incrementally only when distinct jobs justify them.
+**Acceptance:** Compare a vacuum site and atmospheric site with the same equipment. Their conditions change a practical choice. Sustained industrial/reactor operation saturates inadequate cooling, visibly throttles or damages under declared thresholds, and recovers after a real intervention. Removing a radiator or fuel delivery is consequential. Habitat support has paid capacity; exposed crew cannot receive shelter protection from a cosmetic roof. No universal generator dominates the two tested situations.
+**Gate:** Survey information changes engineering; power, worker safety and thermal design interact before adding more technology tiers.
+
+### S3 — A crater or excavation that matters (P0; decide D-16)
+**Story:** A physical impact or deliberate dig changes my base site; I shore, relocate or repair the affected infrastructure.
+- [ ] Prototype bounded persistent terrain deformation and excavation using the existing radial/moving-body framework. Stage underground chambers/access after surface craters work.
+- [ ] Define foundation support/connectivity with simple explicit limits; warn before undermining. Avoid full finite-element engineering.
+- [ ] Connect geometry to collision, worker routes, reachable work, deposits and building support. Define pressure/shelter effects when underground volumes are introduced.
+- [ ] Give damaged structures bounded repair/salvage; preserve deposits independently of demolition and terrain edits.
+**Acceptance:** Create one crater and one intentional excavation; return and reload to find both unchanged. Undermining one foundation invalidates/stresses/fails it under the declared simplified rule; an unaffected building remains sound. Workers re-evaluate access, unsupported placement is rejected, and repairs cannot reset mined reserves or mint salvage. Demonstrate a feasible support/relocation response rather than unavoidable cascading destruction.
+**Gate:** Permanent consequence and alternative engineering responses must justify deformation cost before generalized planet reshaping.
+
+### S4 — Moderate industry and physical supply (P0; decide D-17)
+**Story:** I choose whether to haul ore home or process it near a crewed mine, then deliver parts for maintenance.
+- [ ] Reuse existing ore/alloy/wire/components/ice/water/oxygen/fuel chains. Add at most one useful intermediate or specialization for the first trial.
+- [ ] Couple finite geology/extraction to local stocks, power/heat, storage, construction and repair demand. Simplified tanks/flows suffice for liquid handling.
+- [ ] Prototype one visible local hauling task and one ship freight route with real mass, time, loading capacity and supplies. Document the boundary of the existing shared colony bus; replace it only through a separately reviewed slice.
+- [ ] Add supplied scheduled maintenance/repair jobs with clear wear/fault causes and tolerable cadence; no constant chore timer.
+**Acceptance:** Complete mine → process → transport → build/repair. Compare raw versus processed shipping with measured payload, energy, worker time and travel costs. Block a delivery: dependent work waits without stock teleportation or loss of paid progress. Verify scarce co-products, capacity, cancellation and destruction accounting. A player can explain a meaningful choice without a large recipe catalogue.
+**Gate:** Interaction depth and physical expansion; no Factorio imitation through conveyor/recipe breadth.
+
+### S5 — Sensors, communications and earned autonomy (P0; decide D-18)
+**Story:** A surveyed remote site keeps its crew safe and supplies moving while contact is interrupted.
+- [ ] Distinguish radar motion tracking, telescopic detection, geological prospecting and local probe measurements by useful information, range and uncertainty.
+- [ ] Add one relay/coverage problem with timestamps, observed versus estimated data and explicit queued/rejected command behavior.
+- [ ] Keep current direct controls working until a reviewed communications slice introduces constraints. Define autonomous jobs, emergency shelter and resource-priority policies.
+- [ ] Coarse remote jobs account for crew availability, travel, supply, maintenance and faults; automation has power/material costs and manual intervention.
+**Acceptance:** Survey changes the chosen site/route. Lose communications during a paid job: local policy and safety continue as declared, displayed information becomes stale, and no remote command grants instant labour or freight. Reconnect without duplicate commands/results. Inspect a remote outpost in detail and compare against coarse simulation within a documented tolerance and event ordering. Manual rescue/intervention remains possible.
+**Gate:** Information and infrastructure create choices while preserving usable control; exact light-speed delay remains open.
+
+### S6 — Long travel without skipped consequences (P0; decide D-01/D-02/D-08)
+**Story:** I send a probe, provision a crewed journey and return to a settlement whose history continued coherently.
+- [ ] Prototype bounded time acceleration in the existing neighborhood before committing interstellar propulsion or distances.
+- [ ] Define the common clock, pause, accelerated/local/coarse updates, command latency and event boundaries. Downshift/stop at unsafe encounters under an explicit policy; do not merely simulate huge unstable physics steps.
+- [ ] Budget oxygen/life support, fuel/braking, heat, maintenance and cargo for long travel; test resupply or rescue.
+- [ ] Only after that evidence, compare continuous advanced drive, compressed scale/time and jump alternatives against the identity gate.
+**Acceptance:** Run the same bounded trip at normal and accelerated time; production, resources, worker/job progress, orbits and hazard outcomes agree within declared tolerances. Pause advances none; load causes no offline windfall. An approaching impact or life-support shortage cannot be skipped by acceleration. Arrive, establish supplied habitat/work and preserve both origin and destination across current-format saves.
+**Gate:** Distance earns new reach and logistical decisions; idle waiting, instant consequence erasure and giant world counts are not acceptance evidence.
+
+## Engineering invariants for these slices
+These are requirements for future implementation reviews, not claims of new test coverage.
+1. **Local ownership and conservation:** Inventory, job escrow, cargo, habitat gas and salvage have one owner at a time. Transfers debit and credit once; capacity/reserves apply. Reaction outputs plus declared losses balance inputs; energy and heat ledgers state their approximation.
+2. **Physical labour:** An actor belongs to one world/location/vehicle at a time. Work requires presence, access, tools, supplies and valid state. Travel consumes time; people and cargo do not teleport through commands or simulation LOD.
+3. **Finite habitation:** Occupancy and air/power/thermal capacity constrain supported crew. Overlap cannot double-count breathable air, shelter or worker capacity. Added/repaired capacity starts without invented supplies.
+4. **Safe, legible interruption:** Paused/cancelled/blocked jobs retain declared paid progress and release/refund only owned escrow. Stop/manual override cannot silently resume another job. Safety margins include return/service costs and communicate uncertainty.
+5. **Terrain consistency:** Rendered modifications, collision, support, routes and resource ownership derive from the same persistent world geometry. Impacts/repairs/demolition cannot respawn reserves.
+6. **Shared causal time:** Production, travel, consumption, wear, events and orbital state advance consistently. Paused simulation advances none. LOD/warp transitions preserve accounting, stable IDs and meaningful outcomes within documented tolerances.
+7. **Information integrity:** Unknown/stale/estimated data stays labeled; loss of communications does not erase already valid local safety policy or retroactively execute commands.
+8. **Current-save contract:** Persist worker identity/location/occupancy, jobs/escrow, supplies, thermal state, terrain/support, observations and in-transit deliveries as each ships. Development format resets are allowed; legacy migrations remain deferred until near completion.
+
+For each implementation PR: name the smallest story, current baseline, decisions settled/deferred, gate evidence, invariants, normal-input playtest and targeted regressions actually run. Do not tick completion solely because prose or an isolated subsystem exists. No code work or merge is authorized by this planning change.
