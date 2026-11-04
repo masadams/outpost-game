@@ -18,7 +18,7 @@ import { CommandConsole } from './CommandConsole';
 import { habitatSource } from '../sim/habitats';
 import { habitatNotice } from './habitats';
 import { OperationsDock } from './OperationsDock';
-import { instrumentMarkup } from './instruments';
+import { InstrumentPanel } from './InstrumentPanel';
 import { towingPanel } from './towing';
 import { flightRegion, REGION_LABELS } from '../sim/flightRegion';
 import { flightSafety } from '../sim/flightSafety';
@@ -38,7 +38,7 @@ import type { ColonyAction } from '../sim/colony';
 import { setText, patchMarkup } from './dom';
 export class Hud {
   private root = document.createElement('div');
-  private stats: HTMLElement;
+  private instruments: InstrumentPanel;
   private status: HTMLElement;
   private mining: HTMLElement;
   private colony: HTMLElement;
@@ -87,7 +87,7 @@ export class Hud {
       <footer><p class="context-hint"></p></footer>`;
     this.root.append(this.pointerTip, this.objectives.root, this.dock.nav, this.dock.root, this.nav.guidance); document.body.append(this.root);
     const crewStatus=this.root.querySelector<HTMLElement>('#crew-order-status')!;isolateControlKeys(crewStatus);crewStatus.querySelector('button')!.addEventListener('click',()=>{onColonyAction({type:'crewOrder',operation:'stop'});(document.activeElement as HTMLElement)?.blur();});
-    this.stats = this.root.querySelector('.instruments')!;
+    this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!);
     this.status = this.root.querySelector('.status')!;
     this.mining = this.dock.cargo; this.colony = this.dock.colony;
     this.dock.root.addEventListener('click', event => {
@@ -110,7 +110,8 @@ export class Hud {
     this.root.dataset.vx = world.ship.velocity.x.toFixed(4); this.root.dataset.vy = world.ship.velocity.y.toFixed(4); this.root.dataset.angle = world.ship.angle.toFixed(5); this.root.dataset.spin = world.ship.angularVelocity.toFixed(5);
     setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.20`);
     setText(this.root.querySelector('#hud-context')!,context.label + ' · ' + colonyPlanet(world).label);
-    setText(this.root.querySelector('.context-hint')!,controlHint(context.hint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
+    const compactHint=context.key==='flight'?(world.ship.state==='landed'?'W launch · F deploy · I ship · P pause':'W thrust · A/D steer · Space mine · I ship · P pause'):context.key==='surface'?'A/D walk · E interact · F board · B build':context.hint;
+    setText(this.root.querySelector('.context-hint')!,controlHint(compactHint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
     setText(this.root.querySelector('#surface-frame')!,`SURFACE FRAME · ${colonyPlanet(world).label.toUpperCase()} · ${world.playerMode==='astronaut'?'CREW':'SHIP'}`);
     this.objectives.update(world,this.preferences);this.root.dataset.objectives=world.objectives.completed.join(',');
     const ship: Ship = world.ship;
@@ -119,23 +120,25 @@ export class Hud {
     regionBadge.dataset.region = region;
     if (regionBadge.textContent !== REGION_LABELS[region]) regionBadge.textContent = REGION_LABELS[region];
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
-    patchMarkup(this.stats, instrumentMarkup(world));
+    this.instruments.update(world);
     const safety = flightSafety(ship, world.system), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;
     const flightMessage = onFoot || ship.state === 'crashed' ? '' : safety.message;
     if (flightAlert.textContent !== flightMessage) flightAlert.textContent = flightMessage;
     flightAlert.hidden = !flightMessage; flightAlert.dataset.level = safety.level;
     this.root.dataset.approach = String(!onFoot && safety.approach);
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
-    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${world.notice.message} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · L CHECKPOINT · R NEW RUNTIME' :
-      !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? world.notice.message :
+    const noticeText=world.notice.message.replace(/ · P TO RESUME$/,'');
+    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · L CHECKPOINT · R NEW RUNTIME' :
+      !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? noticeText :
       world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
       onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : habitatNotice(world)) :
       ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
       (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
       ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : region === 'airless' ? 'AIRLESS FLIGHT · GRAVITY · NO AIR DRAG' : region === 'space' ? 'OPEN SPACE · SHARED GRAVITY' : 'ATMOSPHERIC FLIGHT · GRAVITY + DRAG';
-    const originalNotice=world.notice.time>0?world.notice.message:null;
+    const originalNotice=world.notice.time>0?noticeText:null;
     const shown=originalNotice?message.split(originalNotice).map(part=>controlHint(part,this.preferences)).join(originalNotice):controlHint(message,this.preferences);
     setText(this.status,shown);
+    this.status.dataset.routine=String(!paused&&world.notice.time<=0&&ship.state!=='crashed'&&ship.impact<=0&&world.defence.controlled===null&&(!onFoot||world.astronaut.health>0&&(world.astronaut.oxygen>=30||!!habitatSource(world))));
     this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || !habitatSource(world) && world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;
     this.root.dataset.altitude = t.altitude.toFixed(1);
@@ -150,8 +153,9 @@ export class Hud {
     const incoming = threats.filter(t => t.impact).sort((a, b) => a.seconds - b.seconds)[0];
     const alert = this.root.querySelector('#threat-alert')!;
     const warning = world.defence.meteors.length ? `⚠ ${world.defence.meteors.length} INCOMING${incoming ? ` · IMPACT ${incoming.seconds.toFixed(0)} s` : ''}` : '';
-    const combatStatus = this.root.querySelector('#combat-status')!, arm = ship.armament;
+    const combatStatus = this.root.querySelector<HTMLElement>('#combat-status')!, arm = ship.armament;
     const combatText = world.playerMode === 'ship' ? `${arm.selected.toUpperCase()} ${arm[arm.selected]} · CELL ${arm.energy.toFixed(0)} · HEAT ${arm.heat.toFixed(0)}${arm.overheated ? ' · COOLING LOCK' : ''}` : '';
+    combatStatus.hidden=onFoot||!(world.combat.enemies.length||arm.heat>0||arm.overheated||arm.selected==='missile');
     if (combatStatus.textContent !== combatText) combatStatus.textContent = combatText;
     const hostiles = world.combat.enemies.length ? `${warning ? ' · ' : ''}${world.combat.enemies.length} HOSTILE${world.combat.enemies.every(d => d.state === 'retreat') ? ' · DISENGAGING' : world.combat.enemies.some(d => d.windup > 0) ? ' · DRONE AIMING' : ' · APPROACHING'}` : '';
     const emitters = world.colony.buildings.filter(b => isShield(b.kind)), active = emitters.filter(shieldActive).length;

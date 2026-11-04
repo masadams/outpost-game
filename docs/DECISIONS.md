@@ -182,3 +182,7 @@ Follow the user priority after #24: expand research/ship parts first, then readi
 ## Alpha 0.20 — Large management workspace
 
 User feedback prioritized reducing menu density. Manage now uses a large window with separate icon-labelled pages, a prerequisite-connected research map and one selected-item inspector. Ship fitting compares current and selected stats. Details and salvage rules are progressively disclosed; hover briefs supplement persistent click/keyboard information. Native research/fabrication actions remain explicit and have a fixed inspector footer. Compact Build preserves the world for placement; expansion preserves the existing controls and does not implicitly pause or spend. No new backend, external art or legacy migration is introduced. See MANAGEMENT_WORKSPACE.md and Task 016.
+
+## Alpha 0.20 — Compact cockpit instruments
+
+The user requested a smaller, calmer bottom HUD. A single gauge bank prioritizes flight/landing or crew essentials; secondary measurements and the FlightTools-owned environment/coast status move into an explicit diagnostics popout. Active cautions remain visible when diagnostics are closed, and existing audio/physics thresholds are unchanged. Routine narration and inactive weapon text are quiet. See INSTRUMENT_CONSOLE.md for sizes, units and controls.

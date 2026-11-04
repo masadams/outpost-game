@@ -18,7 +18,8 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   await expect(page.locator('.placement')).toContainText('Site clear');
   await page.getByText('Nearby manual placement · Q/T/Enter',{exact:true}).click();await page.locator('[data-colony="place"]').focus(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await page.keyboard.press('b'); await page.keyboard.down('a');
-  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 12000, intervals: [50] }).toBeLessThan(12);
+  // The return from the build site can exceed 12 seconds at the crew's 12 m/s walking speed.
+  await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 18000, intervals: [100] }).toBeLessThan(12);
   await page.keyboard.up('a'); await page.waitForTimeout(450);
   await expect(oxygen).toContainText('HABITAT AIR'); await expect(page.locator('.machine')).toContainText('Large habitat');
   const held = await hud.getAttribute('data-oxygen'); await page.waitForTimeout(1200); expect(await hud.getAttribute('data-oxygen')).toBe(held);

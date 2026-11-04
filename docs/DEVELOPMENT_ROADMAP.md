@@ -1,6 +1,6 @@
 # Outpost — Master Development Roadmap
 
-**Status:** Research/parts, menus/readiness and checkpoint recovery are merged in [PR #25](https://github.com/masadams/outpost-game/pull/25). User feedback prioritizes reducing menu density: [Task 016](../CODEX_TASK_016.md) implements a large tabbed management workspace, connected research map, selected-item inspectors and four new branches/six parts. See [workspace design/playtest](MANAGEMENT_WORKSPACE.md). Human feel, pace, hardware and remaining content/release acceptance stay open.
+**Status:** Research/parts, menus/readiness and checkpoint recovery are merged in [PR #25](https://github.com/masadams/outpost-game/pull/25). User feedback prioritizes reducing menu density: [Task 016](../CODEX_TASK_016.md) implements a large tabbed management workspace, connected research map, selected-item inspectors and four new branches/six parts. The same local UI branch includes the requested compact instrument console with secondary diagnostics on demand. See [workspace design/playtest](MANAGEMENT_WORKSPACE.md). Human feel, pace, hardware and remaining content/release acceptance stay open.
 
 ## Progress rules
 - [ ] means not completed; [x] means implemented, tested and merged.
