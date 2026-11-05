@@ -4,11 +4,14 @@ import type { Vec } from '../sim/math';
 import { RESOURCES, RESOURCE_INFO, type Resource } from '../sim/resources';
 import { visible, type RenderView } from './budget';
 import { seeded } from './mining/random';
+import { dustStrength, groundBelow } from './landing';
 
 /** An expanding ring with a few dots: a flash. */
 interface Burst { position: Vec; life: number; color: number; size: number }
 /** A piece of debris or a glint, flying free. */
 interface Chunk { x: number; y: number; vx: number; vy: number; turn: number; spin: number; size: number; life: number; maxLife: number; color: number; glint: boolean }
+/** A soft puff of dust kicked up from the ground. */
+interface Puff { x: number; y: number; vx: number; vy: number; size: number; grow: number; life: number; maxLife: number }
 interface RockRecord { position: Vec; velocity: Vec; radius: number; stage: number; resource: Resource }
 
 const BURST_LIFE = 0.4;
@@ -21,6 +24,9 @@ export class VisualEffects {
   private hull = 100;
   private bursts: Burst[] = [];
   private chunks: Chunk[] = [];
+  private puffs: Puff[] = [];
+  private landings = 0;
+  private dustClock = 0;
 
   reset(w: WorldState): void {
     this.rocks = this.snapshotRocks(w);
@@ -28,6 +34,9 @@ export class VisualEffects {
     this.hull = w.ship.hull;
     this.bursts = [];
     this.chunks = [];
+    this.puffs = [];
+    this.landings = w.ship.landings;
+    this.dustClock = 0;
   }
 
   private snapshotRocks(w: WorldState): Map<number, RockRecord> {
@@ -40,15 +49,21 @@ export class VisualEffects {
 
   update(w: WorldState, dt: number, paused: boolean, limit: number, view: RenderView): void {
     this.bursts = limit === 0 ? [] : this.bursts.slice(-limit);
-    if (limit === 0) this.chunks = [];
+    if (limit === 0) {
+      this.chunks = [];
+      this.puffs = [];
+    }
     if (paused) return;
     const step = Math.max(0, dt);
     this.bursts = this.bursts.map(b => ({ ...b, life: b.life - step })).filter(b => b.life > 0).slice(-limit);
     this.advanceChunks(step);
+    this.advancePuffs(step);
     if (limit === 0) {
       this.bursts = [];
       this.chunks = [];
+      this.puffs = [];
     }
+    if (limit > 0) this.landingDust(w, step, limit * 6);
 
     const burst = (position: Vec, color: number, size = 1): void => {
       if (limit > 0 && visible(view, position, 24)) {
@@ -76,6 +91,52 @@ export class VisualEffects {
     this.rocks = this.snapshotRocks(w);
     this.cargo = this.snapshotCargo(w);
     this.hull = w.ship.hull;
+  }
+
+  /** Dust blown by the engine near the ground, and a ring of it when the feet touch down or hit hard. */
+  private landingDust(w: WorldState, dt: number, cap: number): void {
+    const ship = w.ship;
+    const touched = ship.landings > this.landings;
+    const hit = w.ship.hull < this.hull && ship.state !== 'landed';
+    this.landings = ship.landings;
+    if (ship.state === 'crashed' && !hit) return;
+    const ground = groundBelow(ship, w.system);
+    const side = { x: -ground.up.y, y: ground.up.x };
+    const rand = seeded(Math.floor(w.system.time * 30) + 17);
+    const spawn = (direction: number, speed: number, size: number): void => {
+      const lift = 1 + rand() * 3;
+      this.puffs.push({
+        x: ground.point.x + side.x * rand() * 3, y: ground.point.y + side.y * rand() * 3,
+        vx: side.x * direction * speed + ground.up.x * lift, vy: side.y * direction * speed + ground.up.y * lift,
+        size, grow: 5 + rand() * 4, life: 1 + rand() * 0.8, maxLife: 1.8,
+      });
+    };
+    if (touched || hit) {
+      const force = hit ? 1.6 : 1;
+      for (let i = 0; i < 6; i++) {
+        spawn(1, (4 + rand() * 6) * force, 1.2 + rand());
+        spawn(-1, (4 + rand() * 6) * force, 1.2 + rand());
+      }
+    }
+    const strength = ship.state === 'flying' ? dustStrength(ground.altitude, ship.thrusting) : 0;
+    this.dustClock += dt * strength;
+    while (this.dustClock >= 0.04) {
+      this.dustClock -= 0.04;
+      spawn(rand() < 0.5 ? 1 : -1, 8 + rand() * 10 * strength, 1 + rand() * 1.5);
+    }
+    if (this.puffs.length > cap) this.puffs = this.puffs.slice(-cap);
+  }
+
+  private advancePuffs(dt: number): void {
+    for (const p of this.puffs) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= Math.exp(-1.8 * dt);
+      p.vy *= Math.exp(-1.8 * dt);
+      p.size += p.grow * dt;
+      p.life -= dt;
+    }
+    this.puffs = this.puffs.filter(p => p.life > 0);
   }
 
   /** Debris thrown out of a rock that has broken. The first break throws more and bigger pieces than the last. */
@@ -137,6 +198,9 @@ export class VisualEffects {
   /** Pieces of debris alive. */
   get debris(): number { return this.chunks.length; }
 
+  /** Puffs of dust alive. */
+  get dust(): number { return this.puffs.length; }
+
   draw(g: Phaser.GameObjects.Graphics, zoom: number): void {
     const px = 1 / zoom;
     for (const b of this.bursts) {
@@ -146,6 +210,11 @@ export class VisualEffects {
       g.strokeCircle(b.position.x, b.position.y, (3 + age * 34 * b.size) * px);
       g.fillStyle(b.color, alpha * 0.18);
       g.fillCircle(b.position.x, b.position.y, (2 + age * 26 * b.size) * px);
+    }
+    for (const p of this.puffs) {
+      const fade = Math.min(1, p.life / p.maxLife);
+      g.fillStyle(0xb9a58f, fade * 0.28);
+      g.fillCircle(p.x, p.y, p.size);
     }
     for (const c of this.chunks) {
       const fade = Math.min(1, c.life / (c.maxLife * 0.4));

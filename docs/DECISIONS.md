@@ -270,3 +270,6 @@ Extend existing astronaut dispatch, paid construction queues and oxygen domes; t
 
 ## Mining feel (slice 5.2) — 2026-11-05
 Rock, laser and debris art is render-only and deterministic: a rock's look comes from its id, sparks from a time tick, so nothing here touches the simulation or saves. Debris counts are capped by the quality setting and drop to zero with reduced motion. The camera frames the ship plus the rock under the beam, but never zooms in past the normal level. Audio distinguishes a big rock splitting (`split`) from a small one shattering (`fracture`); pickups climb in pitch within a short run. The pickup feed is display only and reads cargo changes.
+
+## Landing feel (slice 5.3) — 2026-11-05
+Landing rules are unchanged. Feedback is render-only: pad beacon colour follows the existing approach check (`flightSafety`), and dust is cosmetic, capped by quality and off with reduced motion. Existing sounds for touchdown and impact are kept.

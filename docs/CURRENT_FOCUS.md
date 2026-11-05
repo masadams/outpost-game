@@ -62,7 +62,7 @@ New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `sr
 |---|---|---|
 | 5.1 Lander and camera | Zoom is set from the window height, so the lander is about 7% of screen height (63 px at 900) and the astronaut about 5%, on any display. Descending keeps the ground below the lander in view, clear of the instrument cluster. The camera leads in the direction you are moving. The focus point sits above centre. New lander and astronaut art (cabin with window, descent stage, braced legs, engine bell; visor, backpack, stride) and a flat landing pad | Done |
 | 5.2 Mining laser and rocks | Faceted, lit rocks that spin, with mineral glints, craters and cracks that open as they take damage. A flickering beam with travelling pulses and a spark shower where it lands. Rocks throw debris when they split or shatter; ore comes aboard with a flash and a "+4.0 kg Iron" line. The camera frames the ship and the rock being worked. Sound: a wobbling beam hum, a deeper crack when a big rock splits versus a short shatter, and pickup chimes that climb when ore comes in quickly | Done |
-| 5.3 Landing feel | Touchdown, dust, crash and recovery, and the sound of each | Planned |
+| 5.3 Landing feel | The beacon posts on the pad turn green inside every touchdown limit, amber near one and red when you are about to hit, and pulse when safe. The engine blows dust across the ground when you hover low; touching down or hitting hard kicks up a ring of dust (none with reduced motion) | Done |
 | 5.4 First-run guidance | Does a new player find their first rock and their first delivery without help? | Planned |
 
 ## Known UX defects to fix in the rebuild

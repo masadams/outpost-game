@@ -11,7 +11,8 @@ import { drawShip } from './ship';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
-import { planetAt, planets } from '../sim/celestial';
+import { nearestPlanet, planetAt, planets } from '../sim/celestial';
+import { flightSafety } from '../sim/flightSafety';
 import { drawShields } from './shields';
 import { applyExplorationAction } from '../sim/exploration';
 import { drawExploration } from './exploration';
@@ -44,6 +45,8 @@ import { predictCoast, type Trajectory } from '../sim/trajectory';
 import { createAtmosphere } from './atmosphere';
 import { createPlanet } from './planet';
 import { drawTrajectory } from './trajectory';
+
+const PAD_LAMPS = { safe: 0x73f3cf, caution: 0xffb06a, critical: 0xff6b5a, neutral: 0x73f3cf } as const;
 
 export class FlightScene extends Phaser.Scene {
   private effects=new VisualEffects();
@@ -356,6 +359,9 @@ export class FlightScene extends Phaser.Scene {
     this.atmosphere.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
     this.moon.setVisible(this.simulation.system.binary).setPosition(moon.position.x - this.follow.x, moon.position.y - this.follow.y);
     this.planet.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
+    const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
+    const padLevel = padSafety.approach ? padSafety.level : 'neutral';
+    const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;
     for (const body of planets(this.simulation.system)) {
       g.lineStyle(.6,body.id==='home'?0xa9d2c7:0xd0c4dd,.7);g.strokeCircle(body.position.x,body.position.y,body.radius);
       g.save(); g.translateCanvas(body.position.x, body.position.y);
@@ -364,9 +370,15 @@ export class FlightScene extends Phaser.Scene {
     g.lineStyle(0.5, 0xb7fff0); g.lineBetween(-30, -body.radius, 30, -body.radius);
     g.lineStyle(0.5, 0x17574e);
     for (const x of [-24, -12, 0, 12, 24]) g.lineBetween(x, -body.radius + 0.3, x, -body.radius + 1.6);
+    // Beacon posts report the approach: green inside every touchdown limit, amber near one, red when about to hit.
+    const lamp = body.id === padBody && padLevel !== 'neutral' ? PAD_LAMPS[padLevel] : 0x73f3cf;
+    const pulse = padLevel === 'safe' && !this.preferences.reducedMotion ? 0.65 + 0.35 * Math.sin(this.time.now / 140) : 1;
     for (const x of [-32, 32]) {
-      g.lineStyle(1, 0x73f3cf); g.lineBetween(x, -body.radius, x, -body.radius - 18);
-      g.fillStyle(0x73f3cf); g.fillCircle(x, -body.radius - 19, 2);
+      g.lineStyle(1, lamp); g.lineBetween(x, -body.radius, x, -body.radius - 18);
+      g.fillStyle(lamp, pulse); g.fillCircle(x, -body.radius - 19, 2);
+    }
+    if (body.id === padBody && padLevel !== 'neutral') {
+      g.fillStyle(lamp, 0.12 * pulse); g.fillRect(-30, -body.radius - 2.5, 60, 2.5);
     }
     // Pad beacon remains visible at orbital zoom.
     g.lineStyle(1 / this.follow.zoom, 0x73f3cf, 0.35); g.strokeCircle(0, -body.radius - WORLD.shipRadius, 16 / this.follow.zoom);
