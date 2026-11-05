@@ -1,5 +1,5 @@
 import { sitePosition } from './localWorld';
-import { applyFacilityAction, type Building } from './colony';
+import { applyFacilityAction, demolishBuilding, demolishError, type Building } from './colony';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS } from './colonyConfig';
 import { SCHEDULE_PRODUCTS, type ScheduleProduct } from './scheduling';
 import { cancelOrder, orderError } from './construction';
@@ -41,6 +41,12 @@ export function applyCommandAction(w: WorldState, a: CommandAction): void {
     applyFacilityAction(w, b, { type: 'adjustTarget', product: a.product as ScheduleProduct, delta: a.delta as -5 | 5 }); return;
   }
   if (a.type !== 'remote') return;
+  if (a.operation === 'demolish') {
+    const error = demolishError(w, b);
+    if (error) notify(w, error);
+    else demolishBuilding(w, b);
+    return;
+  }
   if (a.operation === 'toggle') applyFacilityAction(w, b, { type: 'toggleMachine' });
   else if (a.operation === 'recipe') applyFacilityAction(w, b, { type: 'cycleRecipe' });
   else if (a.operation === 'schedule') applyFacilityAction(w, b, { type: 'toggleSchedule' });

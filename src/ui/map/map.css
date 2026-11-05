@@ -67,3 +67,9 @@
   #hud .map-window { grid-template-columns: minmax(0, 1fr); }
   #hud .map-inspector { border-left: 0; border-top: 1px solid var(--ui-line); }
 }
+
+/* Incoming storm, as far as the Observatory can tell. */
+.map-chart .map-incoming { fill: #ffb06a; }
+.map-chart .map-doubt { fill: none; stroke: #ffb06a; stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.map-chart .map-zone { fill: #ff6b5a22; stroke: #ff8a7a; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.map-chart .map-zone-label { fill: #ff9a8c; }

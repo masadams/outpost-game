@@ -1,7 +1,8 @@
 import { ATMOSPHERE, WORLD } from './config';
 import { heading, length, localAngle, type Vec } from './math';
 export type BodyId = 'home' | 'moon';
-export interface SystemFrame { time: number; binary: boolean }
+/** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
+export interface SystemFrame { time: number; binary: boolean; sun?: boolean }
 export const STATIC_SYSTEM: SystemFrame = { time: 0, binary: false };
 export const CELESTIAL = {
   home: { label: 'Selene', radius: WORLD.radius, mu: WORLD.mu, atmosphere: ATMOSPHERE.height },

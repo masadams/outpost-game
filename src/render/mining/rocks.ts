@@ -4,7 +4,7 @@ import { RESOURCE_INFO } from '../../sim/resources';
 import { rockShape } from './rockShape';
 
 /** Light comes from the upper left, so every rock is lit the same way whatever its spin. */
-const LIGHT = { x: -0.55, y: -0.83 };
+const DEFAULT_LIGHT = { x: -0.55, y: -0.83 };
 const BASE = [0x1b2733, 0x2f4252] as const;
 
 function mix(a: number, b: number, t: number): number {
@@ -25,10 +25,13 @@ export interface RockDrawOptions {
   detail: boolean;
   /** The laser is hitting this rock right now. */
   targeted: boolean;
+  /** Unit vector toward the sun in the world frame; a fixed upper-left light when there is no sun. */
+  light?: { x: number; y: number };
 }
 
 export function drawRock(g: Phaser.GameObjects.Graphics, rock: Asteroid, options: RockDrawOptions): void {
   const { zoom, time, detail, targeted } = options;
+  const LIGHT = options.light ?? DEFAULT_LIGHT;
   const shape = rockShape(rock.id);
   const colour = RESOURCE_INFO[rock.resource].color;
   const turn = rock.id * 0.7 + time * shape.spin;

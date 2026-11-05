@@ -7,6 +7,9 @@ export const HABITAT_WORK_GOAL = 20;
 export const OBJECTIVES = [
   { id: 'delivery', group: 'expedition', link: 'cargo', label: 'Make your first delivery', hint: 'Press W to launch. Hold Space to mine a rock, then hold C to pull the fragments in. Land on the green pad and press E to unload.' },
   { id: 'industry', group: 'expedition', link: 'build', label: 'Get industry running', hint: 'Press F to step out and walk with A/D. Press B to build a solar array and a refinery. The refinery runs once it has ore and power.' },
+  { id: 'sky', group: 'expedition', link: 'build', label: 'Watch the sky', hint: 'Build an Observatory and a solar array to power it. Leave it scanning; the longer it watches, the better it can tell you what is out there.' },
+  { id: 'storm', group: 'expedition', link: 'defence', label: 'Survive the storm', hint: 'Something is coming. Use the warning to get ready, then ride it out. Turrets and your ship laser can break rocks up before they land.' },
+  { id: 'analysis', group: 'expedition', link: 'build', label: 'Learn from the storm', hint: 'Pieces of the storm lie on the ground. Walk over one, then open Base and analyse it.' },
   { id: 'equipment', group: 'expedition', link: 'equipment', label: 'Equip for exploration', hint: 'Build a powered lab, pay for research in Manage, and fabricate a module at home. No free stock or fuel is supplied.' },
   { id: 'moonWork', group: 'expedition', link: 'map', label: 'Work on Nacre', hint: 'Load finite rig/solar freight in Ship / Cargo, select Nacre in Map, fly and land manually. Unload supplies, leave the ship and run a local mining rig.' },
   { id: 'return', group: 'expedition', link: 'map', label: 'Return from the moon', hint: 'Board and fly home after working on Nacre. Plan around terrain and land on the home pad. E delivers any carried ore.' },
@@ -25,6 +28,9 @@ export function observeObjectives(w: WorldState, paidHabitatSeconds = 0): void {
   const add = (id: ObjectiveId, condition: boolean) => { if (condition && !done.includes(id)) done.push(id); };
   add('delivery', w.unloaded > 0);
   add('industry', [w.colony, w.moon.colony].some(c => c.buildings.some(b => ['refinery', 'miningRig', 'fuelProcessor'].includes(b.kind) && b.status === 'running')));
+  add('sky', w.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'));
+  add('storm', w.storm.phase === 'over' && w.ship.state !== 'crashed' && w.astronaut.health > 0);
+  add('analysis', w.storm.analysed);
   add('equipment', w.ship.equipment.length > 0);
   add('moonWork', w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position, w.system).id === 'moon' && w.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.moon.colony.buildings.some(b => b.kind === 'miningRig' && b.status === 'running'));
   add('habitat', w.objectives.habitatSeconds >= HABITAT_WORK_GOAL - 1e-6);
@@ -47,6 +53,9 @@ export function objectiveProgress(source: WorldState, id: ObjectiveId): { value:
   switch (id) {
     case 'delivery': value = w.unloaded > 0 ? 1 : 0; break;
     case 'industry': value = [w.colony, w.moon.colony].some(c => c.buildings.some(b => ['refinery', 'miningRig', 'fuelProcessor'].includes(b.kind) && b.status === 'running')) ? 1 : 0; break;
+    case 'sky': value = w.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running') ? 1 : 0; break;
+    case 'storm': value = w.storm.phase === 'over' ? 1 : 0; break;
+    case 'analysis': value = w.storm.analysed ? 1 : 0; break;
     case 'equipment': value = w.ship.equipment.length > 0 ? 1 : 0; break;
     case 'moonWork': target = 2; unit = 'steps'; value = (w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position,w.system).id === 'moon' ? 1 : 0) + (w.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.moon.colony.buildings.some(b=>b.kind==='miningRig'&&b.status==='running') ? 1 : 0); break;
     case 'return': target = 2; unit = 'steps'; value = w.objectives.returnArmed ? 1 : 0; break;

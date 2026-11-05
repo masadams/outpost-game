@@ -136,3 +136,66 @@
 #hud #operations-dock .dock-heading { flex-wrap: wrap; row-gap: 8px; }
 #hud #operations-dock[data-expanded=false] .dock-heading { padding: 10px 12px; gap: 8px; }
 #hud #operations-dock[data-expanded=false] .dock-heading button { padding: 9px 12px; font-size: calc(13px * var(--text-scale, 1)); }
+
+/* Destructive actions look different and always ask first. */
+#hud .base-actions .danger,
+#hud .nearby-actions .danger,
+#hud .confirm .danger {
+  border-color: #ff6b5a99;
+  color: #ff9a8c;
+}
+#hud .confirm { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid #ff6b5a88; border-radius: 10px; background: #2a1618cc; }
+#hud .confirm p { margin: 0; font: 500 calc(14px * var(--scale)) / 1.4 var(--ui-body); }
+
+/* Right-click menu on a building. */
+#context-menu-host .context-menu {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  gap: 4px;
+  width: 240px;
+  padding: 8px;
+  border: 1px solid var(--ui-line, #2c4256);
+  border-radius: 12px;
+  background: var(--ui-panel-solid, #0b1620);
+  box-shadow: 0 10px 30px #000a;
+  color: var(--ui-text, #e6f1f5);
+  font-family: var(--ui-body);
+  --scale: calc(var(--text-scale, 1) * 1.1);
+  pointer-events: auto;
+}
+#context-menu-host .context-menu header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 8px; }
+#context-menu-host .context-menu strong { font: 600 calc(15px * var(--scale)) / 1.2 var(--ui-display); }
+#context-menu-host .context-menu hr { width: 100%; border: 0; border-top: 1px solid var(--ui-line, #2c4256); margin: 4px 0; }
+#context-menu-host .context-menu button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: 500 calc(14px * var(--scale)) / 1 var(--ui-body);
+  text-align: left;
+  cursor: pointer;
+}
+#context-menu-host .context-menu button:hover:not(:disabled),
+#context-menu-host .context-menu button:focus-visible { background: var(--ui-raised, #14283a); border-color: var(--ui-line, #2c4256); }
+#context-menu-host .context-menu button:disabled { opacity: .45; cursor: default; }
+#context-menu-host .context-menu .danger { color: #ff9a8c; }
+#context-menu-host .context-menu .confirm { display: grid; gap: 6px; padding: 8px; border: 1px solid #ff6b5a88; border-radius: 10px; background: #2a1618cc; }
+#context-menu-host .context-menu .confirm p { margin: 0; font-size: calc(13px * var(--scale)); line-height: 1.4; }
+
+/* Key hints sit beside a label as a small keycap, never inside the label text. */
+#hud #operations-dock .dock-heading kbd,
+.help-title kbd {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border: 1px solid var(--ui-line, #2c4256);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--ui-space, #07111a);
+  color: var(--ui-muted, #8aa3b5);
+  font: 500 0.8em var(--ui-mono, monospace);
+  text-transform: none;
+  letter-spacing: 0;
+}

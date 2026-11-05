@@ -44,3 +44,49 @@ describe('mining visuals', () => {
     expect(fx.debris).toBe(3);
   });
 });
+
+describe('building effects', () => {
+  const view = { centre: { x: 0, y: 0 }, radius: 1e6 };
+  const site = (w: ReturnType<typeof createWorld>, kind: string, status = 'idle') => {
+    w.colony.buildings.push({ id: w.colony.nextId++, kind, angle: 0.05, enabled: true, progress: 0, recipe: 0, status, health: 100 } as never);
+    return w.colony.buildings[w.colony.buildings.length - 1];
+  };
+
+  it('flashes rings when a building is finished, but not for buildings that were already there', () => {
+    const w = createWorld();
+    site(w, 'solar');
+    const fx = new VisualEffects();
+    fx.reset(w);
+    fx.update(w, 1 / 60, false, 12, view);
+    expect(fx.rings).toBe(0);
+    site(w, 'storage');
+    fx.update(w, 1 / 60, false, 12, view);
+    expect(fx.rings).toBe(1);
+  });
+
+  it('sends out a longer signal the first time the Observatory starts, and only that once', () => {
+    const w = createWorld();
+    const obs = site(w, 'observatory');
+    const fx = new VisualEffects();
+    fx.reset(w);
+    obs.status = 'running';
+    fx.update(w, 1 / 60, false, 12, view);
+    expect(fx.rings).toBe(1);
+    for (let i = 0; i < 60 * 4; i++) fx.update(w, 1 / 60, false, 12, view);
+    expect(fx.rings).toBe(0);
+    obs.status = 'no power';
+    fx.update(w, 1 / 60, false, 12, view);
+    obs.status = 'running';
+    fx.update(w, 1 / 60, false, 12, view);
+    expect(fx.rings).toBe(0);
+  });
+
+  it('shows nothing on reduced motion', () => {
+    const w = createWorld();
+    const fx = new VisualEffects();
+    fx.reset(w);
+    site(w, 'solar');
+    fx.update(w, 1 / 60, false, 0, view);
+    expect(fx.rings).toBe(0);
+  });
+});

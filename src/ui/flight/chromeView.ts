@@ -3,12 +3,13 @@ import { flightRegion, REGION_LABELS, type FlightRegion } from '../../sim/flight
 import { OBJECTIVES, objectiveProgress, type ObjectiveId } from '../../sim/objectives';
 import { cargoMass } from '../../sim/shipMass';
 import type { WorldState } from '../../sim/world';
+import { stormView } from './stormView';
 import { coach, DEFAULT_COACH_KEYS, type CoachKeys } from './coach';
 
 type Objective = typeof OBJECTIVES[number];
 
 /** Milestones shown to the player; the focus set keeps the first sortie only. */
-const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry'];
+const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'sky', 'storm', 'analysis'];
 
 export function shownObjectives(): ReadonlyArray<Objective> {
   return featureVisible('catalogue') ? OBJECTIVES : OBJECTIVES.filter(o => FOCUS_OBJECTIVES.includes(o.id));
@@ -41,6 +42,26 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
     const missing = [!kinds.has('solar') && 'a solar array', !kinds.has('refinery') && 'a refinery'].filter(Boolean);
     if (missing.length) return `Build ${missing.join(' and ')}.`;
     return 'Give the refinery ore and power to start it.';
+  }
+  if (id === 'sky') {
+    const lab = w.colony.buildings.find(b => b.kind === 'observatory');
+    if (!lab) return 'Build an Observatory, then give it power.';
+    if (lab.status === 'running') return 'Scanning. Leave it powered.';
+    return 'The Observatory needs power. Build a solar array.';
+  }
+  if (id === 'storm') {
+    const view = stormView(w);
+    if (view) return view.detail;
+    if (!w.colony.buildings.some(b => b.kind === 'observatory')) return 'Build the Observatory to see what is coming.';
+    return 'Keep scanning.';
+  }
+  if (id === 'analysis') {
+    const storm = w.storm;
+    if (storm.analysed) return 'Done. Your buildings now take less damage from blasts.';
+    if (storm.held > 0) return 'Open Base and analyse a piece of the storm.';
+    if (storm.samples.length > 0) return 'Pieces of the storm are on the ground. Walk over one.';
+    if (storm.phase === 'over') return 'Nothing left to collect.';
+    return 'Get through the storm first.';
   }
   return '';
 }

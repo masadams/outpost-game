@@ -1,5 +1,8 @@
 import { featureVisible } from '../../preferences/features';
-import { planets } from '../../sim/celestial';
+import { planetAt, planets, surfacePosition } from '../../sim/celestial';
+import { WORLD } from '../../sim/config';
+import { farPosition } from '../../sim/storm';
+import { stormKnowledge } from '../../sim/stormKnowledge';
 import { BELTS, BELT_IDS, SITE_INFO, SITE_IDS, type BeltId, type Destination, type SiteId } from '../../sim/explorationConfig';
 import { destination, navigation, siteError } from '../../sim/exploration';
 import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../../sim/resources';
@@ -18,6 +21,18 @@ export interface MapView {
   /** World-space box that holds everything worth showing. */
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
   note: string;
+  /** What the Observatory knows of an incoming storm; null when nothing is known. */
+  storm: StormMark | null;
+}
+
+/** Rocks still far away are drawn at the edge of the chart, pointing the way they come from. */
+export interface StormMark {
+  rocks: Array<{ at: Vec; offChart: boolean; distance: number }>;
+  /** How uncertain each position is, in metres. */
+  doubt: number;
+  /** Where it expects them to land, and how wide that guess is. */
+  zone: { at: Vec; radius: number } | null;
+  line: string;
 }
 
 export interface BodyMark { id: string; label: string; at: Vec; radius: number; atmosphere: number }
@@ -130,6 +145,27 @@ function selectedView(w: WorldState): SelectedView {
   };
 }
 
+/** How far from the planet's centre storm rocks are drawn at their true position; beyond that they sit on a ring. */
+const STORM_CHART_RADIUS = 6000;
+
+function stormMark(w: WorldState): StormMark | null {
+  const known = stormKnowledge(w);
+  if (!known) return null;
+  const home = planetAt('home', w.system);
+  const rocks = [...w.storm.far.map(b => farPosition(b, w.system.time)), ...w.defence.meteors.map(m => m.position)].map(position => {
+    const dx = position.x - home.position.x;
+    const dy = position.y - home.position.y;
+    const distance = Math.hypot(dx, dy);
+    const offChart = distance > STORM_CHART_RADIUS;
+    const k = offChart ? STORM_CHART_RADIUS / distance : 1;
+    return { at: { x: home.position.x + dx * k, y: home.position.y + dy * k }, offChart, distance };
+  });
+  const doubt = known.level === 'sighted' ? 700 : known.level === 'tracked' ? 300 : 120;
+  const zone = { at: surfacePosition(home, WORLD.padAngle + known.corridor / WORLD.radius, 0), radius: known.corridorMargin };
+  const side = known.corridor >= 0 ? 'right' : 'left';
+  return { rocks, doubt, zone, line: `Landing about ${Math.round(Math.abs(known.corridor) / 10) * 10} m ${side} of the pad` };
+}
+
 export function mapView(w: WorldState): MapView {
   const moonVisible = featureVisible('moonTravel');
   const bodies = planets(w.system)
@@ -150,8 +186,10 @@ export function mapView(w: WorldState): MapView {
     kind: kindOf(id),
     selected: w.exploration.selected === id,
   }));
+  const storm = stormMark(w);
   const anchors: Vec[] = [
     w.ship.position,
+    ...(storm ? storm.rocks.map(r => r.at) : []),
     ...sites.map(s => s.at),
     ...belts.flatMap(b => b.rocks.map(r => r.at)),
     ...bodies.flatMap(b => [
@@ -174,6 +212,7 @@ export function mapView(w: WorldState): MapView {
       maxY: Math.max(...anchors.map(p => p.y)),
     },
     note: routeNote(w),
+    storm,
   };
 }
 

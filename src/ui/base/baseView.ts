@@ -1,11 +1,13 @@
+import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
-import { energyCapacity, oreCapacity, productCapacity, recipeFor, type Building } from '../../sim/colony';
+import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
 import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
 import { colonyPlanet } from '../../sim/localWorld';
 import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity } from '../../sim/shipStats';
+import { ANALYSIS_ENERGY } from '../../sim/stormConfig';
 import type { WorldState } from '../../sim/world';
 
 /** Everything the Base window shows, derived from the simulation. Pure: no DOM, no Phaser. */
@@ -17,6 +19,19 @@ export interface BaseView {
   attention: AttentionView[];
   buildings: BuildingView[];
   ship: ShipView;
+  /** Present once a storm has been seen: pieces to collect and what analysing them gives. */
+  storm: StormLabView | null;
+}
+
+export interface StormLabView {
+  /** Pieces still lying on the ground, and pieces you are carrying. */
+  onGround: number;
+  held: number;
+  analysed: boolean;
+  /** One plain line about what to do next. */
+  line: string;
+  /** Why the Analyse button is off, or null when it works. */
+  blocked: string | null;
 }
 
 export interface StockView {
@@ -52,6 +67,12 @@ export interface BuildingView {
   canToggle: boolean;
   enabled: boolean;
   canCycleRecipe: boolean;
+  /** Present for turrets: whether they fire on their own. */
+  turret: { auto: boolean } | null;
+  /** What demolishing gives back, in words, e.g. "3 alloy, 1 wire". */
+  salvage: string;
+  /** Why it cannot be demolished right now, or null. */
+  demolishBlocked: string | null;
 }
 
 export interface AttentionView {
@@ -123,7 +144,7 @@ export function whyStopped(b: Building): string | null {
   }
 }
 
-export function buildingView(b: Building): BuildingView {
+export function buildingView(b: Building, w?: WorldState): BuildingView {
   const health = buildingHealth(b);
   // Solar, batteries and storage have no work cycle: they either work or are switched off / wrecked.
   const passive = b.kind === 'solar' || b.kind === 'battery' || b.kind === 'storage';
@@ -136,6 +157,10 @@ export function buildingView(b: Building): BuildingView {
   const facts: Array<[string, string]> = [];
   if (recipe) facts.push(['Making', recipe.label], ['Batch time', `${recipe.seconds} s`]);
   if (power) facts.push([b.kind === 'solar' ? 'Output' : 'Power', `${power.toFixed(1)} kW`]);
+  if (isTurret(b.kind)) {
+    const weapon = WEAPONS[b.kind];
+    facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
+  }
   if (b.kind === 'battery') facts.push(['Stores', '200 kJ']);
   if (b.kind === 'storage') facts.push(['Holds', '+200 kg ore, +100 each product']);
   facts.push(['Condition', `${health.toFixed(0)}%`]);
@@ -152,7 +177,22 @@ export function buildingView(b: Building): BuildingView {
     canToggle: b.kind !== 'storage' && b.kind !== 'battery' && health > 0,
     enabled: b.enabled,
     canCycleRecipe: b.kind === 'refinery' && health > 0,
+    turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic } : null,
+    salvage: salvageText(b),
+    demolishBlocked: w ? demolishError(w, b) : null,
   };
+}
+
+function powerSummary(w: WorldState): string {
+  const c = w.colony;
+  const panels = c.buildings.some(b => b.kind === 'solar');
+  const dark = !!w.system.sun && panels && c.generation <= 1e-6;
+  if (dark) {
+    const lasts = c.demand > 0 ? ` Stored power lasts about ${Math.floor(c.energy / c.demand)} s at this load.` : '';
+    return `Night: solar panels are off.${lasts}`;
+  }
+  if (c.generation <= 0 && c.demand <= 0) return 'No power yet. Build a solar array.';
+  return `Using ${c.demand.toFixed(1)} of ${c.generation.toFixed(1)} kW`;
 }
 
 function powerView(w: WorldState): PowerView {
@@ -164,7 +204,7 @@ function powerView(w: WorldState): PowerView {
     using: c.demand,
     stored: c.energy,
     capacity,
-    summary: c.generation <= 0 && c.demand <= 0 ? 'No power yet. Build a solar array.' : `Using ${c.demand.toFixed(1)} of ${c.generation.toFixed(1)} kW`,
+    summary: powerSummary(w),
     level,
   };
 }
@@ -200,9 +240,17 @@ const PRODUCT_LABEL: Record<Product, string> = {
   fuel: 'Fuel',
 };
 
+function salvageText(b: Building): string {
+  const parts = Object.entries(salvageOf(b)).map(([product, amount]) => {
+    const n = Math.round(amount as number);
+    return `${n} ${product === 'components' && n === 1 ? 'component' : product}`;
+  });
+  return parts.length ? parts.join(', ') : 'nothing';
+}
+
 export function baseView(w: WorldState): BaseView {
   const c = w.colony;
-  const buildings = c.buildings.map(buildingView);
+  const buildings = c.buildings.map(b => buildingView(b, w));
   const ore = RESOURCES.map(r => ({ key: r, label: RESOURCE_INFO[r].label, value: `${w.depot[r].toFixed(0)} kg`, group: 'ore' as const }));
   const products = PRODUCTS.map(p => ({ key: p, label: PRODUCT_LABEL[p], value: c.products[p].toFixed(0), group: 'product' as const }));
   const attention = buildings.filter(b => b.why).map(b => ({ id: b.id, text: `${b.label}: ${b.why}` }));
@@ -214,5 +262,25 @@ export function baseView(w: WorldState): BaseView {
     attention,
     buildings,
     ship: shipView(w),
+    storm: stormLab(w),
   };
+}
+
+function stormLab(w: WorldState): StormLabView | null {
+  const s = (w.rootWorld ?? w).storm;
+  if (s.phase !== 'over' && !s.analysed && s.held === 0) return null;
+  const lab = w.colony.buildings.some(b => b.kind === 'observatory' && buildingHealth(b) > 0);
+  let blocked: string | null = null;
+  if (s.analysed) blocked = 'Already analysed.';
+  else if (s.held <= 0) blocked = 'Walk over a piece on the ground first.';
+  else if (!lab) blocked = 'Needs a working Observatory.';
+  else if (w.colony.energy < ANALYSIS_ENERGY) blocked = `Needs ${ANALYSIS_ENERGY} kJ stored (you have ${Math.floor(w.colony.energy)}).`;
+  const line = s.analysed
+    ? 'Your buildings now take less damage from blasts.'
+    : s.held > 0
+      ? 'Analyse a piece to learn how to harden your buildings.'
+      : s.samples.length > 0
+        ? 'Pieces of the storm are lying on the ground. Walk over one to pick it up.'
+        : 'Nothing left to collect.';
+  return { onGround: s.samples.length, held: s.held, analysed: s.analysed, line, blocked };
 }

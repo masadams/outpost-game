@@ -11,6 +11,7 @@ export const test=base.extend({page:async({page},use)=>{
  const goto=page.goto.bind(page),reload=page.reload.bind(page);
  page.goto=async(...args)=>{const response=await goto(...args);if(clockInstalled)await page.clock.fastForward(100);await enterGame(page);return response;};
  page.reload=async options=>{const response=await reload(options);if(clockInstalled)await page.clock.fastForward(100);await enterGame(page);return response;};
+ await page.addInitScript(()=>{try{localStorage.setItem('outpost.sun','off');}catch{/* blocked */}});
  await use(page);
 }});
 

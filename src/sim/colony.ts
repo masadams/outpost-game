@@ -1,3 +1,5 @@
+import { stepObservatory } from './observatory';
+import { daylightAt } from './sun';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -52,7 +54,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -117,16 +119,42 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
   if (!building) { notify(world, 'STAND WITHIN 18 m OF A FACILITY'); return; }
   if (action.type === 'demolish') {
     if (!colony.buildOpen) return;
-    const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
-    if (inventoryMass(world.depot) > oreCapacity(remaining) || PRODUCTS.some(p => colony.products[p] + (buildingCost(building)[p] ?? 0) * 0.75 * buildingHealth(building) / 100 > productCapacity(remaining))) {
-      notify(world, 'NOT ENOUGH STORAGE AFTER DEMOLITION'); return;
-    }
-    ventHabitat(world, building); drainShield(world, building); colony.buildings = remaining.buildings;
-    if (world.defence.controlled === building.id) world.defence.controlled = null;
-    for (const p of PRODUCTS) colony.products[p] += (buildingCost(building)[p] ?? 0) * 0.75 * buildingHealth(building) / 100;
-    colony.energy = Math.min(colony.energy, energyCapacity(colony));
-    notify(world, 'FACILITY REMOVED · SALVAGE SCALES WITH REMAINING HULL');
+    const error = demolishError(world, building);
+    if (error) { notify(world, error.toUpperCase()); return; }
+    demolishBuilding(world, building);
   } else applyFacilityAction(world, building, action);
+}
+/** What demolishing gives back: three quarters of the cost, scaled by how much of the building is left. */
+export function salvageOf(building: Building): Partial<ProductInventory> {
+  const result: Partial<ProductInventory> = {};
+  for (const p of PRODUCTS) {
+    const amount = (buildingCost(building)[p] ?? 0) * 0.75 * buildingHealth(building) / 100;
+    if (amount > 0) result[p] = amount;
+  }
+  return result;
+}
+
+/** Why a building cannot be taken down right now, or null. */
+export function demolishError(world: WorldState, building: Building): string | null {
+  const colony = world.colony;
+  const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
+  const salvage = salvageOf(building);
+  const tooMuchOre = inventoryMass(world.depot) > oreCapacity(remaining);
+  const tooMuchStock = PRODUCTS.some(p => colony.products[p] + (salvage[p] ?? 0) > productCapacity(remaining));
+  return tooMuchOre || tooMuchStock ? 'Not enough storage left to take it down.' : null;
+}
+
+/** Takes a building down and returns the salvage. Callers check `demolishError` first. */
+export function demolishBuilding(world: WorldState, building: Building): void {
+  const colony = world.colony;
+  const salvage = salvageOf(building);
+  ventHabitat(world, building);
+  drainShield(world, building);
+  colony.buildings = colony.buildings.filter(b => b.id !== building.id);
+  if (world.defence.controlled === building.id) world.defence.controlled = null;
+  for (const p of PRODUCTS) colony.products[p] += salvage[p] ?? 0;
+  colony.energy = Math.min(colony.energy, energyCapacity(colony));
+  notify(world, 'Building demolished. You got part of the materials back.');
 }
 export function applyFacilityAction(world: WorldState, building: Building, action: ColonyAction): void {
   if (!operational(building)) { notify(world, 'FACILITY WRECKED · U TO REPAIR');
@@ -152,8 +180,10 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   stepConstruction(world, dt);
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
-  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b)).reduce((sum, b) => sum + 8 * capacityFactor(b) * powerFraction(b), 0);
-  for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b)) b.gridPower = b.requestedPower = 8 * capacityFactor(b) * powerFraction(b);
+  // Panels follow the sun: full power in daylight, none at night.
+  const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * daylightAt(world.system, b.angle);
+  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b)).reduce((sum, b) => sum + panel(b), 0);
+  for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b)) b.gridPower = b.requestedPower = panel(b);
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
   stepHabitats(world, dt, true);
@@ -166,6 +196,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     if (!operational(building)) continue;
     if (!building.enabled) continue;
     if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
+    if (building.kind === 'observatory') { stepObservatory(world, building, dt); continue; }
     if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
     if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;
     const recipe = recipeFor(building); if (!recipe) continue;

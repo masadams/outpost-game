@@ -1,5 +1,6 @@
 import { visible, type RenderView } from './budget';
 import { facilityArt } from './facilityArt';
+import { facilityMotion } from './facilityMotion';
 import { colonyPlanet } from '../sim/localWorld';
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { operational } from '../sim/buildingHealth';
@@ -7,16 +8,17 @@ import Phaser from 'phaser';
 import { BLUEPRINTS, type BuildType } from '../sim/colonyConfig';
 import { placementError, previewAngle } from '../sim/colony';
 import { heading } from '../sim/math';
+import { daylightAt } from '../sim/sun';
 import type { WorldState } from '../sim/world';
 
-function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true): void {
+function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true, time=0, animate=false): void {
   const colony = world.colony;
   const target = colony.buildings.find(b => b.id === selected);
   if (target) { const n = heading(target.angle); g.lineStyle(1, 0xffc58c, .9); g.strokeCircle(n.x * (colonyPlanet(world).radius + 12), n.y * (colonyPlanet(world).radius + 12), 24); }
   for (const order of colony.command.queue) { const n = heading(order.angle); g.lineStyle(1, 0xffc58c, .5); g.strokeCircle(n.x * (colonyPlanet(world).radius + 6), n.y * (colonyPlanet(world).radius + 6), 8); }
-  const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled && operational(b) && (!isHabitat(b.kind) || !!b.habitat?.powered) }));
-  if (draft) entries.push({ kind: draft.kind, angle: draft.angle, ghost: true, active: draft.valid });
-  if (!draft && colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world) });
+  const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled && operational(b) && (!isHabitat(b.kind) || !!b.habitat?.powered), working: b.enabled && operational(b) && (b.kind === 'solar' || b.kind === 'battery' || b.status === 'running') }));
+  if (draft) entries.push({ kind: draft.kind, angle: draft.angle, ghost: true, active: draft.valid, working: false });
+  if (!draft && colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world), working: false });
   for (const entry of entries) {
     const blueprint = BLUEPRINTS[entry.kind], n = heading(entry.angle), tangent = { x: -n.y, y: n.x };
     const body=colonyPlanet(world);if(!visible(view,{x:body.position.x+n.x*body.radius,y:body.position.y+n.y*body.radius},isHabitat(entry.kind)?HABITATS[entry.kind].halfSpan+HABITATS[entry.kind].height:50))continue;
@@ -59,11 +61,15 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
       const c = p(-width + 3, 9), d = p(width - 3, 9); g.lineBetween(c.x, c.y, d.x, d.y);
     }
     if(detail)facilityArt(g,entry.kind,p,width,color,entry.active);
+    if(detail&&animate&&entry.working&&!entry.ghost)facilityMotion(g,entry.kind,p,width,color,time,Math.abs(entry.angle*37)%1);
     const lamp = p(0, 15); g.fillStyle(color, entry.active ? 1 : 0.25); g.fillCircle(lamp.x, lamp.y, 1.4);
+    // After dark a working building glows from its lamp.
+    const dark = 1 - daylightAt(world.system, entry.angle);
+    if (dark > 0.2 && entry.active && !entry.ghost) { g.fillStyle(color, 0.16 * dark); g.fillCircle(lamp.x, lamp.y, 6); g.fillStyle(0xffe6b0, 0.07 * dark); g.fillCircle(lamp.x, lamp.y, 11); }
   }
 }
 
-export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true): void {
+export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true, time=0, animate=false): void {
   const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y);
-  drawColonyLocal(g, world, selected, draft, view, detail); g.restore();
+  drawColonyLocal(g, world, selected, draft, view, detail, time, animate); g.restore();
 }

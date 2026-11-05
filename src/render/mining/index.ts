@@ -16,17 +16,19 @@ export interface MiningDrawOptions {
   time: number;
   /** False when paused or reduced motion is on. */
   animate: boolean;
+  /** Direction toward the sun in the world frame, when there is one. */
+  light?: { x: number; y: number };
 }
 
 /** Rocks, ore, the tractor field and the mining laser. */
 export function drawMining(g: Phaser.GameObjects.Graphics, world: WorldState, options: MiningDrawOptions): void {
-  const { zoom, view, detail, time, animate } = options;
+  const { zoom, view, detail, time, animate, light } = options;
   const px = 1 / zoom;
   const targeted = world.beam?.targetId ?? null;
 
   for (const rock of world.asteroids) {
     if (!visible(view, rock.position, rock.radius)) continue;
-    drawRock(g, rock, { zoom, time: animate ? time : 0, detail, targeted: rock.id === targeted });
+    drawRock(g, rock, { zoom, time: animate ? time : 0, detail, targeted: rock.id === targeted, light });
   }
 
   for (const ore of world.pickups) {

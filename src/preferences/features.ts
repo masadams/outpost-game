@@ -31,8 +31,8 @@ export type Feature =
   | 'starterBudget'
   | 'catalogue';
 
-/** Buildings a new player can place. Order matches number keys 1–5. */
-export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor'];
+/** Buildings a new player can place. The first five match number keys 1–5; the rest are mouse-only. */
+export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'observatory', 'laser'];
 
 export const FEATURE_STORAGE_KEY = 'outpost.features';
 
@@ -90,9 +90,6 @@ const ACTION_FEATURES: Partial<Record<string, Feature>> = {
   startEncounter: 'combat',
   cycleWeapon: 'combat',
   startWave: 'defence',
-  controlTurret: 'defence',
-  releaseTurret: 'defence',
-  toggleAuto: 'defence',
 };
 
 /** Whether an action from the keyboard or interface may reach the simulation. */
@@ -111,7 +108,7 @@ export function filterActions(actions: ColonyAction[], current: FeatureMode = fe
 }
 
 /** Key bindings for hidden systems are left out of the Settings table in the focus set. */
-const FOCUS_HIDDEN_BINDINGS: readonly string[] = ['SHIFT', 'N', 'G', 'O', 'Z', 'Y', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+const FOCUS_HIDDEN_BINDINGS: readonly string[] = ['SHIFT', 'N', 'O', 'Z', 'Y', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
 
 export function bindingVisible(slot: string, current: FeatureMode = featureMode()): boolean {
   return current === 'all' || !FOCUS_HIDDEN_BINDINGS.includes(slot);

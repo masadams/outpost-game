@@ -3,6 +3,8 @@ import type { JSX } from 'preact';
 import { Icon, type IconName } from './Icon';
 import type { ObjectiveCardView, RegionView } from './chromeView';
 import type { PickupLine } from './pickupFeed';
+import type { StormView } from './stormView';
+import type { DayView } from './dayView';
 
 export type ScreenPanel = 'cargo' | 'colony' | 'command' | 'navigation';
 export type ViewAction = 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
@@ -28,6 +30,8 @@ export interface ChromeState {
   sound: { status: SoundStatus; muted: boolean; audible: boolean; loops: number };
   camera: { mode: string; zoom: number; x: number; y: number; angle: number };
   pickups: PickupLine[];
+  storm: StormView | null;
+  day: DayView | null;
   trajectory: boolean;
   predictionPoints: number;
   keys: ChromeKeys;
@@ -135,6 +139,18 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           </span>
           <span class="objective-detail">{objective.detail}</span>
         </button>
+        {state.day && (
+          <span id="flight-daylight" data-phase={state.day.phase} title={state.day.detail}>
+            <i aria-hidden="true" />
+            {state.day.label} · {state.day.detail}
+          </span>
+        )}
+        {state.storm && (
+          <section class="storm-card" data-tone={state.storm.tone} role="status" aria-live="polite">
+            <span class="storm-title">{state.storm.title}</span>
+            <span class="storm-detail">{state.storm.detail}</span>
+          </section>
+        )}
         <span id="flight-region" role="status" aria-live="polite" data-region={state.region.key}>
           {state.region.label}
         </span>

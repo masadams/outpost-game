@@ -1,11 +1,15 @@
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import type { BuildingView } from './baseView';
+import { Demolish } from './Demolish';
 
 export interface NearbyHandlers {
   toggle: () => void;
   recipe: () => void;
   repair: () => void;
+  auto: () => void;
+  control: () => void;
+  demolish: (id: number) => void;
   details: (id: number) => void;
 }
 
@@ -46,6 +50,16 @@ export function NearbyCardView({ state, on }: { state: NearbyState; on: NearbyHa
             Next recipe <kbd aria-hidden="true">V</kbd>
           </button>
         )}
+        {b.turret && (
+          <button type="button" disabled={state.paused} aria-pressed={b.turret.auto} onClick={click(on.auto)}>
+            Auto defence: {b.turret.auto ? 'on' : 'off'} <kbd aria-hidden="true">G</kbd>
+          </button>
+        )}
+        {b.turret && (
+          <button type="button" disabled={state.paused} onClick={click(on.control)}>
+            Take control
+          </button>
+        )}
         {state.damaged && (
           <button type="button" disabled={state.paused} onClick={click(on.repair)}>
             Repair <kbd aria-hidden="true">U</kbd>
@@ -54,6 +68,14 @@ export function NearbyCardView({ state, on }: { state: NearbyState; on: NearbyHa
         <button type="button" onClick={click(() => on.details(b.id))}>
           Details
         </button>
+        <Demolish
+          key={b.id}
+          label={b.label}
+          salvage={b.salvage}
+          blocked={b.demolishBlocked}
+          disabled={state.paused}
+          onConfirm={() => on.demolish(b.id)}
+        />
       </div>
     </section>
   );

@@ -35,7 +35,7 @@ export class OperationsDock {
 
     this.root.id = 'operations-dock'; this.root.setAttribute('aria-label', 'Operations'); this.root.hidden = true;
     const header = this.header; header.className = 'dock-heading';
-    const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close [Esc]'; close.setAttribute('aria-label', 'Close operations panel'); close.onclick = () => this.close();
+    const close = document.createElement('button'); close.type = 'button'; close.append('Close ');{const hint = document.createElement('kbd'); hint.textContent = 'Esc'; hint.setAttribute('aria-hidden', 'true'); close.append(hint);} close.setAttribute('aria-label', 'Close operations panel'); close.onclick = () => this.close();
     this.sizeButton.type='button';this.sizeButton.onclick=()=>{if(this.inspection){this.inspection=false;this.expanded.add('command');this.render();return;}if(this.view){if(this.expanded.has(this.view))this.expanded.delete(this.view);else this.expanded.add(this.view);this.render();}};this.heading.className='dock-title';this.pausedBadge.className='window-paused';this.pausedBadge.textContent='Paused while open';this.pausedBadge.setAttribute('role','status');this.pausedBadge.hidden=true;
     header.append(this.heading,this.pausedBadge,this.sizeButton,close); this.root.append(header,this.shipTabs);
     this.cargo.className = 'mining'; this.cargo.setAttribute('aria-label', 'Cargo and mining telemetry');

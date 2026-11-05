@@ -281,3 +281,9 @@ Guidance is one pure function from world state to the next instruction (`coach`)
 - The R restart key is removed: it was too easy to hit and wipes progress. New Game lives in the menu only.
 - Queued buildings now show in a card whenever the build bar is closed, with a cancel button per site, Cancel all, and a Start building button once the astronaut is on foot. From the lander it says to step out (F). Stepping out waits until the astronaut is standing before sending them to work, instead of giving up if they are still in the air.
 - The engine sound is a low rumble (filtered noise under a soft sine) instead of a buzzing sawtooth.
+
+## Building life, menus, sun and day — 2026-11-05
+- **Buildings show life.** Finishing a building flashes rings and glints; each working building has its own movement (smoke, rotors, a sliding glint, a shuddering bit, an orbiting spark). The Observatory sends three slow rings when it first starts listening and pings the sky while it runs. All render-only, off on reduced motion.
+- **Menus.** Right-click a building for its menu; Demolish always asks, shows the refund and works from anywhere. The X key no longer demolishes. Key hints sit beside labels. Rules are in `docs/UI_CONVENTIONS.md`.
+- **Sun and day.** The sun moves round the sky once every 1000 s instead of the planet spinning, so flight and landing physics stay as they are; real rotation is a later decision. Solar output follows the sun at each building; batteries bridge the night. A new game starts in the morning with the first dusk about 6½ minutes in. The cycle is on by default and off with `?sun=off` or localStorage `outpost.sun=off`; the browser suite runs with it off. See `docs/tasks/sun-and-day.md`.
+- **Storm on the Map.** Rocks the Observatory has seen appear on the chart with their uncertainty, far ones pinned to the edge, plus the predicted landing zone.

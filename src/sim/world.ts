@@ -20,6 +20,8 @@ import { createCombat, type CombatState, type CombatAction } from './combatConfi
 import { applyCombatAction, isCombatAction, stepCombat } from './combat';
 import { serviceCombatAtPad } from './combatSupply';
 import { createDefence, type DefenceState } from './defenceConfig';
+import { createStorm, type StormState } from './stormConfig';
+import { stepStorm, isStormAction, applyStormAction } from './storm';
 import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, resolveDefenceHits } from './defence';
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
@@ -50,7 +52,7 @@ export interface WorldState {
   beam: Beam | null; tractorActive: boolean; nextId: number; unloaded: number;
   playerMode: 'ship' | 'astronaut'; astronaut: Astronaut; depotOpen: boolean;
   buttons: { board: boolean; interact: boolean }; notice: { message: string; time: number };
-  surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; combat: CombatState;
+  surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; storm: StormState; combat: CombatState;
 }
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
@@ -68,7 +70,7 @@ export function createWorld(): WorldState {
   for (const p of Object.keys(moon.colony.products) as (keyof typeof moon.colony.products)[]) moon.colony.products[p] = 0;
   moon.colony.nextId = 1001;
   const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
-    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), combat: createCombat() };
+    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), storm: createStorm(), combat: createCombat() };
   world.moon.colony.research = world.colony.research;
   seedNeighborhood(world);
   const velocity = planetAt('home', world.system).velocity;
@@ -84,6 +86,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(action.type==='autopilot'){applyAutopilotAction(world,action);continue;}
     if(action.type==='upgradeBuilding'){applyBuildingUpgrade(owner,action);continue;}
     if(action.type==='crewOrder'){applyCrewOrder(owner,action);continue;}
+    if(isStormAction(action)){applyStormAction(world,action);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(local, action);
@@ -129,6 +132,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   }
   let researchStaffed = false;
   for (const site of allColonies(world)) researchStaffed = stepColony(site, dt, researchStaffed);
+  stepStorm(world);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });
   resolveDefenceHits(world);
