@@ -54,8 +54,8 @@ New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `sr
 | 4.1 Flight | Instrument cluster (reserve bars, attitude dial with nose and motion, readouts, touchdown limits), objective card, screen buttons (Ship, Build, Base, Map, Menu), icon tray, view tools by the radar, notices column, Base/Map pause while flying | Done |
 | 4.2 Build | Build bar (cards, costs, what is missing, materials and power, queue with cancel), ghost placement with plain reasons at the cursor, build from the landed lander or on foot, astronaut sent automatically, Esc leaves build mode | Done |
 | 4.3 Base | Base window: Overview (materials, power, what needs attention), Buildings (list + inspector with on/off and recipe, plain reasons), Ship. Nearby card on foot replaces the old facility panel. Legacy console only with `?features=all` | Done |
-| 4.4 Map | Full-screen Map window with inspector; replaces the old navigation panel and guidance line | Next |
-| 4.5 Cleanup | Delete the old dock, panels and remaining legacy CSS; Menu, Help and Settings restyled | Planned |
+| 4.4 Map | Map window: clickable chart (Selene, ore clusters by colour, sites, pad, you, bearing line), places list, inspector with distance and speeds, unknowns until surveyed, site action with a plain reason, next-step note; zoom / fit / focus | Done |
+| 4.5 Cleanup | Ship panel (cargo, recovery) in the new style; Menu, Help and Settings restyled; plain-language notices; delete remaining dead legacy CSS | Next |
 
 ## Known UX defects to fix in the rebuild
 - ~~Full-screen Map/Manage windows don't pause~~ Fixed in 4.1: Base and Map pause while flying.

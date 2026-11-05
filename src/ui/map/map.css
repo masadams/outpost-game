@@ -1,0 +1,69 @@
+/* Map window (mockup 1, "Map"). Lives inside the full-screen dock window. */
+#hud #navigation-panel { font-family: var(--ui-body); color: var(--ui-text); --scale: var(--text-scale, 1); padding: 0; height: 100%; }
+#hud .map-window { display: grid; grid-template-columns: minmax(150px, 200px) minmax(0, 1fr) minmax(250px, 340px); min-height: 100%; }
+
+#hud .map-places { display: grid; align-content: start; gap: 6px; padding: 16px 12px; border-right: 1px solid var(--ui-line); }
+#hud .map-places button {
+  display: grid; gap: 3px; text-align: left; padding: 10px 12px; border-radius: var(--ui-radius); border: 1px solid transparent;
+  background: transparent; color: var(--ui-text); font: 600 calc(14px * var(--scale)) / 1.15 var(--ui-display); letter-spacing: .03em;
+}
+#hud .map-places button small { font: 400 calc(12px * var(--scale)) / 1 var(--ui-body); color: var(--ui-muted); letter-spacing: 0; }
+#hud .map-places button[aria-pressed=true] { background: var(--ui-raised); border-color: var(--ui-mint); }
+
+#hud .map-chart-wrap { position: relative; min-width: 0; padding: 12px; display: grid; }
+#hud .map-chart { display: block; width: 100%; height: auto; max-height: calc(100dvh - var(--chrome-right-bottom) - 120px); border-radius: var(--ui-radius); cursor: crosshair; }
+#hud .map-bg { fill: var(--ui-space); }
+#hud .map-grid-line { fill: none; stroke: #22405a55; stroke-width: 1; }
+#hud .map-atmosphere { fill: #86c7ff14; stroke: #86c7ff55; stroke-dasharray: 4 6; }
+#hud .map-planet { fill: #2f4450; stroke: #9fc4d0; stroke-width: 2; }
+#hud .map-body[data-body=moon] .map-planet { fill: #3b354a; }
+#hud .map-label { fill: var(--ui-text); font: 600 15px var(--ui-display); letter-spacing: .08em; text-transform: uppercase; }
+#hud .map-you { fill: var(--ui-mint); }
+#hud .map-rock { opacity: .9; }
+#hud .map-site { fill: none; stroke: var(--ui-mint); stroke-width: 2; }
+#hud .map-site[data-intact=false] { stroke: var(--ui-red); }
+#hud .map-pad { fill: var(--ui-mint); }
+#hud .map-ship { fill: var(--ui-amber); stroke: var(--ui-space); stroke-width: 2; }
+#hud .map-bearing { stroke: var(--ui-mint); stroke-width: 1.5; stroke-dasharray: 4 6; }
+#hud .map-bearing[data-blocked=true] { stroke: var(--ui-amber); }
+#hud .map-select path { fill: none; stroke: var(--ui-mint); stroke-width: 2.5; }
+
+#hud .map-tools { position: absolute; left: 24px; bottom: 24px; display: flex; gap: 6px; }
+#hud .map-tools button {
+  padding: 8px 11px; border-radius: var(--ui-radius); background: var(--ui-panel); border: 1px solid var(--ui-line); color: var(--ui-text);
+  font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .06em; text-transform: uppercase;
+}
+#hud .map-tools button[aria-pressed=true] { border-color: var(--ui-mint); color: var(--ui-mint); }
+
+#hud .map-inspector { display: grid; align-content: start; gap: 12px; padding: 18px 20px; border-left: 1px solid var(--ui-line); min-width: 0; }
+#hud .map-inspector h3 { margin: 0; font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ui-muted); }
+#hud .map-title { display: grid; gap: 6px; }
+#hud .map-title strong { font: 700 calc(22px * var(--scale)) / 1.1 var(--ui-display); letter-spacing: .03em; }
+#hud .map-state { font: 600 calc(12px * var(--scale)) / 1 var(--ui-display); letter-spacing: .12em; text-transform: uppercase; color: var(--ui-green); }
+#hud .map-state[data-state="Not surveyed"], #hud .map-state[data-state=Detected] { color: var(--ui-muted); }
+#hud .map-body-text, #hud .map-note, #hud .map-action p { margin: 0; font: 400 calc(14px * var(--scale)) / 1.45 var(--ui-body); color: var(--ui-muted); }
+#hud .map-body-text { color: var(--ui-text); }
+#hud .map-facts { display: grid; gap: 8px; margin: 0; }
+#hud .map-facts div { display: flex; justify-content: space-between; gap: 12px; font: 400 calc(14px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .map-facts dt { color: var(--ui-muted); }
+#hud .map-facts dd { margin: 0; font-family: var(--ui-mono); text-align: right; }
+#hud .map-warning { margin: 0; color: var(--ui-amber); font: 500 calc(14px * var(--scale)) / 1.4 var(--ui-body); }
+#hud .map-action { display: grid; gap: 8px; }
+#hud .map-action button {
+  justify-self: start; padding: 11px 14px; border-radius: var(--ui-radius); background: var(--ui-mint); color: var(--ui-space); border: 1px solid var(--ui-mint);
+  font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+#hud .map-action button:disabled { background: var(--ui-raised); color: var(--ui-muted); border-color: var(--ui-line); }
+#hud .map-note { border-top: 1px solid var(--ui-line); padding-top: 12px; }
+
+/* Compact map panel (or narrow screens): stack the columns. */
+#hud #operations-dock[data-expanded=false] .map-window,
+#hud #operations-dock[data-inspection=true] .map-window { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 960px) {
+  #hud .map-window { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); }
+  #hud .map-places { grid-column: 1 / -1; grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--ui-line); padding: 8px 12px; }
+}
+@media (max-width: 680px) {
+  #hud .map-window { grid-template-columns: minmax(0, 1fr); }
+  #hud .map-inspector { border-left: 0; border-top: 1px solid var(--ui-line); }
+}

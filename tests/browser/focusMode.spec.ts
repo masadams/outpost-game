@@ -35,8 +35,8 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: 'Map', exact: true }).click();
-  await expect(dock.getByRole('button', { name: /Return to home pad/ })).toBeVisible();
-  await expect(dock.getByRole('button', { name: /Nacre moon/ })).toHaveCount(0);
+  await expect(dock.getByRole('button', { name: 'Home pad', exact: true })).toBeVisible();
+  await expect(dock.getByRole('button', { name: /Nacre/ })).toHaveCount(0);
   await page.keyboard.press('Escape');
 
   await page.keyboard.press('h');

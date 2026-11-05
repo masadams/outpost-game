@@ -141,14 +141,6 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
 #command-console th, #command-console td { text-align: right; padding: 3px; border-bottom: 1px solid var(--edge); }
 #command-console th:first-child { text-align: left; overflow-wrap: anywhere; }
 
-#navigation-panel { font-size: 10px; line-height: 1.6; }
-#navigation-panel svg { display: block; width: 100%; max-height: 260px; border: 1px solid var(--edge); background: #06101a; }
-#navigation-panel h3 { color: var(--mint); font-size: 12px; }
-#navigation-panel button { font-size: 10px; padding: 7px; margin-block: 3px; }
-#navigation-panel article { border-top: 1px solid var(--edge); padding-block: 8px; }
-.nav-sites { display: grid; margin-block: 10px; }
-.nav-objective { color: var(--mint); border-left: 2px solid; padding-left: 8px; }
-#navigation-panel summary { cursor: pointer; color: var(--mint); padding-block: 7px; }
 
 .research-panel article, .equipment-panel article { border: 1px solid var(--edge); padding: 8px; margin-block: 8px; }
 .research-panel progress { width: 100%; accent-color: var(--mint); }
@@ -169,10 +161,10 @@ label, small { color: var(--muted); }
 .dock-heading { padding: 10px 12px; font-size: 12px; letter-spacing: 1px; }
 #operations-dock > section { padding: 14px; }
 #operations-dock label { font-size: inherit; letter-spacing: .7px; }
-#operations-dock section button, #command-console button, #navigation-panel button { font-size: inherit; padding: 8px; }
+#operations-dock section button, #command-console button { font-size: inherit; padding: 8px; }
 #operations-dock section small, #command-console table { font-size: max(11px,calc(11px * var(--text-scale))); line-height: 1.5; }
-#command-console, #navigation-panel { font-size: inherit; line-height: 1.6; }
-#command-console h3, #navigation-panel h3, .manifest h3 { font-size: 1.05em; color: var(--mint); font-weight: normal; }
+#command-console { font-size: inherit; line-height: 1.6; }
+#command-console h3, .manifest h3 { font-size: 1.05em; color: var(--mint); font-weight: normal; }
 #command-console table { table-layout: fixed; }
 #command-console td, #command-console th { overflow-wrap: anywhere; }
 .product-grid { gap: 8px; }.product-grid span { font-size: inherit; }
@@ -216,7 +208,6 @@ label, small { color: var(--muted); }
 
 #operations-dock { max-height: calc(100vh - var(--telemetry-height) - 206px); }
 
-.chart-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 
 /* Objectives share the operations dock; safety notices never compete with an expanded list. */
 #objective-panel article { border-top:1px solid var(--edge); padding-block:12px; }

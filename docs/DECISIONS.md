@@ -2,6 +2,12 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Map slice decisions — 2026-11-05
+
+- **Map window rewritten** around the mockup: chart you can click, a places list, and an inspector. Ore clusters you have not surveyed say "Unknown until surveyed" instead of showing numbers.
+- **Site actions** (salvage, tender fuel, survey) stay as a button in the inspector, but because Map pauses a flight, the usual way to act is to close it and press E in range. The inspector says what is missing in plain words ("Get within 120 m of it.").
+- The one-line target guidance stays in the HUD while flying.
+
 ## Base slice decisions — 2026-11-05
 
 - **New Base window** for the focus set: Overview, Buildings, Ship. Building problems are explained in one plain sentence ("Needs iron ore. Mine some and unload it at the pad."), and Overview lists them under "Needs attention".

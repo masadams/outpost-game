@@ -9,10 +9,11 @@ test('charts a finite neighborhood, selects targets while paused and keeps fligh
   await page.goto('/'); const hud = page.locator('#hud'), panel = page.locator('#navigation-panel'), guidance = page.locator('#navigation-guidance');
   await expect(hud).toHaveAttribute('data-state', 'landed'); await expect(hud).toHaveAttribute('data-asteroids', '27'); await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Map', exact: true }).click(); await expect(panel).toBeVisible();
-  await expect(panel.getByRole('img')).toBeVisible(); await expect(panel).toContainText('Frost arc'); await expect(panel).toContainText('Unsurveyed');
+  await expect(panel.getByRole('img')).toBeVisible(); await expect(panel).toContainText('Frost arc');
+  await page.getByRole('button', { name: 'Frost arc', exact: true }).click(); await expect(panel).toContainText('Not surveyed'); await expect(panel).toContainText('Unknown until surveyed');
   const fuel = await hud.getAttribute('data-fuel');
   await page.getByRole('button', { name: 'Frost survey buoy', exact: true }).focus(); await page.keyboard.press('Space');
-  await expect(guidance).toHaveAttribute('data-target', 'survey'); await expect(panel).toContainText('relative'); await expect(hud).toHaveAttribute('data-state', 'paused');
+  await expect(guidance).toHaveAttribute('data-target', 'survey'); await expect(panel).toContainText('Relative speed'); await expect(hud).toHaveAttribute('data-state', 'paused');
   expect(await hud.getAttribute('data-fuel')).toBe(fuel);
   for (const [width, height] of [[900, 600], [1280, 800], [1920, 1080]]) {
     await page.setViewportSize({ width, height });
@@ -25,7 +26,7 @@ test('charts a finite neighborhood, selects targets while paused and keeps fligh
   await page.setViewportSize({ width: 1280, height: 800 }); await page.locator('#operations-dock').evaluate(e => e.scrollTop = 0); await page.screenshot({ path: 'docs/screenshots/neighborhood-chart.png' });
   await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!)); expect(saved.version).toBe(19); expect(saved.world.exploration.selected).toBe('survey');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(guidance).toHaveAttribute('data-target', 'survey');
-  await page.getByRole('button', { name: 'Map', exact: true }).click(); await page.getByRole('button', { name: 'Return to home pad', exact: true }).click(); await expect(guidance).toHaveAttribute('data-target', 'home'); expect(errors).toEqual([]);
+  await page.getByRole('button', { name: 'Map', exact: true }).click(); await page.getByRole('button', { name: 'Home pad', exact: true }).click(); await expect(guidance).toHaveAttribute('data-target', 'home'); expect(errors).toEqual([]);
 });
 
 test('matches a physical derelict, recovers finite salvage and restores depletion without duplication', async ({ page }) => {

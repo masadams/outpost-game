@@ -58,7 +58,7 @@ test('flies to the moving moon, builds supplied mining, saves both colonies, car
   await cargo(page); await freight(page, 'Load', 'alloy', 3); await freight(page, 'Load', 'wire', 1); await freight(page, 'Load', 'components', 1);
   expect((await telemetry(page)).cargo).toBe(25); await tap(page, 'Escape');
   await page.getByRole('button', { name: 'Map', exact: true }).click({ force: true }); await advance(page, 100);
-  await page.getByRole('button', { name: 'Nacre moon · land and work', exact: true }).click({ force: true }); await advance(page, 100); await expect(page.locator('#navigation-guidance')).toHaveAttribute('data-target', 'moon'); await tap(page, 'Escape');
+  await page.getByRole('button', { name: 'Nacre moon', exact: true }).click({ force: true }); await advance(page, 100); await expect(page.locator('#navigation-guidance')).toHaveAttribute('data-target', 'moon'); await tap(page, 'Escape');
   // The clock advances real fixed simulation/render steps; the test only reads HUD telemetry and presses normal keys.
   await page.keyboard.down('Space'); await page.keyboard.down('c'); await fly(page, 'home', 1500); await page.keyboard.up('Space'); await page.keyboard.up('c');
   await fly(page, 'moon', 150); await fly(page, 'moon', 7, 120); await expect(hud).toHaveAttribute('data-body', 'moon'); await expect(page.locator('#flight-region')).toHaveText('AIRLESS · VACUUM');
