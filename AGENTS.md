@@ -37,7 +37,7 @@ TypeScript, Vite, Phaser 3 for world rendering/input, custom fixed-timestep simu
 
 ## UI and UX rules
 - It is a game, not a dashboard. Show the minimum the player needs for what they are doing now; reveal more on demand or when it becomes relevant.
-- **Full-screen windows (Base management, Map, menus) pause the simulation.** Small in-flight panels and the HUD stay live. The player must never crash or lose something behind a window they cannot see past.
+- **Full-screen windows (Base management, Map) pause the simulation while the ship is flying.** When landed or on foot they stay live, so production keeps running. Menus always pause. Small in-flight panels and the HUD stay live. The player must never crash or lose something behind a window they cannot see past.
 - Prefer icons + short labels, large readable type, and world-space feedback (ghost placement, markers) over walls of text.
 - Every disabled action says *why* in one short line.
 - Keyboard shortcuts are hints, not a requirement; the mouse path must also work.

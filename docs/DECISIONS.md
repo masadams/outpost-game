@@ -2,6 +2,15 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Mockup 1 review — 2026-11-05
+
+The user reviewed [mockup 1](mockups/ui-rebuild.html): colors and direction approved, fonts acceptable. It reads clear but a little simple; add detail and refinement during the real build without losing clarity.
+
+- **Attitude dial stays** in the flight cluster.
+- **Building works on foot or from the landed ship.**
+- **Pause rule refined:** Base and Map pause only while the ship is flying. When landed or on foot they stay live. Menus always pause. This replaces decision 1 below.
+- **Map** stays a full window (as mocked); a large overlay is also acceptable if it proves better in play.
+
 ## UX rebuild and focus reset — 2026-11-04
 
 After a full review of the alpha, the user approved four decisions:
