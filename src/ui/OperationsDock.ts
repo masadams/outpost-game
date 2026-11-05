@@ -47,7 +47,8 @@ export class OperationsDock {
   }
   update(context: HudContext, playerMode: string): void {
     if (context.key !== this.contextKey || playerMode !== this.playerMode) {
-      const preserve=this.manual&&playerMode===this.playerMode&&!['recovery','turret'].includes(context.key);
+      const leftBuild=this.contextKey==='construction'&&context.key==='surface';
+      const preserve=this.manual&&playerMode===this.playerMode&&!leftBuild&&!['recovery','turret'].includes(context.key);
       this.contextKey = context.key; this.playerMode = playerMode;
       if (!preserve) { this.view = context.view; this.manual = false; }
       this.render();

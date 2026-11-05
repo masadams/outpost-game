@@ -100,3 +100,10 @@
   font: 500 calc(14px * var(--text-scale, 1)) / 1.3 var(--ui-body); white-space: normal; backdrop-filter: blur(4px);
 }
 #hud .cursor-tip[data-ok=false] { border-color: var(--ui-red); color: var(--ui-red); }
+
+/* Short screens: keep the bar low so it stays out of the flight corridor. */
+@media (max-height: 720px) {
+  #hud .build-bar { gap: 7px; padding: 9px 12px; }
+  #hud .build-card { padding: 8px 10px; gap: 5px; }
+  #hud .build-card-purpose { display: none; }
+}
