@@ -1,29 +1,169 @@
 import type Phaser from 'phaser';
 import type { WorldState } from '../sim/world';
 import type { Vec } from '../sim/math';
+import { RESOURCES, RESOURCE_INFO, type Resource } from '../sim/resources';
 import { visible, type RenderView } from './budget';
-interface Burst { position: Vec; life:number; color:number }
-/** Render-only bounded bursts. Never saved, never collidable, never change simulation. */
+import { seeded } from './mining/random';
+
+/** An expanding ring with a few dots: a flash. */
+interface Burst { position: Vec; life: number; color: number; size: number }
+/** A piece of debris or a glint, flying free. */
+interface Chunk { x: number; y: number; vx: number; vy: number; turn: number; spin: number; size: number; life: number; maxLife: number; color: number; glint: boolean }
+interface RockRecord { position: Vec; velocity: Vec; radius: number; stage: number; resource: Resource }
+
+const BURST_LIFE = 0.4;
+const CHUNKS_PER_EVENT = 8;
+
+/** Render-only bursts and debris. Never saved, never collidable, never change simulation. */
 export class VisualEffects {
- private previous=new Map<number,Vec>();
- private hull=100;
- private bursts:Burst[]=[];
- reset(w:WorldState):void{this.previous=new Map(w.asteroids.map(a=>[a.id,{...a.position}]));this.hull=w.ship.hull;this.bursts=[];}
- update(w:WorldState,dt:number,paused:boolean,limit:number,view:RenderView):void{
-  this.bursts=limit===0?[]:this.bursts.slice(-limit);
-  if(paused)return;
-  this.bursts=this.bursts.map(b=>({...b,life:b.life-Math.max(0,dt)})).filter(b=>b.life>0).slice(-limit);
-  if(limit===0)this.bursts=[];
-  const ids=new Set(w.asteroids.map(a=>a.id));
-  const add=(position:Vec,color:number)=>{if(limit>0&&visible(view,position,24)){this.bursts.push({position:{...position},life:.4,color});this.bursts=this.bursts.slice(-limit);}};
-  for(const [id,p]of this.previous)if(!ids.has(id))add(p,0xffca8d);
-  if(w.ship.hull<this.hull)add(w.ship.position,0xff987e);
-  this.previous=new Map(w.asteroids.map(a=>[a.id,{...a.position}]));this.hull=w.ship.hull;
- }
- get count():number{return this.bursts.length;}
- draw(g:Phaser.GameObjects.Graphics,zoom:number):void{
-  for(const b of this.bursts){const age=.4-b.life;g.lineStyle(1/zoom,b.color,b.life*2);g.strokeCircle(b.position.x,b.position.y,(2+age*20)/zoom);
-   g.fillStyle(b.color,b.life*2);for(let i=0;i<6;i++){const a=i*Math.PI/3,r=age*35/zoom;g.fillCircle(b.position.x+Math.cos(a)*r,b.position.y+Math.sin(a)*r,.8/zoom);}
+  private rocks = new Map<number, RockRecord>();
+  private cargo = new Map<Resource, number>();
+  private hull = 100;
+  private bursts: Burst[] = [];
+  private chunks: Chunk[] = [];
+
+  reset(w: WorldState): void {
+    this.rocks = this.snapshotRocks(w);
+    this.cargo = this.snapshotCargo(w);
+    this.hull = w.ship.hull;
+    this.bursts = [];
+    this.chunks = [];
   }
- }
+
+  private snapshotRocks(w: WorldState): Map<number, RockRecord> {
+    return new Map(w.asteroids.map(a => [a.id, { position: { ...a.position }, velocity: { ...a.velocity }, radius: a.radius, stage: a.stage, resource: a.resource }]));
+  }
+
+  private snapshotCargo(w: WorldState): Map<Resource, number> {
+    return new Map(RESOURCES.map(r => [r, w.ship.cargo[r]]));
+  }
+
+  update(w: WorldState, dt: number, paused: boolean, limit: number, view: RenderView): void {
+    this.bursts = limit === 0 ? [] : this.bursts.slice(-limit);
+    if (limit === 0) this.chunks = [];
+    if (paused) return;
+    const step = Math.max(0, dt);
+    this.bursts = this.bursts.map(b => ({ ...b, life: b.life - step })).filter(b => b.life > 0).slice(-limit);
+    this.advanceChunks(step);
+    if (limit === 0) {
+      this.bursts = [];
+      this.chunks = [];
+    }
+
+    const burst = (position: Vec, color: number, size = 1): void => {
+      if (limit > 0 && visible(view, position, 24)) {
+        this.bursts.push({ position: { ...position }, life: BURST_LIFE, color, size });
+        this.bursts = this.bursts.slice(-limit);
+      }
+    };
+
+    const ids = new Set(w.asteroids.map(a => a.id));
+    for (const [id, rock] of this.rocks) {
+      if (ids.has(id)) continue;
+      burst(rock.position, 0xffca8d, rock.stage === 0 ? 1.6 : 1);
+      if (limit > 0 && visible(view, rock.position, rock.radius * 2)) this.breakUp(id, rock, limit * 8);
+    }
+    if (w.ship.hull < this.hull) burst(w.ship.position, 0xff987e);
+
+    // A flash at the ship for each kind of ore taken aboard.
+    for (const r of RESOURCES) {
+      if (w.ship.cargo[r] > (this.cargo.get(r) ?? 0) + 1e-6) {
+        burst(w.ship.position, RESOURCE_INFO[r].color, 0.8);
+        this.glints(w.ship.position, w.ship.velocity, RESOURCE_INFO[r].color, limit * 8);
+      }
+    }
+
+    this.rocks = this.snapshotRocks(w);
+    this.cargo = this.snapshotCargo(w);
+    this.hull = w.ship.hull;
+  }
+
+  /** Debris thrown out of a rock that has broken. The first break throws more and bigger pieces than the last. */
+  private breakUp(id: number, rock: RockRecord, cap: number): void {
+    const rand = seeded(id * 31 + rock.stage);
+    const colour = RESOURCE_INFO[rock.resource].color;
+    const pieces = rock.stage === 0 ? CHUNKS_PER_EVENT : CHUNKS_PER_EVENT - 3;
+    for (let i = 0; i < pieces; i++) {
+      const angle = (i / pieces) * Math.PI * 2 + rand() * 0.8;
+      const speed = (6 + rand() * 14) * (rock.stage === 0 ? 1 : 1.3);
+      const glint = i % 3 === 0;
+      this.chunks.push({
+        x: rock.position.x + Math.cos(angle) * rock.radius * 0.4,
+        y: rock.position.y + Math.sin(angle) * rock.radius * 0.4,
+        vx: rock.velocity.x + Math.cos(angle) * speed,
+        vy: rock.velocity.y + Math.sin(angle) * speed,
+        turn: rand() * Math.PI * 2,
+        spin: (rand() - 0.5) * 9,
+        size: Math.max(0.8, rock.radius * (0.1 + rand() * 0.14)),
+        life: 0.8 + rand() * 0.7,
+        maxLife: 1.5,
+        color: glint ? colour : 0x4d6477,
+        glint,
+      });
+    }
+    this.trim(cap);
+  }
+
+  /** A few bright specks thrown from where ore is collected. */
+  private glints(at: Vec, velocity: Vec, color: number, cap: number): void {
+    const rand = seeded(Math.floor(at.x * 7 + at.y * 13));
+    for (let i = 0; i < 3; i++) {
+      const angle = rand() * Math.PI * 2;
+      this.chunks.push({
+        x: at.x, y: at.y, vx: velocity.x + Math.cos(angle) * 14, vy: velocity.y + Math.sin(angle) * 14,
+        turn: 0, spin: 0, size: 0.7, life: 0.35, maxLife: 0.35, color, glint: true,
+      });
+    }
+    this.trim(cap);
+  }
+
+  private trim(cap: number): void {
+    if (this.chunks.length > cap) this.chunks = this.chunks.slice(-cap);
+  }
+
+  private advanceChunks(dt: number): void {
+    for (const c of this.chunks) {
+      c.x += c.vx * dt;
+      c.y += c.vy * dt;
+      c.turn += c.spin * dt;
+      c.life -= dt;
+    }
+    this.chunks = this.chunks.filter(c => c.life > 0);
+  }
+
+  /** Flashes alive. Debris is limited separately and does not count here. */
+  get count(): number { return this.bursts.length; }
+
+  /** Pieces of debris alive. */
+  get debris(): number { return this.chunks.length; }
+
+  draw(g: Phaser.GameObjects.Graphics, zoom: number): void {
+    const px = 1 / zoom;
+    for (const b of this.bursts) {
+      const age = BURST_LIFE - b.life;
+      const alpha = Math.min(1, b.life * 2.2);
+      g.lineStyle(1.2 * px, b.color, alpha);
+      g.strokeCircle(b.position.x, b.position.y, (3 + age * 34 * b.size) * px);
+      g.fillStyle(b.color, alpha * 0.18);
+      g.fillCircle(b.position.x, b.position.y, (2 + age * 26 * b.size) * px);
+    }
+    for (const c of this.chunks) {
+      const fade = Math.min(1, c.life / (c.maxLife * 0.4));
+      if (c.glint) {
+        g.fillStyle(c.color, fade);
+        g.fillCircle(c.x, c.y, Math.max(c.size, 1.2 * px));
+        g.fillStyle(0xffffff, fade * 0.8);
+        g.fillCircle(c.x, c.y, Math.max(c.size * 0.4, 0.5 * px));
+      } else {
+        const a = c.turn;
+        const s = c.size;
+        g.fillStyle(c.color, fade);
+        g.fillTriangle(
+          c.x + Math.cos(a) * s * 1.3, c.y + Math.sin(a) * s * 1.3,
+          c.x + Math.cos(a + 2.3) * s, c.y + Math.sin(a + 2.3) * s,
+          c.x + Math.cos(a + 4.1) * s * 0.8, c.y + Math.sin(a + 4.1) * s * 0.8,
+        );
+      }
+    }
+  }
 }

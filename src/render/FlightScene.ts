@@ -35,8 +35,10 @@ import { notify } from '../sim/messages';
 import { inspectCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
 import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
+import { tractorStats } from '../sim/shipStats';
 import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
 import { objectiveCard, regionView } from '../ui/flight/chromeView';
+import { PickupFeed } from '../ui/flight/pickupFeed';
 import { FlightTools } from '../ui/FlightTools';
 import { predictCoast, type Trajectory } from '../sim/trajectory';
 import { createAtmosphere } from './atmosphere';
@@ -73,6 +75,7 @@ export class FlightScene extends Phaser.Scene {
   private colonyActions: ColonyAction[] = [];
   private audio!: GameAudio;
   private chrome!: FlightChrome;
+  private pickupFeed = new PickupFeed();
   private soundEnabling = false;
   private help!: Help;
   private pausedBeforeHelp = false;
@@ -114,7 +117,7 @@ export class FlightScene extends Phaser.Scene {
     document.querySelector('#hud')!.append(this.chrome.host);
     this.flightTools = new FlightTools();
     this.loadCheckpoint(false);
-    this.audio.reset(this.simulation);this.effects.reset(this.simulation);
+    this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.pickupFeed.reset(this.simulation);
     this.follow.viewportHeight = this.scale.height;
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
     this.stars = this.add.graphics();
@@ -166,7 +169,7 @@ export class FlightScene extends Phaser.Scene {
     this.setPaused(true);this.menu.open('title');
   }
   private newGame():void{
-    const invalid=!this.hasRun&&this.simulation.notice.message.includes('CHECKPOINT INVALID');this.simulation=createWorld();if(invalid)notify(this.simulation,'CHECKPOINT INVALID · NEW RUNTIME STARTED · OLD SAVE KEPT');this.hasRun=true;this.menu.close();this.hud.closeDock();this.hud.clearBuildPointer();this.setPaused(false);this.follow.reset(this.ship,this.simulation.system);this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.prediction=null;this.threats=[];
+    const invalid=!this.hasRun&&this.simulation.notice.message.includes('CHECKPOINT INVALID');this.simulation=createWorld();if(invalid)notify(this.simulation,'CHECKPOINT INVALID · NEW RUNTIME STARTED · OLD SAVE KEPT');this.hasRun=true;this.menu.close();this.hud.closeDock();this.hud.clearBuildPointer();this.setPaused(false);this.follow.reset(this.ship,this.simulation.system);this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.pickupFeed.reset(this.simulation);this.prediction=null;this.threats=[];
   }
   private menuAction(action:MenuAction):void{
     if(action==='new'){this.newGame();return;}
@@ -187,6 +190,23 @@ export class FlightScene extends Phaser.Scene {
     else if (action === 'autoZoom') this.follow.autoZoom();
     else this.follow.zoomBy(action === 'zoomIn' ? 1.25 : 0.8);
   }
+  /** The rock under the laser and the ore the tractor is pulling in: what the pilot is working on. */
+  private workPoints(): Array<{ x: number; y: number }> {
+    const world = this.simulation;
+    if (world.playerMode !== 'ship' || world.ship.state !== 'flying') return [];
+    const points: Array<{ x: number; y: number }> = [];
+    if (world.beam && world.beam.targetId !== null) points.push(world.beam.end);
+    if (world.tractorActive) {
+      const range = tractorStats(world.ship).range;
+      const near = world.pickups
+        .map(p => ({ p, d: Math.hypot(p.position.x - world.ship.position.x, p.position.y - world.ship.position.y) }))
+        .filter(v => v.d <= range)
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 3);
+      for (const v of near) points.push(v.p.position);
+    }
+    return points;
+  }
   private updateChrome(): void {
     const world = activeWorld(this.simulation);
     const key = (slot: BindingSlot) => keyLabel(this.preferences.bindings[slot] ?? slot);
@@ -202,6 +222,7 @@ export class FlightScene extends Phaser.Scene {
         loops: this.audio.loopCount,
       },
       camera: { mode: this.follow.mode, zoom: this.follow.zoom, x: this.follow.x, y: this.follow.y, angle: this.follow.angle },
+      pickups: this.pickupFeed.lines(),
       trajectory: this.flightTools.trajectory,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : this.prediction?.points.length ?? 0,
       keys: {
@@ -275,6 +296,8 @@ export class FlightScene extends Phaser.Scene {
     }
     const onFoot = this.simulation.playerMode === 'astronaut';
     this.follow.viewportHeight = this.scale.height;
+    this.follow.viewportWidth = this.scale.width;
+    this.follow.work = this.workPoints();
     this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot, this.simulation.system);
     this.hud.updateBuildingLabels(this.simulation,{...this.follow,width:this.scale.width,height:this.scale.height});
     if(this.pointerInside){this.hud.setBuildPointer(activeWorld(this.simulation),screenToWorld(this.input.activePointer,{...this.follow,width:this.scale.width,height:this.scale.height}),this.follow.zoom);this.hud.showBuildTip(this.input.activePointer.x,this.input.activePointer.y);}
@@ -290,6 +313,7 @@ export class FlightScene extends Phaser.Scene {
     this.flightTools.update(this.ship, this.prediction, this.simulation.towing.targetId !== null, this.simulation.system);
     this.audio.update(activeWorld(this.simulation), this.halted, delta / 1000);
     this.updateChrome();
+    this.pickupFeed.update(this.simulation,this.halted?0:Math.min(delta/1000,.1));
     this.effects.update(this.simulation,Math.min(delta/1000,.1),this.halted,this.preferences.reducedMotion?0:this.preferences.quality==='low'?4:12,{centre:{x:this.follow.x,y:this.follow.y},radius:Math.hypot(this.scale.width,this.scale.height)/2/this.follow.zoom+128/this.follow.zoom});
     const drawKey=[this.scale.width,this.scale.height,this.follow.x.toFixed(3),this.follow.y.toFixed(3),this.follow.angle.toFixed(4),this.follow.zoom.toFixed(4),this.preferences.quality,this.preferences.reducedMotion,this.flightTools.trajectory,this.hud.selectedBuildingId,JSON.stringify(this.hud.buildPreview),this.hud.shieldAccents,this.simulation.system.time,this.simulation.colony.buildOpen,this.simulation.moon.colony.buildOpen].join(':');
     if(!this.halted || drawKey!==this.lastDrawKey){const started=performance.now();this.draw();this.budget.record('draw',performance.now()-started);this.lastDrawKey=drawKey;}
@@ -309,7 +333,7 @@ export class FlightScene extends Phaser.Scene {
         if(selection.source==='previous')notify(saved,'PREVIOUS CHECKPOINT LOADED · LATEST MISSING OR INVALID · P TO RESUME');
         this.simulation = saved; this.paused = true; this.keys.release(); this.clock.reset(); this.colonyActions = [];
         this.follow.reset(saved.playerMode === 'astronaut' ? saved.astronaut : saved.ship,saved.system);
-        this.audio.reset(saved);this.effects.reset(saved); this.audio.silence();
+        this.audio.reset(saved);this.effects.reset(saved);this.pickupFeed.reset(saved); this.audio.silence();
         this.prediction = null; this.threats = [];return true;
       } else if (requested) notify(this.simulation, 'NO CHECKPOINT · PRESS K TO SAVE');
     } catch { notify(this.simulation, 'CHECKPOINT INVALID OR STORAGE UNAVAILABLE · CURRENT WORLD KEPT'); }
@@ -350,7 +374,13 @@ export class FlightScene extends Phaser.Scene {
     }
     if (this.flightTools.trajectory && this.simulation.towing.targetId === null) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawExploration(g, this.simulation, this.follow.zoom);
-    drawMining(g, this.simulation, this.follow.zoom, view, this.preferences.quality==='high');
+    drawMining(g, this.simulation, {
+      zoom: this.follow.zoom,
+      view,
+      detail: this.preferences.quality === 'high',
+      time: this.time.now / 1000,
+      animate: !this.halted && !this.preferences.reducedMotion,
+    });
     drawTowing(g, this.simulation, this.follow.zoom);
     drawCrewOrder(g,this.simulation,this.follow.zoom);
     for (const site of allColonies(this.simulation)) {

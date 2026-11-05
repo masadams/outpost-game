@@ -328,3 +328,22 @@
 @media (max-height: 750px) and (min-width: 681px) {
   #hud #command-console .selection-inspector { max-height: calc(100dvh - var(--chrome-right-bottom) - 170px); }
 }
+
+/* What just came aboard: small lines under the objective, left of the view tools. */
+#hud-chrome .pickup-feed {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--hud-bottom, 250px) + 12px);
+  transform: translateX(-50%);
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text, #e6f1f5);
+  text-shadow: 0 1px 3px #000a;
+}
+#hud-chrome .pickup-feed:empty { display: none; }

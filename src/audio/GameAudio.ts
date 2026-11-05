@@ -19,6 +19,8 @@ export class GameAudio {
   private active = true;
   private failed = false;
   private disposed = false;
+  private pickupRun = 0;
+  private lastPickup = -10;
   private frame: SoundFrame = { cues: [], engine: false, mining: false, tractor: false, machinery: false };
   readonly preferences: AudioPreferences;
   constructor() {
@@ -49,6 +51,16 @@ export class GameAudio {
           const oscillator = this.context.createOscillator(), gain = this.context.createGain(), filter = this.context.createBiquadFilter();
           oscillator.type = type; oscillator.frequency.value = frequency; filter.type = 'lowpass'; filter.frequency.value = name === 'engine' ? 450 : 1000;
           gain.gain.value = 0; oscillator.connect(filter); filter.connect(gain); gain.connect(this.effects!); oscillator.start();
+          if (name === 'mining') {
+            // A slow wobble makes the beam hum feel alive rather than a flat tone.
+            const wobble = this.context.createOscillator();
+            const depth = this.context.createGain();
+            wobble.frequency.value = 6.5;
+            depth.gain.value = 14;
+            wobble.connect(depth);
+            depth.connect(oscillator.frequency);
+            wobble.start();
+          }
           this.loops.set(name, { oscillator, gain });
         }
       }
@@ -109,6 +121,7 @@ export class GameAudio {
   private play(cue: Cue): void {
     if(cue==='airlessArrival'){this.tone(220,330,.3,0,'sine');this.tone(440,330,.35,.3,'sine');}
     else if (cue === 'crash') { this.noise(0.45, 0.16); this.tone(130, 35, 0.45); }
+    else if (cue === 'split') { this.noise(0.22, 0.12); this.tone(120, 48, 0.3); this.tone(300, 180, 0.1); }
     else if (cue === 'impact' || cue === 'fracture') { this.noise(0.16, 0.09); this.tone(160, 65, 0.18); }
     else if (cue === 'shieldHit') { this.tone(260, 720, 0.16, 0, 'sine'); }
     else if (cue === 'shieldBreach') { this.tone(520, 100, 0.28); this.tone(180, 90, 0.18, 0.28); }
@@ -124,7 +137,15 @@ export class GameAudio {
     else if (cue === 'atmosphereExit') { this.tone(330, 520, 0.18); this.tone(520, 780, 0.2, 0.18); }
     else if (cue === 'atmosphereEntry') { this.tone(660, 440, 0.18); this.tone(440, 260, 0.2, 0.18); }
     else if (cue === 'land' || cue === 'delivery' || cue === 'service') { this.tone(330, 440, 0.14); this.tone(660, 660, 0.18, 0.12); }
-    else if (cue === 'pickup' || cue === 'production') this.tone(cue === 'pickup' ? 740 : 440, 980, 0.08);
+    else if (cue === 'pickup') {
+      // Quick pickups in a row climb a step each, up to an octave, so a haul feels like a run.
+      const now = this.context?.currentTime ?? 0;
+      this.pickupRun = now - this.lastPickup < 1.4 ? Math.min(this.pickupRun + 1, 7) : 0;
+      this.lastPickup = now;
+      const rise = 2 ** (this.pickupRun / 7);
+      this.tone(740 * rise, 980 * rise, 0.08);
+    }
+    else if (cue === 'production') this.tone(440, 980, 0.08);
     else if (cue === 'build') { this.noise(0.08, 0.035); this.tone(260, 520, 0.18); }
     else if (cue === 'demolish') this.tone(220, 90, 0.2);
     else if (cue === 'jump') this.tone(170, 280, 0.12);

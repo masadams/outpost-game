@@ -2,6 +2,7 @@ import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import { Icon, type IconName } from './Icon';
 import type { ObjectiveCardView, RegionView } from './chromeView';
+import type { PickupLine } from './pickupFeed';
 
 export type ScreenPanel = 'cargo' | 'colony' | 'command' | 'navigation';
 export type ViewAction = 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
@@ -26,6 +27,7 @@ export interface ChromeState {
   paused: boolean;
   sound: { status: SoundStatus; muted: boolean; audible: boolean; loops: number };
   camera: { mode: string; zoom: number; x: number; y: number; angle: number };
+  pickups: PickupLine[];
   trajectory: boolean;
   predictionPoints: number;
   keys: ChromeKeys;
@@ -179,6 +181,14 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           />
         </div>
       </div>
+
+      <ul class="pickup-feed" aria-live="polite" aria-label="Collected">
+        {state.pickups.map(line => (
+          <li key={line.key} data-resource={line.key} style={{ opacity: line.fade }}>
+            {line.text}
+          </li>
+        ))}
+      </ul>
 
       <div
         id="flight-tools"

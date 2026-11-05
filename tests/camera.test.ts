@@ -7,6 +7,8 @@ import {
   SUIT_ART_HEIGHT,
   SUIT_SCREEN_FRACTION,
   groundInViewZoom,
+  groundUrgency,
+  framingZoom,
   groundZoom,
 } from '../src/render/camera';
 import { createShip } from '../src/sim/physics';
@@ -51,9 +53,10 @@ describe('camera scale', () => {
 });
 
 describe('ground stays in view while descending', () => {
-  it('never zooms in past the point where the ground below the lander is on screen', () => {
+  it('never zooms in past the point where the ground below the lander is on screen, once contact is near', () => {
     for (const height of [600, 900, 1080]) {
-      for (const altitude of [30, 80, 150, 300, 600, 900]) {
+      // At 25 m/s, anything at or under 175 m is within 7 seconds of contact.
+      for (const altitude of [30, 80, 150, 170]) {
         const camera = new FlightCamera();
         camera.viewportHeight = height;
         const ship = lander(altitude, -25);
@@ -64,6 +67,21 @@ describe('ground stays in view while descending', () => {
         expect(below, `${height}px at ${altitude} m`).toBeGreaterThan(altitude);
       }
     }
+  });
+
+  it('does not zoom out for a slow drift far from the ground, such as while mining', () => {
+    const drifting = new FlightCamera();
+    drifting.viewportHeight = 900;
+    const ship = lander(260, -6);
+    drifting.reset(ship);
+    settle(drifting, ship, 8);
+    expect(drifting.zoom).toBeGreaterThan(groundInViewZoom(900, 260) * 2);
+    expect(groundUrgency(260, 6)).toBe(0);
+    expect(groundUrgency(100, 0)).toBe(1);
+    expect(groundUrgency(300, 60)).toBe(1);
+    const mid = groundUrgency(300, 25);
+    expect(mid).toBeGreaterThan(0);
+    expect(mid).toBeLessThan(1);
   });
 
   it('zooms in for the landing: the lander is big again once it is close to the ground', () => {
@@ -219,5 +237,68 @@ describe('camera behaviour', () => {
     camera.rotate = false;
     camera.update(ship, 1 / 60);
     expect(camera.angle).toBe(0);
+  });
+});
+
+describe('framing the work', () => {
+  it('fits points of interest within the screen, leaving room above and below', () => {
+    const centre = { x: 0, y: 0 };
+    // A rock 200 m straight above (screen up, since the camera angle is 0, world up is -y).
+    const above = framingZoom([{ x: 0, y: -200 }], centre, 0, 1600, 900);
+    expect(above * 200).toBeLessThanOrEqual(0.3 * 900 + 1e-6);
+    // The same distance sideways has more room, because the screen is wider than it is tall above the focus.
+    const sideways = framingZoom([{ x: 200, y: 0 }], centre, 0, 1600, 900);
+    expect(sideways).toBeGreaterThan(above);
+    expect(sideways * 200).toBeLessThanOrEqual(0.36 * 1600 + 1e-6);
+    // The tightest point decides.
+    expect(framingZoom([{ x: 0, y: -50 }, { x: 0, y: -400 }], centre, 0, 1600, 900)).toBeCloseTo((0.3 * 900) / 400);
+    expect(framingZoom([], centre, 0, 1600, 900)).toBe(Infinity);
+  });
+
+  it('turns with the camera', () => {
+    const centre = { x: 0, y: 0 };
+    const point = [{ x: 300, y: 0 }];
+    const flat = framingZoom(point, centre, 0, 1600, 900);
+    const turned = framingZoom(point, centre, Math.PI / 2, 1600, 900);
+    expect(turned).toBeLessThan(flat);
+  });
+
+  it('zooms in on a rock under the laser, within what fits and the lander size, then eases back', () => {
+    const camera = new FlightCamera();
+    camera.viewportHeight = 900;
+    camera.viewportWidth = 1600;
+    const ship = lander(600, 0);
+    camera.reset(ship);
+    settle(camera, ship, 8);
+    const alone = camera.zoom;
+
+    camera.work = [{ x: ship.position.x + 40, y: ship.position.y - 90 }];
+    settle(camera, ship, 8);
+    expect(camera.zoom).toBeGreaterThan(alone * 1.3);
+    expect(camera.zoom).toBeLessThanOrEqual(groundZoom(900, false) + 1e-6);
+
+    camera.work = [];
+    settle(camera, ship, 10);
+    expect(camera.zoom).toBeCloseTo(alone, 1);
+  });
+
+  it('never lets the work leave the screen, however far it is', () => {
+    const camera = new FlightCamera();
+    camera.viewportHeight = 900;
+    const ship = lander(600, 0);
+    camera.reset(ship);
+    camera.work = [{ x: ship.position.x, y: ship.position.y - 440 }];
+    settle(camera, ship, 10);
+    const fit = framingZoom(camera.work, { x: camera.x, y: camera.y }, camera.angle, 1600, 900);
+    expect(camera.zoom).toBeLessThanOrEqual(Math.max(fit, groundZoom(900, false) / (1 + 600 / 240)) + 1e-6);
+  });
+
+  it('is ignored on foot', () => {
+    const camera = new FlightCamera();
+    const suit = { position: { x: 14, y: -WORLD.radius - 2.5 } };
+    camera.reset(suit);
+    camera.work = [{ x: 14, y: -WORLD.radius - 200 }];
+    settle(camera, suit, 8, true);
+    expect(camera.zoom).toBeCloseTo(groundZoom(900, true));
   });
 });

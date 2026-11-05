@@ -25,7 +25,7 @@ describe('audio events stay separate from simulation', () => {
   it('plays local fracture, pickup and delivery cues without reacting to distant rocks', () => {
     const world = createWorld(), director = new AudioDirector(); director.reset(world);
     world.asteroids.splice(0, 1); world.ship.cargo.iron = 5;
-    expect(director.update(world, 1 / 60, false).cues).toEqual(['pickup', 'fracture']);
+    expect(director.update(world, 1 / 60, false).cues).toEqual(['pickup', 'split']);
     world.unloaded = 5; world.ship.cargo.iron = 0;
     expect(director.update(world, 1 / 60, false).cues).toEqual(['delivery']);
     world.ship.position = { x: 0, y: -10000 }; director.reset(world); world.asteroids.splice(0, 1);
@@ -75,4 +75,22 @@ it('paces footsteps by surface travel rather than the moving moon carrying idle 
  const w=createWorld();w.playerMode='astronaut';const moon=colonyWorld(w,'moon'),director=new AudioDirector();w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);director.reset(moon);
  for(let i=0;i<10;i++){w.system.time+=1;w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);expect(director.update(moon,1,false).cues).not.toContain('step');}
  w.astronaut.position=surfacePosition(planetAt('moon',w.system),4.1/450,2.5);expect(director.update(moon,1,false).cues).toContain('step');
+});
+
+describe('rock break cues', () => {
+  it('splits a big rock and shatters a small one', () => {
+    const world = createWorld();
+    const director = new AudioDirector();
+    director.reset(world);
+    const [big, small] = world.asteroids;
+    big.stage = 0;
+    small.stage = 1;
+    big.position = { ...world.ship.position };
+    small.position = { ...world.ship.position };
+    director.reset(world);
+    world.asteroids.splice(0, 2);
+    const cues = director.update(world, 1 / 60, false).cues;
+    expect(cues).toContain('split');
+    expect(cues).toContain('fracture');
+  });
 });
