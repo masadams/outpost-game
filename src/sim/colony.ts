@@ -1,3 +1,4 @@
+import { stepObservatory } from './observatory';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -166,6 +167,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     if (!operational(building)) continue;
     if (!building.enabled) continue;
     if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
+    if (building.kind === 'observatory') { stepObservatory(world, building, dt); continue; }
     if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
     if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;
     const recipe = recipeFor(building); if (!recipe) continue;

@@ -35,6 +35,8 @@ export interface FarBody {
   impactTime: number | null;
 }
 
+export interface PlannedImpact { id: number; impactAngle: number | null; impactTime: number | null }
+
 export interface StormState {
   phase: 'quiet' | 'approaching' | 'over';
   /** Bodies not yet handed to the meteor physics, soonest first. */
@@ -42,10 +44,16 @@ export interface StormState {
   /** Ids of every body of this storm, including those already in the meteor physics. */
   ids: number[];
   planned: boolean;
-  /** The storm only happens once armed. Nothing arms it yet; the Observatory will (slice P1.2). */
+  /** When the first body reaches the local region; set when the storm is planned. */
+  arrival: number;
+  /** Seconds a powered Observatory has watched the storm bodies in the far field. */
+  observed: number;
+  /** What the plan says will happen, kept for the Observatory's estimates. The player never sees this directly. */
+  plan: PlannedImpact[];
+  /** The storm only happens once armed. Building an Observatory arms it. */
   armed: boolean;
 }
 
 export function createStorm(): StormState {
-  return { phase: 'quiet', far: [], ids: [], planned: false, armed: false };
+  return { phase: 'quiet', far: [], ids: [], planned: false, arrival: 0, observed: 0, plan: [], armed: false };
 }

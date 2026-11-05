@@ -14,6 +14,7 @@ export function facilityArt(g:Phaser.GameObjects.Graphics,kind:BuildType,p:Point
  else if(kind==='fuelProcessor'){for(const x of [-5,5]){const at=p(x,11);g.fillStyle(0x49445e);g.fillCircle(at.x,at.y,4.5);g.strokeCircle(at.x,at.y,4.5);line(x,1,x,6);}line(-5,4,5,4);}
  else if(kind==='service'){box(-width+1,1,width*2-2,10,0x284b58);line(-width,14,width,14);line(-width,1,-width,18);line(width,1,width,18);g.lineStyle(1.8,color);line(-2,6,2,6);line(0,4,0,8);}
  else if(kind==='researchLab'){box(-width+1,1,width*2-2,9,0x343a58);const at=p(3,14);g.strokeCircle(at.x,at.y,5);line(0,12,-5,24);line(-10,22,-1,26);g.lineStyle(.5,0xe0ecff,.8);line(-5,24,-3,27);}
+ else if(kind==='observatory'){box(-width+2,1,width*2-4,8,0x2f4a63);const dome=p(0,9);g.fillStyle(0x3d5f80);g.fillCircle(dome.x,dome.y,7);g.strokeCircle(dome.x,dome.y,7);g.lineStyle(.9,0xdff3ff,.9);line(1,10,6,19);line(2.4,9,7.5,17.5);}
  else if(kind.startsWith('shield')){for(const y of [5,8,11,14,17])line(-5,y,5,y);line(0,1,0,22);const at=p(0,23);g.strokeCircle(at.x,at.y,3);}
  else if(kind==='refinery'){box(-5,1,10,10,0x4a453e);line(-width+3,13,-width+3,23);line(0,6,0,13);line(-4,8,4,8);}
  else if(kind==='laser'||kind==='flak'||kind==='missile'){box(-6,3,12,7,0x443e49);if(kind==='missile'){for(const x of [-4,0,4])box(x-1,10,2,8,0x73627d);}else{const at=p(0,11);g.fillStyle(0x5c5661);g.fillCircle(at.x,at.y,5);g.strokeCircle(at.x,at.y,5);}}

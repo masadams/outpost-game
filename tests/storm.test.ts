@@ -46,9 +46,9 @@ describe('first storm in flight', { timeout: 60000 }, () => {
     w.storm.armed = true;
     w.system.time = STORM.arrivalTime - STORM.lead - 61;
     stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
-    expect(w.storm.planned).toBe(false);
-    for (let i = 0; i < 70 * 60; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.storm.planned).toBe(true);
+    expect(w.storm.phase).toBe('quiet');
+    for (let i = 0; i < 70 * 60; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.storm.phase).toBe('approaching');
     expect(w.defence.meteors).toHaveLength(0);
     expect(w.storm.far).toHaveLength(STORM.aim.length);
@@ -75,6 +75,16 @@ describe('first storm in flight', { timeout: 60000 }, () => {
 });
 
 describe('storm arming', () => {
+  it('starts when an Observatory is built, never sooner than the fixed time and always with a full warning', () => {
+    const w = createWorld();
+    w.system.time = 1400;
+    w.colony.buildings.push({ id: 90, kind: 'observatory', angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'idle' } as never);
+    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(w.storm.armed).toBe(true);
+    expect(w.storm.arrival).toBeGreaterThanOrEqual(1400 + STORM.lead + 30);
+    expect(w.storm.plan).toHaveLength(STORM.aim.length);
+  });
+
   it('does nothing until armed', () => {
     const w = createWorld();
     w.system.time = STORM.arrivalTime - STORM.lead - 61;
@@ -100,5 +110,46 @@ describe('first storm saves', () => {
     }
     expect(loaded.defence.impacts).toBe(w.defence.impacts);
     expect(loaded.storm.phase).toBe(w.storm.phase);
+  });
+});
+
+describe('observatory and what is known', () => {
+  async function watched(seconds: number, powered = true) {
+    const { stormKnowledge } = await import('../src/sim/stormKnowledge');
+    const w = createWorld();
+    w.system.time = 1000;
+    w.colony.generation = 0;
+    w.colony.buildings.push({ id: 90, kind: 'observatory', angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'idle' } as never);
+    if (powered) w.colony.buildings.push({ id: 91, kind: 'solar', angle: -0.1, enabled: true, progress: 0, recipe: 0, status: 'idle' } as never);
+    w.colony.energy = 50;
+    // Run to the moment the bodies appear, then watch.
+    while (w.storm.phase !== 'approaching') stepWorld(w, { thrust: false, turn: 0 }, 0.25);
+    for (let i = 0; i < seconds * 4; i++) stepWorld(w, { thrust: false, turn: 0 }, 0.25);
+    return { w, knowledge: stormKnowledge(w) };
+  }
+
+  it('knows nothing without scanning, and sees only a rough warning at first', async () => {
+    const none = await watched(60, false);
+    expect(none.w.storm.observed).toBe(0);
+    expect(none.knowledge).toBeNull();
+    const rough = await watched(20);
+    expect(rough.knowledge?.level).toBe('sighted');
+    expect(rough.knowledge!.etaMargin).toBeGreaterThan(60);
+  });
+
+  it('narrows the arrival time and corridor the longer it watches', async () => {
+    const a = await watched(30);
+    const b = await watched(120);
+    const c = await watched(200);
+    expect(b.knowledge!.etaMargin).toBeLessThan(a.knowledge!.etaMargin);
+    expect(c.knowledge!.etaMargin).toBeLessThan(b.knowledge!.etaMargin);
+    expect(c.knowledge!.corridorMargin).toBeLessThan(a.knowledge!.corridorMargin);
+    expect(c.knowledge!.level).toBe('precise');
+  });
+
+  it('keeps the true arrival inside the stated margin', async () => {
+    const k = await watched(100);
+    const truth = Math.min(...k.w.storm.plan.map(p => p.impactTime!)) - k.w.system.time;
+    expect(Math.abs(k.knowledge!.eta - truth)).toBeLessThanOrEqual(k.knowledge!.etaMargin);
   });
 });

@@ -6,7 +6,7 @@
 | # | What | Status |
 |---|---|---|
 | P1.1 | Storm simulation: a seeded set of rocks that travel in from far away, enter the existing meteor physics and can hit the colony. Saved and restored. | Done (disarmed until P1.2 arms it) |
-| P1.2 | Observatory building; observing narrows the arrival time and bearing. Nothing is known without it | Planned |
+| P1.2 | Observatory building; observing narrows the arrival time and bearing. Nothing is known without it | Done |
 | P1.3 | Warning in plain language: countdown card, map and radar markers with uncertainty | Planned |
 | P1.4 | Preparation in the focus set: laser turret, manual interception from the ship, power reserve | Planned |
 | P1.5 | Aftermath: meteorite fragments to recover, analyse one for a research unlock; full playthrough test | Planned |

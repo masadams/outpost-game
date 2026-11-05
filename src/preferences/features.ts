@@ -31,8 +31,8 @@ export type Feature =
   | 'starterBudget'
   | 'catalogue';
 
-/** Buildings a new player can place. Order matches number keys 1–5. */
-export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor'];
+/** Buildings a new player can place. Order matches number keys 1–6. */
+export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'observatory'];
 
 export const FEATURE_STORAGE_KEY = 'outpost.features';
 

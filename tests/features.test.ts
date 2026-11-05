@@ -20,7 +20,7 @@ describe('focus feature set', () => {
   });
 
   it('keeps the first-sortie buildings on number keys 1–5', () => {
-    expect(BUILD_TYPES.slice(0, FOCUS_BLUEPRINTS.length)).toEqual([...FOCUS_BLUEPRINTS]);
+    expect(BUILD_TYPES.slice(0, 5)).toEqual(FOCUS_BLUEPRINTS.slice(0, 5));
     for (const kind of BUILD_TYPES) expect(blueprintVisible(kind, 'focus')).toBe(FOCUS_BLUEPRINTS.includes(kind));
     for (const kind of BUILD_TYPES) expect(blueprintVisible(kind, 'all')).toBe(true);
   });

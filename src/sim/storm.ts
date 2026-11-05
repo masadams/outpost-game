@@ -67,16 +67,18 @@ export function planStorm(world: WorldState): void {
   const storm = world.storm;
   if (storm.planned) return;
   storm.planned = true;
+  if (storm.arrival <= 0) storm.arrival = STORM.arrivalTime;
   const rand = seeded(STORM.seed);
   const home = planetAt('home', world.system);
   for (let i = 0; i < STORM.aim.length; i++) {
-    const entryTime = STORM.arrivalTime + i * STORM.spacing;
+    const entryTime = storm.arrival + i * STORM.spacing;
     const system = { ...world.system, time: entryTime };
     const target = WORLD.padAngle + (STORM.targetOffset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
     const tangential = aimTangential(target, system, STORM.radii[i], STORM.masses[i]);
     const meteor = entryMeteor(world.nextId++, target, tangential, system, STORM.radii[i], STORM.masses[i]);
     const fall = landing(meteor, system);
     storm.ids.push(meteor.id);
+    storm.plan.push({ id: meteor.id, impactAngle: fall?.angle ?? null, impactTime: fall?.time ?? null });
     storm.far.push({
       id: meteor.id,
       entry: { ...meteor.position },
@@ -100,11 +102,17 @@ export function farPosition(body: FarBody, time: number): Vec {
 export function stepStorm(world: WorldState): void {
   const storm = world.storm;
   const time = world.system.time;
-  if (!storm.armed) return;
-  // Planning takes a moment, so it happens a little before the bodies appear.
-  if (!storm.planned && time >= STORM.arrivalTime - STORM.lead - 60) planStorm(world);
-  if (!storm.planned) return;
-  if (storm.phase === 'quiet' && time >= STORM.arrivalTime - STORM.lead) storm.phase = 'approaching';
+  if (!storm.armed) {
+    // Building an Observatory is what starts the story.
+    if (!world.colony.buildings.some(b => b.kind === 'observatory')) return;
+    storm.armed = true;
+  }
+  if (!storm.planned) {
+    // Never sooner than the fixed first-storm time, and always with the full warning window ahead.
+    storm.arrival = Math.max(STORM.arrivalTime, time + STORM.lead + 30);
+    planStorm(world);
+  }
+  if (storm.phase === 'quiet' && time >= storm.arrival - STORM.lead) storm.phase = 'approaching';
   if (storm.phase === 'quiet') return;
   while (storm.far.length > 0 && storm.far[0].entryTime <= time) {
     const body = storm.far.shift()!;
