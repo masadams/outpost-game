@@ -1,3 +1,4 @@
+import { featureVisible } from '../preferences/features';
 import { isolateControlKeys } from './controlKeys';
 import type { DockView, HudContext } from './context';
 
@@ -35,7 +36,12 @@ export class OperationsDock {
   constructor() {
     this.nav.className = 'dock-nav'; this.nav.setAttribute('aria-label', 'Operations panels');
     this.nav.innerHTML = `<button data-panel="cargo" aria-controls="operations-dock">Ship [I]</button><button data-panel="colony" aria-controls="operations-dock">Build</button><button data-panel="command" aria-controls="operations-dock">Manage</button><button data-panel="navigation" aria-controls="operations-dock">Map</button>`;
-    this.shipTabs.className='ship-tabs';this.shipTabs.setAttribute('aria-label','Ship systems');this.shipTabs.innerHTML='<button data-panel="cargo">Cargo</button><button data-panel="combat">Weapons</button><button data-panel="defence">Defence</button><button data-panel="autopilot">Flight computer</button>';
+    this.shipTabs.className='ship-tabs';this.shipTabs.setAttribute('aria-label','Ship systems');this.shipTabs.innerHTML = [
+      '<button data-panel="cargo">Cargo</button>',
+      featureVisible('combat') ? '<button data-panel="combat">Weapons</button>' : '',
+      featureVisible('defence') ? '<button data-panel="defence">Defence</button>' : '',
+      featureVisible('autopilot') ? '<button data-panel="autopilot">Flight computer</button>' : '',
+    ].join('');
 
     this.root.id = 'operations-dock'; this.root.setAttribute('aria-label', 'Operations'); this.root.hidden = true;
     const header = this.header; header.className = 'dock-heading';
@@ -98,9 +104,9 @@ export class OperationsDock {
     if(this.view!=='command')this.inspection=false;this.root.dataset.inspection=String(this.inspection);
     const expanded=!this.inspection&&this.view!==null&&this.expanded.has(this.view);
     this.layoutControls(expanded);
-    this.heading.textContent = this.view ? ({cargo:'Ship / Cargo',combat:'Ship / Weapons',defence:'Ship / Defence',colony:'Build',command:'Manage colony',navigation:'Map',objectives:'Objectives',autopilot:'Ship / Flight computer'} as const)[this.view] : '';
+    this.heading.textContent = this.view ? ({cargo:'Ship / Cargo',combat:featureVisible('combat')?'Ship / Weapons':'Ship / Recovery',defence:'Ship / Defence',colony:'Build',command:'Manage colony',navigation:'Map',objectives:'Objectives',autopilot:'Ship / Flight computer'} as const)[this.view] : '';
     if(this.inspection)this.heading.textContent=this.inspectionTitle;
-    const ship=['cargo','combat','defence','autopilot'].includes(this.view??'');this.shipTabs.hidden=!ship;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
+    const ship=['cargo','combat','defence','autopilot'].includes(this.view??'');this.shipTabs.hidden=!ship||this.shipTabs.children.length<2;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
     const changed=this.renderedView!==this.view;this.renderedView=this.view;
     const sections = { autopilot:this.autopilot,cargo: this.cargo, colony: this.colony, combat: this.combat, defence: this.defence, command: this.command, navigation: this.navigation, objectives: this.objectives };
     for (const [view, section] of Object.entries(sections)) section.hidden = view !== this.view;

@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL in a modern desktop browser. Choose **New Game**, or **Continue** for a valid current save (loads paused; P resumes). **Menu** offers Resume, Save/Load, Settings, Controls and Return to title. Click the game if keyboard focus is elsewhere. The canvas resizes with the window.
+Open the local Vite URL in a modern desktop browser. New games show only the first-mining-sortie systems ([current focus](docs/CURRENT_FOCUS.md)); add `?features=all` to the URL to see every system, including the ones documented below. Choose **New Game**, or **Continue** for a valid current save (loads paused; P resumes). **Menu** offers Resume, Save/Load, Settings, Controls and Return to title. Click the game if keyboard focus is elsewhere. The canvas resizes with the window.
 
 | Key | Action |
 |---|---|

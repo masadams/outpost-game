@@ -1,3 +1,4 @@
+import { featureVisible } from '../preferences/features';
 import { colonyPlanet } from '../sim/localWorld';
 import { buildFlow, type BuildDraft } from './buildFlow';
 import { MANIFESTS, type ManifestId } from '../sim/manifests';
@@ -26,7 +27,7 @@ export function colonyPanel(world: WorldState, paused: boolean, draft?:BuildDraf
 
     <button data-colony="toggleBuild">${colony.buildOpen ? 'Finish mouse building [B]' : 'Plan construction [B]'}</button>
     ${colony.buildOpen ? `<p class="build-instruction">Choose → point at surface → left click queues work · right click finishes</p><h3>${BLUEPRINTS[colony.selected].label} · selected blueprint</h3><p>Cost ${Object.entries(BLUEPRINTS[colony.selected].cost).map(([p,q])=>`${q} ${p}`).join(' · ')}<br>${blueprintFootprint(colony.selected)}</p>
-      <label for="build-category">Blueprint category</label><select id="build-category">${([['power','Power & storage'],['industry','Industry & research'],['crew','Crew & service'],['defence','Defence'],['all','All blueprints']] as const).map(([id,label])=>`<option value="${id}" ${category===id?'selected':''}>${label}</option>`).join('')}</select>${blueprintPalette(world,'',category)}${buildFlow(world,paused,draft)}<details data-preserve-open><summary>Nearby manual placement · Q/T/Enter</summary>      <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
+      ${featureVisible('catalogue')?`<label for="build-category">Blueprint category</label><select id="build-category">${([['power','Power & storage'],['industry','Industry & research'],['crew','Crew & service'],['defence','Defence'],['all','All blueprints']] as const).map(([id,label])=>`<option value="${id}" ${category===id?'selected':''}>${label}</option>`).join('')}</select>`:''}${blueprintPalette(world,'',category)}${buildFlow(world,paused,draft)}<details data-preserve-open><summary>Nearby manual placement · Q/T/Enter</summary>      <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
       <div class="build-actions"><button ${disabled} data-shift="-32">← [Q]</button><button ${disabled} data-shift="32">→ [T]</button><button ${disabled || error ? 'disabled' : ''} data-colony="place">Place [Enter]</button></div>
 </details>
       <button ${disabled} data-colony="demolish">Demolish nearby [X] · up to 75% salvage</button>` : ''}

@@ -1,9 +1,39 @@
+import { featureVisible } from '../preferences/features';
 import { isolateControlKeys } from './controlKeys';
 export class Help {
   private dialog = document.createElement('dialog');
   constructor(private onToggle: (open: boolean) => void) {
     this.dialog.id = 'help'; this.dialog.setAttribute('aria-label', 'Outpost quick-start and controls');
-    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.21</span><button type="button">Return to game [H / Esc]</button></div>
+    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.21</span><button type="button">Return to game [H / Esc]</button></div>${featureVisible('catalogue') ? FULL_HELP : FOCUS_HELP}`;
+    document.body.append(this.dialog);
+    isolateControlKeys(this.dialog);
+    this.dialog.querySelector('button')!.addEventListener('click', () => this.close());
+    this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.close(); });
+  }
+  get isOpen(): boolean { return this.dialog.open; }
+  toggle(): void { if (this.isOpen) this.close(); else { this.onToggle(true); this.dialog.showModal(); } }
+  close(): void { if (this.dialog.open) { this.dialog.close(); (document.activeElement as HTMLElement)?.blur(); this.onToggle(false); } }
+  destroy(): void { this.dialog.remove(); }
+}
+
+/** Short guide for the first mining sortie (focus feature set). */
+const FOCUS_HELP = `
+      <h2>Your first sortie</h2>
+      <p>You start landed on the pad at your outpost on Selene. Mine ore from the rocks above, bring it home, and use it to build.</p>
+      <h2>Fly</h2>
+      <p><b>W</b> fires the main engine. <b>A / D</b> turn. Gravity always pulls toward the planet's center, so tilt to move sideways and keep some fuel for the landing.</p>
+      <p>The bottom gauges show your altitude, descent speed, drift and tilt. Land gently on the green pad: slow descent, little drift, nose up.</p>
+      <h2>Mine</h2>
+      <p>Point the nose at a rock and hold <b>Space</b> to cut it apart. Hold <b>C</b> nearby to pull the fragments into your hold. A full hold makes the lander heavier and slower to stop.</p>
+      <h2>Unload and build</h2>
+      <p>Land on the pad and press <b>E</b> to unload ore. Press <b>F</b> to step out, walk with <b>A / D</b>, and press <b>B</b> to build. Pick a building, point at the ground and click to place it. Your astronaut walks over and builds it.</p>
+      <p>Start with a <b>Solar array</b> for power and a <b>Refinery</b> to turn ore into alloy and wire. Add <b>Storage</b> and a <b>Battery</b> as you grow. A <b>Fuel processor</b> turns refined water and oxygen into fuel.</p>
+      <h2>If things go wrong</h2>
+      <p>If you crash, press <b>Backspace</b> to bring the lander back to the pad for 8 alloy and 2 components. Its cargo is lost. Press <b>K</b> to save and <b>L</b> to load.</p>
+      <h2>Controls</h2>
+      <p><b>P</b> pause · <b>I</b> ship and cargo · <b>H / Esc</b> close this guide · <b>M</b> mute · <b>J</b> coast path · <b>+ / −</b> zoom. Change any key in Settings.</p>`;
+
+const FULL_HELP = `
       <h2>Start and continue</h2><p>New Game starts a fresh runtime and keeps the old checkpoint until you save. Continue loads a valid current checkpoint paused; P resumes. Explicit saves retain one previous valid flight. If the latest is missing or invalid, Continue identifies and loads that older flight; loading never rewrites storage. Menu offers Resume, Save/Load, Settings, Controls and Return to title. Escape closes a panel first, then opens the pause menu; Escape resumes from that menu. Menus freeze physics and silence gameplay audio.</p><h2>Set up your flight deck</h2><p><b>Settings</b> changes text size, motion, graphics, the horizon camera, music/effects levels and all keyboard bindings. This guide shows defaults; the settings binding table and contextual hints show your chosen keys. <b>Objectives</b> records actual deliveries, supplied industry, equipment and a moon work/return trip. It grants no supplies. Choose a tracked goal for live progress and a direct link to its controls. Colony milestones cover 20 seconds of actually supplied habitat air, all nineteen research projects and a real meteor interception. The collapsible Selene starter-route budget shows remaining materials, reserved-stock shortfalls and separate energy needs; paid work is counted once. Drills remain opt-in.</p><h2>Find your controls</h2><p>Top-left Ship, Build, Manage and Map buttons use one operations dock. Ship groups Cargo, Weapons and Defence. Build plans construction; Manage opens a large workspace with Facilities, Research, Ship fitting, Construction, Economy and Shields pages. Choose a technology or part to inspect its details; hovering shows a brief hint. Compact/Expand changes window size. Build stays compact for pointing at the world. Manage remains live until you press P. <b>I</b> toggles cargo; <b>Esc</b> closes the panel. Relevant panels open when you build, operate a turret, enter combat or open the depot. Closing a panel never pauses the world; <b>P</b> pauses. Telemetry and weapon state stay along the bottom so targets remain visible.</p><h2>Mouse building and crew orders</h2><p>Open <b>Build</b>, choose a category and blueprint, point near the surface and <b>left click</b> to queue a paid site. <b>Right click</b> finishes placement. Numeric site and queue controls provide keyboard alternatives; Q/T/Enter remains nearby manual placement. Planning can be inspected while paused; costs/work stay frozen. <b>Dispatch crew to build queue</b> walks the real deployed astronaut into work range, then completes paid eight-second orders. Travel, oxygen, gravity and risk remain real. Away from placement, <b>right click ground</b> to walk. A/D, jumping, boarding or turret control cancels a crew order; Stop is also available in the HUD. Low suit air stops the order; it does not refill or automatically return the crew. Each world has its own shared grid; click facilities for actual Manage power controls, with no fake cable links.</p><h2>Your first sortie</h2><p>Launch from the green pad, mine ore, land, then build a small working colony on the larger planet and its 1.2 km atmosphere.</p>
       <ol><li><b>Fly:</b> hold W / Up for about 6.5 seconds for a low atmospheric hop, then coast. Hold Space to clear the starter rock above home, or steer around it. A/D or arrows rotate. Gravity acts everywhere; air resistance fades to zero in space.</li>
       <li><b>Return:</b> keep the nose upright, pulse thrust early during descent. Touch down on green with descent ≤ 6 m/s, drift ≤ 4 m/s, tilt ≤ 15°. Backspace recovers a lost ship using supplies; R starts a fresh runtime.</li>
@@ -18,13 +48,3 @@ export class Help {
       <h2>Research, parts and readiness</h2><p>Manage → Research has nineteen powered, paid technologies, prerequisite filters and an inspectable unlock tree. Ship equipment has nine slots and twenty-five real parts. Choose a slot to compare alternatives; replacement pays the full new cost, then salvages the old part at 50% × hull condition. Unsafe hold/tank downgrades block atomically; added capacity starts empty. Ship / Cargo shows home recovery funding and local fuel-production needs. The optional recovery allowance in the starter budget reserves nothing, and fuel estimates start no production. Recovery costs 8 alloy + 2 components, keeps fitted parts, loses cargo and returns at 30 hull with at most 20 kg remaining fuel.</p><h2>Earned flight automation and facility upgrades</h2><p>Research Flight control → Return guidance → Autonomous navigation, then fabricate a flight computer at the home shipyard. Ship → Flight computer offers landing assist, return home and selected chart destination programs, depending on the fitted tier. Prepare the local pad approach for landing assist; programs use ordinary fuel, cell power, gravity and collisions. Manual flight/tools, nearby hazards or exhausted supplies disengage. The AP button in the instrument bezel always cancels, including while paused. Loading disarms automation.</p><p>Settings or Manage toggles Building labels. Click a physical facility or its label to open focused controls; Open full colony management returns to the large workspace. Infrastructure retrofits unlocks tier II, Advanced facility systems tier III. Full repair, local unreserved materials and 20/40 kJ are required. Identity, contents and work remain; added capacity starts empty and faster industry needs more power. All facilities gain structural protection.</p><h2>Keep your progress</h2><p><b>K saves · L loads</b> a local checkpoint. Reload restores it paused; P resumes. <b>R resets runtime progress</b> but keeps that saved checkpoint. There is no autosave. Save before experimenting.</p>
       <p><b>P</b> pauses · <b>H / Esc</b> closes this guide · <b>M</b> mutes · volume is in the top bar. Sound starts after your first click/key and stops on pause or focus loss.</p>
       <p class="help-note">First playtest: try flight, mining, walking, production and save/load. Buildings are non-solid but can take meteor damage, the power/material bus is global, and solar is constant. Hostile patrols and meteor drills are opt-in. The presentation pass is implemented; human handling/art/audio evaluation, wider balance and later reliability work remain.</p>`;
-    document.body.append(this.dialog);
-    isolateControlKeys(this.dialog);
-    this.dialog.querySelector('button')!.addEventListener('click', () => this.close());
-    this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.close(); });
-  }
-  get isOpen(): boolean { return this.dialog.open; }
-  toggle(): void { if (this.isOpen) this.close(); else { this.onToggle(true); this.dialog.showModal(); } }
-  close(): void { if (this.dialog.open) { this.dialog.close(); (document.activeElement as HTMLElement)?.blur(); this.onToggle(false); } }
-  destroy(): void { this.dialog.remove(); }
-}

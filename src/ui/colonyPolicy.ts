@@ -1,9 +1,11 @@
+import { featureVisible } from '../preferences/features';
 import { availableProduct, MAX_RESERVE, POLICY_FIELDS, POLICY_INFO, policyFor } from '../sim/colonyPolicy';
 import { oreCapacity } from '../sim/colony';
 import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 
 export function policyPanel(world: WorldState, paused: boolean): string {
+  if (!featureVisible('policy')) return '';
   const policy = policyFor(world.colony), disabled = paused ? 'disabled' : '';
   return `<details class="policy-controls" data-preserve-open><summary>Resource priorities · reserves</summary>
     <small>Manage from ship or surface. Reserves protect existing stock; they do not create resources.</small>

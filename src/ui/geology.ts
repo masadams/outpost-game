@@ -1,3 +1,4 @@
+import { featureVisible } from '../preferences/features';
 import { colonyPlanet, localAngleAt } from '../sim/localWorld';
 import { RIG, depositAt, rigDeposit, surfaceDistance } from '../sim/geology';
 import { RESOURCE_INFO } from '../sim/resources';
@@ -6,6 +7,7 @@ import { previewAngle, type Building } from '../sim/colony';
 import type { WorldState } from '../sim/world';
 
 export function geologyPanel(world: WorldState): string {
+  if (!featureVisible('geology')) return '';
   if (world.playerMode !== 'astronaut') return '<div class="ground-survey"><label>PLANETARY MINING</label><small>Leave the ship and inspect marked surface seams in the Build panel.</small></div>';
   const crewAngle = localAngleAt(world, world.astronaut.position), selecting = world.colony.buildOpen && world.colony.selected === 'miningRig';
   const site = selecting ? previewAngle(world) : crewAngle;

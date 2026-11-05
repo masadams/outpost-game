@@ -18,22 +18,33 @@ This is the bible's first signature slice: **the excellent mining sortie**. The 
 | # | Step | Status |
 |---|---|---|
 | 1 | Ground rules: rewrite AGENTS.md, archive task specs, write this page, log decisions | Done |
-| 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel. Mockup 1: [docs/mockups/ui-rebuild.html](mockups/ui-rebuild.html) | In review |
-| 3 | Feature visibility: new games show only the focus set below; other systems remain in code, hidden | Not started |
+| 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel. Mockup 1: [docs/mockups/ui-rebuild.html](mockups/ui-rebuild.html) | Done: mockup 1 approved; add more detail and refinement in the real build |
+| 3 | Feature visibility: new games show only the focus set below; other systems remain in code, hidden. See [Feature visibility](#feature-visibility) | Done |
 | 4 | Rebuild UI layer in Preact on shared design tokens, implementing the agreed mockups | Not started |
 | 5 | Polish and hands-on playtest the first mining sortie until it's fun | Not started |
 
 ## Screen modes (agreed direction)
 - **Flight** — minimal live HUD: core instruments, current objective, contextual prompts. No permanent toolbar wall.
-- **Surface / Build** — live. Build bar with icons; ghost placement in the world with clear valid/invalid feedback.
-- **Base** — full-screen management. **Pauses the game.**
-- **Map** — full-screen navigation. **Pauses the game.**
+- **Surface / Build** — live. Build bar with icons; ghost placement in the world with clear valid/invalid feedback. Works on foot or from the landed ship.
+- **Base** — full-screen management. **Pauses while flying**; live when landed or on foot.
+- **Map** — full-screen navigation. **Pauses while flying**; live when landed or on foot.
 
 ## Visible to a new player (focus set)
 Flight, mining laser, cargo, landing, the astronaut on foot for building, the delivery depot, refining and fuel, and a small set of buildings: solar array, battery, storage and refinery.
 
 ## Hidden for now (code kept, not shown in new games)
 Combat and drones, turrets/defence drills, shields, towing, flight computers/autopilot, facility upgrade tiers, production scheduling, colony priority policy, freight manifests, the broad research tree and ship-part catalogue, habitats, and Nacre travel UI. Each returns through a deliberate slice, ideally as something the player discovers or unlocks in play.
+
+## Feature visibility
+`src/preferences/features.ts` decides what a new player sees. In the focus set:
+- Build offers five buildings (keys 1–5): solar array, battery, storage, refinery, fuel processor.
+- Manage shows Facilities, Construction and Economy. Research, Ship fitting and Shields are hidden.
+- The Ship panel has no Weapons, Defence or Flight computer tabs; a wrecked lander shows only recovery.
+- Map has no Nacre route. Objectives show the first two goals. Help is a short first-sortie guide.
+- Upgrades, scheduling, priorities, geology, towing, freight and readiness panels are hidden.
+- Actions for hidden systems are ignored at one gate in `FlightScene`, so stray keys (N, O, Y, Shift…) do nothing.
+
+Add `?features=all` to the URL, or set localStorage `outpost.features` to `all`, to see everything. The browser regression suite runs with all features on; `tests/browser/focusMode.spec.ts` checks the focus set.
 
 ## Known UX defects to fix in the rebuild
 - Full-screen Map/Manage windows don't pause; the ship can crash behind them (observed: hull 100% → 41% while Map was open).

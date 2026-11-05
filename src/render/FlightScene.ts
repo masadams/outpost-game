@@ -1,3 +1,4 @@
+import { actionAllowed, featureVisible, filterActions } from '../preferences/features';
 import {applyAutopilotAction} from '../sim/autopilot';
 import { GameMenu, type MenuAction } from '../ui/GameMenu';
 import { screenToWorld } from './pointer';
@@ -81,7 +82,7 @@ export class FlightScene extends Phaser.Scene {
   constructor() { super('flight'); }
   create(): void {
     applyPresentation(this.preferences);
-    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
+    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (!actionAllowed(action)) return; if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.paused) this.colonyActions.push(action); }, this.preferences);
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
@@ -183,7 +184,9 @@ export class FlightScene extends Phaser.Scene {
     if (!this.paused) {
       this.clock.advance(delta / 1000, dt => {
         const input = this.keys.read();
-        stepWorld(this.simulation, { ...input, colonyActions: [...(input.colonyActions ?? []), ...this.colonyActions.splice(0)] }, dt);
+        const actions = filterActions([...(input.colonyActions ?? []), ...this.colonyActions.splice(0)]);
+        const combatFire = !!input.combatFire && featureVisible('combat');
+        stepWorld(this.simulation, { ...input, combatFire, colonyActions: actions }, dt);
       });
     }
     const onFoot = this.simulation.playerMode === 'astronaut';

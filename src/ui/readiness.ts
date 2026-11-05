@@ -1,3 +1,4 @@
+import { featureVisible } from '../preferences/features';
 import { fuelPlan,recoveryReadiness } from '../sim/readiness';
 import { BLUEPRINTS } from '../sim/colonyConfig';
 import { fuelCapacity } from '../sim/shipStats';
@@ -5,6 +6,7 @@ import type { WorldState } from '../sim/world';
 const fmt=(n:number)=>Number(n.toFixed(2));
 const shortage=(n:number)=>n>0&&n<.01?'&lt;0.01':fmt(n);
 export function readinessPanel(w:WorldState,paused:boolean,requested:number):string{
+  if (!featureVisible('freight')) return '';
  const recovery=recoveryReadiness(w),fuel=fuelPlan(w,requested),short=recovery.rows.filter(r=>r.shortfall>0);
  return `<p class="readiness-summary" data-recovery-funded="${recovery.funded}">HOME RECOVERY · ${recovery.funded?'Parts funded':short.map(r=>`short ${shortage(r.shortfall)} kg ${r.product}`).join(' · ')}</p><details class="readiness-panel" data-preserve-open><summary>Expedition readiness & refuelling</summary>
  <h3>Recovery at Selene</h3>${recovery.rows.map(r=>`<p data-recovery-material="${r.product}">${r.product}: need ${r.need} kg · usable ${fmt(r.usable)} / ${fmt(r.stock)} kg · short ${shortage(r.shortfall)} kg</p>`).join('')}

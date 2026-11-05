@@ -1,3 +1,4 @@
+import { bindingVisible } from '../preferences/features';
 import { BINDING_LABELS, BINDING_SLOTS, bindingError, keyLabel, physicalKey, defaultPresentation, applyPresentation, type BindingSlot, type PresentationPreferences } from '../preferences/presentation';
 
 export class Settings {
@@ -10,7 +11,7 @@ export class Settings {
       <label><input type="checkbox" id="reduced-motion"> Reduced motion and flashes</label><label><input type="checkbox" id="building-labels-setting"> Building labels</label><label><input type="checkbox" id="camera-rotation"> Camera follows local horizon</label>
       <label>Effects volume<input aria-label="Effects volume" id="effects-volume" type="range" min="0" max="1" step="0.05"></label><label>Music volume<input aria-label="Music volume" id="music-volume" type="range" min="0" max="1" step="0.05"></label></div>
       <p>Reduced graphics limits decorative detail; physics, distant production and threats keep running. Reduced motion removes camera rotation, pulses and animated engine/suit accents.</p>
-      <details><summary>Keyboard bindings · click a key to change it</summary><p>Choose an unused key. Duplicate bindings are rejected. Native controls keep Enter, Space and arrow navigation; typing in fields never flies the ship. This table lists the current controls; long-form guide examples use defaults.</p><div class="binding-grid">${BINDING_SLOTS.map(slot=>`<label>${BINDING_LABELS[slot]??(slot==='UP'?'Alternate thrust':slot==='LEFT'?'Alternate left':slot==='RIGHT'?'Alternate right':`Blueprint ${keyLabel(slot)}`)}<button type="button" data-bind="${slot}"></button></label>`).join('')}</div><button id="reset-bindings">Reset controls</button></details>
+      <details><summary>Keyboard bindings · click a key to change it</summary><p>Choose an unused key. Duplicate bindings are rejected. Native controls keep Enter, Space and arrow navigation; typing in fields never flies the ship. This table lists the current controls; long-form guide examples use defaults.</p><div class="binding-grid">${BINDING_SLOTS.filter(slot=>bindingVisible(slot)).map(slot=>`<label>${BINDING_LABELS[slot]??(slot==='UP'?'Alternate thrust':slot==='LEFT'?'Alternate left':slot==='RIGHT'?'Alternate right':`Blueprint ${keyLabel(slot)}`)}<button type="button" data-bind="${slot}"></button></label>`).join('')}</div><button id="reset-bindings">Reset controls</button></details>
       <p id="binding-status" role="status" aria-live="polite"></p><button id="reset-presentation">Reset presentation preferences</button>`;
     document.body.append(d); this.sync();
     d.addEventListener('cancel', e=>{e.preventDefault();this.close();});

@@ -5,8 +5,8 @@ import { TECH_IDS } from './progressionConfig';
 export type ObjectiveLink = 'cargo' | 'build' | 'equipment' | 'map' | 'research' | 'defence';
 export const HABITAT_WORK_GOAL = 20;
 export const OBJECTIVES = [
-  { id: 'delivery', group: 'expedition', link: 'cargo', label: 'Make your first delivery', hint: 'Launch with W. Hold Space to mine the starter rocks; C collects fragments. Land on the marked pad and E unloads ore.' },
-  { id: 'industry', group: 'expedition', link: 'build', label: 'Run supplied industry', hint: 'F leaves the ship. Walk with A/D, open Build [B], and place a solar array and refinery or rig. Work needs real feedstock and power.' },
+  { id: 'delivery', group: 'expedition', link: 'cargo', label: 'Make your first delivery', hint: 'Press W to launch. Hold Space to mine a rock, then hold C to pull the fragments in. Land on the green pad and press E to unload.' },
+  { id: 'industry', group: 'expedition', link: 'build', label: 'Get industry running', hint: 'Press F to step out and walk with A/D. Press B to build a solar array and a refinery. The refinery runs once it has ore and power.' },
   { id: 'equipment', group: 'expedition', link: 'equipment', label: 'Equip for exploration', hint: 'Build a powered lab, pay for research in Manage, and fabricate a module at home. No free stock or fuel is supplied.' },
   { id: 'moonWork', group: 'expedition', link: 'map', label: 'Work on Nacre', hint: 'Load finite rig/solar freight in Ship / Cargo, select Nacre in Map, fly and land manually. Unload supplies, leave the ship and run a local mining rig.' },
   { id: 'return', group: 'expedition', link: 'map', label: 'Return from the moon', hint: 'Board and fly home after working on Nacre. Plan around terrain and land on the home pad. E delivers any carried ore.' },
