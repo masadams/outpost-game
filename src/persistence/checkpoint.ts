@@ -24,7 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=19;
+export const SAVE_VERSION=20;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -76,7 +76,16 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+}
+function validStorm(world: WorldState): boolean {
+  const s = world.storm;
+  if (!['quiet', 'approaching', 'over'].includes(s.phase) || typeof s.planned !== 'boolean' || typeof s.armed !== 'boolean') return false;
+  if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 16 || s.ids.length > 16) return false;
+  const vec = (v: unknown) => object(v) && number(v.x, -1e7, 1e7) && number(v.y, -1e7, 1e7);
+  return s.ids.every(id => Number.isInteger(id) && id > 0) && s.far.every(b => object(b) && Number.isInteger(b.id) && vec(b.entry) && vec(b.velocity) &&
+    number(b.entryTime, 0, 1e9) && number(b.radius, 0.01, 200) && number(b.mass, 1e-12, 1e6) &&
+    (b.impactAngle === null || number(b.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (b.impactTime === null || number(b.impactTime, 0, 1e9)));
 }
 export function encodeCheckpoint(world: WorldState): string {
   world = world.rootWorld ?? world;

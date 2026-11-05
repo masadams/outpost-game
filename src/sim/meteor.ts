@@ -45,7 +45,7 @@ export function advanceMeteor(meteor: Meteor, dt: number, world?: WorldState, sh
 export function predictMeteor(source: Meteor, horizon = 120, system = STATIC_SYSTEM): ThreatPrediction {
   const meteor = { ...source, position: { ...source.position }, velocity: { ...source.velocity } };
   const result: ThreatPrediction = { id: source.id, points: [{ ...meteor.position }], impact: null, seconds: 0 };
-  const count = Math.ceil(Math.min(120, Math.max(0, horizon)) / STEP);
+  const count = Math.ceil(Math.min(300, Math.max(0, horizon)) / STEP);
   for (let i = 1; i <= count; i++) {
     result.impact = advanceMeteor(meteor, STEP, undefined, undefined, { ...system, time: system.time + (i - 1) * STEP }); result.seconds = i * STEP;
     if (i % 30 === 0 || result.impact) result.points.push({ ...meteor.position });
