@@ -3,6 +3,7 @@ import { flightRegion, REGION_LABELS, type FlightRegion } from '../../sim/flight
 import { OBJECTIVES, objectiveProgress, type ObjectiveId } from '../../sim/objectives';
 import { cargoMass } from '../../sim/shipMass';
 import type { WorldState } from '../../sim/world';
+import { coach, DEFAULT_COACH_KEYS, type CoachKeys } from './coach';
 
 type Objective = typeof OBJECTIVES[number];
 
@@ -26,8 +27,10 @@ export interface RegionView {
   label: string;
 }
 
-function detailFor(w: WorldState, id: ObjectiveId): string {
+function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
   if (id === 'delivery') {
+    const step = coach(w, keys);
+    if (step) return step.text;
     const cargo = cargoMass(w.ship);
     if (cargo <= 0) return 'Mine a rock, then hold C to pull the fragments in.';
     if (w.ship.state === 'landed') return `${cargo.toFixed(0)} kg in the hold. Press E to unload.`;
@@ -43,7 +46,11 @@ function detailFor(w: WorldState, id: ObjectiveId): string {
 }
 
 /** The objective card follows the tracked goal, or the next unfinished one. */
-export function objectiveCard(w: WorldState, tracked: ObjectiveId | 'auto' = 'auto'): ObjectiveCardView {
+export function objectiveCard(
+  w: WorldState,
+  tracked: ObjectiveId | 'auto' = 'auto',
+  keys: CoachKeys = DEFAULT_COACH_KEYS,
+): ObjectiveCardView {
   const root = w.rootWorld ?? w;
   const shown = shownObjectives();
   const done = root.objectives.completed.filter(id => shown.some(o => o.id === id));
@@ -55,7 +62,7 @@ export function objectiveCard(w: WorldState, tracked: ObjectiveId | 'auto' = 'au
   return {
     count,
     title: next.label,
-    detail: complete ? 'Done.' : detailFor(root, next.id) || next.hint,
+    detail: complete ? 'Done.' : detailFor(w.rootWorld ? w : root, next.id, keys) || next.hint,
     fraction: complete ? 1 : Math.max(0, Math.min(1, progress.value / progress.target)),
     complete,
   };

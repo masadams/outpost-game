@@ -40,6 +40,8 @@ import { tractorStats } from '../sim/shipStats';
 import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
 import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
+import { coach } from '../ui/flight/coach';
+import { drawCoachPointer } from './coachPointer';
 import { FlightTools } from '../ui/FlightTools';
 import { predictCoast, type Trajectory } from '../sim/trajectory';
 import { createAtmosphere } from './atmosphere';
@@ -210,11 +212,15 @@ export class FlightScene extends Phaser.Scene {
     }
     return points;
   }
+  private coachKeys() {
+    const key = (slot: BindingSlot) => keyLabel(this.preferences.bindings[slot] ?? slot);
+    return { thrust: key('W'), turn: `${key('A')} / ${key('D')}`, fire: key('SPACE'), tractor: key('C'), unload: key('E') };
+  }
   private updateChrome(): void {
     const world = activeWorld(this.simulation);
     const key = (slot: BindingSlot) => keyLabel(this.preferences.bindings[slot] ?? slot);
     this.chrome.update({
-      objective: objectiveCard(world, this.hud.trackedObjective),
+      objective: objectiveCard(world, this.hud.trackedObjective, this.coachKeys()),
       region: regionView(world),
       panel: this.hud.currentPanel,
       paused: this.paused,
@@ -403,6 +409,8 @@ export class FlightScene extends Phaser.Scene {
     drawDefence(g, this.simulation, this.threats, this.follow.zoom, view);
     drawCombat(g, this.simulation, this.follow.zoom, this.preferences.reducedMotion, view, this.preferences.quality==='high');
     const s = this.ship;
+    const coaching = coach(this.simulation, this.coachKeys());
+    if (coaching?.target) drawCoachPointer(g, s.position, coaching.target, this.follow.zoom, this.time.now / 1000, !this.halted && !this.preferences.reducedMotion);
     this.effects.draw(g,this.follow.zoom);
     drawShip(g,s,this.follow.zoom,this.time.now,this.halted,this.preferences.reducedMotion);
     const mx = width - 92, my = height - 100, m = this.map;

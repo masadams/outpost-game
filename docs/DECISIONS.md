@@ -273,3 +273,6 @@ Rock, laser and debris art is render-only and deterministic: a rock's look comes
 
 ## Landing feel (slice 5.3) — 2026-11-05
 Landing rules are unchanged. Feedback is render-only: pad beacon colour follows the existing approach check (`flightSafety`), and dust is cosmetic, capped by quality and off with reduced motion. Existing sounds for touchdown and impact are kept.
+
+## First-run guidance (slice 5.4) — 2026-11-05
+Guidance is one pure function from world state to the next instruction (`coach`), shown in the objective card and as a world-space arrow. It reads state only, so there is nothing to save, and it stops after the first delivery. No tutorial mode, popups or locked controls.
