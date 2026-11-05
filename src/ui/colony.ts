@@ -1,8 +1,6 @@
 import { featureVisible } from '../preferences/features';
 import { colonyPlanet } from '../sim/localWorld';
-import { buildFlow, type BuildDraft } from './buildFlow';
 import { MANIFESTS, type ManifestId } from '../sim/manifests';
-import { blueprintFootprint, blueprintPalette, type BuildCategory } from './blueprints';
 import { RESOURCES, type Resource } from '../sim/resources';
 import type { Product } from '../sim/colonyConfig';
 import { habitatDetails } from './habitats';
@@ -18,19 +16,11 @@ import { energyCapacity, oreCapacity, placementError, nearbyBuilding, recipeFor,
 import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 
-export function colonyPanel(world: WorldState, paused: boolean, draft?:BuildDraft|null,category:BuildCategory='power'): string {
+/** Nearby facility controls and local stocks. Building itself lives in the build bar. */
+export function colonyPanel(world: WorldState, paused: boolean): string {
   const colony = world.colony, disabled = paused || world.playerMode !== 'astronaut' ? 'disabled' : '';
   const near = nearbyBuilding(world);
-  const error = colony.buildOpen ? placementError(world) : null;
-  return `<label>BUILD · ${colonyPlanet(world).label.toUpperCase()} · ${colony.buildings.length} FACILITIES</label>
-
-
-    <button data-colony="toggleBuild">${colony.buildOpen ? 'Finish mouse building [B]' : 'Plan construction [B]'}</button>
-    ${colony.buildOpen ? `<p class="build-instruction">Choose → point at surface → left click queues work · right click finishes</p><h3>${BLUEPRINTS[colony.selected].label} · selected blueprint</h3><p>Cost ${Object.entries(BLUEPRINTS[colony.selected].cost).map(([p,q])=>`${q} ${p}`).join(' · ')}<br>${blueprintFootprint(colony.selected)}</p>
-      ${featureVisible('catalogue')?`<label for="build-category">Blueprint category</label><select id="build-category">${([['power','Power & storage'],['industry','Industry & research'],['crew','Crew & service'],['defence','Defence'],['all','All blueprints']] as const).map(([id,label])=>`<option value="${id}" ${category===id?'selected':''}>${label}</option>`).join('')}</select>`:''}${blueprintPalette(world,'',category)}${buildFlow(world,paused,draft)}<details data-preserve-open><summary>Nearby manual placement · Q/T/Enter</summary>      <p class="placement ${error ? 'invalid' : ''}">${error ?? 'Site clear · place preview'}<br><small>Preview ${colony.offset} m along the rim</small></p>
-      <div class="build-actions"><button ${disabled} data-shift="-32">← [Q]</button><button ${disabled} data-shift="32">→ [T]</button><button ${disabled || error ? 'disabled' : ''} data-colony="place">Place [Enter]</button></div>
-</details>
-      <button ${disabled} data-colony="demolish">Demolish nearby [X] · up to 75% salvage</button>` : ''}
+  return `<label>${colonyPlanet(world).label.toUpperCase()} · ${colony.buildings.length} BUILDINGS</label>
     ${near ? `<div class="machine" data-hull="${buildingHealth(near).toFixed(1)}" data-aim="${(near.turret?.aim ?? 0).toFixed(3)}"><label>${BLUEPRINTS[near.kind].label}</label><p>Hull ${buildingHealth(near).toFixed(0)}% · ${near.status}${recipeFor(near) ? ` · ${recipeFor(near)!.label} · ${near.progress.toFixed(1)} s` : ''}</p>
       ${near.kind === 'storage' || near.kind === 'battery' ? `<p>${buildingHealth(near) > 0 ? 'Passive capacity · available' : 'Capacity lost · repair to restore'}</p>` : `<button ${disabled} data-colony="toggleMachine">${near.enabled ? 'Disable' : 'Enable'} nearby${near.kind === 'service' || isTurret(near.kind) ? '' : ' [E]'}</button>`}
       ${isTurret(near.kind) ? `<p>${WEAPONS[near.kind].range} m · ${WEAPONS[near.kind].energy} kJ/shot${WEAPONS[near.kind].alloy ? ` · ${WEAPONS[near.kind].alloy} alloy${WEAPONS[near.kind].components ? ` + ${WEAPONS[near.kind].components} components` : ''}` : ''}</p><button ${disabled} data-colony="controlTurret">${world.defence.controlled === near.id ? 'Release turret' : 'Control turret'} [E]</button><button ${disabled} data-colony="toggleAuto">Auto defence [G]: ${near.turret?.automatic ? 'on' : 'off'}</button>` : ''}
@@ -45,7 +35,6 @@ export function colonyPanel(world: WorldState, paused: boolean, draft?:BuildDraf
     <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
     <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
     <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div></details>
-    ${colony.buildOpen ? `<div class="facility-list">${colony.buildings.map(b => `<div>${BLUEPRINTS[b.kind].label} · ${b.status} · ${buildingHealth(b).toFixed(0)}% hull</div>`).join('')}</div>` : ''}
     <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {

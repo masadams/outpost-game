@@ -102,7 +102,7 @@ test('constructs a powered production line and preserves its world checkpoint ac
   await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-build-open', 'true');
   await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
   await page.keyboard.press('t');
-  await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="refinery"]').click();
+  await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Industry & research',exact:true}).click(); await page.locator('[data-select="refinery"]').click();
   await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await page.keyboard.press('t'); await page.keyboard.press('5'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '3');

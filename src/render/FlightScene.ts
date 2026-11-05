@@ -133,7 +133,17 @@ export class FlightScene extends Phaser.Scene {
         if(!this.halted){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:Math.atan2(at.x-p.position.x,-(at.y-p.position.y)),body:p.id});}}
         return;
       }
-      if(this.hud.pointerBuilding){const d=this.hud.buildPointer;if(!this.halted&&d){if(d.valid)this.colonyActions.push({type:'queueBuild',kind:d.kind,angle:d.angle,body:d.body});else notify(this.simulation,d.error??'Invalid site');}return;}
+      if(this.hud.pointerBuilding){
+        const d=this.hud.buildPointer;
+        if(!this.halted&&d){
+          if(d.valid){
+            this.colonyActions.push({type:'queueBuild',kind:d.kind,angle:d.angle,body:d.body});
+            // On foot, the astronaut walks over and builds it straight away.
+            if(this.simulation.playerMode==='astronaut'&&!this.simulation.crewOrder)this.colonyActions.push({type:'crewOrder',operation:'build',body:d.body});
+          }else notify(this.simulation,d.error??'Invalid site');
+        }
+        return;
+      }
       const candidates=allColonies(this.simulation).flatMap(site=>site.colony.buildings.map(b=>({id:b.id,body:site.siteBody??'home',p:sitePosition(site,b.angle,8)}))).map(v=>({...v,d:Math.hypot(at.x-v.p.x,at.y-v.p.y)})).sort((a,b)=>a.d-b.d);
       if(candidates[0]?.d<Math.max(16,10/this.follow.zoom))this.hud.selectFacility(candidates[0].body,candidates[0].id);
     });
@@ -212,6 +222,16 @@ export class FlightScene extends Phaser.Scene {
     this.paused = value; this.keys.release(); this.colonyActions = []; this.clock.reset();
     if (value) this.audio.silence();
   }
+  private lastPlayerMode: 'ship' | 'astronaut' = 'ship';
+  /** Stepping out of the lander with building work queued sends the astronaut to do it. */
+  private dispatchOnStepOut(): void {
+    const mode = this.simulation.playerMode;
+    const steppedOut = this.lastPlayerMode === 'ship' && mode === 'astronaut';
+    this.lastPlayerMode = mode;
+    if (!steppedOut || this.halted || this.simulation.crewOrder) return;
+    const local = activeWorld(this.simulation);
+    if (local.colony.command.queue.some(o => !o.paused)) this.colonyActions.push({ type: 'crewOrder', operation: 'build' });
+  }
   /** The world is still while the player pauses, or while a full-screen window is open in flight. */
   private get halted(): boolean { return this.paused || this.windowPaused; }
   /** Base and Map pause the world only while the lander is flying (docs/DECISIONS.md, mockup 1 review). */
@@ -226,9 +246,10 @@ export class FlightScene extends Phaser.Scene {
   }
   update(_time: number, delta: number): void {
     this.updateWindowPause();
+    this.dispatchOnStepOut();
     if (this.keys.mute()) this.audio.toggleMute();
     if (!this.settings.isOpen && (!this.menu.isOpen||this.help.isOpen) && this.keys.help()) this.help.toggle();
-    if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else if(!this.menu.isOpen){if(this.hud.dockOpen)this.hud.closeDock();else{this.setPaused(true);this.menu.open('pause');}} }
+    if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else if(!this.menu.isOpen){const local=activeWorld(this.simulation);if(local.colony.buildOpen){applyColonyAction(local,{type:'buildMode',open:false});this.hud.clearBuildPointer();}else if(this.hud.dockOpen)this.hud.closeDock();else{this.setPaused(true);this.menu.open('pause');}} }
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.restart()) this.newGame();
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }

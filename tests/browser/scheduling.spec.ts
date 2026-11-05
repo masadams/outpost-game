@@ -10,7 +10,7 @@ test('automatically refines rig ore to stock targets, supports native controls a
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 10000, intervals: [100] }).toBeGreaterThan(96);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await page.keyboard.press('b'); await page.keyboard.press('Enter');
-  await page.keyboard.press('t'); await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click(); await page.keyboard.press('Enter');
+  await page.keyboard.press('t'); await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Industry & research',exact:true}).click(); await page.locator('[data-select="miningRig"]').click(); await page.keyboard.press('Enter');
   await page.keyboard.press('t'); await page.keyboard.press('4'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '3');
   // Extend construction from a new crew position; the preview is limited to 96 m reach.

@@ -320,3 +320,11 @@
   right: 16px;
   height: calc(100dvh - var(--chrome-right-bottom) - 24px);
 }
+
+/* The old management workspace sized itself from the full viewport, assuming the window started near the top.
+   It now starts below the screen buttons, so subtract that offset. Removed when Base is rebuilt (slice 4.3). */
+#hud .tree-viewport { height: clamp(200px, calc(100dvh - var(--chrome-right-bottom) - 370px), 680px); }
+#hud #command-console .selection-inspector { max-height: max(240px, calc(100dvh - var(--chrome-right-bottom) - 400px)); }
+@media (max-height: 750px) and (min-width: 681px) {
+  #hud #command-console .selection-inspector { max-height: calc(100dvh - var(--chrome-right-bottom) - 170px); }
+}

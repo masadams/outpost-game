@@ -52,8 +52,8 @@ New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `sr
 | Slice | What | Status |
 |---|---|---|
 | 4.1 Flight | Instrument cluster (reserve bars, attitude dial with nose and motion, readouts, touchdown limits), objective card, screen buttons (Ship, Build, Base, Map, Menu), icon tray, view tools by the radar, notices column, Base/Map pause while flying | Done |
-| 4.2 Build | Build bar, in-world ghost placement with reasons, build on foot or from the landed ship | Next |
-| 4.3 Base | Full-screen Base window: overview, buildings, ship; replaces Manage | Planned |
+| 4.2 Build | Build bar (cards, costs, what is missing, materials and power, queue with cancel), ghost placement with plain reasons at the cursor, build from the landed lander or on foot, astronaut sent automatically, Esc leaves build mode | Done |
+| 4.3 Base | Full-screen Base window: overview, buildings, ship; replaces Manage and the on-foot facility panel (nearby controls, reserves, local stocks) | Next |
 | 4.4 Map | Full-screen Map window with inspector; replaces the old navigation panel and guidance line | Planned |
 | 4.5 Cleanup | Delete the old dock, panels and remaining legacy CSS; Menu, Help and Settings restyled | Planned |
 

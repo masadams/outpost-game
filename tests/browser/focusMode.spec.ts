@@ -17,14 +17,16 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: 'Build', exact: true }).click();
-  const palette = dock.locator('.build-palette [data-select]');
-  await expect(palette).toHaveCount(5);
+  const bar = page.getByRole('region', { name: 'Build', exact: true });
+  const cards = bar.locator('[data-select]');
+  await expect(cards).toHaveCount(5);
   for (const name of ['Solar array', 'Battery', 'Storage', 'Refinery', 'Fuel processor']) {
-    await expect(palette.filter({ hasText: name })).toHaveCount(1);
+    await expect(cards.filter({ hasText: name })).toHaveCount(1);
   }
-  await expect(dock.locator('#build-category')).toHaveCount(0);
-  await expect(dock).not.toContainText('unreserved');
+  await expect(bar.getByRole('navigation', { name: 'Building groups' })).toHaveCount(0);
+  await expect(bar).not.toContainText('unreserved');
   await page.keyboard.press('Escape');
+  await expect(bar).toBeHidden();
 
   await page.getByRole('button', { name: 'Base', exact: true }).click();
   const pages = dock.locator('button[data-page]');

@@ -14,9 +14,9 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   await page.keyboard.up('d'); await page.waitForTimeout(450); await page.keyboard.press('b'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '1');
   for (let i = 0; i < 4; i++) await page.keyboard.press('q');
-  await page.getByLabel('Blueprint category', { exact: true }).selectOption('crew'); await page.locator('[data-select="habitatLarge"]').focus(); await page.keyboard.press('Space');
-  await expect(page.locator('.placement')).toContainText('Site clear');
-  await page.getByText('Nearby manual placement · Q/T/Enter',{exact:true}).click();await page.locator('[data-colony="place"]').focus(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Crew & service',exact:true}).click(); await page.locator('[data-select="habitatLarge"]').focus(); await page.keyboard.press('Space');
+  // Keyboard placement: leave the card, then Enter places next to the astronaut.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await page.keyboard.press('b'); await page.keyboard.down('a');
   // The return from the build site can exceed 12 seconds at the crew's 12 m/s walking speed.
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 18000, intervals: [100] }).toBeLessThan(12);

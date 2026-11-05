@@ -2,6 +2,14 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Build slice decisions — 2026-11-05
+
+- **Screen buttons stay on top of full-screen windows** and act as tabs (Ship, Build, Base, Map), with the sound / help / settings / pause tray. Windows open just below them. Small change from mockup 1, so Settings and switching screens never need closing a window first.
+- **Build mode replaces the instrument cluster** with the build bar; flight instruments return when you stop building.
+- **Astronaut is sent automatically:** placing a site on foot dispatches them; stepping out of the lander with work queued does too. Any manual movement still cancels the order.
+- **Removed:** the old build panel (category dropdown, numeric "metres from pad" site entry, "Dispatch crew" button, manual-placement disclosure). The keyboard path is Q / T / Enter next to the astronaut.
+- **Reserves** are reachable from the lander under Base → Economy until the Base rebuild.
+
 ## Rewrite over adapt — 2026-11-05
 
 The user directed: when rebuilding is faster or cleaner than adapting, rebuild; do not keep old code that has no value or no longer belongs. Applied to the UI rebuild:

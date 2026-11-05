@@ -10,10 +10,8 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 10000, intervals: [100] }).toBeGreaterThan(96);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await page.keyboard.press('b'); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
-  await page.keyboard.press('t'); await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click();
-  await page.getByText('Nearby manual placement · Q/T/Enter', { exact: true }).click();
-  await expect(page.locator('details').filter({ has: page.getByText('Nearby manual placement · Q/T/Enter', { exact: true }) }).locator('.placement')).toContainText('Site clear');
-  await page.getByRole('button', { name: 'Place [Enter]', exact: true }).click(); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.keyboard.press('t'); await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Industry & research',exact:true}).click(); await page.locator('[data-select="miningRig"]').click();
+  await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await expect.poll(async () => Number(await hud.getAttribute('data-depot')), { timeout: 8000 }).toBeGreaterThan(0);
   await expect(page.locator('.ground-survey')).toHaveAttribute('data-resource', 'iron');
   await page.keyboard.press('b'); await page.keyboard.down('d');

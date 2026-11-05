@@ -3,9 +3,6 @@ import { isolateControlKeys } from './controlKeys';
 import type { DockView, HudContext } from './context';
 
 export class OperationsDock {
-  onBuild: (()=>void)|null=null;
-  buildActive=false;
-  onLeaveBuild:(()=>void)|null=null;
   private shipTabs=document.createElement('nav');
   readonly root = document.createElement('aside');
   readonly autopilot = document.createElement('section');
@@ -71,12 +68,8 @@ export class OperationsDock {
     return !this.root.hidden && !this.inspection && this.root.dataset.expanded === 'true' && (this.view === 'command' || this.view === 'navigation');
   }
   setWindowPaused(paused: boolean): void { this.pausedBadge.hidden = !paused; this.root.dataset.windowPaused = String(paused); }
-  /** Screen buttons: Build opens planning mode; the others toggle their panel. */
-  choose(view: DockView): void {
-    if (view === 'colony' && this.view === 'colony' && !this.buildActive) { this.onBuild?.(); return; }
-    this.toggle(view);
-    if (view === 'colony' && this.view === 'colony') this.onBuild?.();
-  }
+  /** Screen buttons toggle their panel. Build mode is handled by the HUD, not the dock. */
+  choose(view: DockView): void { this.toggle(view); }
   private layoutControls(expanded:boolean):void {
     this.root.dataset.expanded=String(expanded);
     this.sizeButton.textContent=expanded?'↙ Compact':'↗ Expand';
@@ -84,7 +77,6 @@ export class OperationsDock {
     this.sizeButton.setAttribute('aria-pressed',String(expanded));
   }
   private render(): void {
-    if(this.view!=='colony'&&this.buildActive){this.buildActive=false;this.onLeaveBuild?.();}
     this.root.hidden = this.view === null; this.root.dataset.panel = this.view ?? 'closed';
     if(this.view!=='command')this.inspection=false;this.root.dataset.inspection=String(this.inspection);
     const expanded=!this.inspection&&this.view!==null&&this.expanded.has(this.view);
