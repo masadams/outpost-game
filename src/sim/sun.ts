@@ -1,29 +1,12 @@
-import { wrap, type Vec } from './math';
-import type { SystemFrame } from './celestial';
+import type { BodyId, SystemFrame } from './celestial';
+import { lightAt, SUN, sunAngle } from './star';
+import { heading, type Vec } from './math';
 
-/**
- * The star and the day. The sun circles the sky once per day. The planet itself does not spin (flight, landing and terrain are
- * unchanged); from the surface this looks and plays the same. Real rotation is a later, separate step.
- * Everything here is a pure function of time, so nothing is saved.
- */
-export const SUN = {
-  /** Seconds in a full day on Selene. */
-  dayLength: 1000,
-  /** Where the sun is at time zero, as a surface angle: a new game starts in the morning, in full light. */
-  startAngle: -1.1,
-  /** The sun's height (−1 to 1) at which a panel gives full power, and at which it gives none. Between is twilight. */
-  fullElevation: 0.2,
-  zeroElevation: -0.3,
-} as const;
+export { SUN, sunAngle } from './star';
 
 const TURN = Math.PI * 2;
 
-/** The angle (as for surface positions) at which the sun stands overhead at this time. */
-export function sunAngle(time: number): number {
-  return wrap(SUN.startAngle + TURN * time / SUN.dayLength);
-}
-
-/** How high the sun is for a place at this surface angle: 1 overhead, 0 on the horizon, −1 straight below. */
+/** How high the sun is for a place at this surface angle, ignoring the star's finite distance and eclipses: 1 overhead, 0 on the horizon. */
 export function sunElevation(angle: number, time: number): number {
   return Math.cos(angle - sunAngle(time));
 }
@@ -33,20 +16,26 @@ const smooth = (x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/** Share of full sunlight (0 to 1) at a surface angle. Always 1 when the system has no sun switched on. */
-export function daylightAt(system: SystemFrame, angle: number): number {
+/** Share of full sunlight (0 to 1) at a surface angle, from the real position of the star and anything in front of it. Always 1 when the sun is off. */
+export function daylightAt(system: SystemFrame, angle: number, body: BodyId = 'home'): number {
   if (!system.sun) return 1;
-  const e = sunElevation(angle, system.time);
-  return smooth((e - SUN.zeroElevation) / (SUN.fullElevation - SUN.zeroElevation));
+  const light = lightAt(system, body, angle);
+  const twilight = smooth((light.elevation - SUN.zeroElevation) / (SUN.fullElevation - SUN.zeroElevation));
+  return twilight * (1 - light.eclipse);
+}
+
+/** What a solar panel gets: daylight, scaled by how bright the star is at that distance (never more than double). */
+export function solarFactor(system: SystemFrame, angle: number, body: BodyId = 'home'): number {
+  if (!system.sun) return 1;
+  return daylightAt(system, angle, body) * Math.min(2, lightAt(system, body, angle).flux);
 }
 
 /** Direction from the planet's centre toward the sun, as a unit vector in the world frame (up is −y, as for surface angles). */
 export function sunDirection(time: number): Vec {
-  const a = sunAngle(time);
-  return { x: Math.sin(a), y: -Math.cos(a) };
+  return heading(sunAngle(time));
 }
 
-export type DayPhase = 'day' | 'dusk' | 'night' | 'dawn';
+export type DayPhase = 'day' | 'dusk' | 'night' | 'dawn' | 'eclipse';
 
 export interface SunClock {
   daylight: number;

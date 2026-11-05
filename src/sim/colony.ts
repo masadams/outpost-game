@@ -1,5 +1,5 @@
 import { stepObservatory } from './observatory';
-import { daylightAt } from './sun';
+import { solarFactor } from './sun';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -181,7 +181,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
   // Panels follow the sun: full power in daylight, none at night.
-  const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * daylightAt(world.system, b.angle);
+  const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * solarFactor(world.system, b.angle, colonyPlanet(world).id);
   colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b)).reduce((sum, b) => sum + panel(b), 0);
   for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b)) b.gridPower = b.requestedPower = panel(b);
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);

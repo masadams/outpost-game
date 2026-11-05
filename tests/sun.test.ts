@@ -61,7 +61,7 @@ describe('solar power follows the sun', () => {
 
   it('gives full power in daylight, none at night, and is unchanged with the sun off', () => {
     expect(plant(false, 450)).toBeCloseTo(8, 5);
-    expect(plant(true, 0)).toBeCloseTo(8, 5);
+    expect(plant(true, 0)).toBeCloseTo(8, 1);
     expect(plant(true, 620)).toBe(0);
     const dusk = plant(true, 470);
     expect(dusk).toBeGreaterThanOrEqual(0);

@@ -43,7 +43,8 @@ import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
 import { dayView } from '../ui/flight/dayView';
-import { daylightAt, sunAngle, sunDirection, sunElevation } from '../sim/sun';
+import { daylightAt } from '../sim/sun';
+import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
 import { drawStormSamples } from './storm';
@@ -384,10 +385,11 @@ export class FlightScene extends Phaser.Scene {
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
     const planet = nearestPlanet(eye, system);
     const here = localAngle(relative(eye, planet));
-    const height01 = sunElevation(here, system.time);
+    const light = lightAt(system, planet.id, here, Math.max(1, Math.hypot(eye.x - planet.position.x, eye.y - planet.position.y) - planet.radius));
+    const height01 = light.elevation;
     if (height01 < -0.25) return;
-    const shown = Math.max(0, Math.min(1, (height01 + 0.25) / 0.4));
-    const heading = sunAngle(system.time) - this.follow.angle;
+    const shown = Math.max(0, Math.min(1, (height01 + 0.25) / 0.4)) * (1 - 0.9 * light.eclipse);
+    const heading = Math.atan2(light.direction.x, -light.direction.y) - this.follow.angle;
     const reach = 0.4 * Math.min(width, height);
     const x = width / 2 + Math.sin(heading) * reach;
     const y = height * FOCUS_Y - Math.cos(heading) * reach;
@@ -416,7 +418,7 @@ export class FlightScene extends Phaser.Scene {
     // Light: the sky, the ground and the stars follow the sun where the player is.
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
     const eyePlanet = nearestPlanet(eye, this.simulation.system);
-    const daylight = daylightAt(this.simulation.system, localAngle(relative(eye, eyePlanet)));
+    const daylight = daylightAt(this.simulation.system, localAngle(relative(eye, eyePlanet)), eyePlanet.id);
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
@@ -461,7 +463,7 @@ export class FlightScene extends Phaser.Scene {
       detail: this.preferences.quality === 'high',
       time: this.time.now / 1000,
       animate: !this.halted && !this.preferences.reducedMotion,
-      light: this.simulation.system.sun ? sunDirection(this.simulation.system.time) : undefined,
+      light: this.simulation.system.sun ? lightAtPoint(this.simulation.system, this.simulation.ship.position, null).direction : undefined,
     });
     drawStormSamples(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawTowing(g, this.simulation, this.follow.zoom);

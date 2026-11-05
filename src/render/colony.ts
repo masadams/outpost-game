@@ -64,7 +64,7 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     if(detail&&animate&&entry.working&&!entry.ghost)facilityMotion(g,entry.kind,p,width,color,time,Math.abs(entry.angle*37)%1);
     const lamp = p(0, 15); g.fillStyle(color, entry.active ? 1 : 0.25); g.fillCircle(lamp.x, lamp.y, 1.4);
     // After dark a working building glows from its lamp.
-    const dark = 1 - daylightAt(world.system, entry.angle);
+    const dark = 1 - daylightAt(world.system, entry.angle, colonyPlanet(world).id);
     if (dark > 0.2 && entry.active && !entry.ghost) { g.fillStyle(color, 0.16 * dark); g.fillCircle(lamp.x, lamp.y, 6); g.fillStyle(0xffe6b0, 0.07 * dark); g.fillCircle(lamp.x, lamp.y, 11); }
   }
 }

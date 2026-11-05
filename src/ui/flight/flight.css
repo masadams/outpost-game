@@ -389,3 +389,4 @@
 #hud-chrome #flight-daylight[data-phase=dusk] i,
 #hud-chrome #flight-daylight[data-phase=dawn] i { background: #ff9b5e; box-shadow: 0 0 8px #ff9b5e; }
 #hud-chrome #flight-daylight[data-phase=night] i { background: #6d86b8; box-shadow: 0 0 6px #6d86b855; }
+#hud-chrome #flight-daylight[data-phase=eclipse] i { background: #1d2331; box-shadow: 0 0 0 2px #ffd98a88; }
