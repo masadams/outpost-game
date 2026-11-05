@@ -17,7 +17,7 @@ test('continues advanced fitted parts paused, supports save/resume/title and kee
 });
 
 test('keeps corrupt saves unavailable for Continue while a new game remains playable without deleting the slot',async({page})=>{
- await page.addInitScript(()=>localStorage.setItem('outpost.checkpoint.v1','{broken'));await page.goto('/');const menu=page.getByRole('dialog',{name:'Outpost game menu',exact:true});await expect(menu.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(menu).toContainText('Checkpoint unavailable or incompatible');await menu.getByRole('button',{name:'New Game',exact:true}).click();await expect(page.locator('#hud')).toHaveAttribute('data-state','landed');await expect(page.locator('.status')).toContainText('CHECKPOINT INVALID');expect(await page.evaluate(()=>localStorage.getItem('outpost.checkpoint.v1'))).toBe('{broken');
+ await page.addInitScript(()=>localStorage.setItem('outpost.checkpoint.v1','{broken'));await page.goto('/');const menu=page.getByRole('dialog',{name:'Outpost game menu',exact:true});await expect(menu.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(menu).toContainText('Checkpoint unavailable or incompatible');await menu.getByRole('button',{name:'New Game',exact:true}).click();await expect(page.locator('#hud')).toHaveAttribute('data-state','landed');await expect(page.locator('.status')).toContainText('Checkpoint invalid');expect(await page.evaluate(()=>localStorage.getItem('outpost.checkpoint.v1'))).toBe('{broken');
 });
 
 test('opens settings and controls from the title and keeps the native menu usable at supported desktop sizes',async({page})=>{

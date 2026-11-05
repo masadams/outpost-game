@@ -44,7 +44,7 @@ test('exits, walks and jumps to the depot, services the suit, then boards and la
   // Brake on the surface before opening the depot.
   await page.waitForTimeout(450);
   await page.keyboard.press('e'); await expect(hud).toHaveAttribute('data-depot-open', 'true');
-  await expect(page.locator('.surface-panel')).toContainText('DEPOT OPEN');
+  await expect(page.locator('.surface-panel')).toContainText('Depot open');
   await page.screenshot({ path: 'docs/screenshots/surface-depot.png' });
   await page.keyboard.down('Space'); await expect(hud).toHaveAttribute('data-grounded', 'false');
   await page.keyboard.up('Space');
@@ -55,7 +55,7 @@ test('exits, walks and jumps to the depot, services the suit, then boards and la
   await page.keyboard.up('a'); await page.waitForTimeout(450);
   await page.keyboard.press('e');
   await expect.poll(async () => Number(await hud.getAttribute('data-oxygen'))).toBeGreaterThan(179);
-  await expect(page.locator('.status')).toContainText('SUIT RESTORED');
+  await expect(page.locator('.status')).toContainText('Suit restored');
   await page.keyboard.down('d');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(-12);
   await page.keyboard.up('d'); await page.keyboard.press('f');
@@ -78,7 +78,7 @@ test('mines the starter deposit, collects ore and resets the complete sortie', a
   await page.keyboard.up('w'); await page.keyboard.up('Space'); await page.keyboard.up('c');
   await expect(hud).toHaveAttribute('data-mining', 'idle');
   await page.keyboard.press('i'); await expect(page.locator('.mining')).toBeVisible();
-  await expect(page.locator('.mining')).toContainText('ORE SECURED');
+  await expect(page.locator('.mining')).toContainText('Ore on board');
   await page.screenshot({ path: 'docs/screenshots/mining-cargo.png' });
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
   const cargo = await hud.getAttribute('data-cargo'); const pickups = await hud.getAttribute('data-pickups');
@@ -126,7 +126,7 @@ test('keeps a playable world when a stored checkpoint is corrupt', async ({ page
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('outpost.checkpoint.v1', '{broken'));
   await page.goto('/'); await expect(page.locator('#hud')).toHaveAttribute('data-state', 'landed');
-  await expect(page.locator('.status')).toContainText('CHECKPOINT INVALID');
+  await expect(page.locator('.status')).toContainText('Checkpoint invalid');
   await page.keyboard.down('w'); await expect(page.locator('#hud')).toHaveAttribute('data-state', 'flying'); await page.keyboard.up('w');
   expect(errors).toEqual([]);
 });

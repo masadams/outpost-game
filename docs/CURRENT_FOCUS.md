@@ -21,7 +21,7 @@ This is the bible's first signature slice: **the excellent mining sortie**. The 
 | 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel. Mockup 1: [docs/mockups/ui-rebuild.html](mockups/ui-rebuild.html) | Done: mockup 1 approved; add more detail and refinement in the real build |
 | 3 | Feature visibility: new games show only the focus set below; other systems remain in code, hidden. See [Feature visibility](#feature-visibility) | Done |
 | 4 | Rebuild UI layer in Preact on shared design tokens, implementing the agreed mockups. See [UI rebuild progress](#ui-rebuild-progress) | In progress |
-| 5 | Polish and hands-on playtest the first mining sortie until it's fun | Not started |
+| 5 | Polish and hands-on playtest the first mining sortie until it's fun | Next |
 
 ## Screen modes (agreed direction)
 - **Flight** — minimal live HUD: core instruments, current objective, contextual prompts. No permanent toolbar wall.
@@ -55,15 +55,15 @@ New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `sr
 | 4.2 Build | Build bar (cards, costs, what is missing, materials and power, queue with cancel), ghost placement with plain reasons at the cursor, build from the landed lander or on foot, astronaut sent automatically, Esc leaves build mode | Done |
 | 4.3 Base | Base window: Overview (materials, power, what needs attention), Buildings (list + inspector with on/off and recipe, plain reasons), Ship. Nearby card on foot replaces the old facility panel. Legacy console only with `?features=all` | Done |
 | 4.4 Map | Map window: clickable chart (Selene, ore clusters by colour, sites, pad, you, bearing line), places list, inspector with distance and speeds, unknowns until surveyed, site action with a plain reason, next-step note; zoom / fit / focus | Done |
-| 4.5 Cleanup | Ship panel (cargo, recovery) in the new style; Menu, Help and Settings restyled; plain-language notices; delete remaining dead legacy CSS | Next |
+| 4.5 Cleanup | Ship panel (hold, ore, nearest rock, depot on foot) in the new style; Menu, Help and Settings restyled with simpler wording; status messages shown as plain sentences; 46 dead CSS rules and the old surface panel deleted | Done |
 
 ## Known UX defects to fix in the rebuild
 - ~~Full-screen Map/Manage windows don't pause~~ Fixed in 4.1: Base and Map pause while flying.
 - ~~The Build tab stays highlighted while Manage or Map is open~~ Fixed in 4.1: screen buttons show the open panel.
 - ~~Dial readouts overlap their needles~~ Fixed in 4.1: new cluster, checked for clipping and collisions at 900×600–1920×1080 and 1.5× text.
-- The ship is about 20 px tall at 1600×900; the player barely registers their own lander.
+- The ship is about 20 px tall at 1600×900; the player barely registers their own lander. (Open: world rendering, step 5.)
 - ~~About 15 text buttons at launch~~ Fixed in 4.1: five screen buttons, four small icons, view tools by the radar.
-- Help and panel text uses internal jargon ("paid", "supplied", "unreserved") and reads like a changelog.
+- ~~Help and panel text uses internal jargon~~ Fixed in 4.5 for everything a new player sees; the legacy console behind `?features=all` still has the old wording.
 
 ## Out of scope this milestone
 New mechanics, parts, research, buildings or worlds. Storm, expedition and the S0–S6 systems slices wait until this milestone's playtest passes.

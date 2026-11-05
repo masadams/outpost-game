@@ -1,0 +1,26 @@
+/* Ship panel: hold, ore, nearest rock, and the depot view on foot. */
+#hud .ship-panel { display: grid; gap: 14px; padding: 16px 18px; font-family: var(--ui-body); color: var(--ui-text); --scale: var(--text-scale, 1); }
+#hud .ship-cargo { display: grid; gap: 8px; }
+#hud .ship-cargo-head { display: flex; justify-content: space-between; align-items: baseline; }
+#hud .ship-cargo-head span, #hud .ship-target h3, #hud .surface-panel h3 {
+  margin: 0; font: 600 calc(12px * var(--scale)) / 1 var(--ui-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ui-muted);
+}
+#hud .ship-cargo-head strong { font: 500 calc(24px * var(--scale)) / 1 var(--ui-mono); font-variant-numeric: tabular-nums; }
+#hud .ship-cargo-head small { display: inline; font-size: .55em; color: var(--ui-muted); }
+#hud .ship-meter { display: block; height: 10px; border-radius: 5px; background: var(--ui-raised); overflow: hidden; }
+#hud .ship-meter i { display: block; height: 100%; border-radius: 5px; background: var(--ui-ore); }
+#hud .ship-panel[data-full=true] .ship-meter i { background: var(--ui-amber); }
+#hud .ship-next {
+  margin: 0; padding: 10px 12px; border-left: 3px solid var(--ui-mint); border-radius: 0 var(--ui-radius) var(--ui-radius) 0;
+  background: var(--ui-mint-dim, #7fe6d31f); font: 500 calc(14px * var(--scale)) / 1.4 var(--ui-body);
+}
+#hud .ship-ore { width: 100%; border-collapse: collapse; font: 400 calc(13px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .ship-ore th, #hud .ship-ore td { padding: 6px 4px; text-align: left; border-bottom: 1px solid var(--ui-line); }
+#hud .ship-ore thead th { font: 600 calc(11px * var(--scale)) / 1 var(--ui-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ui-muted); }
+#hud .ship-ore td { font-family: var(--ui-mono); text-align: right; font-variant-numeric: tabular-nums; }
+#hud .ship-ore thead th:not(:first-child) { text-align: right; }
+#hud .ship-target p, #hud .surface-panel p { margin: 4px 0 0; font: 500 calc(14px * var(--scale)) / 1.4 var(--ui-body); }
+#hud .ship-panel small { display: block; font: 400 calc(12px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-muted); }
+#hud .ship-places { display: grid; gap: 4px; margin: 8px 0; padding: 0; list-style: none; }
+#hud .ship-places li { display: flex; justify-content: space-between; font: 400 calc(13px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .ship-places strong { font: 500 calc(13px * var(--scale)) / 1 var(--ui-mono); }

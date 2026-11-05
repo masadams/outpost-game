@@ -4,7 +4,7 @@ export class Help {
   private dialog = document.createElement('dialog');
   constructor(private onToggle: (open: boolean) => void) {
     this.dialog.id = 'help'; this.dialog.setAttribute('aria-label', 'Outpost quick-start and controls');
-    this.dialog.innerHTML = `<div class="help-title"><span class="eyebrow">OUTPOST · PLAYTEST ALPHA 0.21</span><button type="button">Return to game [H / Esc]</button></div>${featureVisible('catalogue') ? FULL_HELP : FOCUS_HELP}`;
+    this.dialog.innerHTML = `<div class="help-title"><span>How to play</span><button type="button">Return to game [H / Esc]</button></div>${featureVisible('catalogue') ? FULL_HELP : FOCUS_HELP}`;
     document.body.append(this.dialog);
     isolateControlKeys(this.dialog);
     this.dialog.querySelector('button')!.addEventListener('click', () => this.close());

@@ -47,7 +47,7 @@ test('queues paid construction, needs a real worker, supports cancellation and r
   await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Construction',exact:true}).click();
   await expect(page.getByRole('button', { name: 'Queue paid construction', exact: true })).toBeDisabled(); await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Queue paid construction', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1); await expect(console).toContainText('crew building');
-  await page.getByRole('button', { name: 'Pause order 1', exact: true }).click(); await expect(page.getByRole('button', { name: 'Resume order 1', exact: true })).toBeVisible(); await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED');
+  await page.getByRole('button', { name: 'Pause order 1', exact: true }).click(); await expect(page.getByRole('button', { name: 'Resume order 1', exact: true })).toBeVisible(); await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.world.colony.products.alloy).toBe(24); expect(saved.world.colony.command.queue[0].paused).toBe(true); expect(saved.world.colony.command.queue[0].progress).toBeGreaterThan(0);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name:'Base', exact: true }).click();
@@ -56,12 +56,12 @@ test('queues paid construction, needs a real worker, supports cancellation and r
   await console.locator('#command-site').fill('160'); await console.locator('#command-site').press('Tab'); await console.locator('#command-blueprint').selectOption('battery');
   await page.getByRole('button', { name: 'Queue paid construction', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1);
   await page.getByRole('button', { name: 'Pause order 2', exact: true }).click(); await expect(page.getByRole('button', { name: 'Resume order 2', exact: true })).toBeVisible();
-  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED');
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   const beforeCancel = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   const progress = beforeCancel.world.colony.command.queue[0].progress; expect(progress).toBeGreaterThan(0); expect(progress).toBeLessThan(8);
   await page.keyboard.press('p'); await page.getByRole('button', { name: 'Cancel order 2', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(0);
   await page.getByRole('button',{name:'Facilities',exact:true}).click(); await page.locator('#operations-dock').evaluate(el => el.scrollTop = 0); await page.screenshot({ path: 'docs/screenshots/command-console.png' });
-  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED'); const after = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
+  await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved'); const after = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   for (const [product, cost] of Object.entries({ alloy: 4, wire: 2, components: 2 })) expect(after.world.colony.products[product]).toBeCloseTo(beforeCancel.world.colony.products[product] + cost * (1 - progress / 8));
   expect(after.world.colony.command.queue).toHaveLength(0); expect(after.world.colony.buildings).toHaveLength(1);
 });

@@ -2,7 +2,6 @@ import { featureVisible, blueprintVisible } from '../../preferences/features';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
 import { availableProduct } from '../../sim/colonyPolicy';
 import { CONSTRUCTION_SECONDS } from '../../sim/commandConfig';
-import { colonyPlanet } from '../../sim/localWorld';
 import { inventoryMass } from '../../sim/resources';
 import type { WorldState } from '../../sim/world';
 import { GROUPS } from '../blueprints';
@@ -187,8 +186,4 @@ export function placementTip(w: WorldState, kind: BuildType, error: string | nul
   if (!error) return { text: `${label} · click to place`, ok: true };
   if (error === 'Insufficient fabrication materials') return { text: missingLine(w, kind) ?? 'Not enough materials', ok: false };
   return { text: error, ok: false };
-}
-
-export function colonyName(w: WorldState): string {
-  return colonyPlanet(w).label;
 }

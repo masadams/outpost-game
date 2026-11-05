@@ -2,6 +2,13 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Cleanup slice decisions — 2026-11-05
+
+- **Messages are rewritten at display time, not in the simulation.** `src/ui/notices.ts` turns SHOUTING · DOT · SEPARATED messages into sentences ("Checkpoint saved. K to update. L to load."). Saves, the simulation and its tests keep their original text; key letters and names are preserved. A handful of routine HUD messages were written out in plain English directly.
+- **"Checkpoint" stays** as the word for a save, because the menu already says Save checkpoint / Load checkpoint.
+- **Ship panel** shows hold, ore in hold versus depot, nearest rock and a single "what next" sentence; on foot it also shows the depot and terminals with the key to press.
+- **Dead code is deleted, not parked:** the old surface panel module, the old cargo and navigation markup, 46 unused CSS rules, and the dock's own navigation bar.
+
 ## Map slice decisions — 2026-11-05
 
 - **Map window rewritten** around the mockup: chart you can click, a places list, and an inspector. Ore clusters you have not surveyed say "Unknown until surveyed" instead of showing numbers.

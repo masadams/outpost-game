@@ -3,9 +3,12 @@ import {autopilotPanel} from './autopilot';
 import {UPGRADE_IDS,type UpgradeId} from '../sim/progressionConfig';
 import type {PointerView} from '../render/pointer';
 import { readinessPanel } from './readiness';
-import { BLUEPRINTS } from '../sim/colonyConfig';
 import { isolateControlKeys } from './controlKeys';
 import { orderError } from '../sim/construction';
+import { h, render } from 'preact';
+import { ShipPanelContent } from './ship/ShipPanel';
+import { shipPanelView } from './ship/shipView';
+import { plainNotice } from './notices';
 import { BuildBar } from './build/BuildBar';
 import { BaseWindow, type BaseSection } from './base/BaseWindow';
 import { baseView, buildingView } from './base/baseView';
@@ -23,7 +26,6 @@ import { colonyPlanet, localAngleAt } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
 import { isShield } from '../sim/shieldConfig';
 import { shieldActive } from '../sim/shields';
-import { cargoCapacity, miningStats, tractorStats } from '../sim/shipStats';
 import { NavigationPanel } from './Navigation';
 import { CommandConsole } from './CommandConsole';
 import { habitatSource } from '../sim/habitats';
@@ -31,7 +33,7 @@ import { habitatNotice } from './habitats';
 import { OperationsDock } from './OperationsDock';
 import { InstrumentPanel } from './InstrumentPanel';
 import { towingPanel } from './towing';
-import { flightRegion, REGION_LABELS } from '../sim/flightRegion';
+import { flightRegion } from '../sim/flightRegion';
 import { flightSafety } from '../sim/flightSafety';
 import { hudContext, type DockView } from './context';
 import { combatPanel } from './combat';
@@ -39,11 +41,9 @@ import { defencePanel } from './defence';
 import type { ThreatPrediction } from '../sim/meteor';
 import { WORLD } from '../sim/config';
 import { telemetry, type Ship } from '../sim/physics';
-import { localAngle, wrap } from '../sim/math';
-import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../sim/resources';
+import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 import { SUIT } from '../sim/astronaut';
-import { surfacePanel } from './surface';
 import { colonyPanel, actionFromButton } from './colony';
 import type { ColonyAction } from '../sim/colony';
 import { setText, patchMarkup } from './dom';
@@ -67,6 +67,8 @@ export class Hud {
   private pointerDraft:BuildDraft|null=null;
   private buildBar!: BuildBar;
   private base!: BaseWindow;
+  private shipHost = document.createElement('div');
+  private shipExtras = document.createElement('div');
   private nearby!: NearbyCard;
   private baseSection: BaseSection = featureVisible('catalogue') ? 'legacy' : 'overview';
   private baseSelected: number | null = null;
@@ -183,6 +185,9 @@ export class Hud {
     this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!,()=>onColonyAction({type:'autopilot',operation:'cancel'}));
     this.status = this.root.querySelector('.status')!;
     this.mining = this.dock.cargo; this.colony = this.dock.colony;
+    this.shipHost.className = 'ship-host';
+    this.shipExtras.className = 'ship-extras';
+    this.mining.append(this.shipHost, this.shipExtras);
     this.dock.root.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
       if (!button || button.disabled) return;
@@ -220,16 +225,18 @@ export class Hud {
     this.root.dataset.approach = String(!onFoot && safety.approach);
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
     const noticeText=world.notice.message.replace(/ · P TO RESUME$/,'');
-    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` : onFoot && world.astronaut.health <= 0 ? 'SUIT LOST · L CHECKPOINT · R NEW RUNTIME' :
-      !onFoot && ship.state === 'crashed' ? 'HULL LOST · BACKSPACE RECOVERS WITH SUPPLIES · L LOADS · R RESETS' : world.notice.time > 0 ? noticeText :
-      world.defence.controlled !== null ? 'TURRET CONTROL · A/D AIM · SPACE FIRE · E RELEASE' :
-      onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'LOW OXYGEN · RETURN TO SHIP OR SERVICE' : habitatNotice(world)) :
-      ship.impact > 0 ? 'IMPACT · HULL DAMAGE' : ship.state === 'landed' ?
-      (ship.landings > 0 ? 'TOUCHDOWN CONFIRMED · W TO RELAUNCH' : 'PAD SECURED · HOLD W TO LAUNCH') :
-      ship.fuel <= 0 ? 'FUEL EMPTY · COASTING' : region === 'airless' ? 'AIRLESS FLIGHT · GRAVITY · NO AIR DRAG' : region === 'space' ? 'OPEN SPACE · SHARED GRAVITY' : 'ATMOSPHERIC FLIGHT · GRAVITY + DRAG';
+    const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` :
+      onFoot && world.astronaut.health <= 0 ? 'Your suit is lost. Press L to load your last save, or R to start over.' :
+      !onFoot && ship.state === 'crashed' ? 'Your lander is wrecked. Press Backspace to recover it with supplies, L to load your last save, or R to start over.' :
+      world.notice.time > 0 ? noticeText :
+      world.defence.controlled !== null ? 'Controlling the turret. A/D aims, Space fires, E lets go.' :
+      onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'Low oxygen. Return to the lander or the service station.' : habitatNotice(world)) :
+      ship.impact > 0 ? 'Impact. The hull is damaged.' : ship.state === 'landed' ?
+      (ship.landings > 0 ? 'Touchdown confirmed. Press W to launch again.' : 'On the pad. Hold W to launch.') :
+      ship.fuel <= 0 ? 'Out of fuel. Coasting.' : region === 'airless' ? 'No air here, so no drag.' : region === 'space' ? 'Open space. Gravity still pulls.' : 'In the atmosphere. Gravity and drag both act.';
     const originalNotice=world.notice.time>0?noticeText:null;
     const shown=originalNotice?message.split(originalNotice).map(part=>controlHint(part,this.preferences)).join(originalNotice):controlHint(message,this.preferences);
-    setText(this.status,shown);
+    setText(this.status,plainNotice(shown));
     this.status.dataset.routine=String(!paused&&world.notice.time<=0&&ship.state!=='crashed'&&ship.impact<=0&&world.defence.controlled===null&&(!onFoot||world.astronaut.health>0&&(world.astronaut.oxygen>=30||!!habitatSource(world))));
     this.status.classList.toggle('danger', onFoot ? world.astronaut.health <= 0 || !habitatSource(world) && world.astronaut.oxygen < 30 : ship.state === 'crashed' || ship.impact > 0);
     this.root.dataset.state = paused ? 'paused' : ship.state;
@@ -271,20 +278,12 @@ export class Hud {
   }
   private updateMining(world: WorldState): void {
     const cargo = cargoMass(world.ship), stored = inventoryMass(world.depot);
-    const nearest = world.asteroids.reduce<typeof world.asteroids[number] | null>((best, rock) => {
-      const distance = Math.hypot(rock.position.x - world.ship.position.x, rock.position.y - world.ship.position.y);
-      const bestDistance = best ? Math.hypot(best.position.x - world.ship.position.x, best.position.y - world.ship.position.y) : Infinity;
-      return distance < bestDistance ? rock : best;
-    }, null);
-    const delta = nearest ? { x: nearest.position.x - world.ship.position.x, y: nearest.position.y - world.ship.position.y } : null;
-    const bearing = delta ? wrap(localAngle(delta) - world.ship.angle) * 180 / Math.PI : 0;
-    const objective = cargo > 0 ? (world.ship.state === 'landed' ? 'PRESS E TO UNLOAD' : 'ORE SECURED · return to green pad') :
-      stored > 0 ? 'DELIVERY CONFIRMED · launch for more' : 'Mine fragments, then hold C nearby';
-    patchMarkup(this.mining, `<label>HOLD / DEPOT · kg</label><strong>${cargo.toFixed(1)} <small>/ ${cargoCapacity(world.ship)} kg</small></strong>
-      <div class="cargo-meter"><i style="width:${cargo / cargoCapacity(world.ship) * 100}%"></i></div>
-      ${RESOURCES.map(type => `<div class="resource"><span>${RESOURCE_INFO[type].label}</span><span>${world.ship.cargo[type].toFixed(1)} / ${world.depot[type].toFixed(1)}</span></div>`).join('')}
-      ${world.playerMode === 'astronaut' ? surfacePanel(world) : `<p class="objective">${controlHint(objective,this.preferences)}</p><div class="target"><label>NEAREST DEPOSIT</label>${nearest && delta ? `${RESOURCE_INFO[nearest.resource].label} · ${Math.hypot(delta.x, delta.y).toFixed(0)} m<br><small>${Math.abs(bearing).toFixed(0)}° ${bearing < 0 ? 'left' : 'right'} of nose · laser ${miningStats(world.ship).range} m</small>` : 'Field depleted'}</div>
-      <small>${cargo >= cargoCapacity(world.ship) ? 'HOLD FULL · return and unload' : world.tractorActive ? `TRACTOR ACTIVE · ${tractorStats(world.ship).range} m` : 'C: tractor · SPACE: laser'}</small>`}${readinessPanel(world,this.root.dataset.state==='paused',this.fuelPlanAmount)}${towingPanel(world, this.root.dataset.state === 'paused')}${freightPanel(world, this.root.dataset.state === 'paused')}`);
+    render(h(ShipPanelContent, { view: shipPanelView(world) }), this.shipHost);
+    const paused = this.root.dataset.state === 'paused';
+    patchMarkup(
+      this.shipExtras,
+      `${readinessPanel(world, paused, this.fuelPlanAmount)}${towingPanel(world, paused)}${freightPanel(world, paused)}`,
+    );
     this.root.dataset.cargo = cargo.toFixed(2); this.root.dataset.depot = stored.toFixed(2);
     this.root.dataset.asteroids = String(world.asteroids.length); this.root.dataset.pickups = String(world.pickups.length);
     this.root.dataset.mining = world.beam ? 'active' : 'idle';

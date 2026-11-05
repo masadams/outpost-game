@@ -1,4 +1,3 @@
-import { featureVisible } from '../preferences/features';
 import { colonyPlanet } from '../sim/localWorld';
 import { MANIFESTS, type ManifestId } from '../sim/manifests';
 import { RESOURCES, type Resource } from '../sim/resources';
@@ -12,7 +11,7 @@ import { SCHEDULE_PRODUCTS, type ScheduleProduct } from '../sim/scheduling';
 import { buildingHealth } from '../sim/buildingHealth';
 import { isTurret, WEAPONS } from '../sim/defenceConfig';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType } from '../sim/colonyConfig';
-import { energyCapacity, oreCapacity, placementError, nearbyBuilding, recipeFor, type ColonyAction } from '../sim/colony';
+import { energyCapacity, oreCapacity, nearbyBuilding, recipeFor, type ColonyAction } from '../sim/colony';
 import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 

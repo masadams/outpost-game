@@ -28,7 +28,7 @@ test('keeps cautions visible and opens telemetry details without changing a paus
 
   await expect(cluster.locator('[data-instrument]')).toHaveCount(6);
   await expect(cluster.locator('.cluster-attitude')).toBeVisible();
-  await expect(page.locator('.status')).toHaveText('PAUSED · CHECKPOINT LOADED · P TO RESUME');
+  await expect(page.locator('.status')).toHaveText('Paused. Checkpoint loaded. P to resume.');
   await expect(page.locator('#flight-status')).toBeHidden();
   await expect(page.locator('[data-caution="spin"]')).toBeVisible();
   await expect(page.locator('#flight-alert')).toContainText('DESCENT HIGH');

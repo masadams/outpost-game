@@ -4,35 +4,11 @@
 :root[data-text-scale="1.5"] {--telemetry-height:104px;}
 #hud .instruments,#hud[data-mode=ship] .instruments {left:20px;right:184px;bottom:32px;height:var(--telemetry-height);display:block;grid-auto-rows:auto;background:linear-gradient(#182b35,#091720);border:1px solid #4b626d;border-radius:7px;box-shadow:0 5px 15px #0007;overflow:visible;pointer-events:auto;}
 #hud .instruments > div {padding:0;border:0;overflow:visible;}
-.instrument-bezel {height:23px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #3b535e!important;padding:0 8px!important;background:#0b1923; border-radius:6px 6px 0 0;}
 .instrument-mode {font-size:10px;letter-spacing:.5px;white-space:nowrap;color:#8da6b0;}
 .instrument-lamps {display:flex;gap:7px;overflow:hidden;align-items:center;flex:1;}
 .instrument-lamps span {font-size:10px;white-space:nowrap;}
 .instrument-lamps [data-level=caution],.detail-state[data-level=caution] {color:#efc780;}
 .instrument-lamps [data-level=critical],.detail-state[data-level=critical] {color:#ff9d91;}
-#hud .instrument-bezel button {margin-left:auto;font:inherit;font-size:10px;padding:2px 6px;height:20px;line-height:1;white-space:nowrap;}
-#hud .dial-bank {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));height:calc(100% - 23px);}
-#hud .instruments[data-mode=crew] .dial-bank {grid-template-columns:repeat(4,minmax(0,1fr));}
-#hud .flight-dial {min-width:0;padding:2px 5px;position:relative;text-align:center;color:#d1e2e5;border-right:1px solid #334c58;border-top:0;background:none;overflow:hidden;}
-#hud .flight-dial:last-child {border-right:0;}
-#hud .flight-dial[data-level=caution] {color:#efc780;}
-#hud .flight-dial[data-level=critical] {color:#ff9d91;}
-.dial-label {font-size:10px;letter-spacing:.4px;display:block;line-height:12px;white-space:nowrap;}
-.dial-light {display:inline-block;width:4px;height:4px;margin-right:5px;background:#617c84;border-radius:50%;vertical-align:middle;}
-[data-level=caution] .dial-light {background:#efc780;}
-[data-level=critical] .dial-light {background:#ff9d91;}
-.dial-face {position:relative;width:78px;height:40px;margin:0 auto;}
-.dial-gauge {position:absolute;inset:0;width:100%;height:100%;}
-.gauge-track {fill:none;stroke:#334d59;stroke-width:4;}
-.gauge-fill {fill:none;stroke:currentColor;stroke-width:3;opacity:.6;}
-.gauge-ticks {fill:none;stroke:#78929c;stroke-width:1;}
-.gauge-needle {fill:none;stroke:currentColor;stroke-width:2;}
-#hud[data-mode] .flight-dial strong {position:absolute;left:-10px;right:-10px;bottom:-2px;font-size:clamp(17px,calc(18px * var(--text-scale)),23px);line-height:1.1;white-space:nowrap;font-weight:normal;text-shadow:0 1px 4px #000;}
-#hud[data-mode] .flight-dial strong small {font-size:10px;}
-#hud .flight-dial[data-instrument=tilt] .dial-gauge {left:0;width:48px;}
-#hud[data-mode] .flight-dial[data-instrument=tilt] strong {left:38px;right:-8px;bottom:9px;font-size:clamp(16px,calc(17px * var(--text-scale)),21px);}
-.dial-range {display:block;font-size:8px;line-height:9px;color:#819da6;white-space:nowrap;}
-#hud .instrument-status[hidden] {display:none;}
 #hud .telemetry-details {position:absolute;left:-1px;bottom:calc(100% + 32px);width:min(460px,calc(100vw - 40px));max-height:min(300px,calc(100dvh - var(--telemetry-height) - 270px));overflow:auto;overscroll-behavior:contain;padding:14px;background:#0a1c27;border:1px solid #567482;border-radius:7px;box-shadow:0 8px 35px #000a;text-align:left;font-size:clamp(11px,calc(11px * var(--text-scale)),14px);z-index:3;}
 .telemetry-details h2 {margin:0 0 10px;font-size:1.1em;letter-spacing:.6px;color:#b9d3d6;}
 .detail-reading {display:grid;grid-template-columns:minmax(0,1fr) 90px minmax(0,1.15fr);align-items:center;gap:8px;border-bottom:1px solid #2e4755;padding:6px 0;line-height:1.4;}
@@ -41,10 +17,9 @@
 .instrument-environment h3 {font-size:.85em;color:#a3bac3;margin:10px 0 4px;}
 .instrument-combat {font-size:.9em;color:#a7c5cb;padding-top:8px;}
 #hud .instruments #flight-status {position:static;inset:auto;width:auto;max-width:none;white-space:normal;padding:0;background:transparent;font:inherit;line-height:1.5;margin-bottom:8px;}
-#surface-frame {display:none;}
 #combat-status {bottom:calc(60px + var(--telemetry-height));left:20px;font-size:11px;}
 #hud:has(.instruments[data-expanded=true]) #combat-status {display:none;}
 #hud .notices .status[data-routine=true] {display:none;}
 #hud > footer {bottom:6px;max-height:20px;font-size:10px;}
 @media(max-width:1100px){#hud .instruments,#hud[data-mode=ship] .instruments{bottom:32px;}.instrument-lamps{gap:5px;}.instrument-lamps span{font-size:9px;}}
-@media(max-width:680px){#hud .instruments,#hud[data-mode=ship] .instruments{right:16px;left:16px;}.instrument-mode{font-size:9px;}.instrument-lamps span{font-size:8px;}.dial-face{width:66px;}.dial-label{font-size:9px;}}
+@media(max-width:680px){#hud .instruments,#hud[data-mode=ship] .instruments{right:16px;left:16px;}.instrument-mode{font-size:9px;}.instrument-lamps span{font-size:8px;}}
