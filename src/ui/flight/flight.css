@@ -245,9 +245,9 @@
 }
 #hud-chrome .screen-button[aria-pressed=true] kbd { color: var(--ui-space); background: transparent; border-color: #06101a66; }
 
-#hud-chrome .tray, #hud-chrome .view-tools { display: flex; gap: 6px; align-items: center; }
+#hud-chrome .tray, #hud-chrome .view-tools { display: flex; gap: 4px; align-items: center; }
 #hud-chrome .tool-button {
-  display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: var(--ui-radius);
+  display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: var(--ui-radius);
   color: var(--ui-muted); background: var(--ui-panel); border: 1px solid var(--ui-line);
 }
 #hud-chrome .tool-button:hover:not(:disabled) { color: var(--ui-mint); border-color: var(--ui-mint); background: var(--ui-panel); }
@@ -307,6 +307,16 @@
 #operations-dock:not([data-expanded=true]) {
   top: var(--chrome-right-bottom);
   right: var(--ui-gap);
-  width: min(360px, 40vw);
+  width: min(340px, 32vw);
   max-height: calc(100vh - var(--chrome-right-bottom) - var(--bottom-reserve));
+}
+
+/* Full-screen windows open below the screen buttons, which stay on top and act as tabs (Ship, Build, Base, Map).
+   The sound / help / settings / pause tray stays reachable too. */
+#hud-chrome .chrome-right { z-index: 30; }
+#hud #operations-dock[data-expanded=true] {
+  top: calc(var(--chrome-right-bottom) + 8px);
+  left: 16px;
+  right: 16px;
+  height: calc(100dvh - var(--chrome-right-bottom) - 24px);
 }

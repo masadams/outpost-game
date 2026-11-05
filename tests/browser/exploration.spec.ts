@@ -57,7 +57,8 @@ test('uses a finite tender supply with actual ship tank room', async ({ page }) 
   const map = page.getByRole('button', { name: 'Map', exact: true }), panel = page.locator('#navigation-panel');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await map.click();
   await expect(page.getByRole('button', { name: 'Transfer tender fuel [E]', exact: true })).toBeVisible();
-  await page.keyboard.press('Escape'); await page.keyboard.press('p'); await page.keyboard.press('e');
+  await page.keyboard.press('Escape'); await page.keyboard.press('p');
+  await expect(hud).toHaveAttribute('data-state', 'flying'); await page.keyboard.press('e');
   await expect(hud).toHaveAttribute('data-fuel', WORLD.fuelCapacity.toFixed(2));
   await map.click(); await expect(panel).toContainText('fuel 13.0 kg'); await page.keyboard.press('Escape');
   await page.keyboard.press('e'); await map.click(); await expect(panel).toContainText('fuel 13.0 kg');
