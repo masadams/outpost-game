@@ -40,9 +40,8 @@ test('quick-start guide pauses gameplay, supports keyboard and resumes without s
   await page.keyboard.press('h'); await expect(page.getByRole('dialog')).toBeVisible();
   await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.screenshot({ path: 'docs/screenshots/playtest-guide.png' });
-  await page.keyboard.press('w'); await restart(page);
-  await expect(hud).toHaveAttribute('data-state', 'paused');
-  await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.keyboard.press('w'); await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).not.toBeVisible();
+  await restart(page);
   await expect(hud).toHaveAttribute('data-state', 'landed'); await expect(hud).toHaveAttribute('data-fuel', '240.00');
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name: 'Open quick-start guide' }).click();

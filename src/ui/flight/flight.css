@@ -310,7 +310,10 @@
   width: clamp(380px, 34vw, 480px);
   max-height: calc(100vh - var(--chrome-right-bottom) - var(--bottom-reserve));
   /* Everything inside reads about a quarter larger than in the full-screen window. */
-  --scale: calc(var(--text-scale, 1) * 1.25);
+  --scale: calc(var(--text-scale, 1) * 1.1);
+}
+@media (min-height: 760px) {
+  #operations-dock:not([data-expanded=true]) { --scale: calc(var(--text-scale, 1) * 1.25); }
 }
 
 /* Full-screen windows open below the screen buttons, which stay on top and act as tabs (Ship, Build, Base, Map).

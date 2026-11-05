@@ -10,7 +10,11 @@
   margin-inline: auto;
   pointer-events: none;
   font-family: var(--ui-body);
-  --scale: calc(var(--text-scale, 1) * 1.15);
+  --scale: var(--text-scale, 1);
+}
+/* Taller windows have room for the larger bar; short ones keep the flight corridor clear. */
+@media (min-height: 760px) {
+  #build-bar-host { --scale: calc(var(--text-scale, 1) * 1.15); }
 }
 #build-bar-host:empty { display: none; }
 
