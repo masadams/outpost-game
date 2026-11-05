@@ -92,6 +92,7 @@ function Overview({ view, open, analyse }: { view: BaseView; open: (id: number) 
           </strong>
         </div>
         <p class="base-power-summary">{p.summary}</p>
+        {p.forecast && <p class="base-power-summary" data-forecast>{p.forecast}</p>}
       </div>
       {view.storm && (
         <section class="base-storm" aria-label="Storm pieces" data-analysed={String(view.storm.analysed)}>

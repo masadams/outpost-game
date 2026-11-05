@@ -82,9 +82,9 @@ Also merged alongside it: right-click building menus with a confirmed Demolish (
 | Item | What | Status |
 |---|---|---|
 | Playtest the storm and the first night | Balance: day length, storm timing against night, how hard the storm is with one turret | Needs hands-on play |
-| Sun S3 | The moon's own day, eclipses, a power forecast in Base | Planned |
+| Sun S3 | Power forecast in Base: done. The moon already has its own day; eclipses still to do | Partly done |
 | Real planet rotation | Ground speed, launch assist, co-rotating air. A separate decision | Not decided |
-| Observatory and building sounds | Scan hum, power-on chime, build-complete sound | Planned |
+| Observatory and storm sounds | A rising scan when the Observatory starts, a two-note sighting, a calm chime when the storm is over | Done |
 
 ## Out of scope for now
 New worlds, new ship parts, the broad research tree, and the S0–S6 systems slices wait until the storm and the first night have been played and tuned.

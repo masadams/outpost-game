@@ -173,6 +173,9 @@ export class GameAudio {
       this.tone(740 * rise, 980 * rise, 0.08);
     }
     else if (cue === 'production') this.tone(440, 980, 0.08);
+    else if (cue === 'scan') { this.tone(300, 900, 0.5, 0, 'sine'); this.tone(450, 1350, 0.5, 0.35, 'sine'); this.tone(600, 1800, 0.45, 0.7, 'sine'); }
+    else if (cue === 'sighting') { this.tone(520, 520, 0.12, 0, 'sine'); this.tone(780, 780, 0.2, 0.16, 'sine'); }
+    else if (cue === 'stormOver') { this.tone(330, 440, 0.3, 0, 'sine'); this.tone(495, 660, 0.4, 0.2, 'sine'); }
     else if (cue === 'build') { this.noise(0.08, 0.035); this.tone(260, 520, 0.18); }
     else if (cue === 'demolish') this.tone(220, 90, 0.2);
     else if (cue === 'jump') this.tone(170, 280, 0.12);

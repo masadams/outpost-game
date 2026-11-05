@@ -84,3 +84,19 @@ describe('what the Base says about night', () => {
     expect(baseView(w).power.summary).toMatch(/^Night: solar panels are off\./);
   });
 });
+
+describe('power forecast', () => {
+  it('says when the light changes and whether storage covers a night', async () => {
+    const { baseView } = await import('../src/ui/base/baseView');
+    const w = createWorld();
+    expect(baseView(w).power.forecast).toBeNull();
+    w.system.sun = true;
+    w.colony.buildings.push(completedBuilding(w.colony.nextId++, 'solar', 0.05, w));
+    w.colony.buildings.push(completedBuilding(w.colony.nextId++, 'refinery', 0.09, w));
+    w.depot.iron = 20;
+    for (let i = 0; i < 300; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(baseView(w).power.forecast).toMatch(/^Dusk in .* needs about \d+ kJ/);
+    w.system.time = 640;
+    expect(baseView(w).power.forecast).toMatch(/^Light returns in/);
+  });
+});

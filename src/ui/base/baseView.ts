@@ -8,6 +8,8 @@ import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity } from '../../sim/shipStats';
 import { ANALYSIS_ENERGY } from '../../sim/stormConfig';
+import { SUN, sunClock } from '../../sim/sun';
+import { duration } from '../flight/stormView';
 import type { WorldState } from '../../sim/world';
 
 /** Everything the Base window shows, derived from the simulation. Pure: no DOM, no Phaser. */
@@ -49,6 +51,8 @@ export interface PowerView {
   /** Plain summary, e.g. "Using 6.0 of 8.0 kW". */
   summary: string;
   level: 'good' | 'warn' | 'bad' | 'none';
+  /** Only with the day and night cycle on: when the light changes and whether storage covers the dark. */
+  forecast: string | null;
 }
 
 export type Chip = 'running' | 'idle' | 'stopped' | 'off' | 'wrecked';
@@ -195,6 +199,17 @@ function powerSummary(w: WorldState): string {
   return `Using ${c.demand.toFixed(1)} of ${c.generation.toFixed(1)} kW`;
 }
 
+function powerForecast(w: WorldState): string | null {
+  if (!w.system.sun || !w.colony.buildings.some(b => b.kind === 'solar')) return null;
+  const clock = sunClock(w.system, w.colony.buildings.find(b => b.kind === 'solar')!.angle);
+  const when = duration(clock.secondsToChange);
+  if (!clock.day) return `Light returns in ${when}.`;
+  const night = Math.round(SUN.dayLength * 0.4);
+  const need = w.colony.demand * night;
+  const covers = need <= 0 || w.colony.energy >= need;
+  return covers ? `Dusk in ${when}. Your stored power covers a typical night.` : `Dusk in ${when}. A typical night needs about ${Math.ceil(need)} kJ; you have ${Math.floor(w.colony.energy)}.`;
+}
+
 function powerView(w: WorldState): PowerView {
   const c = w.colony;
   const capacity = energyCapacity(c);
@@ -205,6 +220,7 @@ function powerView(w: WorldState): PowerView {
     stored: c.energy,
     capacity,
     summary: powerSummary(w),
+    forecast: powerForecast(w),
     level,
   };
 }

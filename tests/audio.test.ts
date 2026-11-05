@@ -94,3 +94,19 @@ describe('rock break cues', () => {
     expect(cues).toContain('fracture');
   });
 });
+
+describe('storm and observatory cues', () => {
+  it('scans when the Observatory starts, sights the storm once and rings when it is over', () => {
+    const w = createWorld();
+    const director = new AudioDirector();
+    director.reset(w);
+    w.colony.buildings.push({ id: 7, kind: 'observatory', angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'running' } as never);
+    expect(director.update(w, 1 / 60, false).cues).toContain('scan');
+    expect(director.update(w, 1 / 60, false).cues).not.toContain('scan');
+    w.storm.observed = 20;
+    expect(director.update(w, 1 / 60, false).cues).toContain('sighting');
+    expect(director.update(w, 1 / 60, false).cues).not.toContain('sighting');
+    w.storm.phase = 'over';
+    expect(director.update(w, 1 / 60, false).cues).toContain('stormOver');
+  });
+});
