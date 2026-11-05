@@ -118,16 +118,42 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
   if (!building) { notify(world, 'STAND WITHIN 18 m OF A FACILITY'); return; }
   if (action.type === 'demolish') {
     if (!colony.buildOpen) return;
-    const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
-    if (inventoryMass(world.depot) > oreCapacity(remaining) || PRODUCTS.some(p => colony.products[p] + (buildingCost(building)[p] ?? 0) * 0.75 * buildingHealth(building) / 100 > productCapacity(remaining))) {
-      notify(world, 'NOT ENOUGH STORAGE AFTER DEMOLITION'); return;
-    }
-    ventHabitat(world, building); drainShield(world, building); colony.buildings = remaining.buildings;
-    if (world.defence.controlled === building.id) world.defence.controlled = null;
-    for (const p of PRODUCTS) colony.products[p] += (buildingCost(building)[p] ?? 0) * 0.75 * buildingHealth(building) / 100;
-    colony.energy = Math.min(colony.energy, energyCapacity(colony));
-    notify(world, 'FACILITY REMOVED · SALVAGE SCALES WITH REMAINING HULL');
+    const error = demolishError(world, building);
+    if (error) { notify(world, error.toUpperCase()); return; }
+    demolishBuilding(world, building);
   } else applyFacilityAction(world, building, action);
+}
+/** What demolishing gives back: three quarters of the cost, scaled by how much of the building is left. */
+export function salvageOf(building: Building): Partial<ProductInventory> {
+  const result: Partial<ProductInventory> = {};
+  for (const p of PRODUCTS) {
+    const amount = (buildingCost(building)[p] ?? 0) * 0.75 * buildingHealth(building) / 100;
+    if (amount > 0) result[p] = amount;
+  }
+  return result;
+}
+
+/** Why a building cannot be taken down right now, or null. */
+export function demolishError(world: WorldState, building: Building): string | null {
+  const colony = world.colony;
+  const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
+  const salvage = salvageOf(building);
+  const tooMuchOre = inventoryMass(world.depot) > oreCapacity(remaining);
+  const tooMuchStock = PRODUCTS.some(p => colony.products[p] + (salvage[p] ?? 0) > productCapacity(remaining));
+  return tooMuchOre || tooMuchStock ? 'Not enough storage left to take it down.' : null;
+}
+
+/** Takes a building down and returns the salvage. Callers check `demolishError` first. */
+export function demolishBuilding(world: WorldState, building: Building): void {
+  const colony = world.colony;
+  const salvage = salvageOf(building);
+  ventHabitat(world, building);
+  drainShield(world, building);
+  colony.buildings = colony.buildings.filter(b => b.id !== building.id);
+  if (world.defence.controlled === building.id) world.defence.controlled = null;
+  for (const p of PRODUCTS) colony.products[p] += salvage[p] ?? 0;
+  colony.energy = Math.min(colony.energy, energyCapacity(colony));
+  notify(world, 'Building demolished. You got part of the materials back.');
 }
 export function applyFacilityAction(world: WorldState, building: Building, action: ColonyAction): void {
   if (!operational(building)) { notify(world, 'FACILITY WRECKED · U TO REPAIR');

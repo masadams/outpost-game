@@ -140,6 +140,12 @@ export class FlightScene extends Phaser.Scene {
       const at=screenToWorld(pointer,{...this.follow,width:this.scale.width,height:this.scale.height});
       const local=activeWorld(this.simulation);this.hud.setBuildPointer(local,at,this.follow.zoom);
       if(pointer.rightButtonDown()){
+        // Right-clicking a building opens its menu, like any other game with buildings.
+        if(!this.hud.pointerBuilding){
+          const near=allColonies(this.simulation).flatMap(site=>site.colony.buildings.map(b=>({id:b.id,body:site.siteBody??'home',p:sitePosition(site,b.angle,8)}))).map(v=>({...v,d:Math.hypot(at.x-v.p.x,at.y-v.p.y)})).sort((a,b)=>a.d-b.d)[0];
+          if(near&&near.d<Math.max(16,10/this.follow.zoom)){this.hud.openContextMenu(near.body,near.id,(pointer.event as MouseEvent).clientX,(pointer.event as MouseEvent).clientY);return;}
+        }
+        this.hud.closeContextMenu();
         this.hud.clearBuildPointer();
         if(this.hud.pointerBuilding){applyColonyAction(local,{type:'buildMode',open:false});return;}
         if(!this.halted){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:Math.atan2(at.x-p.position.x,-(at.y-p.position.y)),body:p.id});}}

@@ -1,6 +1,7 @@
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import type { BuildingView } from './baseView';
+import { Demolish } from './Demolish';
 
 export interface NearbyHandlers {
   toggle: () => void;
@@ -8,6 +9,7 @@ export interface NearbyHandlers {
   repair: () => void;
   auto: () => void;
   control: () => void;
+  demolish: (id: number) => void;
   details: (id: number) => void;
 }
 
@@ -66,6 +68,14 @@ export function NearbyCardView({ state, on }: { state: NearbyState; on: NearbyHa
         <button type="button" onClick={click(() => on.details(b.id))}>
           Details
         </button>
+        <Demolish
+          key={b.id}
+          label={b.label}
+          salvage={b.salvage}
+          blocked={b.demolishBlocked}
+          disabled={state.paused}
+          onConfirm={() => on.demolish(b.id)}
+        />
       </div>
     </section>
   );

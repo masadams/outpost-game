@@ -12,6 +12,7 @@ import { plainNotice } from './notices';
 import { BuildBar } from './build/BuildBar';
 import { BaseWindow, type BaseSection } from './base/BaseWindow';
 import { baseView, buildingView } from './base/baseView';
+import { ContextMenu } from './base/ContextMenu';
 import { NearbyCard } from './base/NearbyCard';
 import { nearbyBuilding } from '../sim/colony';
 import { buildingHealth } from '../sim/buildingHealth';
@@ -22,7 +23,7 @@ import type { Vec } from '../sim/math';
 import { Objectives } from './Objectives';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { freightPanel } from './freight';
-import { colonyPlanet, localAngleAt } from '../sim/localWorld';
+import { allColonies, colonyPlanet, localAngleAt } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
 import { isShield } from '../sim/shieldConfig';
 import { shieldActive } from '../sim/shields';
@@ -64,6 +65,8 @@ export class Hud {
     return this.baseSection === 'legacy' ? this.command.selected : this.baseSection === 'buildings' ? this.baseSelected : null;
   }
   private latestWorld:WorldState|null=null;
+  private context!: ContextMenu;
+  private contextTarget: { body: import('../sim/celestial').BodyId; id: number; x: number; y: number } | null = null;
   private pointerDraft:BuildDraft|null=null;
   private buildBar!: BuildBar;
   private base!: BaseWindow;
@@ -114,7 +117,7 @@ export class Hud {
   /** Focus set: the building you stand next to gets a small card instead of the old facility panel. */
   private renderNearby(world: WorldState, paused: boolean): void {
     const near = featureVisible('catalogue') || world.playerMode !== 'astronaut' || world.colony.buildOpen ? undefined : nearbyBuilding(world);
-    this.nearby.update(near ? { building: buildingView(near), damaged: buildingHealth(near) < 100, paused } : null);
+    this.nearby.update(near ? { building: buildingView(near, world), damaged: buildingHealth(near) < 100, paused } : null);
   }
   private renderBuild(world: WorldState): void {
     const open = world.colony.buildOpen;
@@ -134,6 +137,26 @@ export class Hud {
   get noticeElements(): HTMLElement[] { return [this.root.querySelector<HTMLElement>('.notices')!, this.nearby.host, this.nav.guidance]; }
   setWindowPaused(paused: boolean): void { this.dock.setWindowPaused(paused); }
   /** Clicking a building in the world: Base → Buildings with it selected (legacy inspector with all features). */
+  /** Right-click on a building in the world. */
+  openContextMenu(body: import('../sim/celestial').BodyId, id: number, x: number, y: number): void {
+    this.contextTarget = { body, id, x, y };
+    if (this.latestWorld) this.renderContext(this.latestWorld);
+  }
+  closeContextMenu(): void {
+    this.contextTarget = null;
+    this.context.update(null);
+  }
+  private renderContext(world: WorldState): void {
+    const target = this.contextTarget;
+    if (!target) return;
+    const site = allColonies(world).find(s => (s.siteBody ?? 'home') === target.body);
+    const building = site?.colony.buildings.find(b => b.id === target.id);
+    if (!site || !building) {
+      this.closeContextMenu();
+      return;
+    }
+    this.context.update({ building: buildingView(building, site), x: target.x, y: target.y, paused: this.root.dataset.state === 'paused' });
+  }
   selectFacility(body: import('../sim/celestial').BodyId,id:number):void {
     if (featureVisible('catalogue')) {
       this.baseSection='legacy';
@@ -171,14 +194,24 @@ export class Hud {
       toggle: id => onColonyAction({ type: 'remote', id, operation: 'toggle', body: body() }),
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
       analyse: () => onColonyAction({ type: 'analyseSample' }),
+      demolish: id => onColonyAction({ type: 'remote', id, operation: 'demolish', body: body() }),
     });
     this.dock.command.append(this.base.host);
+    this.context = new ContextMenu({
+      details: () => { const t = this.contextTarget; if (t) this.selectFacility(t.body, t.id); },
+      toggle: () => { const t = this.contextTarget; if (t) onColonyAction({ type: 'remote', id: t.id, operation: 'toggle', body: t.body }); },
+      recipe: () => { const t = this.contextTarget; if (t) onColonyAction({ type: 'remote', id: t.id, operation: 'recipe', body: t.body }); },
+      auto: () => { const t = this.contextTarget; if (t) onColonyAction({ type: 'remote', id: t.id, operation: 'auto', body: t.body }); },
+      demolish: () => { const t = this.contextTarget; if (t) onColonyAction({ type: 'remote', id: t.id, operation: 'demolish', body: t.body }); },
+      close: () => this.closeContextMenu(),
+    });
     this.nearby = new NearbyCard({
       toggle: () => onColonyAction({ type: 'toggleMachine' }),
       recipe: () => onColonyAction({ type: 'cycleRecipe' }),
       repair: () => onColonyAction({ type: 'repairBuilding' }),
       auto: () => onColonyAction({ type: 'toggleAuto' }),
       control: () => onColonyAction({ type: 'controlTurret' }),
+      demolish: id => onColonyAction({ type: 'remote', id, operation: 'demolish', body: this.latestWorld?.siteBody ?? 'home' }),
       details: id => this.selectFacility(this.latestWorld?.siteBody ?? 'home', id),
     });
     this.root.id = 'hud';
@@ -186,7 +219,7 @@ export class Hud {
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div><div id="crew-order-status" hidden><span></span><button type="button">Stop crew order</button></div></section>
       <div id="combat-status"></div>
       <footer><p class="context-hint"></p></footer>`;
-    this.root.prepend(this.labels.root);this.root.append(this.buildBar.host, this.buildBar.queueHost, this.buildBar.tipHost, this.dock.root, this.nav.guidance); document.body.append(this.root);
+    this.root.prepend(this.labels.root);this.root.append(this.buildBar.host, this.buildBar.queueHost, this.context.host, this.buildBar.tipHost, this.dock.root, this.nav.guidance); document.body.append(this.root);
     const crewStatus=this.root.querySelector<HTMLElement>('#crew-order-status')!;isolateControlKeys(crewStatus);crewStatus.querySelector('button')!.addEventListener('click',()=>{onColonyAction({type:'crewOrder',operation:'stop'});(document.activeElement as HTMLElement)?.blur();});
     this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!,()=>onColonyAction({type:'autopilot',operation:'cancel'}));
     this.status = this.root.querySelector('.status')!;
@@ -210,7 +243,7 @@ export class Hud {
   }
   update(world: WorldState, paused: boolean, threats: ThreatPrediction[] = []): void {
     const autoActive=world.autopilot.program!==null;if(autoActive&&!this.autopilotWasActive&&this.dock.root.dataset.panel==='autopilot')this.dock.close();this.autopilotWasActive=autoActive;this.root.dataset.autopilot=world.autopilot.program?.phase??'off';
-    this.latestWorld=world;if(this.pointerDraft){if(this.pointerDraft.body!==colonyPlanet(world).id)this.clearBuildPointer();else{const error=this.pointerDraft.inputError??orderError(world,world.colony.selected,this.pointerDraft.angle);this.pointerDraft={...this.pointerDraft,kind:world.colony.selected,error,valid:!error};}}this.renderBuild(world);this.renderNearby(world,paused);
+    this.latestWorld=world;if(this.pointerDraft){if(this.pointerDraft.body!==colonyPlanet(world).id)this.clearBuildPointer();else{const error=this.pointerDraft.inputError??orderError(world,world.colony.selected,this.pointerDraft.angle);this.pointerDraft={...this.pointerDraft,kind:world.colony.selected,error,valid:!error};}}this.renderBuild(world);this.renderNearby(world,paused);this.renderContext(world);
     this.root.dataset.crewOrder=world.crewOrder?.type??'none';const crewBar=this.root.querySelector<HTMLElement>('#crew-order-status')!;crewBar.hidden=!world.crewOrder;crewBar.querySelector('span')!.textContent=world.crewOrder?`Astronaut ${world.crewOrder.type==='walk'?'walking':'building'} · `:'';crewBar.querySelector('button')!.disabled=paused;
     const context = hudContext(world); this.dock.update(context, world.playerMode);
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;

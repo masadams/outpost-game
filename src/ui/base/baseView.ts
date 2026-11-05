@@ -1,6 +1,6 @@
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
-import { energyCapacity, oreCapacity, productCapacity, recipeFor, type Building } from '../../sim/colony';
+import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
 import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
 import { colonyPlanet } from '../../sim/localWorld';
@@ -69,6 +69,10 @@ export interface BuildingView {
   canCycleRecipe: boolean;
   /** Present for turrets: whether they fire on their own. */
   turret: { auto: boolean } | null;
+  /** What demolishing gives back, in words, e.g. "3 alloy, 1 wire". */
+  salvage: string;
+  /** Why it cannot be demolished right now, or null. */
+  demolishBlocked: string | null;
 }
 
 export interface AttentionView {
@@ -140,7 +144,7 @@ export function whyStopped(b: Building): string | null {
   }
 }
 
-export function buildingView(b: Building): BuildingView {
+export function buildingView(b: Building, w?: WorldState): BuildingView {
   const health = buildingHealth(b);
   // Solar, batteries and storage have no work cycle: they either work or are switched off / wrecked.
   const passive = b.kind === 'solar' || b.kind === 'battery' || b.kind === 'storage';
@@ -174,6 +178,8 @@ export function buildingView(b: Building): BuildingView {
     enabled: b.enabled,
     canCycleRecipe: b.kind === 'refinery' && health > 0,
     turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic } : null,
+    salvage: salvageText(b),
+    demolishBlocked: w ? demolishError(w, b) : null,
   };
 }
 
@@ -222,9 +228,17 @@ const PRODUCT_LABEL: Record<Product, string> = {
   fuel: 'Fuel',
 };
 
+function salvageText(b: Building): string {
+  const parts = Object.entries(salvageOf(b)).map(([product, amount]) => {
+    const n = Math.round(amount as number);
+    return `${n} ${product === 'components' && n === 1 ? 'component' : product}`;
+  });
+  return parts.length ? parts.join(', ') : 'nothing';
+}
+
 export function baseView(w: WorldState): BaseView {
   const c = w.colony;
-  const buildings = c.buildings.map(buildingView);
+  const buildings = c.buildings.map(b => buildingView(b, w));
   const ore = RESOURCES.map(r => ({ key: r, label: RESOURCE_INFO[r].label, value: `${w.depot[r].toFixed(0)} kg`, group: 'ore' as const }));
   const products = PRODUCTS.map(p => ({ key: p, label: PRODUCT_LABEL[p], value: c.products[p].toFixed(0), group: 'product' as const }));
   const attention = buildings.filter(b => b.why).map(b => ({ id: b.id, text: `${b.label}: ${b.why}` }));

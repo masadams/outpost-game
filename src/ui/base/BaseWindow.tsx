@@ -1,6 +1,7 @@
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import type { BaseView, BuildingView, Chip } from './baseView';
+import { Demolish } from './Demolish';
 
 export type BaseSection = 'overview' | 'buildings' | 'ship' | 'legacy';
 
@@ -10,6 +11,7 @@ export interface BaseHandlers {
   toggle: (id: number) => void;
   recipe: (id: number) => void;
   analyse: () => void;
+  demolish: (id: number) => void;
 }
 
 export interface BaseState {
@@ -175,7 +177,16 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
             Next recipe
           </button>
         )}
+        <Demolish
+          key={b.id}
+          label={b.label}
+          salvage={b.salvage}
+          blocked={b.demolishBlocked}
+          disabled={paused}
+          onConfirm={() => on.demolish(b.id)}
+        />
       </div>
+      {b.demolishBlocked && <p class="base-why">{b.demolishBlocked}</p>}
       {paused && <p class="base-note">Resume the game to change buildings.</p>}
     </aside>
   );
