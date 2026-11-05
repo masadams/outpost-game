@@ -1,5 +1,12 @@
 /* Flight cluster (mockup 1, "Flight"). Overrides the legacy compact strip in instrumentPanel.css. */
-:root { --telemetry-height: calc(160px * var(--text-scale, 1)); }
+:root {
+  /* Height the bottom cluster can reach; it reflows rather than growing much with larger text. */
+  --telemetry-height: calc(110px + 50px * var(--text-scale, 1));
+  /* Bottom of the top-right chrome (screen buttons + tray). */
+  --chrome-right-bottom: calc(76px + 44px * var(--text-scale, 1));
+  /* Space kept clear at the bottom-right for the radar, view tools and cluster. */
+  --bottom-reserve: max(240px, calc(var(--telemetry-height) + 56px));
+}
 
 #hud .instruments,
 #hud[data-mode=ship] .instruments {
@@ -224,7 +231,7 @@
 #hud-chrome #flight-region[data-region=airless] { color: var(--ui-mint); }
 
 #hud-chrome .chrome-right { position: absolute; right: var(--ui-gap); top: 20px; display: grid; gap: 8px; justify-items: end; }
-#hud-chrome .screens { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+#hud-chrome .screens { display: flex; gap: 8px; justify-content: flex-end; }
 #hud-chrome .screen-button {
   display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: var(--ui-radius);
   font: 600 calc(15px * var(--scale)) / 1 var(--ui-display); letter-spacing: .06em; text-transform: uppercase;
@@ -295,3 +302,11 @@
 /* The left column never reaches the cluster; notices scroll if space runs out. */
 #hud-chrome .chrome-left { display: flex; flex-direction: column; align-items: flex-start; max-height: calc(100% - var(--telemetry-height) - 96px); }
 #hud-chrome .chrome-notices { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+/* Compact panels (Ship, Build, or a compacted window) sit between the top-right chrome and the bottom instruments. */
+#operations-dock:not([data-expanded=true]) {
+  top: var(--chrome-right-bottom);
+  right: var(--ui-gap);
+  width: min(360px, 40vw);
+  max-height: calc(100vh - var(--chrome-right-bottom) - var(--bottom-reserve));
+}

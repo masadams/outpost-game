@@ -35,10 +35,15 @@ test('matches a physical derelict, recovers finite salvage and restores depletio
   await page.addInitScript(text => { if (!sessionStorage.getItem('exploration-fixture')) { localStorage.setItem('outpost.checkpoint.v1', text); sessionStorage.setItem('exploration-fixture', 'yes'); } }, encodeCheckpoint(w));
   await page.goto('/'); const hud = page.locator('#hud'), panel = page.locator('#navigation-panel'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name: 'Map', exact: true }).click(); const recover = page.getByRole('button', { name: 'Recover salvage [E]', exact: true });
-  await expect(recover).toBeDisabled(); await page.keyboard.press('p'); await expect(recover).toBeEnabled(); await recover.focus(); await page.keyboard.press('Enter');
-  await expect(hud).toHaveAttribute('data-cargo', '18.00'); await expect(panel).toContainText('salvage 0.0 kg'); await expect(panel).toContainText('return to the green home pad');
-  await page.keyboard.press('e'); await expect(hud).toHaveAttribute('data-cargo', '18.00'); await expect(page.locator('.status')).toContainText('CACHE EMPTY');
+  // Map is for planning: it pauses a flight, so the site is worked with E once the window is closed.
+  await expect(recover).toBeDisabled(); await page.keyboard.press('Escape'); await page.keyboard.press('p');
+  await expect(hud).toHaveAttribute('data-state', 'flying'); await page.keyboard.press('e');
+  await expect(hud).toHaveAttribute('data-cargo', '18.00');
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await expect(panel).toContainText('salvage 0.0 kg'); await expect(panel).toContainText('return to the green home pad');
   await page.locator('#operations-dock').evaluate(e => e.scrollTop = 0); await page.screenshot({ path: 'docs/screenshots/orbital-salvage.png' });
+  await page.keyboard.press('Escape'); await page.keyboard.press('e');
+  await expect(hud).toHaveAttribute('data-cargo', '18.00'); await expect(page.locator('.status')).toContainText('CACHE EMPTY');
   await page.keyboard.press('p'); await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.world.exploration.salvaged).toBe(18); expect(saved.world.exploration.surveyed).toContain('copper'); expect(saved.world.exploration.sites.find((s: { key: string }) => s.key === 'cache').mass).toBe(80);
   await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-cargo', '0.00'); await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-cargo', '18.00');
@@ -49,7 +54,11 @@ test('uses a finite tender supply with actual ship tank room', async ({ page }) 
   const w = createWorld(), s = w.exploration.sites.find(s => s.key === 'tender')!; w.asteroids = []; w.ship.state = 'flying'; w.ship.fuel = WORLD.fuelCapacity - 5;
   w.ship.position = { x: s.position.x, y: s.position.y - 80 }; w.ship.velocity = { ...s.velocity }; w.exploration.selected = 'tender';
   await page.addInitScript(text => localStorage.setItem('outpost.checkpoint.v1', text), encodeCheckpoint(w)); await page.goto('/'); const hud = page.locator('#hud');
-  await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Map', exact: true }).click(); await page.keyboard.press('p');
-  await page.getByRole('button', { name: 'Transfer tender fuel [E]', exact: true }).click(); await expect(hud).toHaveAttribute('data-fuel', WORLD.fuelCapacity.toFixed(2));
-  await expect(page.locator('#navigation-panel')).toContainText('fuel 13.0 kg'); await page.keyboard.press('e'); await expect(page.locator('#navigation-panel')).toContainText('fuel 13.0 kg');
+  const map = page.getByRole('button', { name: 'Map', exact: true }), panel = page.locator('#navigation-panel');
+  await expect(hud).toHaveAttribute('data-state', 'paused'); await map.click();
+  await expect(page.getByRole('button', { name: 'Transfer tender fuel [E]', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape'); await page.keyboard.press('p'); await page.keyboard.press('e');
+  await expect(hud).toHaveAttribute('data-fuel', WORLD.fuelCapacity.toFixed(2));
+  await map.click(); await expect(panel).toContainText('fuel 13.0 kg'); await page.keyboard.press('Escape');
+  await page.keyboard.press('e'); await map.click(); await expect(panel).toContainText('fuel 13.0 kg');
 });
