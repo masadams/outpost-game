@@ -10,7 +10,7 @@
   margin-inline: auto;
   pointer-events: none;
   font-family: var(--ui-body);
-  --scale: var(--text-scale, 1);
+  --scale: calc(var(--text-scale, 1) * 1.15);
 }
 #build-bar-host:empty { display: none; }
 
@@ -116,8 +116,9 @@
   z-index: 3;
   display: grid;
   gap: 8px;
-  width: min(300px, 40vw);
-  padding: 10px 12px;
+  width: min(360px, 44vw);
+  padding: 12px 14px;
+  --scale: calc(var(--text-scale, 1) * 1.2);
   border: 1px solid var(--ui-line, #2c4256);
   border-radius: 12px;
   background: var(--ui-panel, #0b1620ee);
@@ -125,19 +126,20 @@
   pointer-events: auto;
 }
 #hud .queue-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-#hud .queue-title { font-weight: 600; font-size: 0.9rem; }
+#hud .queue-title { font-weight: 600; font-size: calc(15px * var(--scale)); }
 #hud .queue-clear {
   border: 0;
   background: none;
   color: var(--ui-amber, #ffb06a);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: calc(13px * var(--scale));
   cursor: pointer;
 }
 #hud .queue-card .build-queue { display: grid; gap: 6px; }
-#hud .queue-hint { margin: 0; font-size: 0.82rem; opacity: 0.8; }
+#hud .queue-hint { margin: 0; font-size: calc(14px * var(--scale)); opacity: 0.85; }
 #hud .queue-start {
-  min-height: 40px;
+  min-height: 46px;
+  font-size: calc(15px * var(--scale));
   border: 1px solid var(--ui-mint, #73f3cf);
   border-radius: 10px;
   background: #73f3cf22;
