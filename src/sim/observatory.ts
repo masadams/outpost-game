@@ -2,6 +2,8 @@ import { workFactor } from './facilityStats';
 import { industrialPowerBlock } from './colonyPolicy';
 import type { Building } from './colony';
 import { powerFraction } from './power';
+import { notify } from './messages';
+import { SIGHTING_SECONDS } from './stormKnowledge';
 import type { WorldState } from './world';
 
 export const OBSERVATORY = {
@@ -27,5 +29,11 @@ export function stepObservatory(w: WorldState, b: Building, dt: number): void {
   w.colony.energy = Math.max(0, w.colony.energy - cost);
   b.gridPower = cost / dt;
   b.status = 'running';
-  if (w.storm.phase === 'approaching') w.storm.observed += work;
+  if (w.storm.phase === 'approaching') {
+    const before = w.storm.observed;
+    w.storm.observed += work;
+    if (before < SIGHTING_SECONDS && w.storm.observed >= SIGHTING_SECONDS) {
+      notify(w, 'The Observatory has found something large, far out.');
+    }
+  }
 }

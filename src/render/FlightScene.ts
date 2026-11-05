@@ -40,6 +40,9 @@ import { tractorStats } from '../sim/shipStats';
 import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
 import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
+import { stormView } from '../ui/flight/stormView';
+import { stormKnowledge } from '../sim/stormKnowledge';
+import { farPosition } from '../sim/storm';
 import { coach } from '../ui/flight/coach';
 import { drawCoachPointer } from './coachPointer';
 import { FlightTools } from '../ui/FlightTools';
@@ -232,6 +235,7 @@ export class FlightScene extends Phaser.Scene {
       },
       camera: { mode: this.follow.mode, zoom: this.follow.zoom, x: this.follow.x, y: this.follow.y, angle: this.follow.angle },
       pickups: this.pickupFeed.lines(),
+      storm: stormView(world),
       trajectory: this.flightTools.trajectory,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : this.prediction?.points.length ?? 0,
       keys: {
@@ -425,7 +429,14 @@ export class FlightScene extends Phaser.Scene {
     m.fillStyle(0x0a1724, .9); m.fillCircle(mx, my, 68); m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
     const point = (p: { x: number; y: number }) => { const k = Math.min(.0058, 61 / Math.max(1, Math.hypot(p.x, p.y))); return { x: mx + p.x * k, y: my + p.y * k }; };
     for (const body of planets(this.simulation.system)) { const p = point(body.position); m.lineStyle(1, body.id === 'home' ? 0x73f3cf : 0xc9b2ef); m.strokeCircle(p.x, p.y, body.radius * .0058); }
-    for (const actor of [...this.simulation.asteroids, ...this.simulation.exploration.sites, ...this.simulation.defence.meteors]) { const p = point(actor.position); m.fillStyle(0x9bb4c5, .7); m.fillCircle(p.x, p.y, 1.3); }
+    for (const actor of [...this.simulation.asteroids, ...this.simulation.exploration.sites]) { const p = point(actor.position); m.fillStyle(0x9bb4c5, .7); m.fillCircle(p.x, p.y, 1.3); }
+    // The storm: amber. Far bodies show only once the Observatory has seen them, as rings that tighten with better tracking.
+    for (const rock of this.simulation.defence.meteors) { const p = point(rock.position); m.fillStyle(0xffb06a, .95); m.fillCircle(p.x, p.y, 1.8); }
+    const known = stormKnowledge(this.simulation);
+    if (known) {
+      const ring = known.level === 'sighted' ? 5 : known.level === 'tracked' ? 3 : 1.8;
+      for (const body of this.simulation.storm.far) { const p = point(farPosition(body, this.simulation.system.time)); m.lineStyle(1, 0xffb06a, .9); m.strokeCircle(p.x, p.y, ring); }
+    }
     const ship = point(s.position); m.fillStyle(0xffcf94); m.fillCircle(ship.x, ship.y, 3);
     if (this.simulation.playerMode === 'astronaut') { const p = point(this.simulation.astronaut.position); m.fillStyle(0xe0eff2); m.fillCircle(p.x, p.y, 2); }
   }

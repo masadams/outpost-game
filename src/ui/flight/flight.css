@@ -352,3 +352,21 @@
   text-shadow: 0 1px 3px #000a;
 }
 #hud-chrome .pickup-feed:empty { display: none; }
+
+/* Storm warning, under the objective card. */
+#hud-chrome .storm-card {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--ui-amber, #ffb06a);
+  border-radius: 12px;
+  background: var(--ui-panel, #0b1620ee);
+  pointer-events: auto;
+}
+#hud-chrome .storm-card[data-tone=watching] { border-color: var(--ui-line, #2c4256); }
+#hud-chrome .storm-card[data-tone=urgent] { border-color: #ff6b5a; box-shadow: 0 0 0 1px #ff6b5a55; }
+#hud-chrome .storm-title { font: 700 calc(14px * var(--scale)) / 1.2 var(--ui-display); letter-spacing: .06em; text-transform: uppercase; color: var(--ui-amber, #ffb06a); }
+#hud-chrome .storm-card[data-tone=watching] .storm-title { color: var(--ui-muted, #8aa3b5); }
+#hud-chrome .storm-card[data-tone=urgent] .storm-title { color: #ff8a7a; }
+#hud-chrome .storm-detail { font: 400 calc(14px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-text, #e6f1f5); }
