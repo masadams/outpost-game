@@ -2,6 +2,72 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Camera and scale decisions — 2026-11-05
+
+The user confirmed there is no need for backwards compatibility with saves or anything else: this is a fresh start, so values and formats may change freely.
+
+- **Size follows the window, not a fixed zoom.** Ground zoom is derived from viewport height so the lander is the same share of the screen on every display. The simulation's physical sizes are unchanged: the art still spans the same 14 m envelope the collision uses.
+- **Ground stays in view while falling.** The camera will not zoom in past the point where the ground below is visible in the screen space left clear by the instrument cluster. As a result the lander reaches full size only in the last 50 to 60 m. If that feels too small on approach, the options are a larger lander in the world or a shorter HUD, not a tighter camera.
+- **Focus sits at 40% from the top.** More of the screen is below the ship, where the ground is.
+- **Look-ahead** of up to about 1 second of travel, capped at 20% of the screen, off on foot and with reduced motion.
+
+## Cleanup slice decisions — 2026-11-05
+
+- **Messages are rewritten at display time, not in the simulation.** `src/ui/notices.ts` turns SHOUTING · DOT · SEPARATED messages into sentences ("Checkpoint saved. K to update. L to load."). Saves, the simulation and its tests keep their original text; key letters and names are preserved. A handful of routine HUD messages were written out in plain English directly.
+- **"Checkpoint" stays** as the word for a save, because the menu already says Save checkpoint / Load checkpoint.
+- **Ship panel** shows hold, ore in hold versus depot, nearest rock and a single "what next" sentence; on foot it also shows the depot and terminals with the key to press.
+- **Dead code is deleted, not parked:** the old surface panel module, the old cargo and navigation markup, 46 unused CSS rules, and the dock's own navigation bar.
+
+## Map slice decisions — 2026-11-05
+
+- **Map window rewritten** around the mockup: chart you can click, a places list, and an inspector. Ore clusters you have not surveyed say "Unknown until surveyed" instead of showing numbers.
+- **Site actions** (salvage, tender fuel, survey) stay as a button in the inspector, but because Map pauses a flight, the usual way to act is to close it and press E in range. The inspector says what is missing in plain words ("Get within 120 m of it.").
+- The one-line target guidance stays in the HUD while flying.
+
+## Base slice decisions — 2026-11-05
+
+- **New Base window** for the focus set: Overview, Buildings, Ship. Building problems are explained in one plain sentence ("Needs iron ore. Mine some and unload it at the pad."), and Overview lists them under "Needs attention".
+- **Nearby card** replaces the old on-foot facility panel: status, reason, and quick controls with their keys (E on/off, V recipe, U repair) plus Details into Base.
+- **Legacy console quarantine:** the old Manage console (research tree, ship fitting, shields, scheduling, upgrades, power dispatch) is reachable only with `?features=all`, as a "Legacy console" section inside Base and its default there. It is not rebuilt; each system gets new UI when it returns in a later slice.
+- Window titles are now "Base", "Ship", "Map" in the new header style.
+
+## Build slice decisions — 2026-11-05
+
+- **Screen buttons stay on top of full-screen windows** and act as tabs (Ship, Build, Base, Map), with the sound / help / settings / pause tray. Windows open just below them. Small change from mockup 1, so Settings and switching screens never need closing a window first.
+- **Build mode replaces the instrument cluster** with the build bar; flight instruments return when you stop building.
+- **Astronaut is sent automatically:** placing a site on foot dispatches them; stepping out of the lander with work queued does too. Any manual movement still cancels the order.
+- **Removed:** the old build panel (category dropdown, numeric "metres from pad" site entry, "Dispatch crew" button, manual-placement disclosure). The keyboard path is Q / T / Enter next to the astronaut.
+- **Reserves** are reachable from the lander under Base → Economy until the Base rebuild.
+
+## Rewrite over adapt — 2026-11-05
+
+The user directed: when rebuilding is faster or cleaner than adapting, rebuild; do not keep old code that has no value or no longer belongs. Applied to the UI rebuild:
+
+- **Kept:** `src/sim`, the Phaser world renderer, saves, unit tests, and the view-model style (pure functions from world state to what a screen shows).
+- **Replaced from scratch:** the HUD shell (brand header, button-wall nav, sound and zoom toolbars, objectives button, dial strip) and its legacy CSS, rather than restyled.
+- **Temporary:** the old Ship, Build, Manage and Map panels stay only until their new screens land, then are deleted. Hidden systems (combat, towing, autopilot, upgrades…) lose their old panels at that point and get new UI when they return. Their simulation and unit tests remain.
+- Browser specs that only exercise old UI are replaced by specs for the new screens instead of being patched.
+
+## Mockup 1 review — 2026-11-05
+
+The user reviewed [mockup 1](mockups/ui-rebuild.html): colors and direction approved, fonts acceptable. It reads clear but a little simple; add detail and refinement during the real build without losing clarity.
+
+- **Attitude dial stays** in the flight cluster.
+- **Building works on foot or from the landed ship.**
+- **Pause rule refined:** Base and Map pause only while the ship is flying. When landed or on foot they stay live. Menus always pause. This replaces decision 1 below.
+- **Map** stays a full window (as mocked); a large overlay is also acceptable if it proves better in play.
+
+## UX rebuild and focus reset — 2026-11-04
+
+After a full review of the alpha, the user approved four decisions:
+
+1. **Full-screen windows pause.** Base management, Map and menus pause the simulation. In-flight HUD and small panels stay live. Rationale: the ship crashed behind a live full-screen Map during review; the continuous-world pillar is about space, not about hiding danger behind UI.
+2. **Hide, don't delete.** New games show only the first-mining-sortie set (flight, mining, cargo, landing, depot, refining/fuel, astronaut building, solar/battery/storage/refinery). Combat, drones, defence, shields, towing, autopilot, upgrades, scheduling, policies, freight, the broad research/parts catalogue, habitats and Nacre travel UI stay in code but are hidden until reintroduced by a deliberate slice.
+3. **Rebuild the UI layer with Preact** on shared design tokens, replacing innerHTML-string classes. `src/sim/` is kept and extended.
+4. **Sequence:** ground rules → clickable mockups of Flight, Surface/Build, Base and Map → visibility gating → UI rebuild → first mining sortie polish and playtest. See [CURRENT_FOCUS.md](CURRENT_FOCUS.md).
+
+Completed task specs moved from the repository root to [archive/tasks/](archive/tasks/). AGENTS.md now points to CURRENT_FOCUS.md and the design bible, and sets player-facing writing rules.
+
 ## Ship progression and research — Task 008
 
 On `feat/ship-progression`, four paid prerequisite technologies use a real 4 kW research lab, with priority/caps/reserves, persistent work, one contributor per tick and storage-safe unworked-sample refunds. Eight binary modules change actual thrust/burn, fuel/cargo capacity, tools, cannon, cooling and damage. Dry mass equals paid material mass; all eight add 98 kg. Home-pad fabrication spends 20 kJ unreserved energy plus materials without refilling fuel/hull/ammo/cell. Removal gives 50% × hull salvage, returns excess tank fuel only if storage fits, and blocks excess cargo. Recovery keeps paid modules but retains existing hull/fuel/cargo losses. Dynamic stats reach physics, pickup/tender/refuel, prediction, warnings/HUD and validation; projectile damage is captured at firing. Version 12 migrates v1–11 with no new unlocks/modules. This implements Phase 8.1; shields, additional worlds, economy tuning and the full Phase 9 overhaul remain later. [Actual model/playtest](PROGRESSION.md). Stacked after open discovery #18 / Command #17.
@@ -105,31 +171,31 @@ The next planned pre-automation task implements the initial visual direction/con
 
 The user requested mining on the planet with a rig/building. Implement finite surface seams as the first Phase 7 slice before adding drone/towing logistics. Deposits use the existing five ore types and deterministic surface locations; a rig's whole footprint must fit within one seam. Construction costs manufactured supplies and each powered cycle transfers actual reserve mass into shared ore storage. Depletion persists independently of the rig, including through damage, repair, demolition/rebuilding and checkpoints. Multiple rigs compete for one reserve; blocked output never destroys ore or spends extraction power.
 
-The 6 kW, 0.5 kg / 2 s rate is deliberately slow background supply, preserving the flight/mining role. The existing global grid/material bus and placement-order allocation remain prototype limits; no separate transport simulation, new resource currency, terrain deformation, offline output or unlimited seam respawn is introduced. Existing refining/fuel recipes consume extracted ore without a parallel economy. The tenth blueprint uses the palette button/native keyboard focus to preserve 0 for automatic camera zoom. Version-5 saves preserve reserves/bindings/partial cycles; versions 1–4 receive fresh seams while retaining prior progress. Merged after green CI at the user’s explicit request in [PR #11](https://github.com/masadams/outpost-game/pull/11). See [Task 007A](../CODEX_TASK_007A.md) and [planetary mining notes](PLANETARY_MINING.md). Scheduling, priorities and vulnerable mobile logistics remain later Phase 7 work.
+The 6 kW, 0.5 kg / 2 s rate is deliberately slow background supply, preserving the flight/mining role. The existing global grid/material bus and placement-order allocation remain prototype limits; no separate transport simulation, new resource currency, terrain deformation, offline output or unlimited seam respawn is introduced. Existing refining/fuel recipes consume extracted ore without a parallel economy. The tenth blueprint uses the palette button/native keyboard focus to preserve 0 for automatic camera zoom. Version-5 saves preserve reserves/bindings/partial cycles; versions 1–4 receive fresh seams while retaining prior progress. Merged after green CI at the user’s explicit request in [PR #11](https://github.com/masadams/outpost-game/pull/11). See [Task 007A](archive/tasks/CODEX_TASK_007A.md) and [planetary mining notes](PLANETARY_MINING.md). Scheduling, priorities and vulnerable mobile logistics remain later Phase 7 work.
 
 ## Refinery scheduling — second Phase 7 slice
 
 Continue earned automation through built refineries: opt-in automatic recipe selection replenishes configurable shared-stock targets. Manual remains the default for new and legacy facilities. Each refinery stores its own policy; no free ore, energy or extra starter supplies are granted. Between completed batches, use deterministic round-robin selection among needed recipes with inputs and room for all co-products. Retain paid progress through target edits, disabling and supply/power/storage blocks. Turning scheduling off preserves the selected recipe/progress; explicit V retains its established reset behavior and switches to manual.
 
-Targets are desired shared stock, not hard output caps or reservations. Already-active batches finish even if a target has since been filled, so parallel refineries may exceed a target. Ice co-products can exceed one goal while fulfilling the other; physical capacity always blocks the entire batch. This avoids hidden output loss or discarded paid work. Target buttons use native keyboard activation without changing game controls. Version-6 checkpoints retain policy/cursor/progress; v1–5 remain supported and older refineries stay manual. See [PR #12](https://github.com/masadams/outpost-game/pull/12), [Task 007B](../CODEX_TASK_007B.md) and [automation model](AUTOMATION.md). Power/storage/ammunition priorities and vulnerable mobile logistics remain later work.
+Targets are desired shared stock, not hard output caps or reservations. Already-active batches finish even if a target has since been filled, so parallel refineries may exceed a target. Ice co-products can exceed one goal while fulfilling the other; physical capacity always blocks the entire batch. This avoids hidden output loss or discarded paid work. Target buttons use native keyboard activation without changing game controls. Version-6 checkpoints retain policy/cursor/progress; v1–5 remain supported and older refineries stay manual. See [PR #12](https://github.com/masadams/outpost-game/pull/12), [Task 007B](archive/tasks/CODEX_TASK_007B.md) and [automation model](AUTOMATION.md). Power/storage/ammunition priorities and vulnerable mobile logistics remain later work.
 
 ## Colony resource priorities — third Phase 7 slice
 
 Continue the planned priority controls as explicit reservation policies on the current global bus. Zero defaults preserve old behavior. Industrial power excludes a configured charge floor; turrets and supplied service can consume it. Rigs exclude reserved delivery room from output capacity; ship unloading still uses physical free space. Reserve alloy/components for turrets across every non-turret manufactured-material consumer: construction, building/ship repair, rearm and recovery. Actual turret shots spend normal finite stock. Goals never grant inventory, request production or shield capacity from damage.
 
-Policies can be changed remotely in Colony, including after a crash, so a material hold cannot trap paid recovery. Native controls and an expandable disclosure show configured goals and actual usable budgets; expansion remains runtime UI state. Distinguish reserved power/space from physical shortages and let users release holds. Oversized goals may halt industry until adjusted or capacity is added. Version-7 saves preserve policy without resetting older schedules, depletion or combat; versions 1–6 default to zero policy. The impact path previously erased paid cycles despite the documented scheduling behavior; retain progress through actual wrecking/repair and test that path. See [PR #13](https://github.com/masadams/outpost-game/pull/13), [Task 007C](../CODEX_TASK_007C.md) and [reserve model](COLONY_PRIORITIES.md). Scheduling PR #12 merged during this iteration, so the reserve branch is now based directly on main. This does not complete Phase 7.
+Policies can be changed remotely in Colony, including after a crash, so a material hold cannot trap paid recovery. Native controls and an expandable disclosure show configured goals and actual usable budgets; expansion remains runtime UI state. Distinguish reserved power/space from physical shortages and let users release holds. Oversized goals may halt industry until adjusted or capacity is added. Version-7 saves preserve policy without resetting older schedules, depletion or combat; versions 1–6 default to zero policy. The impact path previously erased paid cycles despite the documented scheduling behavior; retain progress through actual wrecking/repair and test that path. See [PR #13](https://github.com/masadams/outpost-game/pull/13), [Task 007C](archive/tasks/CODEX_TASK_007C.md) and [reserve model](COLONY_PRIORITIES.md). Scheduling PR #12 merged during this iteration, so the reserve branch is now based directly on main. This does not complete Phase 7.
 
 ## Landing instruments and warning audio — user feedback
 
 The user requested warnings on landing telemetry, including green/yellow/red, a warning pulse and low-fuel lights/sound. Add a pure current-state safety model shared by HUD and audio. Use actual touchdown limits and local up; total speed reflects the worse radial/drift category rather than inventing another physical landing rule. Expose spin and keep off-pad/low-clearance feedback visible so green individual instruments cannot imply a guaranteed landing. Limit landing cues to low descending/hovering flight, with earlier activation for fast descent.
 
-Use color plus labels/symbols, stable DOM updates and a gentle 1.4-second critical pulse. Pause and reduced-motion preferences suppress the pulse. Distinct landing/fuel tones are rate-limited, with urgent landing first, critical fuel next and existing threat/hull alarms ahead of a low-fuel caution. Preserve mute/volume, unlock and focus/pause silence; avoid repeating a landing tone rapidly when crossing the approach boundary. This modifies feedback only: physics, stock and save version stay unchanged. It is a separate review stacked on PR #13, before mobile logistics, and does not complete Phase 9. See [PR #14](https://github.com/masadams/outpost-game/pull/14), [Task 007D](../CODEX_TASK_007D.md) and [the warning model](FLIGHT_WARNINGS.md).
+Use color plus labels/symbols, stable DOM updates and a gentle 1.4-second critical pulse. Pause and reduced-motion preferences suppress the pulse. Distinct landing/fuel tones are rate-limited, with urgent landing first, critical fuel next and existing threat/hull alarms ahead of a low-fuel caution. Preserve mute/volume, unlock and focus/pause silence; avoid repeating a landing tone rapidly when crossing the approach boundary. This modifies feedback only: physics, stock and save version stay unchanged. It is a separate review stacked on PR #13, before mobile logistics, and does not complete Phase 9. See [PR #14](https://github.com/masadams/outpost-game/pull/14), [Task 007D](archive/tasks/CODEX_TASK_007D.md) and [the warning model](FLIGHT_WARNINGS.md).
 
 ## Mobile logistics and explicit upgrade/dome schedule
 
 The user asked to continue after landing feedback and asked whether ship upgrades and oxygen/protection domes were scheduled. Ship upgrades existed broadly in Phase 8; now explicitly schedule equipment categories, fabrication limits and physical tradeoffs there, with shield domes as a separate finite-energy defence system. Add Phase 7.5 oxygen habitats immediately after towing: defined curved-surface coverage/height, finite oxygen buffer, area/crew consumption and powered supply pause suit drain only while breathable. Habitat air and shields remain separate functions, with no free suit refill/healing or unlimited impact protection. Sizes/rates/costs remain provisional until each task is specified. See [UPGRADES_AND_DOMES.md](UPGRADES_AND_DOMES.md).
 
-Task 007E starts the next Phase 7 slice with a 25 kg towing utility module fabricated from exactly 25 kg of manufactured stock, respecting reserves. Y captures nearby velocity-matched asteroids with a fixed-length slack/tension cable. Equal/opposite impulses couple the bodies; damping dissipates relative motion. Terrain, excess strain, impact and target destruction sever it. No body teleportation or free ore transfer: normal mining/tractor/unload remains required. Rig mass stays in the ship through supplied wreck recovery, while the attachment releases. Coast prediction suspends during attachment because the single-ship predictor omits cable forces. Version-8 saves preserve active equipment/cable state; v1–7 preserve prior progress and receive no free rig. See [PR #15](https://github.com/masadams/outpost-game/pull/15), [Task 007E](../CODEX_TASK_007E.md) and [TOWING.md](TOWING.md). PR #13 is merged; PR #14 was retargeted to main and remains open. This new branch stacks on landing feedback for review, without automatic merging.
+Task 007E starts the next Phase 7 slice with a 25 kg towing utility module fabricated from exactly 25 kg of manufactured stock, respecting reserves. Y captures nearby velocity-matched asteroids with a fixed-length slack/tension cable. Equal/opposite impulses couple the bodies; damping dissipates relative motion. Terrain, excess strain, impact and target destruction sever it. No body teleportation or free ore transfer: normal mining/tractor/unload remains required. Rig mass stays in the ship through supplied wreck recovery, while the attachment releases. Coast prediction suspends during attachment because the single-ship predictor omits cable forces. Version-8 saves preserve active equipment/cable state; v1–7 preserve prior progress and receive no free rig. See [PR #15](https://github.com/masadams/outpost-game/pull/15), [Task 007E](archive/tasks/CODEX_TASK_007E.md) and [TOWING.md](TOWING.md). PR #13 is merged; PR #14 was retargeted to main and remains open. This new branch stacks on landing feedback for review, without automatic merging.
 
 ## Populated space and central Command — subsequent user steering
 
@@ -201,3 +267,17 @@ Extend existing astronaut dispatch, paid construction queues and oxygen domes; t
 **Still open:** Worker arrival/recruitment, roles/control/mortality, staffing, habitat capacity and safety values, environmental resolution, pressure volumes, terrain/support representation, recipe depth, distribution networks, communications latency/autonomy and interstellar drive/time model. Adopted direction does not approve all possible detailed implementations. See [Bible section 20 and D-13–D-18](MASTER_DESIGN_BIBLE.md#20-adopted-systems-direction--2026-11-04) and [roadmap S0–S6](MASTER_ROADMAP.md#integrated-systems-vertical-slices-s0s6) for dependencies, invariants and acceptance.
 
 **Overriding gate:** Physical consequence, meaningful discovery, interesting decision, growing scale. Prefer depth through interacting systems to breadth; avoid a 2D facsimile of No Man's Sky or Factorio and excessive population micromanagement. Preserve manual flight and building. This records design direction only; no game implementation or merge authorization.
+
+## Mining feel (slice 5.2) — 2026-11-05
+Rock, laser and debris art is render-only and deterministic: a rock's look comes from its id, sparks from a time tick, so nothing here touches the simulation or saves. Debris counts are capped by the quality setting and drop to zero with reduced motion. The camera frames the ship plus the rock under the beam, but never zooms in past the normal level. Audio distinguishes a big rock splitting (`split`) from a small one shattering (`fracture`); pickups climb in pitch within a short run. The pickup feed is display only and reads cargo changes.
+
+## Landing feel (slice 5.3) — 2026-11-05
+Landing rules are unchanged. Feedback is render-only: pad beacon colour follows the existing approach check (`flightSafety`), and dust is cosmetic, capped by quality and off with reduced motion. Existing sounds for touchdown and impact are kept.
+
+## First-run guidance (slice 5.4) — 2026-11-05
+Guidance is one pure function from world state to the next instruction (`coach`), shown in the objective card and as a world-space arrow. It reads state only, so there is nothing to save, and it stops after the first delivery. No tutorial mode, popups or locked controls.
+
+## Playtest fixes after slice 5.4 — 2026-11-05
+- The R restart key is removed: it was too easy to hit and wipes progress. New Game lives in the menu only.
+- Queued buildings now show in a card whenever the build bar is closed, with a cancel button per site, Cancel all, and a Start building button once the astronaut is on foot. From the lander it says to step out (F). Stepping out waits until the astronaut is standing before sending them to work, instead of giving up if they are still in the air.
+- The engine sound is a low rumble (filtered noise under a soft sine) instead of a buzzing sawtooth.

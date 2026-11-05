@@ -1,7 +1,9 @@
+import { featureVisible } from '../preferences/features';
 import type { Building } from '../sim/colony';
 import { createSchedule, MAX_STOCK_TARGET, SCHEDULE_PRODUCTS } from '../sim/scheduling';
 
 export function schedulingPanel(building: Building, disabled: string): string {
+  if (!featureVisible('scheduling')) return '';
   if (building.kind !== 'refinery') return '';
   const schedule = building.schedule ?? createSchedule();
   return `<div class="schedule-controls" data-enabled="${schedule.enabled}">

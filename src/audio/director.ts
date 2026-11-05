@@ -8,7 +8,7 @@ import { heading } from '../sim/math';
 import { flightSafety } from '../sim/flightSafety';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach';
+export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
@@ -16,7 +16,7 @@ function snapshot(world: WorldState) {
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
-    rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position }])),
+    rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position, stage: b.stage }])),
     buildings: new Map(world.colony.buildings.map(b => [b.id, { progress: b.progress, recipe: b.recipe }])) };
 }
 export class AudioDirector {
@@ -69,7 +69,11 @@ export class AudioDirector {
     if (next.cargo > prev.cargo + 1e-6) cues.push('pickup');
     if (next.unloaded > prev.unloaded) cues.push('delivery');
     if (next.fuel > prev.fuel + 1e-6) cues.push('refuel');
-    if (Array.from(prev.rocks).some(([id, p]) => !next.rocks.has(id) && near(p.x, p.y, 650))) cues.push('fracture');
+    // A big rock splitting in two sounds different from a small one shattering into ore.
+    for (const [id, p] of prev.rocks) {
+      if (next.rocks.has(id) || !near(p.x, p.y, 650)) continue;
+      cues.push(p.stage === 0 ? 'split' : 'fracture');
+    }
     const added = Array.from(next.buildings.keys()).some(id => !prev.buildings.has(id));
     const removed = Array.from(prev.buildings.keys()).some(id => !next.buildings.has(id));
     if (added) cues.push('build'); if (removed) cues.push('demolish');

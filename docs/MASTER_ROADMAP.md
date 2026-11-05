@@ -275,6 +275,7 @@ See Bible D-01–D-18, including the adopted direction in section 20. Priority f
 | 2026-11-04 | Simple conserved fluids and shared finite inputs (D-13) | Agreed starting direction; resource/connection detail open |
 | 2026-11-04 | Recoverable failures with warnings, derating and safe shutdown (D-16) | Agreed initial baseline; greater severity requires review |
 | 2026-11-04 | Bounded automation with paid jobs, finite supplies and explicit limits (D-18) | Agreed starting direction; autonomy thresholds open |
+| 2026-11-04 | Focus reset: UX rebuild + first mining sortie before new systems; full-screen windows pause; hide non-focus systems; Preact UI layer | Agreed; see [CURRENT_FOCUS](CURRENT_FOCUS.md) |
 
 
 ## Distinctive-experience quality gate (applies to all phases)

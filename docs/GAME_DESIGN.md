@@ -26,7 +26,7 @@ Build and prepare -> launch -> explore/fight/mine -> collect cargo -> return and
 5. Single-player first, with modular simulation that does not preclude future multiplayer.
 
 ## Milestones
-1. Planetary flight (CODEX_TASK.md).
+1. Planetary flight ([Task 001](archive/tasks/CODEX_TASK.md)).
 2. Destructible asteroids and mining/cargo.
 3. Astronaut movement and building placement.
 4. Planetary defence and persistent damage.

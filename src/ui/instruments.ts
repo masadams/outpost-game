@@ -44,18 +44,4 @@ export function instrumentReadings(w:WorldState):InstrumentReading[]{
 export function gaugeFraction(r:InstrumentReading):number {return typeof r.value==='number'?Math.max(0,Math.min(1,(r.value-r.min)/(r.max-r.min))):0;}
 const symbols={neutral:'',safe:'●',caution:'▲',critical:'!'} as const;
 export function readingValue(r:InstrumentReading):string{return typeof r.value==='number'?r.value.toFixed(r.digits):r.value;}
-function gauge(r:InstrumentReading):string{
- if(r.attitude!==undefined)return `<svg class="dial-gauge attitude-gauge" viewBox="0 0 100 56" aria-hidden="true"><defs><clipPath id="attitude-window"><circle cx="50" cy="28" r="23"/></clipPath></defs><g clip-path="url(#attitude-window)"><g transform="rotate(${-r.attitude} 50 28)"><path d="M0 0h100v28H0z" fill="#20434e"/><path d="M0 28h100v28H0z" fill="#302c29"/><path d="M0 28h100M42 18h16M42 38h16" stroke="#9ebbc1" stroke-width="1.5"/></g></g><circle cx="50" cy="28" r="24" fill="none" stroke="#607982"/><path d="M31 28h13l6 4 6-4h13" fill="none" stroke="#e1b97b" stroke-width="2"/></svg>`;
- const fraction=gaugeFraction(r),angle=fraction*180-90;
- return `<svg class="dial-gauge" viewBox="0 0 100 56" aria-hidden="true"><path class="gauge-track" d="M12 47a38 38 0 0 1 76 0" pathLength="100"/><path class="gauge-fill" d="M12 47a38 38 0 0 1 76 0" pathLength="100" stroke-dasharray="${(fraction*100).toFixed(2)} 100"/><path class="gauge-ticks" d="M9 47h7M50 6v7M84 47h7"/><path class="gauge-needle" d="M50 47V18" transform="rotate(${angle.toFixed(2)} 50 47)"/><circle cx="50" cy="47" r="2" fill="currentColor"/></svg>`;
-}
-export function dialMarkup(r:InstrumentReading):string{
- const value=readingValue(r),scale=typeof r.value==='number'&&(r.unit==='m'&&r.value>=1000||r.unit==='m/s'&&Math.abs(r.value)>=1000)?1000:1;
- const unit=scale===1000?(r.unit==='m'?'km':'km/s'):r.unit;
- const display=scale===1000?(Number(r.value)/scale).toFixed(1):value;
- const signed=typeof r.value==='number'&&r.min<0&&r.value>0?'+':'';
- const range=r.min<0?`±${r.max/scale}`:`0–${r.max/scale}`;
- const description=`${r.label}: ${value} ${r.unit}. ${r.state.label}. ${r.attitude===undefined?`Gauge scale ${range} ${unit}; auto-ranges for altitude and velocity.`:'Surface-relative attitude; upright is level with local up.'}`;
- return `<div class="flight-dial" data-instrument="${r.key}" data-level="${r.state.level}" role="group" aria-label="${description}" title="${description}"><span class="dial-label"><i class="dial-light" aria-hidden="true"></i>${r.short}</span><div class="dial-face">${gauge(r)}<strong>${signed}${display}<small> ${unit}</small></strong></div><span class="dial-range">${r.attitude===undefined?`${range} ${unit}`:'LOCAL UP'}</span><small class="instrument-status" hidden>${symbols[r.state.level]} ${r.state.label||'—'}</small></div>`;
-}
 export function detailMarkup(rows:InstrumentReading[]):string{return rows.map(r=>`<div class="detail-reading" data-detail="${r.key}" ${r.primary?'':`data-instrument="${r.key}" data-level="${r.state.level}"`}><span>${r.label}</span><strong>${readingValue(r)}<small> ${r.unit}</small></strong><span class="detail-state" data-level="${r.state.level}">${symbols[r.state.level]} ${r.state.label||'—'}</span></div>`).join('');}

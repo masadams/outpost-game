@@ -17,22 +17,9 @@ label { display: block; font-size: 10px; letter-spacing: 1.5px; color: var(--mut
 strong { font-size: 23px; font-weight: normal; }
 kbd { font-family: inherit; color: #e2f4f2; }
 #hud { position: fixed; inset: 0; pointer-events: none; padding: 20px 24px; }
-#hud header { display: flex; align-items: center; }
 .eyebrow { color: var(--muted); font-size: 9px; letter-spacing: 2px; }
 h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px; }
-#hud-context { font-size: 10px; letter-spacing: 1px; color: var(--mint); border-left: 1px solid var(--edge); padding-left: 12px; margin-left: 6px; text-transform: uppercase; }
-.mission { position: absolute; right: 340px; top: 26px; font-size: 9px; letter-spacing: 1px; color: var(--muted); }
-#sound-panel { position: fixed; top: 20px; right: 24px; display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--muted); }
-#sound-panel > button:first-child { width: 100px; }
-#sound-panel label { display: flex; align-items: center; gap: 4px; letter-spacing: 0; margin: 0; }
-#sound-panel input { width: 65px; accent-color: var(--mint); }
-.dock-nav { position: absolute; top: 72px; left: 24px; display: flex; gap: 6px; pointer-events: auto; font-size: 11px; }
-#flight-tools { position: fixed; top: 72px; right: 24px; display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
-#flight-tools button { padding: 7px; }
-#flight-tools span { font-size: 9px; min-width: 72px; text-align: right; }
-.status { position: absolute; top: 116px; left: 24px; max-width: min(34vw, 440px); font-size: 10px; letter-spacing: .4px; line-height: 1.7; color: var(--mint); border-left: 2px solid; background: #091925d9; padding: 7px 10px; }
 .status.danger { color: #ff958b; }
-#threat-alert { position: absolute; top: 180px; left: 24px; max-width: min(34vw, 440px); color: var(--amber); font-size: 11px; line-height: 1.6; background: #231b15dd; }
 #threat-alert:empty { display: none; }
 .instruments { position: absolute; bottom: 64px; left: 24px; right: 184px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--edge); background: var(--panel); }
 .instruments > div { padding: 11px 14px; border-right: 1px solid var(--edge); min-width: 0; }
@@ -54,36 +41,19 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
 .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
 .product-grid span { display: flex; flex-direction: column; font-size: 10px; color: var(--muted); }
 .product-grid b { color: #e1eef1; font-weight: normal; font-size: 16px; }
-.build-palette { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.build-actions { display: flex; gap: 5px; }
-.placement, .objective { color: var(--mint); }
+.placement { color: var(--mint); }
 .placement.invalid, .warning { color: var(--amber); }
-.machine, .facility-list, .checkpoint, .target, .surface-panel { border-top: 1px solid var(--edge); margin-top: 12px; padding-top: 12px; }
-.machine p, .surface-panel p, .objective { margin: 10px 0; }
-.cargo-meter { height: 4px; background: var(--edge); margin: 12px 0; }
-.cargo-meter i { display: block; height: 100%; background: var(--mint); }
-#help { color: #d9e8ed; background: #091925; border: 1px solid var(--mint); width: min(740px, calc(100% - 40px)); max-height: 90vh; padding: 24px; font-size: 12px; line-height: 1.8; }
-#help::backdrop { background: #030812e8; }
-#help h2 { color: var(--mint); font-size: 18px; font-weight: normal; }
-#help li { padding: 5px 0; }
-.help-title { display: flex; justify-content: space-between; gap: 15px; align-items: center; }
-.help-note { border-top: 1px solid var(--edge); padding-top: 12px; color: var(--muted); }
+.machine, .facility-list, .checkpoint { border-top: 1px solid var(--edge); margin-top: 12px; padding-top: 12px; }
+.machine p { margin: 10px 0; }
 @media (max-width: 1100px) {
   #operations-dock { width: 280px; }
-  .mission { display: none; }
   .instruments > div { padding: 11px 9px; }
   .instruments strong { font-size: 20px; }
   .instruments label { font-size: 8px; }
 }
 @media (max-width: 800px) {
   #hud { padding: 16px; }
-  #sound-panel { right: 16px; }
-  .dock-nav { left: 16px; top: 108px; font-size: 10px; gap: 4px; }
-  .dock-nav button { padding: 6px; }
-  #flight-tools { right: 16px; top: 68px; }
   #operations-dock { right: 16px; top: 152px; width: 260px; max-height: calc(100vh - 330px); }
-  .status { top: 152px; left: 16px; }
-  #threat-alert { top: 222px; left: 16px; }
   .instruments { left: 16px; right: 16px; bottom: 70px; }
   .instruments > div { padding: 8px 5px; }
   .instruments strong { font-size: 15px; }
@@ -92,21 +62,12 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
   #hud > footer { left: 16px; right: 16px; bottom: 14px; font-size: 9px; }
 }
 @media (max-width: 560px) {
-  h1 { font-size: 18px; } #hud-context { font-size: 9px; }
-  #sound-panel { top: 55px; font-size: 9px; } #sound-panel input { width: 40px; }
-  #flight-tools { top: 145px; } .dock-nav { top: 108px; }
   #operations-dock { top: 190px; max-height: calc(100vh - 365px); }
-  .status { top: 190px; max-width: 40vw; } #threat-alert { top: 260px; max-width: 40vw; }
   #flight-status { display: none; }
   .instruments label { font-size: 7px; letter-spacing: 0; } .instruments strong { font-size: 12px; }
 }
 
 /* Notices flow together instead of overlapping when a message wraps. */
-.notices { position: absolute; top: 116px; left: 24px; width: min(34vw, 440px); }
-.notices .status { position: static; max-width: none; }
-.notices #threat-alert { position: static; max-width: none; margin-top: 8px; }
-@media (max-width: 800px) { .notices { top: 152px; left: 16px; } }
-@media (max-width: 560px) { .notices { top: 190px; width: 40vw; } }
 
 .ground-survey { border-block: 1px solid var(--edge); padding-block: 12px; margin-block: 12px; }
 .ground-survey p { margin: 8px 0; }
@@ -122,22 +83,15 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
 .policy-row b { text-align: center; }
 .policy-row small { display: block; }
 .towing-panel { border-top: 1px solid var(--edge); margin-top: 12px; padding-top: 12px; }
-#flight-region { display: inline-block; font-size: 9px; letter-spacing: 1px; margin-left: 12px; padding: 4px 6px; border: 1px solid var(--edge); color: #86c7ff; vertical-align: middle; }
-#flight-region[data-region="thin-air"] { color: #f3d779; border-color: #f3d779; }
-#flight-region[data-region="space"] { color: #8ce9dd; border-color: #8ce9dd; }
 
 #hud[data-mode="ship"] .instruments { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 #hud[data-mode="ship"] .instruments strong { font-size: 22px; }
 #flight-status { bottom: 195px; }
 #hud[data-mode="ship"] .instruments strong small { display: block; font-size: 8px; line-height: 1.3; }
-.instrument-status { display: block; margin-top: 5px; font-size: 8px; line-height: 1.4; min-height: 23px; overflow-wrap: anywhere; }
 .instruments strong { display: block; line-height: 1.1; }
 .instruments [data-level="safe"] { border-top: 2px solid #73f3cf; }
 .instruments [data-level="caution"] { border-top: 2px solid #f3d779; background: #f3d7790d; }
 .instruments [data-level="critical"] { border-top: 2px solid #ff958b; background: #ff958b12; }
-.instruments [data-level="safe"] .instrument-status { color: #73f3cf; }
-.instruments [data-level="caution"] .instrument-status { color: #f3d779; }
-.instruments [data-level="critical"] .instrument-status { color: #ff958b; }
 .instruments [data-level="neutral"] { border-top: 2px solid transparent; }
 #flight-alert { margin-top: 8px; padding: 9px 12px; background: var(--panel); border-left: 2px solid #73f3cf; font-size: 10px; line-height: 1.6; }
 #flight-alert[data-level="safe"] { color: #73f3cf; }
@@ -149,7 +103,6 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
 @media (max-width: 1100px) {
   #hud[data-mode="ship"] .instruments strong { font-size: 17px; }
   #hud[data-mode="ship"] .instruments > div { padding-inline: 6px; }
-  .instrument-status { font-size: 7px; letter-spacing: 0; }
 }
 
 #command-console { font-size: 10px; line-height: 1.6; }
@@ -173,16 +126,6 @@ h1 { margin: 5px 0 0; font-weight: normal; font-size: 23px; letter-spacing: 4px;
 #command-console th, #command-console td { text-align: right; padding: 3px; border-bottom: 1px solid var(--edge); }
 #command-console th:first-child { text-align: left; overflow-wrap: anywhere; }
 
-#navigation-guidance { position: absolute; left: 24px; bottom: 222px; max-width: min(44vw, 520px); padding: 4px 6px; background: #091925e8; color: #f3d779; font-size: 9px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#navigation-panel { font-size: 10px; line-height: 1.6; }
-#navigation-panel svg { display: block; width: 100%; max-height: 260px; border: 1px solid var(--edge); background: #06101a; }
-#navigation-panel h3 { color: var(--mint); font-size: 12px; }
-#navigation-panel button { font-size: 10px; padding: 7px; margin-block: 3px; }
-#navigation-panel article { border-top: 1px solid var(--edge); padding-block: 8px; }
-.nav-sites { display: grid; margin-block: 10px; }
-.nav-objective { color: var(--mint); border-left: 2px solid; padding-left: 8px; }
-#navigation-panel summary { cursor: pointer; color: var(--mint); padding-block: 7px; }
-
 .research-panel article, .equipment-panel article { border: 1px solid var(--edge); padding: 8px; margin-block: 8px; }
 .research-panel progress { width: 100%; accent-color: var(--mint); }
 .equipment-panel [data-installed="true"] { border-color: var(--mint); }
@@ -195,65 +138,29 @@ button, input, select, summary { border-radius: 4px; }
 button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 label, small { color: var(--muted); }
 #hud { padding: 16px 20px; }
-#hud header { max-width: 49%; min-height: 48px; }
 .eyebrow { font-size: 10px; letter-spacing: 1.3px; }
-h1 { font-size: 21px; letter-spacing: 2px; }
-#hud-context { font-size: 11px; letter-spacing: .2px; padding-left: 8px; margin-left: 2px; }
-#flight-region { font-size: 10px; letter-spacing: .3px; margin-left: 6px; }
-.mission { display: none; }
-#sound-panel { right: 20px; top: 20px; font-size: 11px; gap: 5px; max-width: 49%; }
-#sound-panel button { padding: 7px; }
-#sound-panel > button:first-child { width: 88px; }
-#sound-panel input { width: 55px; }
-.dock-nav { top: 84px; left: 20px; width: min(55vw, 600px); display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); font-size: clamp(11px,calc(11px * var(--text-scale)),14px); gap: 5px; }
-.dock-nav button { padding: 7px 3px; min-width: 0; }
-#flight-tools { top: 84px; right: 20px; font-size: 11px; }
-#flight-tools span { font-size: 10px; }
-.notices { top: 130px; left: 20px; width: min(34vw,440px); }
 .notices .status { font-size: clamp(11px,calc(11px * var(--text-scale)),14px); letter-spacing: 0; padding: 7px 10px; line-height: 1.45; max-height: 62px; overflow-y: auto; pointer-events: auto; }
 #flight-alert, .notices #threat-alert { font-size: 12px; line-height: 1.45; margin-top: 5px; padding: 7px 10px; }
-#objectives { position: absolute; top: 264px; left: 20px; width: min(34vw,440px); max-height: calc(100vh - 500px); overflow: auto; pointer-events: auto; background: var(--panel); border: 1px solid var(--edge); border-radius: 4px; padding: 8px 10px; font-size: clamp(11px,calc(11px * var(--text-scale)),15px); }
-#objectives summary { cursor: pointer; color: var(--mint); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-#objectives article { border-top: 1px solid var(--edge); padding-block: 9px; line-height: 1.5; }
-#objectives article[data-complete=true] b { color: var(--mint); }
-#objectives p { margin: 5px 0; }
 #operations-dock { top: 130px; right: 20px; width: 340px; max-height: calc(100vh - 340px); font-size: calc(12px * var(--text-scale)); line-height: 1.6; border-radius: 6px; box-shadow: 0 14px 50px #0007; }
 .dock-heading { padding: 10px 12px; font-size: 12px; letter-spacing: 1px; }
 #operations-dock > section { padding: 14px; }
 #operations-dock label { font-size: inherit; letter-spacing: .7px; }
-#operations-dock section button, #command-console button, #navigation-panel button { font-size: inherit; padding: 8px; }
+#operations-dock section button, #command-console button { font-size: inherit; padding: 8px; }
 #operations-dock section small, #command-console table { font-size: max(11px,calc(11px * var(--text-scale))); line-height: 1.5; }
-#command-console, #navigation-panel { font-size: inherit; line-height: 1.6; }
-#command-console h3, #navigation-panel h3, .manifest h3 { font-size: 1.05em; color: var(--mint); font-weight: normal; }
+#command-console { font-size: inherit; line-height: 1.6; }
+#command-console h3, .manifest h3 { font-size: 1.05em; color: var(--mint); font-weight: normal; }
 #command-console table { table-layout: fixed; }
 #command-console td, #command-console th { overflow-wrap: anywhere; }
 .product-grid { gap: 8px; }.product-grid span { font-size: inherit; }
-.build-palette { display: block; }
-.build-palette fieldset { border: 1px solid var(--edge); margin: 12px 0; padding: 6px; min-width: 0; }
-.build-palette legend { color: var(--mint); padding: 0 5px; }
-.build-palette button { line-height: 1.5; }
-.build-palette button.selected { background: #1b3b48; border-left: 4px solid var(--mint); }
 .manifest { border: 1px solid var(--edge); margin: 10px 0; padding: 10px; background: #102535; border-radius: 5px; }
 #hud .instruments { bottom: 64px; left: 20px; right: 184px; height: var(--telemetry-height); }
 #hud .instruments > div { padding: 8px; overflow: hidden; }
 #hud .instruments label { font-size: clamp(11px,calc(11px * var(--text-scale)),13px); line-height: 1.2; letter-spacing: .2px; margin-bottom: 5px; }
 #hud[data-mode] .instruments strong { font-size: clamp(20px,calc(23px * var(--text-scale)),28px); line-height: 1.15; }
 #hud[data-mode] .instruments strong small { display: inline; font-size: 11px; }
-#hud .instrument-status { font-size: clamp(10px,calc(10px * var(--text-scale)),12px); line-height: 1.35; margin-top: 5px; min-height: 28px; }
-#surface-frame { position: absolute; left: 20px; bottom: calc(76px + var(--telemetry-height)); font-size: 12px; letter-spacing: .5px; color: var(--mint); background: var(--panel); padding: 3px 6px; }
 #flight-status { left: 20px; right: auto; bottom: calc(100px + var(--telemetry-height)); max-width: min(34vw,520px); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#navigation-guidance { left: 20px; bottom: calc(126px + var(--telemetry-height)); max-width: min(34vw,520px); font-size: 12px; }
 #combat-status { left: 20px; font-size: 11px; }
 #hud > footer { left: 20px; font-size: 11px; }
-#settings, #help { background: #091925; color: #e3eff2; width: min(820px,calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid var(--mint); border-radius: 8px; font-size: calc(13px * var(--text-scale)); padding: 24px; line-height: 1.6; }
-#settings::backdrop, #help::backdrop { background: #030812eb; }
-#settings h2, #help h2 { font-size: 1.35em; color: var(--mint); }
-#settings input, #settings select { font: inherit; color: #e3eff2; background: #102535; border: 1px solid var(--edge); padding: 8px; max-width: 100%; }
-#settings label { font-size: inherit; letter-spacing: 0; }
-#settings select, #settings input[type=range] { display: block; width: 100%; margin-top: 6px; }
-.settings-grid, .binding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.binding-grid { margin-top: 16px; }.binding-grid label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }.binding-grid button { min-width: 65px; }
-#binding-status { color: var(--amber); }
 :root[data-reduced-motion=true] *, :root[data-reduced-motion=true] *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 @media (max-width:1100px) {
  :root { --telemetry-height: 176px; }
@@ -262,44 +169,25 @@ h1 { font-size: 21px; letter-spacing: 2px; }
  #hud .instruments > div { padding: 5px 8px; }
  #hud[data-mode] .instruments strong { font-size: 24px; }
  #hud .instruments label { margin-bottom: 2px; font-size: 12px; }
- #hud .instrument-status { margin-top: 2px; font-size: 11px; line-height: 1.25; }
- #surface-frame { bottom: calc(62px + var(--telemetry-height)); font-size: 11px; }
  #flight-status { bottom: calc(88px + var(--telemetry-height)); }
- #navigation-guidance { bottom: calc(112px + var(--telemetry-height)); font-size: 11px; }
- #hud-context { display: inline-block; font-size: 10px; max-width: 180px; letter-spacing: 0; }
- #flight-region { display: none; }
- #sound-panel { font-size: 10px; } #sound-panel label { font-size: 10px; }
- #sound-panel input { width: 42px; }
- #flight-tools button { padding: 7px 5px; }
- #flight-tools span { min-width: 60px; }
  #hud > footer { bottom: 12px; max-height: 32px; overflow: auto; font-size: 10px; }
  #combat-status { bottom: 38px; font-size: 10px; }
 }
-@media (max-width:1100px) { #flight-region { display: inline-block; font-size: 9px; margin-left: 3px; padding: 3px; } h1 { letter-spacing: 1px; font-size: 19px; } }
 
 #operations-dock { max-height: calc(100vh - var(--telemetry-height) - 206px); }
 
-.chart-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-
 /* Objectives share the operations dock; safety notices never compete with an expanded list. */
-#objectives { top:60px; bottom:auto; height:22px; max-height:none; padding:3px 8px; font-size:12px; line-height:1.2; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--mint); }
 #objective-panel article { border-top:1px solid var(--edge); padding-block:12px; }
 #objective-panel article[data-complete=true] b { color:var(--mint); }
 #objective-panel p { margin:6px 0; }
-.dock-nav { font-size:clamp(11px,calc(11px * var(--text-scale)),13px); }
-.dock-nav button { white-space:nowrap; }
 #operations-dock label { letter-spacing:.2px; }
 :root[data-text-scale="1.5"] .product-grid, :root[data-text-scale="1.25"] .product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .policy-row { grid-template-columns:minmax(0,1fr) 32px 52px 32px; }
 .stock-target { grid-template-columns:minmax(0,1fr) 32px 52px 32px; }
 .command-row { grid-template-columns:minmax(0,1fr) 32px 32px; }
 /* Task-oriented entry points; ship combat and cargo share one group. */
-.dock-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .ship-tabs { display:flex; gap:4px; padding:8px 12px; border-bottom:1px solid var(--edge); background:#102432; }
-.ship-tabs button { flex:1; font-size:12px; padding:6px; }
-.build-flow { padding:10px; border:1px solid var(--mint); border-radius:5px; margin-block:10px; }
-.build-flow p { margin:8px 0; }.build-site { color:var(--amber); }
-#build-category { width:100%;padding:8px;background:#102535;color:#e3eff2;font:inherit;border:1px solid var(--edge); }
+.ship-tabs button { flex:1; font-size:12px; padding:6px; }.build-site { color:var(--amber); }
 #build-site { width:100%;padding:8px;color:#e3eff2;background:#102535;border:1px solid var(--edge);font:inherit; }
 #build-pointer-tip { position:fixed;z-index:3;width:240px;background:#091925f7;color:#ffc58c;border:1px solid #ffc58c;padding:8px;border-radius:4px;font-size:12px;line-height:1.5;pointer-events:none; }
 #crew-order-status { margin-top:6px;background:var(--panel);padding:6px;font-size:12px;color:var(--mint);pointer-events:auto; }
@@ -319,16 +207,7 @@ h1 { font-size: 21px; letter-spacing: 2px; }
 #objective-panel .route-budget p { border-left:2px solid var(--edge);padding-left:8px; }
 #objective-panel .budget-shortfall { color:var(--amber); }
 
-#game-menu { width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;background:#091925f5;color:#d9e8ed;border:1px solid var(--mint);border-radius:8px;padding:24px; }
-#game-menu::backdrop { background:#020910df; }
-#game-menu .menu-brand { text-align:center; }
-#game-menu h1 { font-size:32px;letter-spacing:5px;line-height:1.3; }
-#game-menu nav { display:grid;gap:8px;margin-block:18px; }
-#game-menu button { width:100%;padding:10px; }
-#game-menu small { display:block;line-height:1.6; }
-#game-menu .menu-status { color:var(--amber);line-height:1.5; }
 #research-filter, #equipment-slot { width:100%;padding:8px;background:#102535;color:#d9e8ed;border:1px solid var(--edge);font:inherit; }
-.tech-overview small { display:block;line-height:1.5;margin-bottom:10px; }
 #command-console [data-tech], #command-console [data-upgrade] { scroll-margin-top:56px; }
 
 .readiness-summary { border-left:2px solid var(--mint);padding-left:8px; }
@@ -423,25 +302,17 @@ h1 { font-size: 21px; letter-spacing: 2px; }
 #command-console > .command-alert {margin:8px 0;font-size:.85em;}
 @media(max-width:1050px){#operations-dock[data-expanded=true]{top:126px;height:calc(100dvh - 140px);}}
 #operations-dock[data-expanded=true] {top:16px;left:16px;right:16px;height:calc(100dvh - 32px);background:#091923;}
-#operations-dock > .dock-nav {position:static;width:auto;grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 14px;margin:0;border-bottom:1px solid var(--edge);background:#102432;}
 #command-console .tech-node strong,#command-console .part-card strong {font-size:1em;line-height:1.35;}
 #command-console:not([data-page=facilities]) > .command-alert[data-quiet=true] {display:none;}
 .tree-viewport {height:clamp(260px,calc(100dvh - 380px),680px);}
 #command-console .selection-inspector {max-height:max(260px,calc(100dvh - 350px));overflow:auto;overscroll-behavior:contain;scrollbar-color:#6d9d9b #0b202d;}
 @media(max-width:1050px){#operations-dock[data-expanded=true]{top:10px;left:10px;right:10px;height:calc(100dvh - 20px);}}
 #command-console button.workspace-live {margin:0 0 0 auto;width:auto;white-space:nowrap;font-size:.8em;}
-#operations-dock[data-expanded=true] > .dock-nav {position:sticky;top:46px;z-index:5;}
 #operations-dock[data-expanded=true] .manage-sections {position:sticky;top:94px;z-index:4;background:#091923;}
 #command-console .tech-node[data-state=researching] {border-color:#e5b66e;}
 #hud:has(> #operations-dock[data-expanded=true]:not([hidden])) {z-index:30;}
-#operations-dock #sound-panel {position:static;max-width:none;margin-left:auto;gap:4px;}
 #operations-dock .dock-heading > span {margin-right:0;white-space:nowrap;}
-#operations-dock #sound-panel button {font-size:11px;padding:6px;}
-#operations-dock #sound-panel label {font-size:11px;}
-#operations-dock #sound-panel input {width:42px;}
-#operations-dock > .dock-nav {grid-template-columns:repeat(5,minmax(0,1fr));}
-#operations-dock .dock-nav #objectives {position:static;width:auto;max-width:none;min-width:0;font:inherit;padding:7px 3px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-@media(max-width:1050px){#operations-dock .dock-heading {gap:4px;font-size:11px;padding:8px;}#operations-dock #sound-panel {font-size:10px;}#operations-dock #sound-panel > button:first-child {width:auto;}#operations-dock #sound-panel label {display:none;}#operations-dock .dock-heading button {font-size:10px;}}
+@media(max-width:1050px){#operations-dock .dock-heading {gap:4px;font-size:11px;padding:8px;}#operations-dock .dock-heading button {font-size:10px;}}
 #command-console .selection-inspector {display:flex;flex-direction:column;overflow:hidden;padding:0;max-height:max(300px,calc(100dvh - 350px));}
 .inspector-body {padding:18px;overflow:auto;min-height:0;overscroll-behavior:contain;scrollbar-color:#6d9d9b #0b202d;}
 .inspector-actions {flex:0 0 auto;padding:12px 18px;background:#122b35;border-top:1px solid #41616e;}
@@ -449,7 +320,6 @@ h1 { font-size: 21px; letter-spacing: 2px; }
 #command-console .inspector-actions .action-reason {margin:8px 0 0;}
 #operations-dock[data-expanded=false] .dock-heading {gap:4px;font-size:10px;letter-spacing:.2px;padding:8px;}
 #operations-dock[data-expanded=false] .dock-heading button {font-size:10px;padding:4px;}
-#operations-dock .dock-nav #objectives[aria-expanded=true] {border-color:var(--mint);background:#174039;}
 /* Inspector actions are part of the window, not the flight HUD's fixed footer. */
 #hud .inspector-actions {position:static;inset:auto;width:auto;max-width:none;font:inherit;letter-spacing:normal;}
 #command-console .selection-inspector {max-height:max(260px,calc(100dvh - 420px));}
@@ -488,7 +358,6 @@ h1 { font-size: 21px; letter-spacing: 2px; }
 .autopilot-card p {font-size:.9em;line-height:1.6;}
 .autopilot-card .eyebrow {font-size:.8em;color:#a1c4c8;}
 .autopilot-status {border-left:3px solid var(--mint);padding:10px;background:#132a34;}
-#hud .instrument-bezel .autopilot-disengage {margin:0;color:var(--mint);border-color:#6b9e9f;}
 #operations-dock[data-expanded=false] .autopilot-options {grid-template-columns:1fr;}
 #operations-dock[data-inspection=true] {position:fixed;top:126px;left:auto;right:20px;width:min(420px,calc(100vw - 40px));height:auto;max-height:calc(100dvh - 154px);z-index:25;}
 #operations-dock[data-inspection=true] .manage-sections,#operations-dock[data-inspection=true] .command-flow,#operations-dock[data-inspection=true] .command-flow+small,#operations-dock[data-inspection=true] .command-map,#operations-dock[data-inspection=true] .command-list,#operations-dock[data-inspection=true] [data-workspace-page=facilities]>small,#operations-dock[data-inspection=true] .workspace-toolbar label,#operations-dock[data-inspection=true] .workspace-toolbar select {display:none;}

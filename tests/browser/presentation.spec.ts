@@ -9,9 +9,9 @@ test('keeps desktop controls inside the viewport and leaves a clear central flig
     await expect(page.locator('#hud')).toHaveAttribute('data-state', 'landed');
     await expect(page.locator('#operations-dock')).toBeHidden();
     await page.getByRole('button', { name: 'Build', exact: true }).click();
-    await expect(page.locator('.colony-panel')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Build', exact: true })).toBeVisible();
     const issues = await page.evaluate(() => {
-      const selectors = ['.dock-nav', '#flight-tools', '#sound-panel', '.instruments', '#operations-dock', '.notices'];
+      const selectors = ['#hud-chrome .screens', '#flight-tools', '#sound-panel', '#build-bar-host .build-bar', '.notices'];
       const rects = selectors.map(selector => ({ selector, box: document.querySelector(selector)!.getBoundingClientRect() }));
       const intersect = (a: { left: number; right: number; top: number; bottom: number }, b: { left: number; right: number; top: number; bottom: number }) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
       const centre = { left: innerWidth * 0.4, right: innerWidth * 0.6, top: innerHeight * 0.27, bottom: innerHeight * 0.59 };
@@ -41,14 +41,14 @@ test('uses contextual panels with pause-safe mouse/keyboard navigation and reada
   await expect(page.getByRole('dialog')).toBeHidden(); await expect(dock).toHaveAttribute('data-panel', 'combat');
   await page.keyboard.press('Escape'); await expect(dock).toBeHidden(); await page.keyboard.press('p'); await page.keyboard.press('f');
   await expect(hud).toHaveAttribute('data-context', 'surface'); await expect(dock).toHaveAttribute('data-panel', 'colony');
-  await page.getByRole('button', { name: 'Ship [I]', exact: true }).focus(); await page.keyboard.press('Space');
+  await page.getByRole('button', { name:'Ship', exact: true }).focus(); await page.keyboard.press('Space');
   await expect(dock).toHaveAttribute('data-panel', 'cargo'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-context', 'construction');
-  await expect(page.locator('.build-palette button')).toHaveCount(3);
-  expect(await dock.evaluate(e => e.scrollHeight > e.clientHeight)).toBe(true);
-  await page.getByLabel('Blueprint category', { exact: true }).selectOption('defence');
-  const last = page.locator('[data-select="shieldLarge"]'); await last.click(); await expect(last).toHaveClass(/selected/);
-  await page.keyboard.press('Escape'); await expect(dock).toBeHidden();
-  await page.getByRole('button', { name: 'Build', exact: true }).click(); await expect(dock).toBeVisible();
+  await expect(page.locator('.build-bar [data-select]')).toHaveCount(3);
+  await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Defence',exact:true}).click();
+  const last = page.locator('[data-select="shieldLarge"]'); await last.click(); await expect(last).toHaveAttribute('aria-pressed', 'true');
+  const bar = page.getByRole('region', { name: 'Build', exact: true });
+  await page.keyboard.press('Escape'); await expect(bar).toBeHidden();
+  await page.getByRole('button', { name: 'Build', exact: true }).click(); await expect(bar).toBeVisible();
   expect(errors).toEqual([]);
 });

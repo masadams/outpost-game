@@ -19,6 +19,9 @@ export class GameAudio {
   private active = true;
   private failed = false;
   private disposed = false;
+  private engineRumble: AudioBufferSourceNode | null = null;
+  private pickupRun = 0;
+  private lastPickup = -10;
   private frame: SoundFrame = { cues: [], engine: false, mining: false, tractor: false, machinery: false };
   readonly preferences: AudioPreferences;
   constructor() {
@@ -45,10 +48,46 @@ export class GameAudio {
         this.music=new AdaptiveMusic(this.context,this.master);
         const compressor = this.context.createDynamicsCompressor(); compressor.threshold.value = -16; compressor.ratio.value = 3;
         this.master.connect(compressor); compressor.connect(this.context.destination);
-        for (const [name, frequency, type] of [['engine', 82, 'sawtooth'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 62, 'triangle']] as const) {
+        for (const [name, frequency, type] of [['engine', 54, 'sine'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 62, 'triangle']] as const) {
           const oscillator = this.context.createOscillator(), gain = this.context.createGain(), filter = this.context.createBiquadFilter();
           oscillator.type = type; oscillator.frequency.value = frequency; filter.type = 'lowpass'; filter.frequency.value = name === 'engine' ? 450 : 1000;
           gain.gain.value = 0; oscillator.connect(filter); filter.connect(gain); gain.connect(this.effects!); oscillator.start();
+          if (name === 'engine') {
+            // A rocket is mostly a low rumble of rushing gas: filtered brown noise under a soft sine.
+            const length = this.context.sampleRate * 2;
+            const buffer = this.context.createBuffer(1, length, this.context.sampleRate);
+            const data = buffer.getChannelData(0);
+            let last = 0;
+            let seed = 7;
+            for (let i = 0; i < length; i++) {
+              seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+              last = (last + 0.04 * (seed / 2147483648)) / 1.02;
+              data[i] = last * 14;
+            }
+            const rumble = this.context.createBufferSource();
+            const rumbleFilter = this.context.createBiquadFilter();
+            const rumbleGain = this.context.createGain();
+            rumble.buffer = buffer;
+            rumble.loop = true;
+            rumbleFilter.type = 'lowpass';
+            rumbleFilter.frequency.value = 260;
+            rumbleGain.gain.value = 1.5;
+            rumble.connect(rumbleFilter);
+            rumbleFilter.connect(rumbleGain);
+            rumbleGain.connect(gain);
+            rumble.start();
+            this.engineRumble = rumble;
+          }
+          if (name === 'mining') {
+            // A slow wobble makes the beam hum feel alive rather than a flat tone.
+            const wobble = this.context.createOscillator();
+            const depth = this.context.createGain();
+            wobble.frequency.value = 6.5;
+            depth.gain.value = 14;
+            wobble.connect(depth);
+            depth.connect(oscillator.frequency);
+            wobble.start();
+          }
           this.loops.set(name, { oscillator, gain });
         }
       }
@@ -80,7 +119,7 @@ export class GameAudio {
     if (!this.context) return;
     for (const [name, loop] of this.loops) {
       const enabled = !paused && frame[name];
-      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.065 : name === 'machinery' ? 0.018 : 0.035 : 0, this.context.currentTime, 0.04);
+      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.07 : name === 'machinery' ? 0.018 : 0.035 : 0, this.context.currentTime, 0.04);
     }
     if (frame.cues.some(c=>['warning','landingWarning','fuelWarning','shieldBreach','crash'].includes(c))) this.duckTime=2;
     this.duckTime=Math.max(0,this.duckTime-seconds);
@@ -109,6 +148,7 @@ export class GameAudio {
   private play(cue: Cue): void {
     if(cue==='airlessArrival'){this.tone(220,330,.3,0,'sine');this.tone(440,330,.35,.3,'sine');}
     else if (cue === 'crash') { this.noise(0.45, 0.16); this.tone(130, 35, 0.45); }
+    else if (cue === 'split') { this.noise(0.22, 0.12); this.tone(120, 48, 0.3); this.tone(300, 180, 0.1); }
     else if (cue === 'impact' || cue === 'fracture') { this.noise(0.16, 0.09); this.tone(160, 65, 0.18); }
     else if (cue === 'shieldHit') { this.tone(260, 720, 0.16, 0, 'sine'); }
     else if (cue === 'shieldBreach') { this.tone(520, 100, 0.28); this.tone(180, 90, 0.18, 0.28); }
@@ -124,7 +164,15 @@ export class GameAudio {
     else if (cue === 'atmosphereExit') { this.tone(330, 520, 0.18); this.tone(520, 780, 0.2, 0.18); }
     else if (cue === 'atmosphereEntry') { this.tone(660, 440, 0.18); this.tone(440, 260, 0.2, 0.18); }
     else if (cue === 'land' || cue === 'delivery' || cue === 'service') { this.tone(330, 440, 0.14); this.tone(660, 660, 0.18, 0.12); }
-    else if (cue === 'pickup' || cue === 'production') this.tone(cue === 'pickup' ? 740 : 440, 980, 0.08);
+    else if (cue === 'pickup') {
+      // Quick pickups in a row climb a step each, up to an octave, so a haul feels like a run.
+      const now = this.context?.currentTime ?? 0;
+      this.pickupRun = now - this.lastPickup < 1.4 ? Math.min(this.pickupRun + 1, 7) : 0;
+      this.lastPickup = now;
+      const rise = 2 ** (this.pickupRun / 7);
+      this.tone(740 * rise, 980 * rise, 0.08);
+    }
+    else if (cue === 'production') this.tone(440, 980, 0.08);
     else if (cue === 'build') { this.noise(0.08, 0.035); this.tone(260, 520, 0.18); }
     else if (cue === 'demolish') this.tone(220, 90, 0.2);
     else if (cue === 'jump') this.tone(170, 280, 0.12);
@@ -136,6 +184,7 @@ export class GameAudio {
     document.removeEventListener('keydown', this.unlock); document.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('blur', this.silence); document.removeEventListener('visibilitychange', this.visibility);
     for (const loop of this.loops.values()) loop.oscillator.stop();
+    this.engineRumble?.stop();
     this.music?.destroy(); this.loops.clear(); if (this.context) void this.context.close().catch(() => {});
   }
 }

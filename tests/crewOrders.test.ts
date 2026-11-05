@@ -1,3 +1,4 @@
+import { FOCUS_Y } from '../src/render/camera';
 import { expect,it } from 'vitest';
 import { createWorld,stepWorld } from '../src/sim/world';
 import { applyCrewOrder } from '../src/sim/crewOrders';
@@ -40,7 +41,7 @@ it('keeps dispatched construction equal at different renderer rates',()=>{
  expect(runs[0].astronaut).toEqual(runs[1].astronaut);expect(runs[0].colony).toEqual(runs[1].colony);expect(runs[0].system).toEqual(runs[1].system);
 });
 it('inverts pointer coordinates at zoom and rotated local horizons',()=>{
- expect(screenToWorld({x:640,y:424},{x:100,y:200,width:1280,height:800,zoom:2,angle:Math.PI/2})).toEqual({x:100,y:200});const p=screenToWorld({x:660,y:424},{x:100,y:200,width:1280,height:800,zoom:2,angle:Math.PI/2});expect(p.x).toBeCloseTo(100);expect(p.y).toBeCloseTo(210);
+ expect(screenToWorld({x:640,y:800*FOCUS_Y},{x:100,y:200,width:1280,height:800,zoom:2,angle:Math.PI/2})).toEqual({x:100,y:200});const p=screenToWorld({x:660,y:800*FOCUS_Y},{x:100,y:200,width:1280,height:800,zoom:2,angle:Math.PI/2});expect(p.x).toBeCloseTo(100);expect(p.y).toBeCloseTo(210);
 });
 
 it('an explicit stop pauses dispatched work without refunding or continuing another nearby order',()=>{

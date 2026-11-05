@@ -14,24 +14,24 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   await page.keyboard.up('d'); await page.waitForTimeout(450); await page.keyboard.press('b'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '1');
   for (let i = 0; i < 4; i++) await page.keyboard.press('q');
-  await page.getByLabel('Blueprint category', { exact: true }).selectOption('crew'); await page.locator('[data-select="habitatLarge"]').focus(); await page.keyboard.press('Space');
-  await expect(page.locator('.placement')).toContainText('Site clear');
-  await page.getByText('Nearby manual placement · Q/T/Enter',{exact:true}).click();await page.locator('[data-colony="place"]').focus(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Crew & service',exact:true}).click(); await page.locator('[data-select="habitatLarge"]').focus(); await page.keyboard.press('Space');
+  // Keyboard placement: leave the card, then Enter places next to the astronaut.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await page.keyboard.press('b'); await page.keyboard.down('a');
   // The return from the build site can exceed 12 seconds at the crew's 12 m/s walking speed.
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 18000, intervals: [100] }).toBeLessThan(12);
   await page.keyboard.up('a'); await page.waitForTimeout(450);
-  await expect(oxygen).toContainText('HABITAT AIR'); await expect(page.locator('.machine')).toContainText('Large habitat');
+  await expect(oxygen).toContainText(/habitat air/i); await expect(page.locator('.machine')).toContainText('Large habitat');
   const held = await hud.getAttribute('data-oxygen'); await page.waitForTimeout(1200); expect(await hud.getAttribute('data-oxygen')).toBe(held);
   await page.screenshot({ path: 'docs/screenshots/oxygen-habitat.png' });
-  await page.getByRole('button', { name: 'Disable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText('SUIT AIR');
+  await page.getByRole('button', { name: 'Disable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText(/suit air/i);
   await expect.poll(async () => Number(await hud.getAttribute('data-oxygen'))).toBeLessThan(Number(held) - .3);
-  await page.getByRole('button', { name: 'Enable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText('HABITAT AIR');
+  await page.getByRole('button', { name: 'Enable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText(/habitat air/i);
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.version).toBe(19); expect(saved.world.colony.buildings[1].habitat.oxygen).toBeGreaterThan(.6);
   expect(saved.world.colony.products.oxygen).toBeLessThan(2); expect(saved.world.colony.oxygenUsed).toBeGreaterThan(0);
-  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(oxygen).toContainText('HABITAT AIR');
+  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(oxygen).toContainText(/habitat air/i);
   expect(await hud.getAttribute('data-oxygen')).toBe(saved.world.astronaut.oxygen.toFixed(2)); expect(errors).toEqual([]);
 });
 
@@ -41,8 +41,8 @@ test('warns during charged backup and resumes suit consumption when life support
   w.colony.products.oxygen = 0; w.astronaut.oxygen = 20; w.colony.buildOpen = false;
   await page.addInitScript(text => localStorage.setItem('outpost.checkpoint.v1', text), encodeCheckpoint(w)); await page.goto('/');
   const hud = page.locator('#hud'), oxygen = page.locator('[data-instrument="oxygen"]');
-  await expect(oxygen).toContainText('HABITAT AIR'); await expect(oxygen).toHaveAttribute('data-level', 'caution');
-  await page.keyboard.press('p'); await expect(oxygen).toContainText('SUIT AIR', { timeout: 5000 });
+  await expect(oxygen).toContainText(/habitat air/i); await expect(oxygen).toHaveAttribute('data-level', 'caution');
+  await page.keyboard.press('p'); await expect(oxygen).toContainText(/suit air/i, { timeout: 5000 });
   await expect(oxygen).toHaveAttribute('data-level', 'critical');
   await expect.poll(async () => Number(await hud.getAttribute('data-oxygen'))).toBeLessThan(19.5);
   await page.keyboard.press('p'); const held = await hud.getAttribute('data-oxygen'); await page.waitForTimeout(300); expect(await hud.getAttribute('data-oxygen')).toBe(held);

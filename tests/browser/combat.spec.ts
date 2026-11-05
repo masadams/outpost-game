@@ -23,7 +23,7 @@ test('launches, pauses an opt-in drone encounter, fires with heat/ammo feedback,
   await expect.poll(async () => Number(await panel.getAttribute('data-heat'))).toBeGreaterThan(0);
   await expect.poll(async () => Number(await panel.getAttribute('data-kills')), { timeout: 25000, intervals: [100] }).toBe(1);
   await page.keyboard.up('Shift'); await expect(panel).toHaveAttribute('data-enemies', '0');
-  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED');
+  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   const rounds = await panel.getAttribute('data-cannon');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused');
   await expect(panel).toHaveAttribute('data-kills', '1'); await expect(panel).toHaveAttribute('data-cannon', rounds!);

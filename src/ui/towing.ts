@@ -1,8 +1,10 @@
+import { featureVisible } from '../preferences/features';
 import { TOW } from '../sim/towingConfig';
 import { towInstallationError } from '../sim/towing';
 import { RESOURCE_INFO } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 export function towingPanel(w: WorldState, paused: boolean): string {
+  if (!featureVisible('towing')) return '';
   const rock = w.asteroids.find(r => r.id === w.towing.targetId), error = towInstallationError(w);
   const nearest = w.asteroids.filter(r => r.health > 0).map(r => ({ rock: r, distance: Math.hypot(r.position.x - w.ship.position.x, r.position.y - w.ship.position.y) })).sort((a, b) => a.distance - b.distance || a.rock.id - b.rock.id)[0];
   const distance = rock ? Math.hypot(rock.position.x - w.ship.position.x, rock.position.y - w.ship.position.y) : 0;

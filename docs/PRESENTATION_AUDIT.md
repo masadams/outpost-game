@@ -51,4 +51,4 @@ The technical tests and runtime captures remain distinct from human usability ev
 
 ## Direct user feedback after #22
 
-The user reports that menus still feel convoluted and routine movement between construction tasks is slow/boring, while noting that physical travel may be part of the game's charm. [Task 012](../CODEX_TASK_012.md) addresses this with four task entry points, compact categories, point-and-click paid construction and optional real crew walk/work orders. This is one recorded human finding and an implementation response; it does not complete the broader human usability/art/audio/hardware review.
+The user reports that menus still feel convoluted and routine movement between construction tasks is slow/boring, while noting that physical travel may be part of the game's charm. [Task 012](archive/tasks/CODEX_TASK_012.md) addresses this with four task entry points, compact categories, point-and-click paid construction and optional real crew walk/work orders. This is one recorded human finding and an implementation response; it does not complete the broader human usability/art/audio/hardware review.

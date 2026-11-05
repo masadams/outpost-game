@@ -14,7 +14,11 @@
     "test:preview": "playwright test --config playwright.preview.config.ts"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "@fontsource/chakra-petch": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "phaser": "^3.90.0",
+    "preact": "10.24.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

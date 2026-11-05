@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from './game';
+import { test, restart } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('automatically refines rig ore to stock targets, supports native controls and restores active schedules', async ({ page }) => {
@@ -10,7 +10,7 @@ test('automatically refines rig ore to stock targets, supports native controls a
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 10000, intervals: [100] }).toBeGreaterThan(96);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
   await page.keyboard.press('b'); await page.keyboard.press('Enter');
-  await page.keyboard.press('t'); await page.getByLabel('Blueprint category', { exact: true }).selectOption('industry'); await page.locator('[data-select="miningRig"]').click(); await page.keyboard.press('Enter');
+  await page.keyboard.press('t'); await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Industry & research',exact:true}).click(); await page.locator('[data-select="miningRig"]').click(); await page.keyboard.press('Enter');
   await page.keyboard.press('t'); await page.keyboard.press('4'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '3');
   // Extend construction from a new crew position; the preview is limited to 96 m reach.
@@ -45,7 +45,7 @@ test('automatically refines rig ore to stock targets, supports native controls a
   expect(factory.schedule.enabled).toBe(true); expect(factory.schedule.targets.alloy).toBe(15);
   expect(factory.progress).toBeGreaterThan(0); expect(factory.progress).toBeLessThan(2);
   await schedule.scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/screenshots/production-scheduling.png' });
-  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-buildings', '0'); await page.keyboard.press('l');
+  await restart(page); await expect(hud).toHaveAttribute('data-buildings', '0'); await page.keyboard.press('l');
   await expect(hud).toHaveAttribute('data-buildings', '4'); await expect(schedule).toHaveAttribute('data-enabled', 'true');
   await expect(page.locator('[data-target-value="alloy"]')).toHaveText('15');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(schedule).toHaveAttribute('data-enabled', 'true');

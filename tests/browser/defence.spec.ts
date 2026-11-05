@@ -37,7 +37,7 @@ test('builds and controls a turret, defends an opt-in drill, then saves the reso
   await page.keyboard.press('p');
   await expect.poll(async () => Number(await panel.getAttribute('data-intercepted')), { timeout: 25000, intervals: [200] }).toBeGreaterThanOrEqual(3);
   await expect(panel).toHaveAttribute('data-threats', '0'); await expect(panel).toHaveAttribute('data-impacts', '0'); await expect(hud).toHaveAttribute('data-objectives', /defence/);
-  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('CHECKPOINT SAVED');
+  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused');
   await expect(hud).toHaveAttribute('data-buildings', '2'); await expect(panel).toHaveAttribute('data-wave', '1');
   await expect(panel).toHaveAttribute('data-intercepted', '3'); await expect(panel).toHaveAttribute('data-threats', '0'); await expect(hud).toHaveAttribute('data-objectives', /defence/);

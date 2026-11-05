@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL in a modern desktop browser. Choose **New Game**, or **Continue** for a valid current save (loads paused; P resumes). **Menu** offers Resume, Save/Load, Settings, Controls and Return to title. Click the game if keyboard focus is elsewhere. The canvas resizes with the window.
+Open the local Vite URL in a modern desktop browser. New games show only the first-mining-sortie systems ([current focus](docs/CURRENT_FOCUS.md)); add `?features=all` to the URL to see every system, including the ones documented below. Choose **New Game**, or **Continue** for a valid current save (loads paused; P resumes). **Menu** offers Resume, Save/Load, Settings, Controls and Return to title. Click the game if keyboard focus is elsewhere. The canvas resizes with the window.
 
 | Key | Action |
 |---|---|
@@ -38,9 +38,8 @@ Open the local Vite URL in a modern desktop browser. Choose **New Game**, or **C
 | Wheel / − / + | Manual camera zoom (also while paused) |
 | 0 | Restore automatic zoom |
 | P | Pause / resume |
-| R | Reset runtime sandbox, including colony; keep saved checkpoint |
 
-Top-left **Ship / Build / Manage / Map** buttons open one operations dock on the right. Relevant panels open on context transitions; closing/browsing stays in effect until the next transition. **I** toggles Ship / Cargo; **Esc** closes the panel; with no panel open it opens the pause menu. Panels and zoom can be inspected while paused; opening a panel does not pause. Bottom instruments, weapon state, warnings and radar remain available with the dock closed. See [the visual direction and layout references](docs/PRESENTATION_DIRECTION.md).
+Top-right **Ship / Build / Base / Map / Menu** buttons open their panel; small icons below them toggle sound, open help and settings, and pause. The objective card (top-left) shows your current goal; status messages appear under it. Coast-path and zoom controls sit above the radar. **I** toggles Ship; **Esc** closes a panel, or opens the pause menu when none is open. **Base and Map pause the game while you are flying** and stay live on the pad or on foot. The bottom cluster shows fuel, hull and cargo, an attitude dial (nose and direction of motion against local up) and altitude, vertical speed and drift; touchdown limits appear on a landing approach. Master, effects and music volume are in Settings. See [current focus](docs/CURRENT_FOCUS.md) for the UI rebuild.
 
 The game also pauses when its window loses focus or the tab is hidden. Press P to resume; keys are released on pause to avoid queued actions. Flight controls rotate the ship in world space even as the camera reorients.
 
@@ -48,7 +47,11 @@ The **H** guide includes a first-sortie and construction walkthrough, pauses saf
 
 Cargo → Manufactured freight offers finite rig/solar and habitat/solar manifests. Objectives records real sandbox progress without granting resources. Click a built facility to select it in Command; paused actions remain inspection-only. See [the full presentation model](docs/PRESENTATION.md).
 
-**Mouse colony controls:** Build → category → blueprint → point near the surface → left click queues paid work; right click finishes. Outside placement, right click ground to walk. Dispatch crew to a build queue for optional real travel/work, with suit air and manual override. Stop pauses dispatched work without refunds. Inspect facilities by clicking them for Manage. Each colony still has a shared grid; no fake cable links. See [the complete direct-control rules](docs/DIRECT_CONTROLS.md).
+**Building:** press **Build** (or B) while landed or on foot. Pick a card in the build bar (keys 1–5), point at the ground and click: the ghost turns red with the reason if the spot will not work. Materials are set aside at once and the order appears in the queue, where × cancels it and refunds what has not been used. On foot your astronaut walks over and builds it; from the lander, step out (F) and they go automatically. Right-click, B or Esc stops building. Q / T and Enter place next to the astronaut without the mouse; X demolishes a nearby building. Outside build mode, right-click the ground to walk. See [the complete direct-control rules](docs/DIRECT_CONTROLS.md).
+
+**Map:** shows Selene, the ore clusters (coloured by what they hold), salvage sites, the pad and you. Click a place on the chart or in the list to select it: the inspector shows distance, closing and relative speed, and what is known about it. Unsurveyed clusters stay unknown until you survey them. Site actions (salvage, fuel, survey) work with E when you are close and slow enough; the inspector tells you what is missing.
+
+**Base:** opens your outpost's overview: materials, power, and anything that needs attention in plain words. **Buildings** lists each building with what it is doing; select one to turn it on or off or change the refinery recipe. **Ship** shows fuel, hull and cargo. On foot, a card shows the building you are standing next to, with E (on/off), V (recipe) and U (repair). With `?features=all`, a **Legacy console** section holds the older tools for systems not yet rebuilt.
 
 For a first return flight, launch vertically for about **6.5 seconds**, holding Space to clear the starter deposit above the pad (or steering around it), then coast. Keep the nose upright. Watch radial velocity: positive means climbing, negative means descending. Use short thrust pulses on descent, starting early to keep descent under 30 m/s, then reduce it below 6 m/s near the pad. Thrust is an acceleration; releasing W leaves gravity and atmospheric drag acting on your momentum. With a clear flight path, this low hop peaks around 459 m; a roughly 10-second vertical burn reaches about 1.7 km. Sustained burns can escape the moon; turn around and burn to return, or press R to practice again.
 
@@ -70,13 +73,13 @@ An urgent unsafe approach gently pulses and plays a descending two-tone warning.
 
 A starter iron sample is directly above the home pad. Hold **W + Space + C** to launch, mine and attract ore. Release **W after about 6.5 seconds**, keeping Space/C held while coasting toward the deposit. The beam breaks a parent rock into two fragments; mine those again for ore. The powered tractor pulls ore within 260 m and collects it within 18 m. Use the same vertical descent practice described above, then press **E** on the pad to transfer the hold into the depot. The simulation regression performs this entire sortie with ordinary control inputs. Avoid holding thrust until the hold fills: the ship can reach escape speed before collection finishes.
 
-For other deposits, steer by the nearest-deposit bearing and colored radar blips. A radial ice sample also starts just right of the iron sample above home. Keep the nose on the rock within laser range (450 m); nearer rocks and the moon block the beam. Parents split into two mineable fragments; each fragment releases four drifting ore pickups. Resource mass and fracture momentum are conserved. The 120 kg hold accepts partial stacks and leaves the remainder in space. Cargo adds to ship mass. All five resources have separate hold/depot totals. Rock impacts damage hull. Pause freezes the entire world. R resets all runtime progress; K/L protects a saved checkpoint.
+For other deposits, steer by the nearest-deposit bearing and colored radar blips. A radial ice sample also starts just right of the iron sample above home. Keep the nose on the rock within laser range (450 m); nearer rocks and the moon block the beam. Parents split into two mineable fragments; each fragment releases four drifting ore pickups. Resource mass and fracture momentum are conserved. The 120 kg hold accepts partial stacks and leaves the remainder in space. Cargo adds to ship mass. All five resources have separate hold/depot totals. Rock impacts damage hull. Pause freezes the entire world. New Game in the menu resets all runtime progress; K/L protects a saved checkpoint.
 
 ![Mining cargo HUD](docs/screenshots/mining-cargo.png)
 
 ## Research and ship upgrades
 
-Build a **Research lab**, then open **Manage → Research** to spend samples and actual lab power on prerequisite technologies. Nineteen prerequisite-driven technologies unlock twenty-five parts across nine exclusive slots and two in-place facility upgrade tiers. Select a node in the connected tree to inspect requirements and unlocks. Select a ship slot and part to compare it against the fitted module; replacements atomically pay the full new cost and return hull-scaled salvage. Advanced parts have real thrust/burn, capacity, tool power/heat, cooling and protection tradeoffs. Open **Manage → Ship fitting** at the home-pad ship to compare and fabricate with real mass/materials plus 20 kJ unreserved charge.
+Build a **Research lab**, then open **Base → Research** to spend samples and actual lab power on prerequisite technologies. Nineteen prerequisite-driven technologies unlock twenty-five parts across nine exclusive slots and two in-place facility upgrade tiers. Select a node in the connected tree to inspect requirements and unlocks. Select a ship slot and part to compare it against the fitted module; replacements atomically pay the full new cost and return hull-scaled salvage. Advanced parts have real thrust/burn, capacity, tool power/heat, cooling and protection tradeoffs. Open **Manage → Ship fitting** at the home-pad ship to compare and fabricate with real mass/materials plus 20 kJ unreserved charge.
 
 Extra capacity arrives empty; tools use actual cell/heat budgets and heavier ships handle differently. Removal uses hull-scaled salvage and storage/range checks; recovery preserves paid equipment without filling it. See [rates, limits and playtest](docs/PROGRESSION.md).
 
@@ -118,7 +121,7 @@ Press **F** on the home pad to leave the ship. Use **A/D** or the arrows to walk
 
 The amber **cargo depot** is about 54 m right of the pad. Grounded E opens inventory and transfers the landed ship's hold, leaving overflow aboard if storage is full. E again closes, or walk away. The blue **home emergency service** is about 54 m left: E restores suit oxygen/health, repairs the landed ship using stored iron (**1 kg / 10 hull points**), and transfers any manufactured fuel available. Its emergency suit service remains free. Buildable service stations use grid energy and manufactured supplies.
 
-The suit has **180 seconds of oxygen**. Return to the ship (F within 20 m) or use the service point before it runs out. At zero oxygen, health drains at 5 points/second. Falls above 14 m/s also cause damage; ordinary jumps are safe. A lost suit requires R to restart the entire sortie. Boarding refills oxygen; suit health stays damaged until serviced. You can walk through ship/station art; terrain is the suit's collision surface in this milestone.
+The suit has **180 seconds of oxygen**. Return to the ship (F within 20 m) or use the service point before it runs out. At zero oxygen, health drains at 5 points/second. Falls above 14 m/s also cause damage; ordinary jumps are safe. A lost suit means starting over from the menu (New Game) or loading a save. Boarding refills oxygen; suit health stays damaged until serviced. You can walk through ship/station art; terrain is the suit's collision surface in this milestone.
 
 ![Surface depot](docs/screenshots/surface-depot.png)
 
@@ -221,27 +224,13 @@ Known limitations: a fixed non-rotating planet, no mutual object gravity, lift, 
 Next: review the management workspace and playtest the complete flight/mining/colony/research loop. Use handling, menu, economy and pacing feedback to prioritize the remaining reliability/content and release work. See [the development roadmap](docs/DEVELOPMENT_ROADMAP.md).
 
 ## Start here
-- [Master development roadmap](docs/DEVELOPMENT_ROADMAP.md) — authoritative phases, task checkboxes, dependencies, exit criteria and progress.
-- [Design decisions](docs/DECISIONS.md) — confirmed choices versus unresolved questions.
-- [Game design](docs/GAME_DESIGN.md) — gameplay vision, mechanics and core loop.
-- [Codex Task 001](CODEX_TASK.md) — first playable planetary flight prototype specification.
-- [Codex Task 002](CODEX_TASK_002.md) — mining/cargo iteration scope and acceptance criteria.
-- [Codex Task 003](CODEX_TASK_003.md) — astronaut and surface interaction scope.
-- [Task 007E](CODEX_TASK_007E.md) — first paid utility upgrade and physical asteroid towing.
-- [Command and exploration plan](docs/COMMAND_AND_EXPLORATION.md) — remote management, space content and multi-world flight.
-- [Command concept](docs/mockups/command-console.svg) — planned power/operations/economy layout.
-- [Upgrade/dome schedule](docs/UPGRADES_AND_DOMES.md) — habitat coverage, ship equipment and shield domes.
-- [Task 007D](CODEX_TASK_007D.md) — landing/fuel warning lights and audio feedback.
-- [Task 007C](CODEX_TASK_007C.md) — protected colony power, delivery room and turret materials.
-- [Task 007B](CODEX_TASK_007B.md) — opt-in refinery scheduling and shared-stock targets.
-- [Task 007A](CODEX_TASK_007A.md) — finite planetary deposits and powered extraction.
-- [Task 006A](CODEX_TASK_006A.md) — pre-automation presentation foundation.
-- [Visual direction](docs/PRESENTATION_DIRECTION.md) — palette, wireframes and live layout references.
-- [Codex Task 006](CODEX_TASK_006.md) — ship combat, supplied recovery and combat saves.
-- [Presentation audit](docs/PRESENTATION_AUDIT.md) — initial findings for the required graphics/UX/UI overhaul.
-- [Codex Task 005](CODEX_TASK_005.md) — planetary defence and building damage scope.
-- [Codex Task 004](CODEX_TASK_004.md) — colony construction, economy and checkpoint scope.
-- [Agent instructions](AGENTS.md) — technical architecture, coding and testing conventions.
+- [Current focus](docs/CURRENT_FOCUS.md) — what is being built now and what is out of scope.
+- [Master design bible](docs/MASTER_DESIGN_BIBLE.md) — identity, pillars and open design decisions.
+- [Master roadmap](docs/MASTER_ROADMAP.md) — phases and vertical slices.
+- [Design decisions](docs/DECISIONS.md) — decision log.
+- [Development roadmap](docs/DEVELOPMENT_ROADMAP.md) — shipped milestone history.
+- [Agent instructions](AGENTS.md) — architecture, coding, UI and writing conventions.
+- [Archived task specs](docs/archive/tasks/) — completed Tasks 001–017 (historical).
 
 ## Core experience
 Launch from a small circular moon, fly in a continuous 2D world with radial gravity and inertia, mine asteroids, fight threats, land, walk around, build/refuel a colony and defend it from incoming meteors. No separate flight/surface minigames.
