@@ -1,0 +1,122 @@
+/* Base window (mockup 1, "Base"). Lives inside the full-screen dock window. */
+#base-window { font-family: var(--ui-body); color: var(--ui-text); --scale: var(--text-scale, 1); height: 100%; }
+#base-window[hidden] { display: none; }
+#hud .base-window { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 0; min-height: 100%; }
+
+#hud .base-nav { display: grid; align-content: start; gap: 6px; padding: 16px 12px; border-right: 1px solid var(--ui-line); }
+#hud .base-nav button {
+  text-align: left; padding: 11px 13px; border-radius: var(--ui-radius); border: 1px solid transparent; background: transparent;
+  font: 600 calc(15px * var(--scale)) / 1 var(--ui-display); letter-spacing: .05em; color: var(--ui-muted);
+}
+#hud .base-nav button[aria-pressed=true] { color: var(--ui-text); background: var(--ui-raised); border-color: var(--ui-line); }
+#hud .base-more { margin: 14px 4px 0; padding: 12px; border: 1px dashed var(--ui-line); border-radius: var(--ui-radius); font: 400 calc(13px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-muted); }
+
+#hud .base-body { min-width: 0; overflow: auto; }
+#hud .base-main { padding: 18px 22px; display: grid; align-content: start; gap: 12px; min-width: 0; }
+#hud .base-main h3, #hud .base-inspector h3 {
+  margin: 6px 0 0; font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ui-muted);
+}
+#hud .base-note { margin: 0; font: 400 calc(14px * var(--scale)) / 1.45 var(--ui-body); color: var(--ui-muted); }
+
+#hud .base-stocks { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(120px * var(--scale)), 1fr)); gap: 8px; }
+#hud .base-stock { display: grid; gap: 6px; padding: 11px 12px; border-radius: var(--ui-radius); background: var(--ui-raised); }
+#hud .base-stock span { font: 500 calc(13px * var(--scale)) / 1 var(--ui-body); color: var(--ui-muted); }
+#hud .base-stock strong { font: 500 calc(21px * var(--scale)) / 1 var(--ui-mono); font-variant-numeric: tabular-nums; color: var(--ui-text); }
+#hud .base-ore .base-stock strong { font-size: calc(16px * var(--scale)); }
+
+#hud .base-power { display: grid; gap: 10px; padding: 14px; border-radius: var(--ui-radius); background: var(--ui-raised); }
+#hud .base-power-row { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content; gap: 12px; align-items: center; }
+#hud .base-power-row span { font: 500 calc(14px * var(--scale)) / 1 var(--ui-body); min-width: 6em; }
+#hud .base-power-row strong { font: 500 calc(15px * var(--scale)) / 1 var(--ui-mono); font-variant-numeric: tabular-nums; text-align: right; }
+#hud .base-power-summary { margin: 0; font: 400 calc(13px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-muted); }
+#hud .base-power[data-level=warn] .base-power-summary { color: var(--ui-amber); }
+#hud .base-power[data-level=bad] .base-power-summary { color: var(--ui-red); }
+
+#hud .base-meter { display: block; height: 9px; border-radius: 5px; background: var(--ui-space); overflow: hidden; }
+#hud .base-meter i { display: block; height: 100%; border-radius: 5px; background: var(--ui-mint); }
+#hud .base-meter[data-tone=good] i { background: var(--ui-green); }
+#hud .base-meter[data-tone=warn] i { background: var(--ui-amber); }
+#hud .base-meter[data-tone=ore] i { background: var(--ui-ore); }
+
+#hud .base-attention { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+#hud .base-attention button, #hud .base-why {
+  width: 100%; text-align: left; padding: 11px 13px; border-radius: 0 var(--ui-radius) var(--ui-radius) 0;
+  border: 0; border-left: 3px solid var(--ui-amber); background: #ffbf6b14; color: var(--ui-text);
+  font: 500 calc(14px * var(--scale)) / 1.45 var(--ui-body);
+}
+#hud .base-why { margin: 0; }
+#hud .base-why[data-tone=info] { border-left-color: var(--ui-mint); background: var(--ui-mint-dim, #7fe6d31f); }
+
+#hud .base-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); min-height: 100%; }
+#hud .base-rows { display: grid; gap: 8px; }
+#hud .base-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
+  padding: 12px 14px; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid transparent; color: var(--ui-text);
+}
+#hud .base-row[aria-pressed=true] { border-color: var(--ui-mint); }
+#hud .base-row-name { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); letter-spacing: .02em; min-width: 0; }
+#hud .base-row-name small { display: block; margin-top: 4px; font: 400 calc(13px * var(--scale)) / 1.35 var(--ui-body); color: var(--ui-muted); letter-spacing: 0; }
+#hud .base-chip {
+  justify-self: start; padding: 6px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+  font: 600 calc(11px * var(--scale)) / 1 var(--ui-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ui-muted);
+}
+#hud .base-chip[data-tone=good] { color: var(--ui-green); }
+#hud .base-chip[data-tone=warn] { color: var(--ui-amber); }
+#hud .base-chip[data-tone=bad] { color: var(--ui-red); }
+
+#hud .base-inspector { display: grid; align-content: start; gap: 12px; padding: 18px 20px; border-left: 1px solid var(--ui-line); min-width: 0; }
+#hud .base-facts { display: grid; gap: 8px; margin: 0; }
+#hud .base-facts div { display: flex; justify-content: space-between; gap: 12px; font: 400 calc(14px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .base-facts dt { color: var(--ui-muted); }
+#hud .base-facts dd { margin: 0; font-family: var(--ui-mono); text-align: right; }
+#hud .base-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+#hud .base-actions button {
+  padding: 11px 14px; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid var(--ui-line); color: var(--ui-text);
+  font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+
+#hud .base-legacy[hidden] { display: none; }
+
+@media (max-width: 900px) {
+  #hud .base-window { grid-template-columns: 1fr; }
+  #hud .base-nav { grid-auto-flow: column; grid-auto-columns: max-content; border-right: 0; border-bottom: 1px solid var(--ui-line); padding: 10px 12px; }
+  #hud .base-more { display: none; }
+  #hud .base-split { grid-template-columns: 1fr; }
+  #hud .base-inspector { border-left: 0; border-top: 1px solid var(--ui-line); }
+}
+
+/* Nearby building card in the left column (focus set). */
+#nearby-card:empty { display: none; }
+#hud .nearby-card {
+  display: grid; gap: 9px; padding: 12px 14px; border-radius: var(--ui-radius); pointer-events: auto;
+  background: var(--ui-panel); border: 1px solid var(--ui-line); font-family: var(--ui-body); --scale: var(--text-scale, 1);
+}
+#hud .nearby-card header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#hud .nearby-label { font: 600 calc(11px * var(--scale)) / 1 var(--ui-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ui-muted); }
+#hud .nearby-card strong { font: 600 calc(16px * var(--scale)) / 1.1 var(--ui-display); color: var(--ui-text); }
+#hud .nearby-why { margin: 0; font: 500 calc(13px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-amber); }
+#hud .nearby-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+#hud .nearby-actions button {
+  display: flex; align-items: center; gap: 7px; padding: 8px 11px; border-radius: var(--ui-radius);
+  background: var(--ui-raised); border: 1px solid var(--ui-line); color: var(--ui-text);
+  font: 600 calc(12px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+#hud .nearby-actions kbd {
+  font: 500 calc(11px * var(--scale)) / 1 var(--ui-mono); color: var(--ui-muted); padding: 2px 5px;
+  border: 1px solid var(--ui-line); border-bottom-width: 2px; border-radius: 4px; background: var(--ui-space);
+}
+
+/* Window header in the new style (Base, Map, Ship and the legacy windows share it). */
+#hud #operations-dock .dock-heading {
+  display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: var(--ui-panel-solid);
+  border-bottom: 1px solid var(--ui-line); font-family: var(--ui-body);
+}
+#hud #operations-dock .dock-title {
+  margin-right: auto; font: 700 calc(20px * var(--text-scale, 1)) / 1 var(--ui-display); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ui-text);
+}
+#hud #operations-dock .dock-heading button {
+  padding: 8px 12px; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid var(--ui-line); color: var(--ui-text);
+  font: 600 calc(12px * var(--text-scale, 1)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+#hud #operations-dock[data-expanded=false] .dock-title { font-size: calc(15px * var(--text-scale, 1)); }

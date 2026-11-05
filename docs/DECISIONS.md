@@ -2,6 +2,13 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Base slice decisions — 2026-11-05
+
+- **New Base window** for the focus set: Overview, Buildings, Ship. Building problems are explained in one plain sentence ("Needs iron ore. Mine some and unload it at the pad."), and Overview lists them under "Needs attention".
+- **Nearby card** replaces the old on-foot facility panel: status, reason, and quick controls with their keys (E on/off, V recipe, U repair) plus Details into Base.
+- **Legacy console quarantine:** the old Manage console (research tree, ship fitting, shields, scheduling, upgrades, power dispatch) is reachable only with `?features=all`, as a "Legacy console" section inside Base and its default there. It is not rebuilt; each system gets new UI when it returns in a later slice.
+- Window titles are now "Base", "Ship", "Map" in the new header style.
+
 ## Build slice decisions — 2026-11-05
 
 - **Screen buttons stay on top of full-screen windows** and act as tabs (Ship, Build, Base, Map), with the sound / help / settings / pause tray. Windows open just below them. Small change from mockup 1, so Settings and switching screens never need closing a window first.
