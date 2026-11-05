@@ -9,7 +9,7 @@
 | P1.2 | Observatory building; observing narrows the arrival time and bearing. Nothing is known without it | Done |
 | P1.3 | Warning in plain language: countdown card, map and radar markers with uncertainty | Done (map window marker still to do) |
 | P1.4 | Preparation in the focus set: laser turret, manual interception from the ship, power reserve | Done: laser turret in the build bar, Nearby card controls (auto, take control), storm tuned so preparation matters |
-| P1.5 | Aftermath: meteorite fragments to recover, analyse one for a research unlock; full playthrough test | Done in the simulation, Base window and ground art; browser playthrough test still to write |
+| P1.5 | Aftermath: meteorite fragments to recover, analyse one for a research unlock; full playthrough test | Done, with a browser playthrough test |
 
 ## Design (P1.1)
 - The storm is a set of **real bodies**. Far away they fly straight (no gravity modelled outside the local region). At 14 km from the planet each one is handed to the existing meteor physics (gravity, drag, swept terrain, ship and shield hits) with exactly the state it had.

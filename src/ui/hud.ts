@@ -279,6 +279,11 @@ export class Hud {
     if (defence !== this.defenceMarkup) { patchMarkup(this.dock.defence, defence); this.defenceMarkup = defence; }
     this.root.dataset.buildings = String(world.colony.buildings.length);
     this.root.dataset.buildOpen = String(world.colony.buildOpen);
+    const storm = (world.rootWorld ?? world).storm;
+    this.root.dataset.stormPhase = storm.phase;
+    this.root.dataset.stormImpacts = String((world.rootWorld ?? world).defence.impacts);
+    this.root.dataset.stormHeld = String(storm.held);
+    this.root.dataset.stormAnalysed = String(storm.analysed);
     this.root.dataset.energy = world.colony.energy.toFixed(2);
     this.root.dataset.fuelStock = world.colony.products.fuel.toFixed(2);
   }
