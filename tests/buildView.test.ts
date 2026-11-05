@@ -4,6 +4,7 @@ import { WORLD } from '../src/sim/config';
 import { SUIT } from '../src/sim/astronaut';
 import { planetAt, surfacePosition } from '../src/sim/celestial';
 import { setFeatureMode, FOCUS_BLUEPRINTS } from '../src/preferences/features';
+import { BUILD_TYPES } from '../src/sim/colonyConfig';
 import { buildView, missingLine, placementTip, queueView } from '../src/ui/build/buildView';
 
 afterEach(() => setFeatureMode(null));
@@ -20,8 +21,8 @@ describe('build view', () => {
     setFeatureMode('focus');
     const view = buildView(createWorld());
     expect(view.groups).toBeNull();
-    expect(view.cards.map(c => c.kind)).toEqual([...FOCUS_BLUEPRINTS]);
-    expect(view.cards.map(c => c.hotkey)).toEqual(['1', '2', '3', '4', '5', null]);
+    expect(view.cards.map(c => c.kind)).toEqual(BUILD_TYPES.filter(k => FOCUS_BLUEPRINTS.includes(k)));
+    expect(view.cards.map(c => c.hotkey)).toEqual(['1', '2', '3', '4', '5', '7', null]);
     expect(view.cards[0]).toMatchObject({ label: 'Solar array', purpose: 'Makes power in sunlight', selected: true });
   });
 

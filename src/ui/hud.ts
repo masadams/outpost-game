@@ -176,6 +176,8 @@ export class Hud {
       toggle: () => onColonyAction({ type: 'toggleMachine' }),
       recipe: () => onColonyAction({ type: 'cycleRecipe' }),
       repair: () => onColonyAction({ type: 'repairBuilding' }),
+      auto: () => onColonyAction({ type: 'toggleAuto' }),
+      control: () => onColonyAction({ type: 'controlTurret' }),
       details: id => this.selectFacility(this.latestWorld?.siteBody ?? 'home', id),
     });
     this.root.id = 'hud';

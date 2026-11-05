@@ -86,6 +86,7 @@ export function planStorm(world: WorldState): void {
       entryTime,
       radius: meteor.radius,
       mass: meteor.mass,
+      health: STORM.health[i],
       impactAngle: fall?.angle ?? null,
       impactTime: fall?.time ?? null,
     });
@@ -125,8 +126,8 @@ export function stepStorm(world: WorldState): void {
       mass: body.mass,
       stage: 0,
       resource: 'iron',
-      health: 1,
-      maxHealth: 1,
+      health: body.health,
+      maxHealth: body.health,
     });
     if (storm.far.length + 1 === STORM.aim.length) notify(world, 'Something large is coming down.');
   }

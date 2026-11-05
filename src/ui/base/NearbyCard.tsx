@@ -6,6 +6,8 @@ export interface NearbyHandlers {
   toggle: () => void;
   recipe: () => void;
   repair: () => void;
+  auto: () => void;
+  control: () => void;
   details: (id: number) => void;
 }
 
@@ -44,6 +46,16 @@ export function NearbyCardView({ state, on }: { state: NearbyState; on: NearbyHa
         {b.canCycleRecipe && (
           <button type="button" disabled={state.paused} onClick={click(on.recipe)}>
             Next recipe <kbd aria-hidden="true">V</kbd>
+          </button>
+        )}
+        {b.turret && (
+          <button type="button" disabled={state.paused} aria-pressed={b.turret.auto} onClick={click(on.auto)}>
+            Auto defence: {b.turret.auto ? 'on' : 'off'} <kbd aria-hidden="true">G</kbd>
+          </button>
+        )}
+        {b.turret && (
+          <button type="button" disabled={state.paused} onClick={click(on.control)}>
+            Take control
           </button>
         )}
         {state.damaged && (

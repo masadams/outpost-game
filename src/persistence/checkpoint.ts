@@ -85,7 +85,7 @@ function validStorm(world: WorldState): boolean {
   if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 16 || s.ids.length > 16) return false;
   const vec = (v: unknown) => object(v) && number(v.x, -1e7, 1e7) && number(v.y, -1e7, 1e7);
   return s.ids.every(id => Number.isInteger(id) && id > 0) && s.far.every(b => object(b) && Number.isInteger(b.id) && vec(b.entry) && vec(b.velocity) &&
-    number(b.entryTime, 0, 1e9) && number(b.radius, 0.01, 200) && number(b.mass, 1e-12, 1e6) &&
+    number(b.entryTime, 0, 1e9) && number(b.radius, 0.01, 200) && number(b.mass, 1e-12, 1e6) && number(b.health, 0.01, 12) &&
     (b.impactAngle === null || number(b.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (b.impactTime === null || number(b.impactTime, 0, 1e9)));
 }
 export function encodeCheckpoint(world: WorldState): string {

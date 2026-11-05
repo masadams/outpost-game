@@ -1,3 +1,4 @@
+import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity, recipeFor, type Building } from '../../sim/colony';
 import { buildingHealth } from '../../sim/buildingHealth';
@@ -52,6 +53,8 @@ export interface BuildingView {
   canToggle: boolean;
   enabled: boolean;
   canCycleRecipe: boolean;
+  /** Present for turrets: whether they fire on their own. */
+  turret: { auto: boolean } | null;
 }
 
 export interface AttentionView {
@@ -136,6 +139,10 @@ export function buildingView(b: Building): BuildingView {
   const facts: Array<[string, string]> = [];
   if (recipe) facts.push(['Making', recipe.label], ['Batch time', `${recipe.seconds} s`]);
   if (power) facts.push([b.kind === 'solar' ? 'Output' : 'Power', `${power.toFixed(1)} kW`]);
+  if (isTurret(b.kind)) {
+    const weapon = WEAPONS[b.kind];
+    facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
+  }
   if (b.kind === 'battery') facts.push(['Stores', '200 kJ']);
   if (b.kind === 'storage') facts.push(['Holds', '+200 kg ore, +100 each product']);
   facts.push(['Condition', `${health.toFixed(0)}%`]);
@@ -152,6 +159,7 @@ export function buildingView(b: Building): BuildingView {
     canToggle: b.kind !== 'storage' && b.kind !== 'battery' && health > 0,
     enabled: b.enabled,
     canCycleRecipe: b.kind === 'refinery' && health > 0,
+    turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic } : null,
   };
 }
 

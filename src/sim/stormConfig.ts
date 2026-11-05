@@ -12,13 +12,15 @@ export const STORM = {
   /** Speed on entry, metres per second, relative to the planet. */
   entrySpeed: 105,
   /** Seconds between the first and each later body's arrival. */
-  spacing: 4,
+  spacing: 1.6,
   /** Where the storm is aimed, as metres from the pad along the surface. */
   targetOffset: 140,
   /** Aim offsets for each body, in metres along the surface from the target. One is a deliberate miss. */
   aim: [0, -35, 60, 130, -45, 260, -520],
   radii: [18, 7, 9, 6, 10, 7, 8],
   masses: [2400, 260, 480, 190, 600, 260, 340],
+  /** Toughness: a laser shot does 0.28, so the big one takes over twenty. */
+  health: [6, 2.4, 3, 1.8, 3.3, 2.4, 2.7],
 } as const;
 
 /** A body still travelling in the far field. Straight line at constant velocity. */
@@ -30,6 +32,7 @@ export interface FarBody {
   entryTime: number;
   radius: number;
   mass: number;
+  health: number;
   /** Where it will land (surface angle) and when, from the plan. Null if it misses the planet. The player never sees this directly. */
   impactAngle: number | null;
   impactTime: number | null;
