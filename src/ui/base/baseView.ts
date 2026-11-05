@@ -183,6 +183,18 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
   };
 }
 
+function powerSummary(w: WorldState): string {
+  const c = w.colony;
+  const panels = c.buildings.some(b => b.kind === 'solar');
+  const dark = !!w.system.sun && panels && c.generation <= 1e-6;
+  if (dark) {
+    const lasts = c.demand > 0 ? ` Stored power lasts about ${Math.floor(c.energy / c.demand)} s at this load.` : '';
+    return `Night: solar panels are off.${lasts}`;
+  }
+  if (c.generation <= 0 && c.demand <= 0) return 'No power yet. Build a solar array.';
+  return `Using ${c.demand.toFixed(1)} of ${c.generation.toFixed(1)} kW`;
+}
+
 function powerView(w: WorldState): PowerView {
   const c = w.colony;
   const capacity = energyCapacity(c);
@@ -192,7 +204,7 @@ function powerView(w: WorldState): PowerView {
     using: c.demand,
     stored: c.energy,
     capacity,
-    summary: c.generation <= 0 && c.demand <= 0 ? 'No power yet. Build a solar array.' : `Using ${c.demand.toFixed(1)} of ${c.generation.toFixed(1)} kW`,
+    summary: powerSummary(w),
     level,
   };
 }

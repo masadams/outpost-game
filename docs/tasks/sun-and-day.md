@@ -4,7 +4,7 @@
 
 ## Decision (made 2026-11-05, open to change)
 - **Add a sun now; do not rotate the planet yet.** The planet keeps its fixed surface frame so flight, landing and terrain stay exactly as they are. Instead the sun moves round the sky once per day, which looks and plays the same from the surface. Real rotation (ground speed, co-rotating air, launch assist) is a later, separate slice.
-- **Day length:** 12 minutes of play (a minute of that is dusk and a minute dawn), tuned once it can be played. Stored as a constant, not in saves, so it can be retuned.
+- **Day length:** 1000 seconds (about 17 minutes) of play, tuned once it can be played. Stored as a constant, not in saves, so it can be retuned.
 - **A new game starts mid-morning** so the first sortie is in daylight and the first night arrives after the first delivery, when the player has solar and probably a battery.
 - **Solar output follows the sun** at the building: 0 at night, full at noon, smooth through dusk and dawn. Batteries and storage in the existing model carry the player through.
 - **The moon (Nacre)** gets its own day from the same sun, using its own surface angle and the time. It is not tidally locked in this slice.

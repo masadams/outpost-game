@@ -370,3 +370,22 @@
 #hud-chrome .storm-card[data-tone=watching] .storm-title { color: var(--ui-muted, #8aa3b5); }
 #hud-chrome .storm-card[data-tone=urgent] .storm-title { color: #ff8a7a; }
 #hud-chrome .storm-detail { font: 400 calc(14px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-text, #e6f1f5); }
+
+/* Sky clock under the region chip. */
+#hud-chrome #flight-daylight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border: 1px solid var(--ui-line, #2c4256);
+  border-radius: 999px;
+  background: var(--ui-panel, #0b1620ee);
+  font: 600 calc(12px * var(--scale)) / 1 var(--ui-display);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ui-text, #e6f1f5);
+}
+#hud-chrome #flight-daylight i { width: 10px; height: 10px; border-radius: 50%; background: #ffd98a; box-shadow: 0 0 8px #ffd98a; }
+#hud-chrome #flight-daylight[data-phase=dusk] i,
+#hud-chrome #flight-daylight[data-phase=dawn] i { background: #ff9b5e; box-shadow: 0 0 8px #ff9b5e; }
+#hud-chrome #flight-daylight[data-phase=night] i { background: #6d86b8; box-shadow: 0 0 6px #6d86b855; }

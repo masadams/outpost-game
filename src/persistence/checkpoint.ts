@@ -42,7 +42,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!object(value) || !shape(template, value)) return false;
   const world = value as unknown as WorldState;
   if (remote && (Object.hasOwn(world, 'rootWorld') || Object.hasOwn(world, 'siteBody'))) return false;
-  if (!number(world.system.time, 0, 1e9) || typeof world.system.binary !== 'boolean' || !PRODUCTS.every(p => number(world.ship.freight[p], 0, cargoCapacity(world.ship))) || cargoMass(world.ship) > cargoCapacity(world.ship) + 1e-6 || world.ship.ground !== undefined && !['home', 'moon'].includes(world.ship.ground)) return false;
+  if (!number(world.system.time, 0, 1e9) || typeof world.system.binary !== 'boolean' || (world.system.sun !== undefined && typeof world.system.sun !== 'boolean') || !PRODUCTS.every(p => number(world.ship.freight[p], 0, cargoCapacity(world.ship))) || cargoMass(world.ship) > cargoCapacity(world.ship) + 1e-6 || world.ship.ground !== undefined && !['home', 'moon'].includes(world.ship.ground)) return false;
   if (remote) {
     const facilities = [...world.colony.buildings, ...world.moon.colony.buildings];
     if (new Set(facilities.map(b => b?.id)).size !== facilities.length) return false;
