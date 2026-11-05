@@ -5,6 +5,8 @@ import { RESOURCES, RESOURCE_INFO, type Resource } from '../sim/resources';
 import { visible, type RenderView } from './budget';
 import { seeded } from './mining/random';
 import { dustStrength, groundBelow } from './landing';
+import { allColonies, sitePosition } from '../sim/localWorld';
+import { BLUEPRINTS } from '../sim/colonyConfig';
 
 /** An expanding ring with a few dots: a flash. */
 interface Burst { position: Vec; life: number; color: number; size: number }
@@ -12,6 +14,8 @@ interface Burst { position: Vec; life: number; color: number; size: number }
 interface Chunk { x: number; y: number; vx: number; vy: number; turn: number; spin: number; size: number; life: number; maxLife: number; color: number; glint: boolean }
 /** A soft puff of dust kicked up from the ground. */
 interface Puff { x: number; y: number; vx: number; vy: number; size: number; grow: number; life: number; maxLife: number }
+/** Expanding rings: a building finishing, powering up, or the Observatory starting to listen. */
+interface Signal { x: number; y: number; age: number; life: number; color: number; rings: number; reach: number }
 interface RockRecord { position: Vec; velocity: Vec; radius: number; stage: number; resource: Resource }
 
 const BURST_LIFE = 0.4;
@@ -25,6 +29,10 @@ export class VisualEffects {
   private bursts: Burst[] = [];
   private chunks: Chunk[] = [];
   private puffs: Puff[] = [];
+  private signals: Signal[] = [];
+  /** Buildings already in the world, and those that have already run once, so effects fire only for what is new. */
+  private seen = new Set<string>();
+  private ran = new Set<string>();
   private landings = 0;
   private dustClock = 0;
 
@@ -35,6 +43,8 @@ export class VisualEffects {
     this.bursts = [];
     this.chunks = [];
     this.puffs = [];
+    this.signals = [];
+    this.noteBuildings(w, false, 0);
     this.landings = w.ship.landings;
     this.dustClock = 0;
   }
@@ -52,18 +62,21 @@ export class VisualEffects {
     if (limit === 0) {
       this.chunks = [];
       this.puffs = [];
+      this.signals = [];
     }
     if (paused) return;
     const step = Math.max(0, dt);
     this.bursts = this.bursts.map(b => ({ ...b, life: b.life - step })).filter(b => b.life > 0).slice(-limit);
     this.advanceChunks(step);
     this.advancePuffs(step);
+    this.signals = this.signals.map(g => ({ ...g, age: g.age + step })).filter(g => g.age < g.life);
     if (limit === 0) {
       this.bursts = [];
       this.chunks = [];
       this.puffs = [];
     }
     if (limit > 0) this.landingDust(w, step, limit * 6);
+    this.noteBuildings(w, limit > 0, limit);
 
     const burst = (position: Vec, color: number, size = 1): void => {
       if (limit > 0 && visible(view, position, 24)) {
@@ -91,6 +104,32 @@ export class VisualEffects {
     this.rocks = this.snapshotRocks(w);
     this.cargo = this.snapshotCargo(w);
     this.hull = w.ship.hull;
+  }
+
+  /** Notices buildings that are new or have just started running, and marks them with rings of light. */
+  private noteBuildings(w: WorldState, announce: boolean, limit: number): void {
+    for (const site of allColonies(w)) {
+      const body = site.siteBody ?? 'home';
+      for (const b of site.colony.buildings) {
+        const key = `${body}:${b.id}`;
+        const at = sitePosition(site, b.angle, 10);
+        const color = BLUEPRINTS[b.kind].color;
+        if (!this.seen.has(key)) {
+          this.seen.add(key);
+          if (announce) {
+            this.signals.push({ x: at.x, y: at.y, age: 0, life: 1.4, color, rings: 2, reach: 38 });
+            this.glints(at, { x: 0, y: 0 }, color, limit * 8);
+          }
+        }
+        if (b.status === 'running' && !this.ran.has(key)) {
+          this.ran.add(key);
+          if (!announce) continue;
+          // The Observatory announces itself: three slow rings, like a signal going out.
+          if (b.kind === 'observatory') this.signals.push({ x: at.x, y: at.y, age: 0, life: 3.2, color: 0xa8d8ff, rings: 3, reach: 150 });
+          else this.signals.push({ x: at.x, y: at.y, age: 0, life: 1, color, rings: 1, reach: 22 });
+        }
+      }
+    }
   }
 
   /** Dust blown by the engine near the ground, and a ring of it when the feet touch down or hit hard. */
@@ -195,6 +234,9 @@ export class VisualEffects {
   /** Flashes alive. Debris is limited separately and does not count here. */
   get count(): number { return this.bursts.length; }
 
+  /** Rings of light alive. */
+  get rings(): number { return this.signals.length; }
+
   /** Pieces of debris alive. */
   get debris(): number { return this.chunks.length; }
 
@@ -210,6 +252,14 @@ export class VisualEffects {
       g.strokeCircle(b.position.x, b.position.y, (3 + age * 34 * b.size) * px);
       g.fillStyle(b.color, alpha * 0.18);
       g.fillCircle(b.position.x, b.position.y, (2 + age * 26 * b.size) * px);
+    }
+    for (const sig of this.signals) {
+      for (let i = 0; i < sig.rings; i++) {
+        const t = (sig.age - i * (sig.life * 0.22)) / (sig.life * 0.7);
+        if (t <= 0 || t >= 1) continue;
+        g.lineStyle(1.6 * px, sig.color, (1 - t) * 0.85);
+        g.strokeCircle(sig.x, sig.y, 3 + t * sig.reach);
+      }
     }
     for (const p of this.puffs) {
       const fade = Math.min(1, p.life / p.maxLife);

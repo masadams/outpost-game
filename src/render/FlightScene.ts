@@ -423,7 +423,7 @@ export class FlightScene extends Phaser.Scene {
     drawCrewOrder(g,this.simulation,this.follow.zoom);
     for (const site of allColonies(this.simulation)) {
       drawGeology(g, site, this.follow.zoom); drawShields(g, site, this.hud.shieldAccents && !this.preferences.reducedMotion);
-      drawColony(g, site, this.hud.selectedBuildingId, (site.siteBody ?? 'home') === this.hud.buildPreview?.body ? this.hud.buildPreview : null, view, this.preferences.quality==='high');
+      drawColony(g, site, this.hud.selectedBuildingId, (site.siteBody ?? 'home') === this.hud.buildPreview?.body ? this.hud.buildPreview : null, view, this.preferences.quality==='high', this.time.now/1000, !this.halted&&!this.preferences.reducedMotion);
       drawSurface(g, site, this.halted || this.preferences.reducedMotion ? 0 : this.simulation.system.time);
     }
     drawDefence(g, this.simulation, this.threats, this.follow.zoom, view);
