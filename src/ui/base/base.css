@@ -120,3 +120,19 @@
   font: 600 calc(12px * var(--text-scale, 1)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
 }
 #hud #operations-dock[data-expanded=false] .dock-title { font-size: calc(15px * var(--text-scale, 1)); }
+
+/* Narrow facility inspection (legacy, all features): just the console, no Base navigation. */
+#hud #operations-dock[data-inspection=true] .base-window { grid-template-columns: minmax(0, 1fr); }
+#hud #operations-dock[data-inspection=true] .base-nav { display: none; }
+
+/* Legacy console (all features only): give it the whole window, as it was designed for,
+   with Base navigation as a thin strip and the window itself scrolling. */
+#hud .base-window[data-section=legacy] { grid-template-columns: minmax(0, 1fr); }
+#hud .base-window[data-section=legacy] .base-nav {
+  grid-auto-flow: column; grid-auto-columns: max-content; padding: 8px 12px; border-right: 0; border-bottom: 1px solid var(--ui-line);
+}
+#hud .base-window[data-section=legacy] .base-nav button { padding: 8px 11px; font-size: calc(13px * var(--scale)); }
+#hud .base-window[data-section=legacy] .base-body { overflow: visible; }
+#hud #operations-dock .dock-heading { flex-wrap: wrap; row-gap: 8px; }
+#hud #operations-dock[data-expanded=false] .dock-heading { padding: 10px 12px; gap: 8px; }
+#hud #operations-dock[data-expanded=false] .dock-heading button { padding: 7px 9px; font-size: calc(11px * var(--text-scale, 1)); }

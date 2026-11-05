@@ -215,7 +215,7 @@ function Ship({ view }: { view: BaseView }) {
 const SECTIONS: Array<[BaseSection, string]> = [
   ['overview', 'Overview'],
   ['buildings', 'Buildings'],
-  ['ship', 'Ship'],
+  ['ship', 'Lander'],
 ];
 
 export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on: BaseHandlers; legacyHost: (el: HTMLElement | null) => void }) {

@@ -58,7 +58,7 @@ test('Base shows materials, power and plain reasons; the nearby card controls th
   await expect(page.getByRole('button', { name: 'Select Refinery 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
 
   // Ship section, and no legacy console for new players.
-  await page.getByRole('button', { name: 'Ship', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Lander', exact: true }).click();
   await expect(dock.locator('[data-base-section="ship"]')).toContainText('On the pad');
   await expect(dock.locator('[data-base-nav="legacy"]')).toHaveCount(0);
   await expect(dock.locator('#command-console')).toHaveCount(0);

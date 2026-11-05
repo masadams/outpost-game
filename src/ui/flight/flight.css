@@ -307,7 +307,7 @@
 #operations-dock:not([data-expanded=true]) {
   top: var(--chrome-right-bottom);
   right: var(--ui-gap);
-  width: min(340px, 32vw);
+  width: clamp(300px, 32vw, 340px);
   max-height: calc(100vh - var(--chrome-right-bottom) - var(--bottom-reserve));
 }
 

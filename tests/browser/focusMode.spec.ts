@@ -29,8 +29,9 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await expect(bar).toBeHidden();
 
   await page.getByRole('button', { name: 'Base', exact: true }).click();
-  const pages = dock.locator('button[data-page]');
-  await expect(pages).toHaveText(['Facilities', 'Construction', 'Economy']);
+  const sections = dock.getByRole('navigation', { name: 'Base sections' }).getByRole('button');
+  await expect(sections).toHaveText(['Overview', 'Buildings', 'Lander']);
+  await expect(dock.locator('#command-console')).toHaveCount(0);
   await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: 'Map', exact: true }).click();
