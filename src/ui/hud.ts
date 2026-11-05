@@ -170,6 +170,7 @@ export class Hud {
       select: id => { this.baseSelected = id; this.renderBase(); },
       toggle: id => onColonyAction({ type: 'remote', id, operation: 'toggle', body: body() }),
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
+      analyse: () => onColonyAction({ type: 'analyseSample' }),
     });
     this.dock.command.append(this.base.host);
     this.nearby = new NearbyCard({

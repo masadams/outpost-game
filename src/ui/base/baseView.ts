@@ -7,6 +7,7 @@ import { colonyPlanet } from '../../sim/localWorld';
 import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity } from '../../sim/shipStats';
+import { ANALYSIS_ENERGY } from '../../sim/stormConfig';
 import type { WorldState } from '../../sim/world';
 
 /** Everything the Base window shows, derived from the simulation. Pure: no DOM, no Phaser. */
@@ -18,6 +19,19 @@ export interface BaseView {
   attention: AttentionView[];
   buildings: BuildingView[];
   ship: ShipView;
+  /** Present once a storm has been seen: pieces to collect and what analysing them gives. */
+  storm: StormLabView | null;
+}
+
+export interface StormLabView {
+  /** Pieces still lying on the ground, and pieces you are carrying. */
+  onGround: number;
+  held: number;
+  analysed: boolean;
+  /** One plain line about what to do next. */
+  line: string;
+  /** Why the Analyse button is off, or null when it works. */
+  blocked: string | null;
 }
 
 export interface StockView {
@@ -222,5 +236,25 @@ export function baseView(w: WorldState): BaseView {
     attention,
     buildings,
     ship: shipView(w),
+    storm: stormLab(w),
   };
+}
+
+function stormLab(w: WorldState): StormLabView | null {
+  const s = (w.rootWorld ?? w).storm;
+  if (s.phase !== 'over' && !s.analysed && s.held === 0) return null;
+  const lab = w.colony.buildings.some(b => b.kind === 'observatory' && buildingHealth(b) > 0);
+  let blocked: string | null = null;
+  if (s.analysed) blocked = 'Already analysed.';
+  else if (s.held <= 0) blocked = 'Walk over a piece on the ground first.';
+  else if (!lab) blocked = 'Needs a working Observatory.';
+  else if (w.colony.energy < ANALYSIS_ENERGY) blocked = `Needs ${ANALYSIS_ENERGY} kJ stored (you have ${Math.floor(w.colony.energy)}).`;
+  const line = s.analysed
+    ? 'Your buildings now take less damage from blasts.'
+    : s.held > 0
+      ? 'Analyse a piece to learn how to harden your buildings.'
+      : s.samples.length > 0
+        ? 'Pieces of the storm are lying on the ground. Walk over one to pick it up.'
+        : 'Nothing left to collect.';
+  return { onGround: s.samples.length, held: s.held, analysed: s.analysed, line, blocked };
 }

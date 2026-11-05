@@ -55,8 +55,27 @@ export interface StormState {
   plan: PlannedImpact[];
   /** The storm only happens once armed. Building an Observatory arms it. */
   armed: boolean;
+  /** Pieces left on the ground where bodies came down. Walk over one to pick it up. */
+  samples: StormSample[];
+  /** Samples picked up and not yet analysed. */
+  held: number;
+  /** Once a sample has been analysed, buildings take less blast damage. */
+  analysed: boolean;
 }
 
+/** A piece of a storm body lying on the home planet's surface. */
+export interface StormSample { id: number; angle: number }
+
+/** Blast damage that gets through once impact material has been analysed. */
+export const ANALYSED_DAMAGE_FACTOR = 0.6;
+/** How close, in metres along the surface, the astronaut must be to pick a sample up. */
+export const PICKUP_REACH = 5;
+/** Energy the analysis uses, in kilojoules. */
+export const ANALYSIS_ENERGY = 20;
+
 export function createStorm(): StormState {
-  return { phase: 'quiet', far: [], ids: [], planned: false, arrival: 0, observed: 0, plan: [], armed: false };
+  return {
+    phase: 'quiet', far: [], ids: [], planned: false, arrival: 0, observed: 0, plan: [], armed: false,
+    samples: [], held: 0, analysed: false,
+  };
 }

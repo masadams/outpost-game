@@ -4,7 +4,8 @@ import { localAngle, heading, wrap, type Vec } from './math';
 import { predictMeteor } from './meteor';
 import { notify } from './messages';
 import { seeded } from './random';
-import { STORM, type FarBody } from './stormConfig';
+import { operational } from './buildingHealth';
+import { ANALYSIS_ENERGY, PICKUP_REACH, STORM, type FarBody } from './stormConfig';
 import type { Meteor } from './defenceConfig';
 import type { WorldState } from './world';
 
@@ -132,5 +133,59 @@ export function stepStorm(world: WorldState): void {
     if (storm.far.length + 1 === STORM.aim.length) notify(world, 'Something large is coming down.');
   }
   const clear = world.defence.meteors.length === 0 && world.defence.projectiles.length === 0;
-  if (storm.phase === 'approaching' && storm.far.length === 0 && clear) storm.phase = 'over';
+  if (storm.phase === 'approaching' && storm.far.length === 0 && clear) {
+    storm.phase = 'over';
+    // Pieces come down in the zone the bodies were aimed at, whether or not they were shot apart.
+    for (const planned of storm.plan) {
+      if (planned.impactAngle !== null) storm.samples.push({ id: planned.id, angle: planned.impactAngle });
+    }
+    if (storm.samples.length > 0) notify(world, 'The sky is clear. Pieces of the storm are lying out on the ground.');
+    else notify(world, 'The sky is clear.');
+  }
+  if (storm.phase === 'over') collectSamples(world);
+}
+
+/** Walking over a piece picks it up. */
+function collectSamples(world: WorldState): void {
+  const storm = world.storm;
+  if (storm.samples.length === 0 || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0) return;
+  const planet = planetAt('home', world.system);
+  const here = relative(world.astronaut.position, planet);
+  if (Math.hypot(here.x, here.y) > planet.radius + 40) return;
+  const angle = localAngle(here);
+  const near = storm.samples.filter(s => Math.abs(wrap(s.angle - angle)) * planet.radius <= PICKUP_REACH);
+  if (near.length === 0) return;
+  storm.samples = storm.samples.filter(s => !near.includes(s));
+  storm.held += near.length;
+  notify(world, near.length === 1 ? 'Picked up a piece of the storm. Analyse it in Base.' : `Picked up ${near.length} pieces of the storm.`);
+}
+
+export type StormAction = { type: 'analyseSample' };
+export const isStormAction = (action: { type: string }): action is StormAction => action.type === 'analyseSample';
+
+/** Spend a piece and a little power to learn how to harden buildings against blasts. */
+export function applyStormAction(world: WorldState, action: StormAction): void {
+  void action;
+  const storm = world.storm;
+  if (storm.analysed) {
+    notify(world, 'You have already learned what this material can teach.');
+    return;
+  }
+  if (storm.held <= 0) {
+    notify(world, 'You need a piece of the storm. Walk over one on the ground.');
+    return;
+  }
+  const lab = world.colony.buildings.find(b => b.kind === 'observatory' && operational(b));
+  if (!lab) {
+    notify(world, 'Analysis needs a working Observatory.');
+    return;
+  }
+  if (world.colony.energy < ANALYSIS_ENERGY) {
+    notify(world, `Analysis needs ${ANALYSIS_ENERGY} kJ stored (you have ${Math.floor(world.colony.energy)}).`);
+    return;
+  }
+  world.colony.energy -= ANALYSIS_ENERGY;
+  storm.held -= 1;
+  storm.analysed = true;
+  notify(world, 'Analysis done. Buildings now take less damage from blasts.');
 }

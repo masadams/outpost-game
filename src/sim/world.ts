@@ -21,7 +21,7 @@ import { applyCombatAction, isCombatAction, stepCombat } from './combat';
 import { serviceCombatAtPad } from './combatSupply';
 import { createDefence, type DefenceState } from './defenceConfig';
 import { createStorm, type StormState } from './stormConfig';
-import { stepStorm } from './storm';
+import { stepStorm, isStormAction, applyStormAction } from './storm';
 import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, resolveDefenceHits } from './defence';
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
@@ -86,6 +86,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(action.type==='autopilot'){applyAutopilotAction(world,action);continue;}
     if(action.type==='upgradeBuilding'){applyBuildingUpgrade(owner,action);continue;}
     if(action.type==='crewOrder'){applyCrewOrder(owner,action);continue;}
+    if(isStormAction(action)){applyStormAction(world,action);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(local, action);

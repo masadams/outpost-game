@@ -41,6 +41,7 @@ import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
 import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
+import { drawStormSamples } from './storm';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
 import { coach } from '../ui/flight/coach';
@@ -411,6 +412,7 @@ export class FlightScene extends Phaser.Scene {
       time: this.time.now / 1000,
       animate: !this.halted && !this.preferences.reducedMotion,
     });
+    drawStormSamples(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawTowing(g, this.simulation, this.follow.zoom);
     drawCrewOrder(g,this.simulation,this.follow.zoom);
     for (const site of allColonies(this.simulation)) {

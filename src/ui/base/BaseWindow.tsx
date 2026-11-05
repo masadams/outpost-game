@@ -9,6 +9,7 @@ export interface BaseHandlers {
   select: (id: number) => void;
   toggle: (id: number) => void;
   recipe: (id: number) => void;
+  analyse: () => void;
 }
 
 export interface BaseState {
@@ -43,7 +44,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open }: { view: BaseView; open: (id: number) => void }) {
+function Overview({ view, open, analyse }: { view: BaseView; open: (id: number) => void; analyse: () => void }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -90,6 +91,23 @@ function Overview({ view, open }: { view: BaseView; open: (id: number) => void }
         </div>
         <p class="base-power-summary">{p.summary}</p>
       </div>
+      {view.storm && (
+        <section class="base-storm" aria-label="Storm pieces" data-analysed={String(view.storm.analysed)}>
+          <h3>Storm pieces</h3>
+          <p class="base-note">
+            {view.storm.line} On the ground: {view.storm.onGround} · Carrying: {view.storm.held}
+          </p>
+          <button
+            type="button"
+            class="base-analyse"
+            disabled={view.storm.blocked !== null}
+            onClick={click(analyse)}
+          >
+            Analyse a piece
+          </button>
+          {view.storm.blocked && <p class="base-why">{view.storm.blocked}</p>}
+        </section>
+      )}
       <h3>Needs attention</h3>
       {view.attention.length ? (
         <ul class="base-attention">
@@ -231,7 +249,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}

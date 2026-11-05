@@ -81,6 +81,8 @@ function validWorld(value: unknown, remote = true): value is WorldState {
 function validStorm(world: WorldState): boolean {
   const s = world.storm;
   if (!['quiet', 'approaching', 'over'].includes(s.phase) || typeof s.planned !== 'boolean' || typeof s.armed !== 'boolean' || !number(s.arrival, 0, 1e9) || !number(s.observed, 0, 1e9) || !Array.isArray(s.plan) || s.plan.length > 16) return false;
+  if (!Array.isArray(s.samples) || s.samples.length > 16 || !Number.isInteger(s.held) || s.held < 0 || s.held > 16 || typeof s.analysed !== 'boolean') return false;
+  if (!s.samples.every(p => object(p) && Number.isInteger(p.id) && number(p.angle, -Math.PI - 1e-6, Math.PI + 1e-6))) return false;
   if (!s.plan.every(p => object(p) && Number.isInteger(p.id) && (p.impactAngle === null || number(p.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (p.impactTime === null || number(p.impactTime, 0, 1e9)))) return false;
   if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 16 || s.ids.length > 16) return false;
   const vec = (v: unknown) => object(v) && number(v.x, -1e7, 1e7) && number(v.y, -1e7, 1e7);

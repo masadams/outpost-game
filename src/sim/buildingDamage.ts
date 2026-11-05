@@ -12,6 +12,7 @@ import { energyCapacity, oreCapacity, productCapacity, nearbyBuilding } from './
 import { inventoryMass, RESOURCES } from './resources';
 import { wrap, type Vec } from './math';
 import { notify } from './messages';
+import { ANALYSED_DAMAGE_FACTOR } from './stormConfig';
 import type { WorldState } from './world';
 
 import { buildingHealth, operational } from './buildingHealth';
@@ -25,6 +26,7 @@ export function constrainDamagedStorage(world: WorldState): void {
   c.energy = Math.min(c.energy, energyCapacity(c));
 }
 export function damageColony(world: WorldState, position: Vec, damage: number, radius: number, label = 'METEOR IMPACT'): void {
+  const root = world.rootWorld ?? world;
   world = colonyWorld(world, nearestPlanet(position, world.system).id);
   const angle = localAngleAt(world, position);
   let hit = false;
@@ -32,7 +34,7 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
     const distance = Math.abs(wrap(b.angle - angle)) * colonyPlanet(world).radius;
     const reach = radius + (isHabitat(b.kind) ? HABITATS[b.kind].halfSpan : BLUEPRINTS[b.kind].halfWidth);
     if (distance >= reach || !operational(b)) continue;
-    b.health = Math.max(0, buildingHealth(b) - damage * facilityDamageFactor(b) * (1 - distance / reach)); hit = true;
+    b.health = Math.max(0, buildingHealth(b) - damage * facilityDamageFactor(b) * (root.storm.analysed ? ANALYSED_DAMAGE_FACTOR : 1) * (1 - distance / reach)); hit = true;
     if (!operational(b)) { ventHabitat(world, b); drainShield(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
   const n = { x: Math.sin(angle), y: -Math.cos(angle) };
