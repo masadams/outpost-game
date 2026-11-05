@@ -184,3 +184,18 @@
 #context-menu-host .context-menu .danger { color: #ff9a8c; }
 #context-menu-host .context-menu .confirm { display: grid; gap: 6px; padding: 8px; border: 1px solid #ff6b5a88; border-radius: 10px; background: #2a1618cc; }
 #context-menu-host .context-menu .confirm p { margin: 0; font-size: calc(13px * var(--scale)); line-height: 1.4; }
+
+/* Key hints sit beside a label as a small keycap, never inside the label text. */
+#hud #operations-dock .dock-heading kbd,
+.help-title kbd {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border: 1px solid var(--ui-line, #2c4256);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--ui-space, #07111a);
+  color: var(--ui-muted, #8aa3b5);
+  font: 500 0.8em var(--ui-mono, monospace);
+  text-transform: none;
+  letter-spacing: 0;
+}

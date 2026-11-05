@@ -13,5 +13,3 @@ How menus behave, so everything works the way players of other games expect.
 
 ## Still to normalise
 - The legacy management console (only with `?features=all`) still uses the old wording and layout.
-- The X key still demolishes the building next to you while the build bar is open. It now goes through the same code but does not ask.
-- Menu, Help and Settings dialogs use "Return to game [H / Esc]"-style labels with key text inside the button.
