@@ -7,9 +7,9 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test('new players see only the first-sortie systems', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.locator('#objectives')).toContainText('Objectives 0/2');
+  await expect(page.locator('#objectives')).toContainText('Objective · 0/2');
 
-  await page.getByRole('button', { name: 'Ship [I]', exact: true }).click();
+  await page.getByRole('button', { name: 'Ship', exact: true }).click();
   const dock = page.locator('#operations-dock');
   await expect(dock).toBeVisible();
   await expect(dock.getByRole('button', { name: 'Weapons', exact: true })).toHaveCount(0);
@@ -26,7 +26,7 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await expect(dock).not.toContainText('unreserved');
   await page.keyboard.press('Escape');
 
-  await page.getByRole('button', { name: 'Manage', exact: true }).click();
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
   const pages = dock.locator('button[data-page]');
   await expect(pages).toHaveText(['Facilities', 'Construction', 'Economy']);
   await page.keyboard.press('Escape');
@@ -44,7 +44,7 @@ test('new players see only the first-sortie systems', async ({ page }) => {
 
 test('the all-features switch restores hidden systems', async ({ page }) => {
   await page.goto('/?features=all');
-  await expect(page.locator('#objectives')).toContainText('Objectives 0/8');
-  await page.getByRole('button', { name: 'Manage', exact: true }).click();
+  await expect(page.locator('#objectives')).toContainText('Objective · 0/8');
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
   await expect(page.locator('#operations-dock [data-page="research"]')).toBeVisible();
 });

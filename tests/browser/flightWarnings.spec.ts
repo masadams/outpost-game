@@ -36,7 +36,7 @@ test('shows landing and fuel lights with distinct real audio, pause/mute safety 
   await page.goto('/'); const hud = page.locator('#hud'), alert = page.locator('#flight-alert'), descent = page.locator('[data-instrument="radial"]');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(alert).toContainText('DESCENT HIGH');
   for (const key of ['radial', 'drift', 'tilt', 'spin', 'fuel']) await expect(page.locator(`[data-instrument="${key}"]`)).toHaveAttribute('data-level', 'critical');
-  await expect(descent).toContainText('! DESCENT HIGH');
+  await expect(descent).toHaveAttribute('aria-label', /DESCENT HIGH/);
   await page.keyboard.press('p');
   await expect(hud).toHaveAttribute('data-state', 'flying');
   await expect.poll(tones).toContain(880); await expect.poll(peak, { intervals: [20], timeout: 2000 }).toBeGreaterThan(0.00005);

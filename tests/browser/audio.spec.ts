@@ -19,8 +19,12 @@ test('audio unlocks after input, produces a signal, silences on pause/mute and p
   await expect.poll(rms).toBeLessThan(0.00001);
   await page.keyboard.press('m'); await expect(sound).toHaveAttribute('data-status', 'muted');
   const volume = page.getByRole('slider', { name: 'Sound volume' });
+  await page.getByRole('button', { name: 'Open settings', exact: true }).click();
   await volume.focus(); await page.keyboard.press('ArrowLeft'); await expect(volume).toHaveValue('0.3');
-  await page.reload(); await expect(sound).toHaveAttribute('data-status', 'muted'); await expect(volume).toHaveValue('0.3');
+  await page.getByRole('button', { name: 'Return to game', exact: true }).click();
+  await page.reload(); await expect(sound).toHaveAttribute('data-status', 'muted');
+  await page.getByRole('button', { name: 'Open settings', exact: true }).click(); await expect(volume).toHaveValue('0.3');
+  await page.getByRole('button', { name: 'Return to game', exact: true }).click();
   await page.keyboard.press('m'); await expect(sound).toHaveAttribute('data-status', 'on');
   await page.keyboard.down('w'); await expect.poll(rms).toBeGreaterThan(0.00005);
   await page.evaluate(() => window.dispatchEvent(new Event('blur')));

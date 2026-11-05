@@ -42,10 +42,9 @@
 .instrument-combat {font-size:.9em;color:#a7c5cb;padding-top:8px;}
 #hud .instruments #flight-status {position:static;inset:auto;width:auto;max-width:none;white-space:normal;padding:0;background:transparent;font:inherit;line-height:1.5;margin-bottom:8px;}
 #surface-frame {display:none;}
-#navigation-guidance {bottom:calc(37px + var(--telemetry-height));max-width:min(640px,calc(100vw - 210px));font-size:11px;}
 #combat-status {bottom:calc(60px + var(--telemetry-height));left:20px;font-size:11px;}
 #hud:has(.instruments[data-expanded=true]) #combat-status {display:none;}
 #hud .notices .status[data-routine=true] {display:none;}
 #hud > footer {bottom:6px;max-height:20px;font-size:10px;}
 @media(max-width:1100px){#hud .instruments,#hud[data-mode=ship] .instruments{bottom:32px;}.instrument-lamps{gap:5px;}.instrument-lamps span{font-size:9px;}}
-@media(max-width:680px){#hud .instruments,#hud[data-mode=ship] .instruments{right:16px;left:16px;}#navigation-guidance{max-width:calc(100vw - 32px);}.instrument-mode{font-size:9px;}.instrument-lamps span{font-size:8px;}.dial-face{width:66px;}.dial-label{font-size:9px;}}
+@media(max-width:680px){#hud .instruments,#hud[data-mode=ship] .instruments{right:16px;left:16px;}.instrument-mode{font-size:9px;}.instrument-lamps span{font-size:8px;}.dial-face{width:66px;}.dial-label{font-size:9px;}}

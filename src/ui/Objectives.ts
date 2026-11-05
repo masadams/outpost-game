@@ -2,34 +2,28 @@ import { featureVisible } from '../preferences/features';
 import { OBJECTIVES, objectiveProgress, type ObjectiveId, type ObjectiveLink } from '../sim/objectives';
 import { starterPlan } from '../sim/starterPlan';
 import type { WorldState } from '../sim/world';
-import { setText, patchMarkup } from './dom';
+import { patchMarkup } from './dom';
+import { shownObjectives } from './flight/chromeView';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { isolateControlKeys } from './controlKeys';
 
-/** Milestones shown to the player; the focus set keeps the first sortie only. */
-const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry'];
-function shownObjectives(): ReadonlyArray<typeof OBJECTIVES[number]> {
-  return featureVisible('catalogue') ? OBJECTIVES : OBJECTIVES.filter(o => FOCUS_OBJECTIVES.includes(o.id));
-}
 
 const LINKS: Record<ObjectiveLink, string> = { cargo:'Open Ship / Cargo', build:'Open Build', equipment:'Open Manage / Ship fitting', map:'Open Map', research:'Open Manage / Research', defence:'Open Ship / Defence' };
 export class Objectives {
- readonly root = document.createElement('button');
  readonly content = document.createElement('section');
  private includeRecovery=false;
  private tracked: ObjectiveId | 'auto' = 'auto';
- constructor(open: () => void, navigate: (link: ObjectiveLink, keyboard: boolean) => void) {
-  this.root.id='objectives'; this.root.type='button'; this.root.setAttribute('aria-label','Open expedition objectives'); this.root.setAttribute('aria-controls','operations-dock'); this.content.id='objective-panel';
-  this.root.addEventListener('click',e=>{open();if(e.detail>0)this.root.blur();}); isolateControlKeys(this.root); isolateControlKeys(this.content);
+ get trackedId(): ObjectiveId | 'auto' { return this.tracked; }
+ constructor(navigate: (link: ObjectiveLink, keyboard: boolean) => void) {
+  this.content.id='objective-panel';
+  isolateControlKeys(this.content);
   this.content.addEventListener('change',e=>{const select=e.target as HTMLSelectElement;if(select.id==='budget-recovery'){this.includeRecovery=(select as unknown as HTMLInputElement).checked;return;}if(select.id==='tracked-objective'&&(select.value==='auto'||OBJECTIVES.some(o=>o.id===select.value)))this.tracked=select.value as typeof this.tracked;});
   this.content.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('button[data-objective-link]');const link=button?.dataset.objectiveLink as ObjectiveLink|undefined;if(link&&Object.hasOwn(LINKS,link)){navigate(link,e.detail===0);if(e.detail>0)button?.blur();}});
  }
  update(w:WorldState,p:PresentationPreferences):void {
   const shown=shownObjectives(), done=w.objectives.completed.filter(id=>shown.some(o=>o.id===id));
   const next=this.tracked==='auto'?shown.find(o=>!done.includes(o.id)):shown.find(o=>o.id===this.tracked);
-  const label=`Objectives ${done.length}/${shown.length} · ${next?.label??'Milestones complete'}`;
-  setText(this.root,label); this.root.title=label;
-  const hidden=!!this.content.closest('[hidden]'); this.root.setAttribute('aria-expanded',String(!hidden)); if(hidden)return;
+  if(this.content.closest('[hidden]'))return;
   const progress=next?objectiveProgress(w,next.id):null, recorded=!!next&&done.includes(next.id);
   const plan=starterPlan(w,this.includeRecovery), fmt=(n:number)=>Number(n.toFixed(2));
   patchMarkup(this.content, `<label for="tracked-objective">Tracked objective</label><select id="tracked-objective"><option value="auto" ${this.tracked==='auto'?'selected':''}>Next unfinished milestone</option>${shown.map(o=>`<option value="${o.id}" ${this.tracked===o.id?'selected':''}>${done.includes(o.id)?'✓ ':''}${o.label}</option>`).join('')}</select>

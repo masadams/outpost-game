@@ -40,7 +40,7 @@ Open the local Vite URL in a modern desktop browser. New games show only the fir
 | P | Pause / resume |
 | R | Reset runtime sandbox, including colony; keep saved checkpoint |
 
-Top-left **Ship / Build / Manage / Map** buttons open one operations dock on the right. Relevant panels open on context transitions; closing/browsing stays in effect until the next transition. **I** toggles Ship / Cargo; **Esc** closes the panel; with no panel open it opens the pause menu. Panels and zoom can be inspected while paused; opening a panel does not pause. Bottom instruments, weapon state, warnings and radar remain available with the dock closed. See [the visual direction and layout references](docs/PRESENTATION_DIRECTION.md).
+Top-right **Ship / Build / Base / Map / Menu** buttons open their panel; small icons below them toggle sound, open help and settings, and pause. The objective card (top-left) shows your current goal; status messages appear under it. Coast-path and zoom controls sit above the radar. **I** toggles Ship; **Esc** closes a panel, or opens the pause menu when none is open. **Base and Map pause the game while you are flying** and stay live on the pad or on foot. The bottom cluster shows fuel, hull and cargo, an attitude dial (nose and direction of motion against local up) and altitude, vertical speed and drift; touchdown limits appear on a landing approach. Master, effects and music volume are in Settings. See [current focus](docs/CURRENT_FOCUS.md) for the UI rebuild.
 
 The game also pauses when its window loses focus or the tab is hidden. Press P to resume; keys are released on pause to avoid queued actions. Flight controls rotate the ship in world space even as the camera reorients.
 
@@ -76,7 +76,7 @@ For other deposits, steer by the nearest-deposit bearing and colored radar blips
 
 ## Research and ship upgrades
 
-Build a **Research lab**, then open **Manage → Research** to spend samples and actual lab power on prerequisite technologies. Nineteen prerequisite-driven technologies unlock twenty-five parts across nine exclusive slots and two in-place facility upgrade tiers. Select a node in the connected tree to inspect requirements and unlocks. Select a ship slot and part to compare it against the fitted module; replacements atomically pay the full new cost and return hull-scaled salvage. Advanced parts have real thrust/burn, capacity, tool power/heat, cooling and protection tradeoffs. Open **Manage → Ship fitting** at the home-pad ship to compare and fabricate with real mass/materials plus 20 kJ unreserved charge.
+Build a **Research lab**, then open **Base → Research** to spend samples and actual lab power on prerequisite technologies. Nineteen prerequisite-driven technologies unlock twenty-five parts across nine exclusive slots and two in-place facility upgrade tiers. Select a node in the connected tree to inspect requirements and unlocks. Select a ship slot and part to compare it against the fitted module; replacements atomically pay the full new cost and return hull-scaled salvage. Advanced parts have real thrust/burn, capacity, tool power/heat, cooling and protection tradeoffs. Open **Manage → Ship fitting** at the home-pad ship to compare and fabricate with real mass/materials plus 20 kJ unreserved charge.
 
 Extra capacity arrives empty; tools use actual cell/heat budgets and heavier ships handle differently. Removal uses hull-scaled salvage and storage/range checks; recovery preserves paid equipment without filling it. See [rates, limits and playtest](docs/PROGRESSION.md).
 

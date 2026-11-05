@@ -1,0 +1,45 @@
+/* Outpost design tokens (approved in docs/mockups/ui-rebuild.html).
+   New Preact components use the --ui-* tokens directly. The legacy variables below are re-pointed so panels
+   that have not been rebuilt yet share the same palette and bundled fonts. Single dark theme by design. */
+@import '@fontsource/chakra-petch/500.css';
+@import '@fontsource/chakra-petch/600.css';
+@import '@fontsource/chakra-petch/700.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+:root {
+  color-scheme: dark;
+
+  --ui-space: #060c17;
+  --ui-panel: rgba(9, 21, 35, 0.88);
+  --ui-panel-solid: #0c1a2b;
+  --ui-raised: #12263a;
+  --ui-line: #22405a;
+  --ui-text: #dde9f0;
+  --ui-muted: #8ea6b8;
+  --ui-mint: #7fe6d3;
+  --ui-amber: #ffbf6b;
+  --ui-red: #ff7070;
+  --ui-green: #92e6a0;
+  --ui-ore: #d99b5c;
+
+  --ui-display: "Chakra Petch", "Bahnschrift", "DIN Alternate", "Arial Narrow", sans-serif;
+  --ui-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --ui-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --ui-gap: 24px;
+  --ui-radius: 6px;
+
+  /* Legacy names used by style.css and instrumentPanel.css. */
+  --panel: var(--ui-panel);
+  --edge: var(--ui-line);
+  --muted: var(--ui-muted);
+  --mint: var(--ui-mint);
+  --amber: var(--ui-amber);
+  font-family: var(--ui-mono);
+  color: var(--ui-text);
+  background: var(--ui-space);
+}

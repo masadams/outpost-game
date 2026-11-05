@@ -70,15 +70,24 @@ export class Hud {
   clearBuildPointer():void{this.pointerDraft=null;this.hideBuildTip();}
   get buildPreview() { if(this.pointerBuilding&&this.pointerDraft)return this.pointerDraft; return this.dock.root.dataset.panel === 'command' ? this.command.preview ? { ...this.command.preview, body: this.command.bodyId } : null : null; }
   private dock = new OperationsDock();
-  private objectives = new Objectives(()=>this.dock.open('objectives'),(link,keyboard)=>{if(link==='research'||link==='equipment'){this.dock.open('command');this.command.openSection(link,keyboard);}else{const view=({cargo:'cargo',build:'colony',map:'navigation',defence:'defence'} as const)[link];this.dock.open(view);if(link==='build')this.dock.onBuild?.();}if(keyboard)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();});
+  private objectives = new Objectives((link,keyboard)=>{if(link==='research'||link==='equipment'){this.dock.open('command');this.command.openSection(link,keyboard);}else{const view=({cargo:'cargo',build:'colony',map:'navigation',defence:'defence'} as const)[link];this.dock.open(view);if(link==='build')this.dock.onBuild?.();}if(keyboard)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();});
   destroy(): void { this.root.remove(); }
   toggleDock(view: DockView): void { this.dock.toggle(view); }
+  /** Screen buttons in the flight chrome. */
+  chooseScreen(view: DockView): void { this.dock.choose(view); }
+  openObjectives(): void { this.dock.toggle('objectives'); }
+  get currentPanel(): DockView | null { return this.dock.root.hidden ? null : this.dock.current; }
+  get trackedObjective() { return this.objectives.trackedId; }
+  get fullScreenWindow(): boolean { return this.dock.fullScreen; }
+  /** Status notices and target guidance, shown under the objective card. */
+  get noticeElements(): HTMLElement[] { return [this.root.querySelector<HTMLElement>('.notices')!, this.nav.guidance]; }
+  setWindowPaused(paused: boolean): void { this.dock.setWindowPaused(paused); }
   selectFacility(body: import('../sim/celestial').BodyId,id:number):void {this.dock.inspectFacility(`#${id} · ${body==='home'?'Selene':'Nacre'}`);this.command.selectFacility(body,id);}
   openBuild():void{this.dock.open('colony');}
   get dockOpen():boolean{return !this.dock.root.hidden;}
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
-    this.dock.objectiveButton=this.objectives.root;this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
+    this.pointerTip.id='build-pointer-tip';this.pointerTip.hidden=true;
     this.dock.onBuild=()=>onColonyAction({type:'buildMode',open:true});this.dock.onLeaveBuild=()=>onColonyAction({type:'buildMode',open:false});
     this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
     if(el.id==='build-category'){this.category=el.value as BuildCategory;if(this.latestWorld)this.update(this.latestWorld,this.root.dataset.state==='paused');}});
@@ -87,12 +96,11 @@ export class Hud {
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
     this.command = new CommandConsole(onColonyAction,this.preferences); this.dock.command.append(this.command.root);
     this.root.id = 'hud';
-    this.root.innerHTML = `<header><div class="brand"><span class="eyebrow" id="world-brand">SELENE / OUTPOST ALPHA 0.21</span><h1>OUTPOST <span id="hud-context">On pad</span><span id="flight-region" role="status" aria-live="polite"></span></h1></div><div class="mission">CONTINUOUS FLIGHT · FINITE WORLDS</div></header>
-      <div id="surface-frame"></div><section class="instruments" aria-label="Flight telemetry"></section>
+    this.root.innerHTML = `<section class="instruments" aria-label="Flight telemetry"></section>
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div><div id="crew-order-status" hidden><span></span><button type="button">Stop crew order</button></div></section>
       <div id="combat-status"></div>
       <footer><p class="context-hint"></p></footer>`;
-    this.root.prepend(this.labels.root);this.root.append(this.pointerTip, this.objectives.root, this.dock.nav, this.dock.root, this.nav.guidance); document.body.append(this.root);
+    this.root.prepend(this.labels.root);this.root.append(this.pointerTip, this.dock.root, this.nav.guidance); document.body.append(this.root);
     const crewStatus=this.root.querySelector<HTMLElement>('#crew-order-status')!;isolateControlKeys(crewStatus);crewStatus.querySelector('button')!.addEventListener('click',()=>{onColonyAction({type:'crewOrder',operation:'stop'});(document.activeElement as HTMLElement)?.blur();});
     this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!,()=>onColonyAction({type:'autopilot',operation:'cancel'}));
     this.status = this.root.querySelector('.status')!;
@@ -119,18 +127,13 @@ export class Hud {
     this.root.dataset.context = context.key; this.root.dataset.body = colonyPlanet(world).id;
     this.root.dataset.time = world.system.time.toFixed(4); this.root.dataset.x = world.ship.position.x.toFixed(4); this.root.dataset.y = world.ship.position.y.toFixed(4);
     this.root.dataset.vx = world.ship.velocity.x.toFixed(4); this.root.dataset.vy = world.ship.velocity.y.toFixed(4); this.root.dataset.angle = world.ship.angle.toFixed(5); this.root.dataset.spin = world.ship.angularVelocity.toFixed(5);
-    setText(this.root.querySelector('#world-brand')!,`${colonyPlanet(world).label.toUpperCase()} / OUTPOST ALPHA 0.21`);
-    setText(this.root.querySelector('#hud-context')!,context.label + ' · ' + colonyPlanet(world).label);
     const compactHint=context.key==='flight'?(world.ship.state==='landed'?'W launch · F deploy · I ship · P pause':'W thrust · A/D steer · Space mine · I ship · P pause'):context.key==='surface'?'A/D walk · E interact · F board · B build':context.hint;
     setText(this.root.querySelector('.context-hint')!,controlHint(compactHint + (world.ship.towRig && world.playerMode === 'ship' ? ' · Y: latch / release tow' : ''),this.preferences));
-    setText(this.root.querySelector('#surface-frame')!,`SURFACE FRAME · ${colonyPlanet(world).label.toUpperCase()} · ${world.playerMode==='astronaut'?'CREW':'SHIP'}`);
     this.objectives.update(world,this.preferences);this.root.dataset.objectives=world.objectives.completed.join(',');
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
-    const region = flightRegion(onFoot ? world.astronaut.position : ship.position, world.system), regionBadge = this.root.querySelector<HTMLElement>('#flight-region')!;
-    regionBadge.dataset.region = region;
-    if (regionBadge.textContent !== REGION_LABELS[region]) regionBadge.textContent = REGION_LABELS[region];
     const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
+    const region = flightRegion(onFoot ? world.astronaut.position : ship.position, world.system);
     this.instruments.update(world);
     const safety = flightSafety(ship, world.system), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;
     const flightMessage = onFoot || ship.state === 'crashed' ? '' : safety.message;

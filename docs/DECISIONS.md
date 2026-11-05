@@ -2,6 +2,15 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Rewrite over adapt — 2026-11-05
+
+The user directed: when rebuilding is faster or cleaner than adapting, rebuild; do not keep old code that has no value or no longer belongs. Applied to the UI rebuild:
+
+- **Kept:** `src/sim`, the Phaser world renderer, saves, unit tests, and the view-model style (pure functions from world state to what a screen shows).
+- **Replaced from scratch:** the HUD shell (brand header, button-wall nav, sound and zoom toolbars, objectives button, dial strip) and its legacy CSS, rather than restyled.
+- **Temporary:** the old Ship, Build, Manage and Map panels stay only until their new screens land, then are deleted. Hidden systems (combat, towing, autopilot, upgrades…) lose their old panels at that point and get new UI when they return. Their simulation and unit tests remain.
+- Browser specs that only exercise old UI are replaced by specs for the new screens instead of being patched.
+
 ## Mockup 1 review — 2026-11-05
 
 The user reviewed [mockup 1](mockups/ui-rebuild.html): colors and direction approved, fonts acceptable. It reads clear but a little simple; add detail and refinement during the real build without losing clarity.

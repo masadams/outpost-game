@@ -32,7 +32,7 @@ test('latches a physical asteroid, builds cable tension, restores it paused and 
   await page.goto('/'); const hud = page.locator('#hud'), panel = page.locator('.towing-panel');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('i'); await page.keyboard.press('p');
   await expect(hud).toHaveAttribute('data-state', 'flying'); await page.keyboard.press('y'); await expect(panel).toHaveAttribute('data-target', '1');
-  await expect(page.locator('#flight-status')).toContainText('prediction suspended'); await expect(page.locator('#flight-tools')).toHaveAttribute('data-prediction-points', '0');
+  await expect(page.locator('#flight-status')).toContainText('paused while towing'); await expect(page.locator('#flight-tools')).toHaveAttribute('data-prediction-points', '0');
   await page.keyboard.down('w'); await expect.poll(async () => Number(await panel.getAttribute('data-tension')), { timeout: 6000 }).toBeGreaterThan(10);
   await page.keyboard.up('w'); await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
@@ -45,7 +45,7 @@ test('latches a physical asteroid, builds cable tension, restores it paused and 
   await expect(panel).toHaveAttribute('data-tension', saved.world.towing.tension.toFixed(1));
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'flying'); await page.keyboard.press('y');
   await expect(panel).toHaveAttribute('data-target', ''); await expect(panel).toHaveAttribute('data-breaks', '0');
-  await expect(page.locator('#flight-status')).not.toContainText('prediction suspended');
+  await expect(page.locator('#flight-status')).not.toContainText('paused while towing');
   await expect.poll(async () => Number(await page.locator('#flight-tools').getAttribute('data-prediction-points'))).toBeGreaterThan(0);
   expect(errors).toEqual([]);
 });

@@ -1,6 +1,6 @@
 # Current Focus
 
-**Updated:** 2026-11-04 · **Milestone:** UX rebuild + first mining sortie
+**Updated:** 2026-11-05 · **Milestone:** UX rebuild + first mining sortie
 
 ## Why
 The alpha has a strong simulation core (fixed-step physics, landing, resource accounting, 538 passing unit tests) but grew wide before it got good. Seventeen task specs added research, 25 ship parts, combat, drones, shields, towing, autopilot tiers, facility upgrades, freight, scheduling and colony policy. Meanwhile the first minute of play is unclear and the interface reads like a web dashboard. The bible's own rule is depth before breadth, so we are returning to it.
@@ -20,7 +20,7 @@ This is the bible's first signature slice: **the excellent mining sortie**. The 
 | 1 | Ground rules: rewrite AGENTS.md, archive task specs, write this page, log decisions | Done |
 | 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel. Mockup 1: [docs/mockups/ui-rebuild.html](mockups/ui-rebuild.html) | Done: mockup 1 approved; add more detail and refinement in the real build |
 | 3 | Feature visibility: new games show only the focus set below; other systems remain in code, hidden. See [Feature visibility](#feature-visibility) | Done |
-| 4 | Rebuild UI layer in Preact on shared design tokens, implementing the agreed mockups | Not started |
+| 4 | Rebuild UI layer in Preact on shared design tokens, implementing the agreed mockups. See [UI rebuild progress](#ui-rebuild-progress) | In progress |
 | 5 | Polish and hands-on playtest the first mining sortie until it's fun | Not started |
 
 ## Screen modes (agreed direction)
@@ -46,12 +46,23 @@ Combat and drones, turrets/defence drills, shields, towing, flight computers/aut
 
 Add `?features=all` to the URL, or set localStorage `outpost.features` to `all`, to see everything. The browser regression suite runs with all features on; `tests/browser/focusMode.spec.ts` checks the focus set.
 
+## UI rebuild progress
+New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `src/ui/theme.css` with bundled open-licensed fonts.
+
+| Slice | What | Status |
+|---|---|---|
+| 4.1 Flight | Instrument cluster (reserve bars, attitude dial with nose and motion, readouts, touchdown limits), objective card, screen buttons (Ship, Build, Base, Map, Menu), icon tray, view tools by the radar, notices column, Base/Map pause while flying | Done |
+| 4.2 Build | Build bar, in-world ghost placement with reasons, build on foot or from the landed ship | Next |
+| 4.3 Base | Full-screen Base window: overview, buildings, ship; replaces Manage | Planned |
+| 4.4 Map | Full-screen Map window with inspector; replaces the old navigation panel and guidance line | Planned |
+| 4.5 Cleanup | Delete the old dock, panels and remaining legacy CSS; Menu, Help and Settings restyled | Planned |
+
 ## Known UX defects to fix in the rebuild
-- Full-screen Map/Manage windows don't pause; the ship can crash behind them (observed: hull 100% → 41% while Map was open).
-- The Build tab stays highlighted while Manage or Map is open.
-- Dial readouts overlap their needles in the instrument strip.
+- ~~Full-screen Map/Manage windows don't pause~~ Fixed in 4.1: Base and Map pause while flying.
+- ~~The Build tab stays highlighted while Manage or Map is open~~ Fixed in 4.1: screen buttons show the open panel.
+- ~~Dial readouts overlap their needles~~ Fixed in 4.1: new cluster, checked for clipping and collisions at 900×600–1920×1080 and 1.5× text.
 - The ship is about 20 px tall at 1600×900; the player barely registers their own lander.
-- About 15 text buttons are on screen at launch; secondary text is small monospace.
+- ~~About 15 text buttons at launch~~ Fixed in 4.1: five screen buttons, four small icons, view tools by the radar.
 - Help and panel text uses internal jargon ("paid", "supplied", "unreserved") and reads like a changelog.
 
 ## Out of scope this milestone

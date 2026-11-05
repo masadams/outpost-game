@@ -29,6 +29,8 @@ export class NavigationPanel {
     this.guidance.textContent = `${n.occluded?'△ BLOCKED · ':''}TARGET ${code} · ${Math.round(n.range)} m · closing ${fmt(n.closing)} · relative ${fmt(n.relativeSpeed)} m/s`;
     this.guidance.title = `${n.label}: bearing from nose (local up on foot); positive closing speed means approaching. Match total relative velocity, not just closing speed. ${n.occluded ? 'Planet blocks direct contact.' : 'Direct line of sight.'}`;
     this.guidance.dataset.target = e.selected;
+    // Guidance helps while flying; on the pad or on foot it is noise.
+    this.guidance.hidden = w.playerMode !== 'ship' || w.ship.state !== 'flying';
     if (!visible) return;
     const bodies=planets(w.system), anchors=[w.ship.position,n.position,...w.exploration.sites.map(s=>s.position),...bodies.flatMap(b=>[{x:b.position.x-b.radius-b.atmosphere,y:b.position.y-b.radius-b.atmosphere},{x:b.position.x+b.radius+b.atmosphere,y:b.position.y+b.radius+b.atmosphere}])];
     const minX=Math.min(...anchors.map(p=>p.x)),maxX=Math.max(...anchors.map(p=>p.x)),minY=Math.min(...anchors.map(p=>p.y)),maxY=Math.max(...anchors.map(p=>p.y));
