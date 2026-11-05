@@ -18,7 +18,7 @@ test('tracks goals and links to real controls with native keyboard input while p
 
 test('earns supplied-air work from normally paid construction, preserves partial progress and stops on a disabled dome',async({page})=>{
  test.setTimeout(120000);await clock(page);await page.goto('/');await advance(page,500);await page.getByRole('button',{name:'Build',exact:true}).click({force:true});await advance(page,100);
- const place=async(metres:number)=>{const at=await surfacePoint(page,'home',metres/1800);await page.mouse.move(at.x,at.y);await advance(page,100);await page.mouse.click(at.x,at.y);await advance(page,100);};await place(200);
+ const place=async(metres:number)=>{const at=await surfacePoint(page,'home',metres/1800);await page.mouse.move(at.x,at.y);await advance(page,100);await page.mouse.click(at.x,at.y);await advance(page,100);};await tap(page,'-');await tap(page,'-');await advance(page,2000);await place(200);
  await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Crew & service',exact:true}).click();await activate(page,page.locator('[data-select="habitatSmall"]'));await advance(page,100);await place(120);
  const paid=await snapshot(page);expect(paid.colony.command.queue.map((o:{kind:string})=>o.kind)).toEqual(['solar','habitatSmall']);// Mouse placement lands on whole pixels, so allow a couple of metres.
  paid.colony.command.queue.forEach((o:{angle:number},i:number)=>expect(Math.abs(o.angle*1800-[200,120][i])).toBeLessThan(2));
