@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from './game';
+import { test, restart } from './game';
 import { createWorld } from '../../src/sim/world';
 import { applyTowAction } from '../../src/sim/towing';
 import { WORLD } from '../../src/sim/config';
@@ -16,7 +16,7 @@ test('fabricates a paid tow rig using native controls and preserves the equipmen
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.version).toBe(19); expect(saved.world.ship.towRig).toBe(true); expect(saved.world.colony.products).toMatchObject({ alloy: 12, wire: 8, components: 5 });
-  await page.keyboard.press('r'); await expect(panel).toHaveAttribute('data-equipped', 'false');
+  await restart(page); await expect(panel).toHaveAttribute('data-equipped', 'false');
   await page.keyboard.press('l'); await expect(panel).toHaveAttribute('data-equipped', 'true');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(panel).toHaveAttribute('data-equipped', 'true');
   expect(errors).toEqual([]);
@@ -39,7 +39,7 @@ test('latches a physical asteroid, builds cable tension, restores it paused and 
   expect(saved.world.towing.targetId).toBe(1); expect(saved.world.towing.tension).toBeGreaterThan(0); expect(saved.world.ship.fuel).toBeLessThan(240);
   await expect(page.getByRole('button', { name: 'Release tow [Y]', exact: true })).toBeDisabled();
   await panel.scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/screenshots/asteroid-towing.png' });
-  await page.keyboard.press('r'); await expect(panel).toHaveAttribute('data-equipped', 'false'); await page.keyboard.press('l');
+  await restart(page); await expect(panel).toHaveAttribute('data-equipped', 'false'); await page.keyboard.press('l');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(panel).toHaveAttribute('data-target', '1');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(panel).toHaveAttribute('data-target', '1');
   await expect(panel).toHaveAttribute('data-tension', saved.world.towing.tension.toFixed(1));

@@ -276,3 +276,8 @@ Landing rules are unchanged. Feedback is render-only: pad beacon colour follows 
 
 ## First-run guidance (slice 5.4) — 2026-11-05
 Guidance is one pure function from world state to the next instruction (`coach`), shown in the objective card and as a world-space arrow. It reads state only, so there is nothing to save, and it stops after the first delivery. No tutorial mode, popups or locked controls.
+
+## Playtest fixes after slice 5.4 — 2026-11-05
+- The R restart key is removed: it was too easy to hit and wipes progress. New Game lives in the menu only.
+- Queued buildings now show in a card whenever the build bar is closed, with a cancel button per site, Cancel all, and a Start building button once the astronaut is on foot. From the lander it says to step out (F). Stepping out waits until the astronaut is standing before sending them to work, instead of giving up if they are still in the air.
+- The engine sound is a low rumble (filtered noise under a soft sine) instead of a buzzing sawtooth.

@@ -253,12 +253,21 @@ export class FlightScene extends Phaser.Scene {
     if (value) this.audio.silence();
   }
   private lastPlayerMode: 'ship' | 'astronaut' = 'ship';
-  /** Stepping out of the lander with building work queued sends the astronaut to do it. */
-  private dispatchOnStepOut(): void {
+  /** Seconds left to send the astronaut to work after stepping out; zero when nothing is waiting. */
+  private dispatchWait = 0;
+  /** Stepping out of the lander with building work queued sends the astronaut to do it, once they are standing. */
+  private dispatchOnStepOut(delta: number): void {
     const mode = this.simulation.playerMode;
-    const steppedOut = this.lastPlayerMode === 'ship' && mode === 'astronaut';
+    if (this.lastPlayerMode === 'ship' && mode === 'astronaut') this.dispatchWait = 3;
     this.lastPlayerMode = mode;
-    if (!steppedOut || this.halted || this.simulation.crewOrder) return;
+    if (this.dispatchWait <= 0) return;
+    this.dispatchWait -= Math.max(0, delta) / 1000;
+    if (mode !== 'astronaut' || this.simulation.crewOrder) {
+      this.dispatchWait = 0;
+      return;
+    }
+    if (this.halted || !this.simulation.astronaut.grounded) return;
+    this.dispatchWait = 0;
     const local = activeWorld(this.simulation);
     if (local.colony.command.queue.some(o => !o.paused)) this.colonyActions.push({ type: 'crewOrder', operation: 'build' });
   }
@@ -276,11 +285,10 @@ export class FlightScene extends Phaser.Scene {
   }
   update(_time: number, delta: number): void {
     this.updateWindowPause();
-    this.dispatchOnStepOut();
+    this.dispatchOnStepOut(delta);
     if (this.keys.mute()) this.audio.toggleMute();
     if (!this.settings.isOpen && (!this.menu.isOpen||this.help.isOpen) && this.keys.help()) this.help.toggle();
     if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else if(!this.menu.isOpen){const local=activeWorld(this.simulation);if(local.colony.buildOpen){applyColonyAction(local,{type:'buildMode',open:false});this.hud.clearBuildPointer();}else if(this.hud.dockOpen)this.hud.closeDock();else{this.setPaused(true);this.menu.open('pause');}} }
-    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.restart()) this.newGame();
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.save()) {
       try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
       catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }

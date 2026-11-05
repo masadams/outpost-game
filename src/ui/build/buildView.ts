@@ -187,3 +187,30 @@ export function placementTip(w: WorldState, kind: BuildType, error: string | nul
   if (error === 'Insufficient fabrication materials') return { text: missingLine(w, kind) ?? 'Not enough materials', ok: false };
   return { text: error, ok: false };
 }
+
+/** The always-visible list of queued buildings, shown while the build bar is closed. */
+export interface QueueView {
+  orders: OrderView[];
+  /** One short line: what is happening or what to do next. */
+  hint: string;
+  /** The button that starts the work, when pressing it would do something. */
+  start: boolean;
+  /** The astronaut is already on the job. */
+  working: boolean;
+}
+
+export function queueView(w: WorldState): QueueView | null {
+  const orders = buildView(w).queue;
+  if (orders.length === 0) return null;
+  const active = orders.some(o => !o.paused);
+  const root = w.rootWorld ?? w;
+  const working = root.crewOrder?.type === 'build';
+  const hint = working
+    ? crewLine(w) ?? 'Astronaut working'
+    : w.playerMode === 'ship'
+      ? 'Step out (F) and your astronaut builds these.'
+      : active
+        ? 'Press Start to send your astronaut to build.'
+        : 'All paused. Cancel them or place new sites.';
+  return { orders, hint, start: !working && w.playerMode === 'astronaut' && active, working };
+}

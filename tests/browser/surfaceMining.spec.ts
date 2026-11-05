@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from './game';
+import { test, restart } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('builds a powered surface rig, stops and resumes extraction, and preserves finite reserves', async ({ page }) => {
@@ -31,7 +31,7 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   expect(saved.world.colony.buildings[1].depositId).toBe(1);
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/planetary-mining.png' });
-  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-buildings', '0'); await expect(hud).toHaveAttribute('data-depot', '0.00');
+  await restart(page); await expect(hud).toHaveAttribute('data-buildings', '0'); await expect(hud).toHaveAttribute('data-depot', '0.00');
   await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-buildings', '2');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(hud).toHaveAttribute('data-depot', ore!);
   await expect(page.locator('.ground-survey')).toHaveAttribute('data-remaining', reserve!);

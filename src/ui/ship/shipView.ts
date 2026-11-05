@@ -90,7 +90,7 @@ function foot(w: WorldState): FootView {
   }));
   const status =
     suit.health <= 0
-      ? 'Your suit is lost. Press R to start over.'
+      ? 'Your suit is lost. Open the menu (Esc) to start over.'
       : habitatSource(w)
         ? 'Breathing habitat air.'
         : canBoard

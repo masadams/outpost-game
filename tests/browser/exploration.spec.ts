@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from './game';
+import { test, restart } from './game';
 import { createWorld } from '../../src/sim/world';
 import { encodeCheckpoint } from '../../src/persistence/checkpoint';
 import { WORLD } from '../../src/sim/config';
@@ -47,7 +47,7 @@ test('matches a physical derelict, recovers finite salvage and restores depletio
   await expect(hud).toHaveAttribute('data-cargo', '18.00'); await expect(page.locator('.status')).toContainText('Cache empty');
   await page.keyboard.press('p'); await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.world.exploration.salvaged).toBe(18); expect(saved.world.exploration.surveyed).toContain('copper'); expect(saved.world.exploration.sites.find((s: { key: string }) => s.key === 'cache').mass).toBe(80);
-  await page.keyboard.press('r'); await expect(hud).toHaveAttribute('data-cargo', '0.00'); await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-cargo', '18.00');
+  await restart(page); await expect(hud).toHaveAttribute('data-cargo', '0.00'); await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-cargo', '18.00');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Map', exact: true }).click(); await expect(panel).toContainText('salvage 0.0 kg'); expect(errors).toEqual([]);
 });
 

@@ -38,7 +38,6 @@ Open the local Vite URL in a modern desktop browser. New games show only the fir
 | Wheel / − / + | Manual camera zoom (also while paused) |
 | 0 | Restore automatic zoom |
 | P | Pause / resume |
-| R | Reset runtime sandbox, including colony; keep saved checkpoint |
 
 Top-right **Ship / Build / Base / Map / Menu** buttons open their panel; small icons below them toggle sound, open help and settings, and pause. The objective card (top-left) shows your current goal; status messages appear under it. Coast-path and zoom controls sit above the radar. **I** toggles Ship; **Esc** closes a panel, or opens the pause menu when none is open. **Base and Map pause the game while you are flying** and stay live on the pad or on foot. The bottom cluster shows fuel, hull and cargo, an attitude dial (nose and direction of motion against local up) and altitude, vertical speed and drift; touchdown limits appear on a landing approach. Master, effects and music volume are in Settings. See [current focus](docs/CURRENT_FOCUS.md) for the UI rebuild.
 
@@ -74,7 +73,7 @@ An urgent unsafe approach gently pulses and plays a descending two-tone warning.
 
 A starter iron sample is directly above the home pad. Hold **W + Space + C** to launch, mine and attract ore. Release **W after about 6.5 seconds**, keeping Space/C held while coasting toward the deposit. The beam breaks a parent rock into two fragments; mine those again for ore. The powered tractor pulls ore within 260 m and collects it within 18 m. Use the same vertical descent practice described above, then press **E** on the pad to transfer the hold into the depot. The simulation regression performs this entire sortie with ordinary control inputs. Avoid holding thrust until the hold fills: the ship can reach escape speed before collection finishes.
 
-For other deposits, steer by the nearest-deposit bearing and colored radar blips. A radial ice sample also starts just right of the iron sample above home. Keep the nose on the rock within laser range (450 m); nearer rocks and the moon block the beam. Parents split into two mineable fragments; each fragment releases four drifting ore pickups. Resource mass and fracture momentum are conserved. The 120 kg hold accepts partial stacks and leaves the remainder in space. Cargo adds to ship mass. All five resources have separate hold/depot totals. Rock impacts damage hull. Pause freezes the entire world. R resets all runtime progress; K/L protects a saved checkpoint.
+For other deposits, steer by the nearest-deposit bearing and colored radar blips. A radial ice sample also starts just right of the iron sample above home. Keep the nose on the rock within laser range (450 m); nearer rocks and the moon block the beam. Parents split into two mineable fragments; each fragment releases four drifting ore pickups. Resource mass and fracture momentum are conserved. The 120 kg hold accepts partial stacks and leaves the remainder in space. Cargo adds to ship mass. All five resources have separate hold/depot totals. Rock impacts damage hull. Pause freezes the entire world. New Game in the menu resets all runtime progress; K/L protects a saved checkpoint.
 
 ![Mining cargo HUD](docs/screenshots/mining-cargo.png)
 
@@ -122,7 +121,7 @@ Press **F** on the home pad to leave the ship. Use **A/D** or the arrows to walk
 
 The amber **cargo depot** is about 54 m right of the pad. Grounded E opens inventory and transfers the landed ship's hold, leaving overflow aboard if storage is full. E again closes, or walk away. The blue **home emergency service** is about 54 m left: E restores suit oxygen/health, repairs the landed ship using stored iron (**1 kg / 10 hull points**), and transfers any manufactured fuel available. Its emergency suit service remains free. Buildable service stations use grid energy and manufactured supplies.
 
-The suit has **180 seconds of oxygen**. Return to the ship (F within 20 m) or use the service point before it runs out. At zero oxygen, health drains at 5 points/second. Falls above 14 m/s also cause damage; ordinary jumps are safe. A lost suit requires R to restart the entire sortie. Boarding refills oxygen; suit health stays damaged until serviced. You can walk through ship/station art; terrain is the suit's collision surface in this milestone.
+The suit has **180 seconds of oxygen**. Return to the ship (F within 20 m) or use the service point before it runs out. At zero oxygen, health drains at 5 points/second. Falls above 14 m/s also cause damage; ordinary jumps are safe. A lost suit means starting over from the menu (New Game) or loading a save. Boarding refills oxygen; suit health stays damaged until serviced. You can walk through ship/station art; terrain is the suit's collision surface in this milestone.
 
 ![Surface depot](docs/screenshots/surface-depot.png)
 

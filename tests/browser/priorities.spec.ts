@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from './game';
+import { test, restart } from './game';
 import { WORLD } from '../../src/sim/config';
 
 test('manages reserves from ship and surface, protects production/storage/materials and restores policy', async ({ page }) => {
@@ -44,7 +44,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   expect(saved.version).toBe(19); expect(saved.world.colony.policy).toEqual({ energyReserve: 0, deliveryReserve: 400, alloyReserve: 15, componentsReserve: 5 });
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/colony-priorities.png' });
-  await page.keyboard.press('r'); await expect(page.locator('[data-policy-value="deliveryReserve"]').first()).toHaveText('0');
+  await restart(page); await expect(page.locator('[data-policy-value="deliveryReserve"]').first()).toHaveText('0');
   await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await expect(page.locator('[data-policy-value="deliveryReserve"]').first()).toHaveText('400'); await expect(hud).toHaveAttribute('data-depot', ore!);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused');

@@ -4,7 +4,7 @@ import { WORLD } from '../src/sim/config';
 import { SUIT } from '../src/sim/astronaut';
 import { planetAt, surfacePosition } from '../src/sim/celestial';
 import { setFeatureMode, FOCUS_BLUEPRINTS } from '../src/preferences/features';
-import { buildView, missingLine, placementTip } from '../src/ui/build/buildView';
+import { buildView, missingLine, placementTip, queueView } from '../src/ui/build/buildView';
 
 afterEach(() => setFeatureMode(null));
 
@@ -75,5 +75,17 @@ describe('build view', () => {
     const view = buildView(w);
     expect(view.resources.find(r => r.key === 'power')).toMatchObject({ value: '−2.0 kW', level: 'bad' });
     expect(view.queue).toEqual([{ id: 7, label: 'Refinery', fraction: 0.25, status: 'queued', paused: false }]);
+  });
+});
+
+describe('queue card', () => {
+  it('is empty with no orders, says to step out from the ship, and offers Start on foot', () => {
+    const w = createWorld();
+    expect(queueView(w)).toBeNull();
+    w.colony.command.queue.push({ id: 1, kind: 'solar', angle: 0.01, progress: 0, paused: false, status: 'queued' } as never);
+    expect(queueView(w)?.start).toBe(false);
+    expect(queueView(w)?.hint).toContain('(F)');
+    w.playerMode = 'astronaut';
+    expect(queueView(w)?.start).toBe(true);
   });
 });

@@ -13,3 +13,12 @@ export const test=base.extend({page:async({page},use)=>{
  page.reload=async options=>{const response=await reload(options);if(clockInstalled)await page.clock.fastForward(100);await enterGame(page);return response;};
  await use(page);
 }});
+
+/** Starts a fresh game through the menu, as a player would (there is no restart key). */
+export async function restart(page: Page): Promise<void> {
+  const menu = page.getByRole('dialog', { name: 'Outpost game menu', exact: true });
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeVisible();
+  await menu.getByRole('button', { name: 'New Game', exact: true }).click();
+  await expect(menu).toBeHidden();
+}

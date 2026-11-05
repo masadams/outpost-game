@@ -1,6 +1,6 @@
 import { installAudioProbe } from '../helpers/audioProbe';
 import { expect } from '@playwright/test';
-import { test } from './game';
+import { test, restart } from './game';
 
 test('audio unlocks after input, produces a signal, silences on pause/mute and persists settings', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -40,7 +40,7 @@ test('quick-start guide pauses gameplay, supports keyboard and resumes without s
   await page.keyboard.press('h'); await expect(page.getByRole('dialog')).toBeVisible();
   await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.screenshot({ path: 'docs/screenshots/playtest-guide.png' });
-  await page.keyboard.press('w'); await page.keyboard.press('r');
+  await page.keyboard.press('w'); await restart(page);
   await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(hud).toHaveAttribute('data-state', 'landed'); await expect(hud).toHaveAttribute('data-fuel', '240.00');

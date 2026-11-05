@@ -19,6 +19,7 @@ export class GameAudio {
   private active = true;
   private failed = false;
   private disposed = false;
+  private engineRumble: AudioBufferSourceNode | null = null;
   private pickupRun = 0;
   private lastPickup = -10;
   private frame: SoundFrame = { cues: [], engine: false, mining: false, tractor: false, machinery: false };
@@ -47,10 +48,36 @@ export class GameAudio {
         this.music=new AdaptiveMusic(this.context,this.master);
         const compressor = this.context.createDynamicsCompressor(); compressor.threshold.value = -16; compressor.ratio.value = 3;
         this.master.connect(compressor); compressor.connect(this.context.destination);
-        for (const [name, frequency, type] of [['engine', 82, 'sawtooth'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 62, 'triangle']] as const) {
+        for (const [name, frequency, type] of [['engine', 54, 'sine'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 62, 'triangle']] as const) {
           const oscillator = this.context.createOscillator(), gain = this.context.createGain(), filter = this.context.createBiquadFilter();
           oscillator.type = type; oscillator.frequency.value = frequency; filter.type = 'lowpass'; filter.frequency.value = name === 'engine' ? 450 : 1000;
           gain.gain.value = 0; oscillator.connect(filter); filter.connect(gain); gain.connect(this.effects!); oscillator.start();
+          if (name === 'engine') {
+            // A rocket is mostly a low rumble of rushing gas: filtered brown noise under a soft sine.
+            const length = this.context.sampleRate * 2;
+            const buffer = this.context.createBuffer(1, length, this.context.sampleRate);
+            const data = buffer.getChannelData(0);
+            let last = 0;
+            let seed = 7;
+            for (let i = 0; i < length; i++) {
+              seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+              last = (last + 0.04 * (seed / 2147483648)) / 1.02;
+              data[i] = last * 14;
+            }
+            const rumble = this.context.createBufferSource();
+            const rumbleFilter = this.context.createBiquadFilter();
+            const rumbleGain = this.context.createGain();
+            rumble.buffer = buffer;
+            rumble.loop = true;
+            rumbleFilter.type = 'lowpass';
+            rumbleFilter.frequency.value = 260;
+            rumbleGain.gain.value = 1.5;
+            rumble.connect(rumbleFilter);
+            rumbleFilter.connect(rumbleGain);
+            rumbleGain.connect(gain);
+            rumble.start();
+            this.engineRumble = rumble;
+          }
           if (name === 'mining') {
             // A slow wobble makes the beam hum feel alive rather than a flat tone.
             const wobble = this.context.createOscillator();
@@ -92,7 +119,7 @@ export class GameAudio {
     if (!this.context) return;
     for (const [name, loop] of this.loops) {
       const enabled = !paused && frame[name];
-      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.065 : name === 'machinery' ? 0.018 : 0.035 : 0, this.context.currentTime, 0.04);
+      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.07 : name === 'machinery' ? 0.018 : 0.035 : 0, this.context.currentTime, 0.04);
     }
     if (frame.cues.some(c=>['warning','landingWarning','fuelWarning','shieldBreach','crash'].includes(c))) this.duckTime=2;
     this.duckTime=Math.max(0,this.duckTime-seconds);
@@ -157,6 +184,7 @@ export class GameAudio {
     document.removeEventListener('keydown', this.unlock); document.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('blur', this.silence); document.removeEventListener('visibilitychange', this.visibility);
     for (const loop of this.loops.values()) loop.oscillator.stop();
+    this.engineRumble?.stop();
     this.music?.destroy(); this.loops.clear(); if (this.context) void this.context.close().catch(() => {});
   }
 }

@@ -16,7 +16,7 @@ import { NearbyCard } from './base/NearbyCard';
 import { nearbyBuilding } from '../sim/colony';
 import { buildingHealth } from '../sim/buildingHealth';
 import { featureVisible } from '../preferences/features';
-import { buildView, placementTip, type BuildGroup } from './build/buildView';
+import { buildView, placementTip, queueView, type BuildGroup } from './build/buildView';
 import type { BuildDraft } from './build/buildDraft';
 import type { Vec } from '../sim/math';
 import { Objectives } from './Objectives';
@@ -120,6 +120,7 @@ export class Hud {
     const open = world.colony.buildOpen;
     this.root.dataset.building = String(open);
     this.buildBar.update(open ? buildView(world, this.buildGroup) : null);
+    this.buildBar.queue(open ? null : queueView(world));
     if (!open) this.buildBar.tip(null);
   }
   openObjectives(): void { this.dock.toggle('objectives'); }
@@ -153,6 +154,8 @@ export class Hud {
       select: kind => onColonyAction({ type: 'select', kind }),
       group: group => { this.buildGroup = group; if (this.latestWorld) this.renderBuild(this.latestWorld); },
       cancel: id => onColonyAction({ type: 'queueControl', id, operation: 'cancel' }),
+      cancelAll: ids => { for (const id of ids) onColonyAction({ type: 'queueControl', id, operation: 'cancel' }); },
+      start: () => onColonyAction({ type: 'crewOrder', operation: 'build' }),
       close: () => onColonyAction({ type: 'buildMode', open: false }),
     });
     this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
@@ -180,7 +183,7 @@ export class Hud {
       <section class="notices"><div class="status" role="status" aria-live="polite"></div><div id="flight-alert" role="status" aria-live="polite" hidden></div><div id="threat-alert"></div><div id="crew-order-status" hidden><span></span><button type="button">Stop crew order</button></div></section>
       <div id="combat-status"></div>
       <footer><p class="context-hint"></p></footer>`;
-    this.root.prepend(this.labels.root);this.root.append(this.buildBar.host, this.buildBar.tipHost, this.dock.root, this.nav.guidance); document.body.append(this.root);
+    this.root.prepend(this.labels.root);this.root.append(this.buildBar.host, this.buildBar.queueHost, this.buildBar.tipHost, this.dock.root, this.nav.guidance); document.body.append(this.root);
     const crewStatus=this.root.querySelector<HTMLElement>('#crew-order-status')!;isolateControlKeys(crewStatus);crewStatus.querySelector('button')!.addEventListener('click',()=>{onColonyAction({type:'crewOrder',operation:'stop'});(document.activeElement as HTMLElement)?.blur();});
     this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!,()=>onColonyAction({type:'autopilot',operation:'cancel'}));
     this.status = this.root.querySelector('.status')!;
@@ -226,8 +229,8 @@ export class Hud {
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
     const noticeText=world.notice.message.replace(/ · P TO RESUME$/,'');
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` :
-      onFoot && world.astronaut.health <= 0 ? 'Your suit is lost. Press L to load your last save, or R to start over.' :
-      !onFoot && ship.state === 'crashed' ? 'Your lander is wrecked. Press Backspace to recover it with supplies, L to load your last save, or R to start over.' :
+      onFoot && world.astronaut.health <= 0 ? 'Your suit is lost. Press L to load your last save, or open the menu (Esc) to start over.' :
+      !onFoot && ship.state === 'crashed' ? 'Your lander is wrecked. Press Backspace to recover it with supplies, L to load your last save, or open the menu (Esc) to start over.' :
       world.notice.time > 0 ? noticeText :
       world.defence.controlled !== null ? 'Controlling the turret. A/D aims, Space fires, E lets go.' :
       onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'Low oxygen. Return to the lander or the service station.' : habitatNotice(world)) :

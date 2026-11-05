@@ -1,12 +1,14 @@
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import type { BuildType } from '../../sim/colonyConfig';
-import type { BuildGroup, BuildView, CardView, OrderView } from './buildView';
+import type { BuildGroup, BuildView, CardView, OrderView, QueueView } from './buildView';
 
 export interface BuildHandlers {
   select: (kind: BuildType) => void;
   group: (group: BuildGroup) => void;
   cancel: (orderId: number) => void;
+  cancelAll: (orderIds: number[]) => void;
+  start: () => void;
   close: () => void;
 }
 
@@ -126,6 +128,31 @@ export function BuildBarView({ view, on }: { view: BuildView; on: BuildHandlers 
   );
 }
 
+/** Queued buildings stay visible after the build bar closes, with a way to start or cancel them. */
+export function QueueCard({ view, on }: { view: QueueView; on: BuildHandlers }) {
+  return (
+    <section class="queue-card" aria-label="Queued buildings" data-working={String(view.working)}>
+      <header class="queue-head">
+        <span class="queue-title">Queued buildings</span>
+        <button type="button" class="queue-clear" onClick={keep(() => on.cancelAll(view.orders.map(o => o.id)))}>
+          Cancel all
+        </button>
+      </header>
+      <ol class="build-queue" aria-label="Construction queue">
+        {view.orders.map(order => (
+          <Order key={order.id} order={order} cancel={on.cancel} />
+        ))}
+      </ol>
+      <p class="queue-hint" role="status">{view.hint}</p>
+      {view.start && (
+        <button type="button" class="queue-start" onClick={keep(on.start)}>
+          Start building
+        </button>
+      )}
+    </section>
+  );
+}
+
 /** Small label next to the cursor while placing. */
 export function CursorTip({ text, ok, x, y }: { text: string; ok: boolean; x: number; y: number }) {
   return (
@@ -138,14 +165,20 @@ export function CursorTip({ text, ok, x, y }: { text: string; ok: boolean; x: nu
 export class BuildBar {
   readonly host = document.createElement('div');
   readonly tipHost = document.createElement('div');
+  readonly queueHost = document.createElement('div');
 
   constructor(private handlers: BuildHandlers) {
     this.host.id = 'build-bar-host';
     this.tipHost.id = 'build-tip-host';
+    this.queueHost.id = 'build-queue-host';
   }
 
   update(view: BuildView | null): void {
     render(view ? h(BuildBarView, { view, on: this.handlers }) : null, this.host);
+  }
+
+  queue(view: QueueView | null): void {
+    render(view ? h(QueueCard, { view, on: this.handlers }) : null, this.queueHost);
   }
 
   tip(tip: { text: string; ok: boolean; x: number; y: number } | null): void {
@@ -155,6 +188,8 @@ export class BuildBar {
   destroy(): void {
     render(null, this.host);
     render(null, this.tipHost);
+    render(null, this.queueHost);
+    this.queueHost.remove();
     this.host.remove();
     this.tipHost.remove();
   }

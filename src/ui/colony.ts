@@ -34,7 +34,7 @@ export function colonyPanel(world: WorldState, paused: boolean): string {
     <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
     <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
     <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div></details>
-    <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save · R keeps checkpoint</small></p>`;
+    <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save</small></p>`;
 }
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
   const body=button.dataset.body==='home'||button.dataset.body==='moon'?button.dataset.body:undefined;
