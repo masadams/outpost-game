@@ -42,3 +42,20 @@ describe('storm warning', () => {
     expect(objectiveCard(scanning, 'storm').detail).toContain('Something may be out there');
   });
 });
+
+describe('storm on the map', () => {
+  it('shows nothing until the Observatory has seen it, then rocks on the chart edge and a landing zone', async () => {
+    const { mapView } = await import('../src/ui/map/mapView');
+    expect(mapView(createWorld()).storm).toBeNull();
+    const w = watching(20);
+    const marks = mapView(w).storm!;
+    expect(marks.rocks.length).toBeGreaterThan(0);
+    expect(marks.rocks.every(r => r.offChart)).toBe(true);
+    expect(marks.doubt).toBeGreaterThan(300);
+    expect(marks.zone?.radius).toBeGreaterThan(70);
+    expect(marks.line).toMatch(/Landing about \d+ m (left|right) of the pad/);
+    const sharp = mapView(watching(200)).storm!;
+    expect(sharp.doubt).toBeLessThan(marks.doubt);
+    expect(sharp.zone!.radius).toBeLessThan(marks.zone!.radius);
+  });
+});

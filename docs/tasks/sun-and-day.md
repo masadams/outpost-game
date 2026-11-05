@@ -14,7 +14,7 @@
 ## Slices
 | # | What | Status |
 |---|---|---|
-| S1 | `sun.ts`: day phase, sun direction, illumination at a surface angle; solar output and the Base power numbers follow it; a clock chip ("Day · dusk in 3:10") | Planned |
-| S2 | Lighting: sky colour and stars by sun height, sun and its glow in the sky, rock and ground shading from the real sun direction, buildings dim and show lamps at night | Planned |
+| S1 | `sun.ts`: day phase, sun direction, illumination at a surface angle; solar output and the Base power numbers follow it; a clock chip ("Day · dusk in 3 min 10 s") | Done |
+| S2 | Lighting: sky colour and stars by sun height, sun and its glow in the sky, rock shading from the real sun direction, the world dims and buildings glow at night | Done |
 | S3 | Moon day, long-night play tuning, eclipses by the moon, Map and Base power forecast | Planned |
 | S4 | True planet rotation and ground speed (separate decision) | Not started |

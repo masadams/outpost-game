@@ -88,6 +88,32 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
         const c = at(s.at);
         return <circle key={s.id} cx={c.x} cy={c.y} r={7} class="map-site" data-intact={String(s.intact)} />;
       })}
+      {view.storm && (
+        <g class="map-storm" aria-label={`Incoming storm. ${view.storm.line}`}>
+          {view.storm.zone && (
+            <circle
+              cx={at(view.storm.zone.at).x}
+              cy={at(view.storm.zone.at).y}
+              r={Math.max(8, view.storm.zone.radius * k)}
+              class="map-zone"
+            />
+          )}
+          {view.storm.rocks.map((r, i) => {
+            const c = at(r.at);
+            return (
+              <g key={i} data-off-chart={String(r.offChart)}>
+                <circle cx={c.x} cy={c.y} r={Math.max(6, view.storm!.doubt * k)} class="map-doubt" />
+                <circle cx={c.x} cy={c.y} r={3} class="map-incoming" />
+              </g>
+            );
+          })}
+          {view.storm.zone && (
+            <text x={at(view.storm.zone.at).x} y={at(view.storm.zone.at).y - Math.max(8, view.storm.zone.radius * k) - 8} class="map-label map-zone-label" text-anchor="middle">
+              Landing zone
+            </text>
+          )}
+        </g>
+      )}
       <rect x={pad.x - 7} y={pad.y - 3} width={14} height={6} class="map-pad" />
       {target && <line x1={ship.x} y1={ship.y} x2={target.x} y2={target.y} class="map-bearing" data-blocked={String(view.selected.blocked)} />}
       <circle cx={ship.x} cy={ship.y} r={6} class="map-ship" />
