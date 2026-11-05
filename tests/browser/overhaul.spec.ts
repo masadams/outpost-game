@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from './game';
+import { surfacePoint } from './screen';
 
 test('persists accessible settings and conflict-checked controls without changing checkpoints or leaking focused input',async({page})=>{
  test.setTimeout(60000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
@@ -63,10 +64,10 @@ test('bounds visual work with both colonies and full body budgets while distant 
 });
 
 test('selects the clicked physical facility for Command inspection without spending or moving while paused',async({page})=>{
- const {createWorld}=await import('../../src/sim/world'),{completedBuilding}=await import('../../src/sim/construction'),{encodeCheckpoint}=await import('../../src/persistence/checkpoint'),{sitePosition}=await import('../../src/sim/localWorld');
- const w=createWorld();w.colony.buildings.push(completedBuilding(1,'solar',-100/1800,w),completedBuilding(2,'solar',100/1800,w));w.colony.nextId=3;const point=sitePosition(w,100/1800,8),save=encodeCheckpoint(w);
+ const {createWorld}=await import('../../src/sim/world'),{completedBuilding}=await import('../../src/sim/construction'),{encodeCheckpoint}=await import('../../src/persistence/checkpoint');
+ const w=createWorld();w.colony.buildings.push(completedBuilding(1,'solar',-100/1800,w),completedBuilding(2,'solar',100/1800,w));w.colony.nextId=3;const save=encodeCheckpoint(w);
  await page.addInitScript(text=>localStorage.setItem('outpost.checkpoint.v1',text),save);await page.goto('/');await expect(page.locator('#hud')).toHaveAttribute('data-state','paused');
- await page.mouse.click(640+(point.x-w.ship.position.x)*1.7,800*.53+(point.y-w.ship.position.y)*1.7);
+ const at=await surfacePoint(page,'home',100/1800);await page.mouse.click(at.x,at.y);
  await expect(page.locator('#operations-dock')).toHaveAttribute('data-panel','command');await expect(page.locator('.command-machine')).toHaveAttribute('data-selected','2');await expect(page.getByRole('button',{name:'Disable selected',exact:true})).toBeDisabled();await expect(page.locator('#hud')).toHaveAttribute('data-time','0.0000');
  await page.screenshot({path:'docs/screenshots/overhaul-facilities.png'});await page.getByRole('button',{name:'Open full colony management',exact:true}).click();await page.getByRole('button',{name:'Economy',exact:true}).click();await expect(page.locator('.command-machine')).toBeHidden();await page.getByRole('button',{name:'Facilities',exact:true}).click();await expect(page.locator('.command-machine')).toHaveAttribute('data-selected','2');await expect(page.locator('#hud')).toHaveAttribute('data-time','0.0000');
 });

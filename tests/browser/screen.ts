@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { planetAt, surfacePosition, type BodyId } from '../../src/sim/celestial';
+import { FOCUS_Y } from '../../src/render/camera';
 
 /** Screen position of a surface point, from the live camera exposed on #flight-tools. */
 export async function surfacePoint(page: Page, body: BodyId, angle: number): Promise<{ x: number; y: number }> {
@@ -21,6 +22,6 @@ export async function surfacePoint(page: Page, body: BodyId, angle: number): Pro
   const dy = target.y - v.y;
   return {
     x: v.width / 2 + (dx * Math.cos(v.angle) + dy * Math.sin(v.angle)) * v.zoom,
-    y: v.height * 0.53 + (-dx * Math.sin(v.angle) + dy * Math.cos(v.angle)) * v.zoom,
+    y: v.height * FOCUS_Y + (-dx * Math.sin(v.angle) + dy * Math.cos(v.angle)) * v.zoom,
   };
 }

@@ -1,8 +1,8 @@
-import { colonyPlanet, localAngleAt } from '../sim/localWorld';
-import { nearestPlanet } from '../sim/celestial';
+import { colonyPlanet } from '../sim/localWorld';
 import Phaser from 'phaser';
 import { heading } from '../sim/math';
 import { STATIONS } from '../sim/surface';
+import { drawAstronaut } from './astronaut';
 import type { WorldState } from '../sim/world';
 
 export function drawSurface(g: Phaser.GameObjects.Graphics, world: WorldState, time = 0): void {
@@ -20,18 +20,5 @@ export function drawSurface(g: Phaser.GameObjects.Graphics, world: WorldState, t
       const a = p(-1, 5), b = p(1, 7); g.lineStyle(1, 0x203749); g.lineBetween(a.x, a.y, b.x, b.y);
     }
   }
-  if (world.playerMode !== 'astronaut' || nearestPlanet(world.astronaut.position, world.system).id !== body.id) return;
-  const suit = world.astronaut, n = heading(localAngleAt(world, suit.position)), tangent = { x: -n.y, y: n.x };
-  const p = (x: number, y: number) => ({ x: suit.position.x + tangent.x * x + n.x * y, y: suit.position.y + tangent.y * x + n.y * y });
-  const stride = suit.grounded && Math.hypot(suit.velocity.x-body.velocity.x,suit.velocity.y-body.velocity.y)>1 ? Math.sin(time*11) : 0;
-  const pack=[p(-2.2,-1),p(-2.5,2),p(-1,2),p(-1,-1)];g.fillStyle(0x49697a);g.fillPoints(pack,true);
-  const head = p(0, 2.8), torso = p(0, 0);
-  const color = suit.health <= 0 ? 0xff8f75 : 0xe0eff2;
-  g.lineStyle(1.6, color); g.fillStyle(0x3b667c); g.fillCircle(torso.x, torso.y, 2);
-  g.fillStyle(color); g.fillCircle(head.x, head.y, 2.2);
-  g.fillStyle(0x73f3cf); const visor = p(0.6, 3); g.fillCircle(visor.x, visor.y, 1.1);
-  for (const side of [-1, 1]) {
-    const foot = p(side * 1.4 + side * stride * .7, -2.5 + Math.abs(stride)*.3), hand = p(side * 2.6, 0.3);
-    g.lineBetween(torso.x, torso.y, foot.x, foot.y); g.lineBetween(torso.x, torso.y + 0.5, hand.x, hand.y);
-  }
+  drawAstronaut(g, world, time);
 }

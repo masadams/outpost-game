@@ -1,18 +1,53 @@
-import { STATIC_SYSTEM, nearestPlanet, relative } from '../sim/celestial';
+import { STATIC_SYSTEM, nearestPlanet, relative, relativeVelocity } from '../sim/celestial';
 import { clamp, localAngle, wrap } from '../sim/math';
 import { ATMOSPHERE, WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 import type { Vec } from '../sim/math';
-interface FollowTarget { position: Vec }
+interface FollowTarget { position: Vec; velocity?: Vec }
+
+/** Physical height of the drawn lander and astronaut, in metres. */
+export const SHIP_ART_HEIGHT = 14;
+export const SUIT_ART_HEIGHT = 7.5;
+/** How tall each should appear on screen when standing on the ground, as a fraction of viewport height. */
+export const SHIP_SCREEN_FRACTION = 0.07;
+export const SUIT_SCREEN_FRACTION = 0.049;
+/** Where the focus point sits on screen, as a fraction of height from the top. Above centre, so there is ground to see below. */
+export const FOCUS_Y = 0.4;
+/** Pixels at the bottom of the screen covered by the instrument cluster and landing chips. */
+export const HUD_BOTTOM_PX = 250;
+
+/** Pixels below the focus point that are actually clear of the HUD. */
+export function usableDepth(viewportHeight: number): number {
+  return Math.max(0.15 * viewportHeight, viewportHeight * (1 - FOCUS_Y) - HUD_BOTTOM_PX);
+}
+/** Seconds of travel the camera looks ahead, and the most it may lead by (fraction of viewport height). */
+const LOOK_AHEAD_SECONDS = 0.9;
+const LOOK_AHEAD_MAX = 0.2;
+
+/** Zoom at which the actor has its target on-screen size. Scales with the window, so size is the same on any display. */
+export function groundZoom(viewportHeight: number, onFoot: boolean): number {
+  const fraction = onFoot ? SUIT_SCREEN_FRACTION : SHIP_SCREEN_FRACTION;
+  const height = onFoot ? SUIT_ART_HEIGHT : SHIP_ART_HEIGHT;
+  return clamp((viewportHeight * fraction) / height, 1, 9);
+}
+
+/** Highest zoom that still shows the ground below a descending actor, with a margin. */
+export function groundInViewZoom(viewportHeight: number, altitude: number): number {
+  return usableDepth(viewportHeight) / (1.1 * Math.max(0, altitude) + 15);
+}
 export class FlightCamera {
   reducedMotion = false;
   rotate = true;
-  x = 0; y = 0; angle = 0; zoom = 1.7;
+  /** Window height in pixels. The scene keeps this current. */
+  viewportHeight = 900;
+  x = 0; y = 0; angle = 0; zoom = 3.9;
+  /** Smoothed look-ahead offset, in metres. */
+  lead: Vec = { x: 0, y: 0 };
   private manualZoom: number | null = null;
   get mode(): 'auto' | 'manual' { return this.manualZoom === null ? 'auto' : 'manual'; }
-  zoomBy(factor: number): void { if (Number.isFinite(factor) && factor > 0) this.manualZoom = clamp((this.manualZoom ?? this.zoom) * factor, 0.035, 5); }
+  zoomBy(factor: number): void { if (Number.isFinite(factor) && factor > 0) this.manualZoom = clamp((this.manualZoom ?? this.zoom) * factor, 0.035, 12); }
   autoZoom(): void { this.manualZoom = null; }
-  reset(ship: FollowTarget, system = STATIC_SYSTEM): void { this.x = ship.position.x; this.y = ship.position.y; this.angle = localAngle(relative(ship.position, nearestPlanet(ship.position, system))); this.zoom = 1.7; this.manualZoom = null; }
+  reset(ship: FollowTarget, system = STATIC_SYSTEM): void { this.x = ship.position.x; this.y = ship.position.y; this.angle = localAngle(relative(ship.position, nearestPlanet(ship.position, system))); this.zoom = groundZoom(this.viewportHeight, false); this.manualZoom = null; this.lead = { x: 0, y: 0 }; }
   update(ship: FollowTarget, dt: number, onFoot = false, system = STATIC_SYSTEM): void {
     const planet = nearestPlanet(ship.position, system), position = relative(ship.position, planet);
     const altitude = Math.max(0, Math.hypot(position.x, position.y) - planet.radius - (onFoot ? SUIT.radius : WORLD.shipRadius));
@@ -20,12 +55,25 @@ export class FlightCamera {
     const smooth = blend * blend * (3 - 2 * blend);
     // Smoothly blend the local frame into the fixed world frame, including at the angle seam.
     const targetAngle = !this.rotate || this.reducedMotion ? 0 : this.angle + wrap(localAngle(relative(ship.position, nearestPlanet(ship.position, system))) - this.angle) * (1 - smooth) + wrap(-this.angle) * smooth;
+    // Look ahead in the direction of travel (relative to the ground), so there is more room in front than behind.
+    const motion = ship.velocity ? relativeVelocity(ship.velocity, planet) : { x: 0, y: 0 };
+    const maxLead = (LOOK_AHEAD_MAX * this.viewportHeight) / Math.max(this.zoom, 1e-6);
+    const speed = Math.hypot(motion.x, motion.y);
+    const reach = Math.min(maxLead, speed * LOOK_AHEAD_SECONDS);
+    const wanted = onFoot || this.reducedMotion || speed < 1e-6 ? { x: 0, y: 0 } : { x: (motion.x / speed) * reach, y: (motion.y / speed) * reach };
+    const leadFollow = 1 - Math.exp(-1.5 * dt);
+    this.lead = { x: this.lead.x + (wanted.x - this.lead.x) * leadFollow, y: this.lead.y + (wanted.y - this.lead.y) * leadFollow };
     const follow = 1 - Math.exp(-5 * dt);
-    this.x += (ship.position.x - this.x) * follow;
-    this.y += (ship.position.y - this.y) * follow;
+    this.x += (ship.position.x + this.lead.x - this.x) * follow;
+    this.y += (ship.position.y + this.lead.y - this.y) * follow;
     this.angle = !this.rotate || this.reducedMotion ? 0 : wrap(this.angle + wrap(targetAngle - this.angle) * (1 - Math.exp(-2.5 * dt)));
-    const baseZoom = onFoot ? 2.8 : 1.7;
-    const targetZoom = this.manualZoom ?? clamp(baseZoom / (1 + altitude / 360), 0.08, baseZoom);
-    this.zoom += (targetZoom - this.zoom) * (1 - Math.exp(-2 * dt));
+    const baseZoom = groundZoom(this.viewportHeight, onFoot);
+    let wantedZoom = baseZoom / (1 + altitude / 240);
+    const normal = Math.hypot(position.x, position.y) > 0 ? { x: position.x / Math.hypot(position.x, position.y), y: position.y / Math.hypot(position.x, position.y) } : { x: 0, y: -1 };
+    const climbRate = motion.x * normal.x + motion.y * normal.y;
+    // While falling, never zoom in past the point where the ground below is still on screen.
+    if (climbRate < -0.5) wantedZoom = Math.min(wantedZoom, groundInViewZoom(this.viewportHeight, altitude));
+    const targetZoom = this.manualZoom ?? clamp(wantedZoom, 0.08, baseZoom);
+    this.zoom += (targetZoom - this.zoom) * (1 - Math.exp(-3 * dt));
   }
 }

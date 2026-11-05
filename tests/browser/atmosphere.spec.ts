@@ -27,9 +27,11 @@ test('shows a live coast path and supports keyboard, wheel and button zoom while
   await page.keyboard.press('j'); await expect(tools).toHaveAttribute('data-trajectory', 'true');
   await expect.poll(async () => Number(await tools.getAttribute('data-prediction-points'))).toBeGreaterThan(10);
   await page.keyboard.press('0'); await expect(tools).toHaveAttribute('data-zoom-mode', 'auto');
+  await expect.poll(async () => Number(await tools.getAttribute('data-zoom'))).toBeGreaterThan(0.2);
+  const autoZoom = Number(await tools.getAttribute('data-zoom'));
   await page.mouse.move(640, 350);
   for (let i = 0; i < 4; i++) await page.mouse.wheel(0, 300);
-  await expect.poll(async () => Number(await tools.getAttribute('data-zoom')), { timeout: 10000 }).toBeLessThan(0.12);
+  await expect.poll(async () => Number(await tools.getAttribute('data-zoom')), { timeout: 10000 }).toBeLessThan(autoZoom * 0.2);
   await page.screenshot({ path: 'docs/screenshots/atmosphere-trajectory.png' });
   expect(await hud.getAttribute('data-altitude')).toBe(altitude); expect(await hud.getAttribute('data-fuel')).toBe(fuel);
   expect(errors).toEqual([]);

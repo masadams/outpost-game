@@ -26,7 +26,7 @@ import { FixedClock } from '../sim/clock';
 import { WORLD } from '../sim/config';
 import { createWorld, stepWorld } from '../sim/world';
 import { Hud } from '../ui/hud';
-import { FlightCamera } from './camera';
+import { FlightCamera, FOCUS_Y } from './camera';
 import { drawMining } from './mining';
 import { drawSurface } from './surface';
 import { drawColony } from './colony';
@@ -115,6 +115,7 @@ export class FlightScene extends Phaser.Scene {
     this.flightTools = new FlightTools();
     this.loadCheckpoint(false);
     this.audio.reset(this.simulation);this.effects.reset(this.simulation);
+    this.follow.viewportHeight = this.scale.height;
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
     this.stars = this.add.graphics();
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
@@ -273,6 +274,7 @@ export class FlightScene extends Phaser.Scene {
       });
     }
     const onFoot = this.simulation.playerMode === 'astronaut';
+    this.follow.viewportHeight = this.scale.height;
     this.follow.update(onFoot ? this.simulation.astronaut : this.ship, Math.min(delta / 1000, 0.1), onFoot, this.simulation.system);
     this.hud.updateBuildingLabels(this.simulation,{...this.follow,width:this.scale.width,height:this.scale.height});
     if(this.pointerInside){this.hud.setBuildPointer(activeWorld(this.simulation),screenToWorld(this.input.activePointer,{...this.follow,width:this.scale.width,height:this.scale.height}),this.follow.zoom);this.hud.showBuildTip(this.input.activePointer.x,this.input.activePointer.y);}
@@ -324,7 +326,7 @@ export class FlightScene extends Phaser.Scene {
     }
     }
     const view={centre:{x:this.follow.x,y:this.follow.y},radius:Math.hypot(width,height)/2/this.follow.zoom+128/this.follow.zoom};
-    this.world.setPosition(width / 2, height * 0.53).setScale(this.follow.zoom).setRotation(-this.follow.angle);
+    this.world.setPosition(width / 2, height * FOCUS_Y).setScale(this.follow.zoom).setRotation(-this.follow.angle);
     g.setPosition(-this.follow.x, -this.follow.y);
     const home = planetAt('home', this.simulation.system), moon = planetAt('moon', this.simulation.system);
     this.atmosphere.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
@@ -333,7 +335,11 @@ export class FlightScene extends Phaser.Scene {
     for (const body of planets(this.simulation.system)) {
       g.lineStyle(.6,body.id==='home'?0xa9d2c7:0xd0c4dd,.7);g.strokeCircle(body.position.x,body.position.y,body.radius);
       g.save(); g.translateCanvas(body.position.x, body.position.y);
-    g.lineStyle(4, 0x73f3cf); g.lineBetween(-30, -body.radius, 30, -body.radius);
+    // Landing pad: a flat plate just under the surface, so the feet stand on its top edge.
+    g.fillStyle(0x3fbfa8); g.fillRect(-30, -body.radius, 60, 1.8);
+    g.lineStyle(0.5, 0xb7fff0); g.lineBetween(-30, -body.radius, 30, -body.radius);
+    g.lineStyle(0.5, 0x17574e);
+    for (const x of [-24, -12, 0, 12, 24]) g.lineBetween(x, -body.radius + 0.3, x, -body.radius + 1.6);
     for (const x of [-32, 32]) {
       g.lineStyle(1, 0x73f3cf); g.lineBetween(x, -body.radius, x, -body.radius - 18);
       g.fillStyle(0x73f3cf); g.fillCircle(x, -body.radius - 19, 2);

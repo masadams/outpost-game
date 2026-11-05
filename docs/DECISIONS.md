@@ -2,6 +2,15 @@
 
 This log distinguishes **decided** direction from ideas and unresolved choices. Update when a decision changes; link relevant PR.
 
+## Camera and scale decisions — 2026-11-05
+
+The user confirmed there is no need for backwards compatibility with saves or anything else: this is a fresh start, so values and formats may change freely.
+
+- **Size follows the window, not a fixed zoom.** Ground zoom is derived from viewport height so the lander is the same share of the screen on every display. The simulation's physical sizes are unchanged: the art still spans the same 14 m envelope the collision uses.
+- **Ground stays in view while falling.** The camera will not zoom in past the point where the ground below is visible in the screen space left clear by the instrument cluster. As a result the lander reaches full size only in the last 50 to 60 m. If that feels too small on approach, the options are a larger lander in the world or a shorter HUD, not a tighter camera.
+- **Focus sits at 40% from the top.** More of the screen is below the ship, where the ground is.
+- **Look-ahead** of up to about 1 second of travel, capped at 20% of the screen, off on foot and with reduced motion.
+
 ## Cleanup slice decisions — 2026-11-05
 
 - **Messages are rewritten at display time, not in the simulation.** `src/ui/notices.ts` turns SHOUTING · DOT · SEPARATED messages into sentences ("Checkpoint saved. K to update. L to load."). Saves, the simulation and its tests keep their original text; key letters and names are preserved. A handful of routine HUD messages were written out in plain English directly.

@@ -21,7 +21,7 @@ This is the bible's first signature slice: **the excellent mining sortie**. The 
 | 2 | Clickable HTML mockups of the four screen modes (Flight, Surface/Build, Base, Map); agree on look and feel. Mockup 1: [docs/mockups/ui-rebuild.html](mockups/ui-rebuild.html) | Done: mockup 1 approved; add more detail and refinement in the real build |
 | 3 | Feature visibility: new games show only the focus set below; other systems remain in code, hidden. See [Feature visibility](#feature-visibility) | Done |
 | 4 | Rebuild UI layer in Preact on shared design tokens, implementing the agreed mockups. See [UI rebuild progress](#ui-rebuild-progress) | In progress |
-| 5 | Polish and hands-on playtest the first mining sortie until it's fun | Next |
+| 5 | Polish and hands-on playtest the first mining sortie until it's fun. See [Polish progress](#polish-progress) | In progress |
 
 ## Screen modes (agreed direction)
 - **Flight** — minimal live HUD: core instruments, current objective, contextual prompts. No permanent toolbar wall.
@@ -57,11 +57,19 @@ New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `sr
 | 4.4 Map | Map window: clickable chart (Selene, ore clusters by colour, sites, pad, you, bearing line), places list, inspector with distance and speeds, unknowns until surveyed, site action with a plain reason, next-step note; zoom / fit / focus | Done |
 | 4.5 Cleanup | Ship panel (hold, ore, nearest rock, depot on foot) in the new style; Menu, Help and Settings restyled with simpler wording; status messages shown as plain sentences; 46 dead CSS rules and the old surface panel deleted | Done |
 
+## Polish progress
+| Slice | What | Status |
+|---|---|---|
+| 5.1 Lander and camera | Zoom is set from the window height, so the lander is about 7% of screen height (63 px at 900) and the astronaut about 5%, on any display. Descending keeps the ground below the lander in view, clear of the instrument cluster. The camera leads in the direction you are moving. The focus point sits above centre. New lander and astronaut art (cabin with window, descent stage, braced legs, engine bell; visor, backpack, stride) and a flat landing pad | Done |
+| 5.2 Mining laser and rocks | How the laser, rock breakup and pickups look and sound | Next |
+| 5.3 Landing feel | Touchdown, dust, crash and recovery, and the sound of each | Planned |
+| 5.4 First-run guidance | Does a new player find their first rock and their first delivery without help? | Planned |
+
 ## Known UX defects to fix in the rebuild
 - ~~Full-screen Map/Manage windows don't pause~~ Fixed in 4.1: Base and Map pause while flying.
 - ~~The Build tab stays highlighted while Manage or Map is open~~ Fixed in 4.1: screen buttons show the open panel.
 - ~~Dial readouts overlap their needles~~ Fixed in 4.1: new cluster, checked for clipping and collisions at 900×600–1920×1080 and 1.5× text.
-- The ship is about 20 px tall at 1600×900; the player barely registers their own lander. (Open: world rendering, step 5.)
+- ~~The ship is about 20 px tall at 1600×900~~ Fixed in 5.1: about 63 px, and it scales with the window.
 - ~~About 15 text buttons at launch~~ Fixed in 4.1: five screen buttons, four small icons, view tools by the radar.
 - ~~Help and panel text uses internal jargon~~ Fixed in 4.5 for everything a new player sees; the legacy console behind `?features=all` still has the old wording.
 
