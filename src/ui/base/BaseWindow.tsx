@@ -47,7 +47,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, reserve }: { view: BaseView; open: (id: number) => void; analyse: () => void; reserve: (d: -1 | 1) => void }) {
+function Overview({ view, open, analyse, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -96,9 +96,9 @@ function Overview({ view, open, analyse, reserve }: { view: BaseView; open: (id:
         {p.forecast && <p class="base-power-summary" data-forecast>{p.forecast}</p>}
         <div class="base-reserve" data-reserve={p.reserve}>
           <span>Keep for turrets</span>
-          <button type="button" aria-label="Keep less power for turrets" disabled={p.reserve <= 0} onClick={click(() => reserve(-1))}>−</button>
+          <button type="button" aria-label="Keep less power for turrets" disabled={paused || p.reserve <= 0} onClick={click(() => reserve(-1))}>−</button>
           <strong>{p.reserve} kJ</strong>
-          <button type="button" aria-label="Keep more power for turrets" onClick={click(() => reserve(1))}>+</button>
+          <button type="button" aria-label="Keep more power for turrets" disabled={paused} onClick={click(() => reserve(1))}>+</button>
         </div>
         <p class="base-note">Other machines stop before they use this, so turrets still have power in a storm or at night.</p>
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
@@ -270,7 +270,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} reserve={on.reserve} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}
