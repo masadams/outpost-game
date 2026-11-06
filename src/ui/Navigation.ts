@@ -23,6 +23,7 @@ export class NavigationPanel {
     this.guidance.id = 'navigation-guidance';
     this.handlers = {
       select: target => issue({ type: 'navigate', target }),
+      mark: point => issue({ type: 'mark', point }),
       visit: () => { if (!this.paused) issue({ type: 'visitSite' }); },
       zoom: action => {
         if (action === 'in') this.zoom = Math.min(8, this.zoom * 1.5);

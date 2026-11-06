@@ -9,6 +9,7 @@ import type { WorldState } from './world';
 /** Target aboard quantities, not a repeatable grant. The starter rig/solar costs 12/5/3. */
 export const MANIFESTS = {
   expedition: { label: 'Rig + solar expedition', stock: { alloy: 15, wire: 5, components: 5 }, detail: 'Build a rig and solar array, with 3 alloy / 2 components left for later work.' },
+  nacreKit: { label: 'Nacre kit', stock: { alloy: 18, wire: 10, components: 5 }, detail: 'A mining rig, a solar array, a battery and a power relay.' },
   lifeSupport: { label: 'Small habitat + solar', stock: { alloy: 14, wire: 6, components: 4, oxygen: 4 }, detail: 'Hardware plus finite oxygen. Check habitat power and ongoing oxygen demand.' },
 } satisfies Record<string, { label: string; stock: Partial<ProductInventory>; detail: string }>;
 export type ManifestId = keyof typeof MANIFESTS;

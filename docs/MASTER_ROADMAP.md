@@ -392,3 +392,18 @@ Not scheduled yet; each needs its own small spec before work starts.
 - **Where new asteroids come from, and what happens when a region runs out.** Open decision (links to D-17). Proposal: each body has a finite local population that is only topped up slowly, by a rare deterministic capture of a passing rock into orbit, and by storms, whose pieces become ground deposits. Ground deposits are finite. When a region is used up, the player moves on to another body or belt. Needs a playtest of how fast the first belts run dry before numbers are fixed.
 - **Upgrading buildings instead of building more.** One refinery with several streams in place of several refineries; battery banks that hold more; turret accuracy, range and power. The facility tiers already in the code (levels 2 and 3) come back for this, each tier costing materials and power and unlocked by research.
 - **Boot-up and power priority.** Machines now warm up before they run (done). Later: an explicit priority order, so that when power is short the turrets and life support come first.
+
+## Agreed order after Phase 2's first slices (set in playtest review)
+1. **Stabilise.** Full browser run and a hands-on pass over the path from first mining to the second storm; fix what breaks.
+2. **Power across distance.** Relays or lines with limited capacity, so a solar field on the lit side of a planet must be connected to the base. Today the grid is one shared pool per planet with no distance cost.
+3. **Probes (roadmap 2D).** Finite survey probes that send data home. They support the seeded-system and multi-system phases (Phases 4 and 6).
+4. **Phase 3 ship engineering** (scout, miner, interceptor roles).
+5. **The star as a place.** Helia stays physical and technically reachable, but very far (hours of flight with little to do). Close in, heat and gravity kill: the ship cooks and is pulled in. It exists to give a sense of scale and to ground the seeded-system phase. Build it only after the foundation above is solid; no content at the star itself.
+Rule: do not grow faster than the foundation. Each step is checked against the design bible and this plan before it starts.
+
+## Direction update (playtest review)
+Do **not** start the big ship-engineering phase yet. Order instead:
+1. **Grow the universe on solid physics:** more planets and moons, asteroid belts, far-off worlds, each with proper gravity, atmosphere, light and orbits; probes and scans that work for any location rather than scripted targets (marking and scanning any point is in, P2.11).
+2. **Facility upgrades in place:** improve a building where it stands (multi-stream refinery, bigger battery, faster rig) instead of building more.
+3. **Later, end-game:** shields, living domes, terraforming.
+Ship engineering (Phase 3) follows once the world is wide enough to need it.

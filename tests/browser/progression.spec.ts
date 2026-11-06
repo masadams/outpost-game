@@ -15,7 +15,7 @@ test('builds a powered lab, earns research with real work and fabricates cargo e
   const start = page.getByRole('button', { name: 'Research Applied materials', exact: true }); await start.focus(); await page.keyboard.press('Space'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   const progress = console.locator('[data-project="materials"] progress'); await expect.poll(async () => Number(await progress.getAttribute('value')), { timeout: 15000 }).toBeGreaterThan(2);
   await page.keyboard.press('p'); await page.keyboard.press('k'); const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(save.version).toBe(25); expect(save.world.colony.products.alloy).toBe(14); expect(save.world.colony.research.queue[0].progress).toBeGreaterThan(2); expect(save.world.colony.research.completed).toEqual([]);
+  expect(save.version).toBe(27); expect(save.world.colony.products.alloy).toBe(14); expect(save.world.colony.research.queue[0].progress).toBeGreaterThan(2); expect(save.world.colony.research.completed).toEqual([]);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Research',exact:true}).click();
   await page.keyboard.press('p');await expect(console.locator('[data-project="materials"]')).toHaveCount(0,{timeout:45000});await page.getByLabel('Research view',{exact:true}).selectOption('complete');await expect(console.locator('[data-tech="materials"]')).toHaveAttribute('data-state','complete');
   await expect(console.locator('[data-project="materials"]')).toHaveCount(0); await page.keyboard.press('Escape');

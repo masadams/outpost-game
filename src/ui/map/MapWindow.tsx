@@ -6,6 +6,7 @@ import type { MapView } from './mapView';
 export interface MapHandlers {
   select: (id: Destination) => void;
   visit: () => void;
+  mark: (point: Vec) => void;
   zoom: (action: 'in' | 'out' | 'fit' | 'focus') => void;
 }
 
@@ -55,10 +56,16 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
     const nearest = view.places
       .map(p => ({ p, d: Math.hypot(at(p.at).x - x, at(p.at).y - y) }))
       .sort((a, b) => a.d - b.d)[0];
-    if (nearest && nearest.d < 60) on.select(nearest.p.id);
+    if (nearest && nearest.d < 60) {
+      on.select(nearest.p.id);
+      return;
+    }
+    // Empty space: mark that point.
+    const origin = at({ x: 0, y: 0 });
+    on.mark({ x: (x - origin.x) / k, y: (y - origin.y) / k });
   };
   return (
-    <svg class="map-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Chart of nearby space. Click a place to select it." onClick={pick}>
+    <svg class="map-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Chart of nearby space. Click a place to select it, or empty space to mark a point." onClick={pick}>
       <defs>
         <pattern id="map-grid" width="50" height="50" patternUnits="userSpaceOnUse">
           <path d="M50 0H0V50" class="map-grid-line" />
@@ -88,6 +95,14 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
         const c = at(s.at);
         return <circle key={s.id} cx={c.x} cy={c.y} r={7} class="map-site" data-intact={String(s.intact)} />;
       })}
+      {view.places.filter(p => p.id === 'mark').map(p => (
+        <g key="mark" class="map-mark" aria-label="Marked point">
+          <path d={`M${at(p.at).x - 8} ${at(p.at).y}H${at(p.at).x + 8}M${at(p.at).x} ${at(p.at).y - 8}V${at(p.at).y + 8}`} />
+        </g>
+      ))}
+      {view.probes.map((p, i) => (
+        <circle key={`probe-${i}`} cx={at(p.at).x} cy={at(p.at).y} r={3.5} class="map-probe" aria-label="Survey probe" />
+      ))}
       {view.wrecks.map(x => (
         <g key={x.id} class="map-wreck" aria-label={x.label}>
           <rect x={at(x.at).x - 6} y={at(x.at).y - 6} width={12} height={12} class="map-wreck-mark" />

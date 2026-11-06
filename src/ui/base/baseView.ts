@@ -142,6 +142,7 @@ function inputNeed(b: Building): string {
 
 /** Why a building is not doing its job, in plain words, or null when nothing is wrong. */
 export function whyStopped(b: Building): string | null {
+  if (b.linked === false) return 'Not connected to the base. Build a power relay between it and the pad.';
   switch (b.status) {
     case 'no power':
       return isTurret(b.kind)

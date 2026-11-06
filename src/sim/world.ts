@@ -9,6 +9,7 @@ import { isProgressionAction } from './progressionConfig';
 import { applyResearch } from './research';
 import { applyEquipment } from './equipment';
 import { createExploration, isExplorationAction, type ExplorationState } from './explorationConfig';
+import { stepProbes } from './probes';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
 import { applyCommandAction } from './command';
 import { isCommandAction } from './commandConfig';
@@ -137,6 +138,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     collideShip(world.ship, rock, startShip, starts.get(rock.id)!);
   }
   stepSites(world, dt, startShip);
+  stepProbes(world, dt);
   world.beam = piloting && input.mine ? fireLaser(world.ship, [...world.asteroids, ...world.defence.meteors, ...world.exploration.sites], dt, world.system) : null;
   resolveMinedRocks(world);
   world.tractorActive = piloting && !!input.tractor && world.ship.state === 'flying' && powerTractor(world.ship, dt);

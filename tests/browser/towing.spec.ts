@@ -15,7 +15,7 @@ test('fabricates a paid tow rig using native controls and preserves the equipmen
   await expect(panel).toHaveAttribute('data-equipped', 'true'); await expect(hud).toHaveAttribute('data-state', 'landed');
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(25); expect(saved.world.ship.towRig).toBe(true); expect(saved.world.colony.products).toMatchObject({ alloy: 12, wire: 8, components: 5 });
+  expect(saved.version).toBe(27); expect(saved.world.ship.towRig).toBe(true); expect(saved.world.colony.products).toMatchObject({ alloy: 12, wire: 8, components: 5 });
   await restart(page); await expect(panel).toHaveAttribute('data-equipped', 'false');
   await page.keyboard.press('l'); await expect(panel).toHaveAttribute('data-equipped', 'true');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(panel).toHaveAttribute('data-equipped', 'true');

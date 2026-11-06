@@ -19,6 +19,19 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
   const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled && operational(b) && (!isHabitat(b.kind) || !!b.habitat?.powered), working: b.enabled && operational(b) && (b.kind === 'solar' || b.kind === 'battery' || b.status === 'running') }));
   if (draft) entries.push({ kind: draft.kind, angle: draft.angle, ghost: true, active: draft.valid, working: false });
   if (!draft && colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world), working: false });
+  // A building out of reach of the base's power wears an amber diamond.
+  for (const b of colony.buildings) {
+    if (b.linked !== false) continue;
+    const up = heading(b.angle);
+    const r = colonyPlanet(world).radius + 34;
+    g.lineStyle(1.5, 0xffc247, 0.95);
+    g.strokePoints([
+      new Phaser.Geom.Point(up.x * r - up.y * 5, up.y * r + up.x * 5),
+      new Phaser.Geom.Point(up.x * (r + 5), up.y * (r + 5)),
+      new Phaser.Geom.Point(up.x * r + up.y * 5, up.y * r - up.x * 5),
+      new Phaser.Geom.Point(up.x * (r - 5), up.y * (r - 5)),
+    ], true);
+  }
   for (const entry of entries) {
     const blueprint = BLUEPRINTS[entry.kind], n = heading(entry.angle), tangent = { x: -n.y, y: n.x };
     const body=colonyPlanet(world),seen=heading(entry.angle+body.spin);if(!visible(view,{x:body.position.x+seen.x*body.radius,y:body.position.y+seen.y*body.radius},isHabitat(entry.kind)?HABITATS[entry.kind].halfSpan+HABITATS[entry.kind].height:50))continue;

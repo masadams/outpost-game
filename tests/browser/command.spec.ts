@@ -34,7 +34,7 @@ test('directs distant facilities from ship with power dials, drag priorities, na
   await console.locator('.command-machine').scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/screenshots/command-power.png' });
   await page.getByRole('button',{name:'Economy',exact:true}).click(); await expect(console.locator('[data-workspace-page="economy"] table')).toContainText('usable');
   await page.keyboard.press('p'); await page.keyboard.press('k'); const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(25); expect(saved.world.colony.buildings[1].dispatch.limit).toBe(10); expect(saved.world.colony.buildings[1].enabled).toBe(false);
+  expect(saved.version).toBe(27); expect(saved.world.colony.buildings[1].dispatch.limit).toBe(10); expect(saved.world.colony.buildings[1].enabled).toBe(false);
   expect(saved.world.astronaut.position).toEqual(surfacePosition(planetAt('home', saved.world.system), 0, WORLD.shipRadius)); // Cabin follows the moving pad without control input.
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name:'Base', exact: true }).click(); await expect(console).toBeVisible();
   await page.getByRole('button', { name: 'Select facility 2', exact: true }).click(); await expect(slider).toHaveValue('10'); expect(errors).toEqual([]);

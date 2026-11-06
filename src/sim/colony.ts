@@ -1,3 +1,4 @@
+import { linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
 import { bootStep, needsBoot } from './boot';
 import { solarFactor } from './sun';
@@ -41,6 +42,8 @@ export interface Building {
   gridPower?: number; requestedPower?: number;
   /** Seconds of steady power so far while starting up (see boot.ts); undefined means always online. */
   boot?: number;
+  /** False when out of reach of the base's power. Set every step; missing means connected. */
+  linked?: boolean;
   /** Seconds without power while online. */
   dark?: number;
   habitat?: HabitatState;
@@ -70,7 +73,7 @@ export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.fi
 export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
 /** A battery holds enough to carry a small base through much of a night. */
 export const BATTERY_CAPACITY = 1200;
-export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
+export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b) && b.linked !== false).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
 export const previewAngle = (world: WorldState): number => wrap(localAngleAt(world, world.astronaut.position) + world.colony.offset / colonyPlanet(world).radius);
 /** Why a blueprint cannot be used yet, or null. The Observatory is earned from the Frost survey buoy (day-cycle games only). */
 export function blueprintLock(world: WorldState, kind: BuildType): string | null {
@@ -198,10 +201,12 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   stepConstruction(world, dt);
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
+  const wired = linkedBuildings(world);
+  for (const b of colony.buildings) b.linked = wired === null || wired.has(b.id) ? undefined : false;
   // Panels follow the sun: full power in daylight, none at night.
   const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * solarFactor(world.system, b.angle, colonyPlanet(world).id);
-  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b)).reduce((sum, b) => sum + panel(b), 0);
-  for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b)) b.gridPower = b.requestedPower = panel(b);
+  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false).reduce((sum, b) => sum + panel(b), 0);
+  for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false) b.gridPower = b.requestedPower = panel(b);
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
   stepHabitats(world, dt, true);
@@ -213,6 +218,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
     if (!operational(building)) continue;
     if (!building.enabled) continue;
+    if (building.linked === false) { building.status = 'no power'; continue; }
     if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
     if (needsBoot(building.kind) && !bootStep(world, building, dt)) continue;
     if (building.kind === 'observatory') { stepObservatory(world, building, dt); continue; }
