@@ -72,6 +72,7 @@ const PURPOSE: Record<BuildType, string> = {
   miningRig: 'Mines a surface deposit',
   researchLab: 'Studies samples to unlock tech',
   observatory: 'Watches the sky for what is coming',
+  relay: 'Carries power 600 m to far-off buildings',
   habitatSmall: 'Breathable air for your crew',
   habitatLarge: 'Large breathable dome',
   shieldSmall: 'Absorbs impacts nearby',

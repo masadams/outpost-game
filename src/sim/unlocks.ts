@@ -19,6 +19,7 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   if (kind === 'observatory') {
     return industry && (!w.system.sun || w.exploration.surveyed.includes('frost'));
   }
+  if (kind === 'relay') return industry;
   if (kind === 'researchLab') return studiedFinds(w).length > 0;
   if (kind === 'missile') return w.storm.wave >= 2;
   if (kind === 'laser') {

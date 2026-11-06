@@ -23,6 +23,8 @@ Builds on what is already in the code but hidden in the focus set: surface depos
 
 | P2.8 | **The Nacre night.** Nacre turns once per orbit, so a day is about 24 min with about 12 min of darkness, and solar stops. The survey says so. The expedition kit is now a rig, a solar array and a battery (16 alloy, 7 wire, 5 components). One battery (1200 kJ) covers only part of the night against a rig's 6 kW, so a base must size its batteries or pause at night. | Built |
 
+| P2.9 | **Power across distance.** In day-cycle games a building only draws from, or feeds, the grid when it is wired to the base: within 150 m of the pad, or of a wired building. A power relay (cheap pylon, 600 m reach) carries the link farther. Out-of-reach solar makes nothing, out-of-reach machines stop ("Not connected to the base") and wear an amber diamond. The Nacre kit now includes a relay (18 alloy, 10 wire, 5 components). Line losses and relay capacity limits are later. (`src/sim/grid.ts`.) | Built |
+
 ## Research and upgrades (from the bible, section 8.2)
 A technology may need a discovery or sample, lab time, material or energy inputs, and fabrication equipment to turn the knowledge into a part. Knowledge is not manufacturing: you can record a discovery long before you can exploit it. The existing research tree and ship parts stay; the focus set brings them back a little at a time, each unlocked by something the player actually found.
 

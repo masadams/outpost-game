@@ -47,7 +47,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     if (!isTurret(b.kind)) continue;
     const state = turretState(b), spec = WEAPONS[b.kind], at = turretPosition(b, site);
     state.cooldown = Math.max(0, state.cooldown - dt);
-    if (!operational(b) || !b.enabled) continue;
+    if (!operational(b) || !b.enabled || b.linked === false) continue;
     const manual = defence.controlled === b.id, target = targetFor(site, b);
     if (manual) state.aim = clamp(state.aim + turn * 1.1 * dt, -1.4, 1.4);
     else if (state.automatic && target) {

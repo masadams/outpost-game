@@ -139,7 +139,7 @@ function kit(w: WorldState): KitView | null {
   const reason = plan.error === null ? 'Ready to load.'
     : short.length ? `Needs ${short.join(', ')}`
       : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
-  return { text: 'A rig, a solar array and a battery for Nacre: 16 alloy, 7 wire, 5 components. Nacre has long nights; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
+  return { text: 'A rig, a solar array, a battery and a power relay for Nacre: 18 alloy, 10 wire, 5 components. Nacre has long nights; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
 }
 
 export function shipPanelView(w: WorldState): ShipPanelView {
