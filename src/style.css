@@ -365,7 +365,7 @@ label, small { color: var(--muted); }
 #operations-dock[data-inspection=true] .full-command-link {display:block!important;}
 .facility-upgrade {border-top:1px solid var(--edge);padding-top:10px;margin-top:14px;}
 #building-labels {position:absolute;inset:0;pointer-events:none;z-index:-1;}
-#building-labels button {position:absolute;pointer-events:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(11px * var(--text-scale));padding:4px 6px;background:#081b24ed;border:1px solid #698591;color:#c8dfe4;}
+#building-labels button {position:absolute;pointer-events:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(11px * var(--text-scale) * var(--label-scale, 1));padding:4px 6px;background:#081b24ed;border:1px solid #698591;color:#c8dfe4;}
 #building-labels button[aria-pressed=true] {border-color:#edbd7e;color:#edbd7e;}
 .tech-board,.tree-connections {height:952px;}
 @media(max-width:1050px){.autopilot-options{grid-template-columns:1fr;}#operations-dock[data-inspection=true]{right:12px;}}
