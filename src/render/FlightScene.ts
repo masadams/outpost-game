@@ -343,13 +343,10 @@ export class FlightScene extends Phaser.Scene {
     if(this.pointerInside){this.hud.setBuildPointer(activeWorld(this.simulation),screenToWorld(this.input.activePointer,{...this.follow,width:this.scale.width,height:this.scale.height}),this.follow.zoom);this.hud.showBuildTip(this.input.activePointer.x,this.input.activePointer.y);}
     this.predictionTime += delta / 1000;
     if (this.simulation.towing.targetId !== null) this.prediction = null;
-    if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.halted && this.predictionTime >= 0.2))) {
+    if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.halted && this.predictionTime >= 0.4))) {
       this.prediction = predictCoast(this.ship, 180, this.simulation.system); this.predictionTime = 0;
     }
-    this.threatTime += delta / 1000;
-    if ((!this.halted && this.threatTime >= 0.5) || this.threats.length !== Math.min(12, this.simulation.defence.meteors.length)) {
-      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => this.onGround(predictMeteor(m, 120, this.simulation.system))); this.threatTime = 0;
-    }
+    this.updateThreats(delta / 1000);
     this.flightTools.update(this.ship, this.prediction, this.simulation.towing.targetId !== null, this.simulation.system);
     this.audio.update(activeWorld(this.simulation), this.halted, delta / 1000);
     this.updateChrome();
@@ -404,6 +401,26 @@ export class FlightScene extends Phaser.Scene {
     sky.fillStyle(warm, 0.95 * shown);
     sky.fillCircle(x, y, 11);
     void daylight;
+  }
+  private threatCache = new Map<number, { prediction: ThreatPrediction; age: number }>();
+  /**
+   * Predictions for the incoming rocks are the costly part of a storm, so they are cheap and spread out: one rock per frame,
+   * on a coarse step, each refreshed about once a second and a half. A rock with no prediction yet is done first.
+   */
+  private updateThreats(seconds: number): void {
+    const rocks = this.simulation.defence.meteors.slice(0, 12);
+    const ids = new Set(rocks.map(m => m.id));
+    for (const id of this.threatCache.keys()) if (!ids.has(id)) this.threatCache.delete(id);
+    if (!this.halted) for (const entry of this.threatCache.values()) entry.age += seconds;
+    const due = rocks
+      .map(m => ({ m, age: this.threatCache.get(m.id)?.age ?? Infinity }))
+      .filter(v => v.age >= 1.5 && (!this.halted || v.age === Infinity))
+      .sort((a, b) => b.age - a.age)[0];
+    if (due) {
+      const prediction = this.onGround(predictMeteor(due.m, 90, this.simulation.system, 0.1));
+      this.threatCache.set(due.m.id, { prediction, age: 0 });
+    }
+    this.threats = rocks.map(m => this.threatCache.get(m.id)?.prediction).filter((p): p is ThreatPrediction => !!p);
   }
   /** Threat paths and impact markers drawn on the ground as it is now, so they point at the right place on a turning planet. */
   private onGround(p: ThreatPrediction): ThreatPrediction {
