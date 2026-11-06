@@ -11,7 +11,11 @@ export const STATIC_SYSTEM: SystemFrame = { time: 0, binary: false };
  * `requiresBinary` bodies only exist when the two-body system is switched on.
  */
 export interface BodySpec {
-  label: string; radius: number; mu: number; atmosphere: number;
+  label: string; radius: number; mu: number;
+  /** Height of the air above the surface (m); 0 for none. */
+  atmosphere: number;
+  /** How thick the air is and how fast it thins; null for an airless body. */
+  air: { scaleHeight: number; surfaceDensity: number } | null;
   orbit: { kind: 'pair'; partner: BodyId; role: 'primary' | 'secondary' }
     | { kind: 'circle'; radius: number; phase: number };
   spin: 'day' | 'tidal';
@@ -22,11 +26,12 @@ export interface BodySpec {
 /** Every body in the system, as data. Add a body here and the rest of the physics (gravity, landing, light) follows. */
 export const BODIES: Record<BodyId, BodySpec> = {
   home: { label: 'Selene', radius: WORLD.radius, mu: WORLD.mu, atmosphere: ATMOSPHERE.height,
+    air: { scaleHeight: ATMOSPHERE.scaleHeight, surfaceDensity: ATMOSPHERE.surfaceDensity },
     orbit: { kind: 'pair', partner: 'moon', role: 'primary' }, spin: 'day', requiresBinary: false, surveySeconds: 0 },
-  moon: { label: 'Nacre', radius: 450, mu: 1.6 * 450 ** 2, atmosphere: 0,
+  moon: { label: 'Nacre', radius: 450, mu: 1.6 * 450 ** 2, atmosphere: 0, air: null,
     orbit: { kind: 'pair', partner: 'home', role: 'secondary' }, spin: 'tidal', requiresBinary: true, surveySeconds: 90 },
   // A small airless world far out, circling the shared centre of Selene and Nacre. Faint: it takes long watching to find.
-  cinder: { label: 'Cinder', radius: 260, mu: 0.9 * 260 ** 2, atmosphere: 0,
+  cinder: { label: 'Cinder', radius: 260, mu: 0.9 * 260 ** 2, atmosphere: 0, air: null,
     orbit: { kind: 'circle', radius: 22000, phase: 2.2 }, spin: 'tidal', requiresBinary: true, surveySeconds: 420 },
 };
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */

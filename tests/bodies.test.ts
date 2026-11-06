@@ -62,3 +62,31 @@ describe('Cinder, the third body', () => {
     expect(BODIES.cinder.surveySeconds).toBeGreaterThan(BODIES.moon.surveySeconds);
   });
 });
+
+describe('air by body', () => {
+  it('only Selene has air; each body reads its own', async () => {
+    const { airBody, airDensity, airFraction } = await import('../src/sim/environment');
+    const system = { time: 0, binary: true };
+    const home = planetAt('home', system);
+    const moon = planetAt('moon', system);
+    const cinder = planetAt('cinder', system);
+    expect(BODIES.home.air).not.toBeNull();
+    expect(BODIES.moon.air).toBeNull();
+    expect(BODIES.cinder.air).toBeNull();
+    const ground = { x: home.position.x, y: home.position.y - home.radius - 1 };
+    expect(airBody(ground, system)?.id).toBe('home');
+    expect(airFraction(ground, system)).toBeGreaterThan(0.9);
+    expect(airDensity({ x: moon.position.x + moon.radius + 5, y: moon.position.y }, system)).toBe(0);
+    expect(airBody({ x: cinder.position.x + cinder.radius + 5, y: cinder.position.y }, system)).toBeNull();
+    expect(airDensity({ x: home.position.x, y: home.position.y - home.radius - home.atmosphere - 50 }, system)).toBe(0);
+  });
+
+  it('a new body with air would carry its own drag, using its own numbers', async () => {
+    const { airDensity } = await import('../src/sim/environment');
+    const system = { time: 0, binary: true };
+    const home = planetAt('home', system);
+    const lower = airDensity({ x: home.position.x, y: home.position.y - home.radius - 100 }, system);
+    const higher = airDensity({ x: home.position.x, y: home.position.y - home.radius - 600 }, system);
+    expect(lower).toBeGreaterThan(higher);
+  });
+});

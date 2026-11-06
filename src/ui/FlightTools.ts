@@ -1,7 +1,6 @@
 import { setText } from './dom';
 import { STATIC_SYSTEM } from '../sim/celestial';
-import { ATMOSPHERE } from '../sim/config';
-import { airDensity, gravity } from '../sim/environment';
+import { airDensity, airFraction, gravity } from '../sim/environment';
 import { flightRegion, REGION_LABELS } from '../sim/flightRegion';
 import type { Ship } from '../sim/physics';
 import type { Trajectory } from '../sim/trajectory';
@@ -19,7 +18,7 @@ export class FlightTools {
   update(ship: Ship, prediction: Trajectory | null, towing = false, system = STATIC_SYSTEM): void {
     const density = airDensity(ship.position, system);
     const g = gravity(ship.position, system);
-    const air = density > 0 ? `AIR ${(density / ATMOSPHERE.surfaceDensity * 100).toFixed(1)}%` : 'NO AIR DRAG';
+    const air = density > 0 ? `AIR ${(airFraction(ship.position, system) * 100).toFixed(1)}%` : 'NO AIR DRAG';
     setText(this.status, `${REGION_LABELS[flightRegion(ship.position, system)]} · ${air} · g ${Math.hypot(g.x, g.y).toFixed(2)} m/s² · Coast: ${this.pathStatus(ship, prediction, towing)}`);
     this.status.title = 'The coast path assumes no further input and includes gravity and air drag. It pauses while towing.';
     this.status.dataset.regime = density > 0 ? 'atmosphere' : 'vacuum';
