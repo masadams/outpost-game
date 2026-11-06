@@ -61,3 +61,23 @@ describe('ore on the ground', () => {
     expect(STATIONS.some(s => s.kind === 'depot')).toBe(true);
   });
 });
+
+describe('rocks that fall', () => {
+  it('break into loose ore when they hit the ground, with the same mass, instead of blocking the pad', async () => {
+    const w = createWorld();
+    w.system.sun = true;
+    const rocks = w.asteroids.filter(a => a.id === 1 || a.id === 3);
+    const mass = rocks.reduce((m, r) => m + r.mass, 0);
+    w.asteroids = rocks;
+    run(w, 130);
+    expect(w.asteroids).toHaveLength(0);
+    const ore = w.pickups.reduce((m, p) => m + p.mass, 0);
+    expect(ore).toBeCloseTo(mass, 5);
+    expect(w.pickups).toHaveLength(8);
+    // The pad is clear: the lander can take off.
+    run(w, 2, { thrust: true, turn: 0 });
+    expect(w.ship.state).toBe('flying');
+    const { telemetry } = await import('../src/sim/physics');
+    expect(telemetry(w.ship, WORLD.shipRadius, w.system).altitude).toBeGreaterThan(3);
+  });
+});

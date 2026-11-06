@@ -13,15 +13,16 @@ export interface Body { belt?: BeltId; id: number; position: Vec; velocity: Vec;
 export interface Asteroid extends Body { stage: number; health: number; maxHealth: number }
 export interface Pickup extends Body {}
 
-export function moveBody(body: Body, dt: number, system: SystemFrame = STATIC_SYSTEM): void {
+/** Moves a loose body one step. Returns how fast it hit the ground, in m/s (0 if it did not). */
+export function moveBody(body: Body, dt: number, system: SystemFrame = STATIC_SYSTEM): number {
   body.velocity = integrateVelocity(body.position, body.velocity, { x: 0, y: 0 }, body.mass, 0.47 * Math.PI * body.radius ** 2, dt, system);
   const end = { x: body.position.x + body.velocity.x * dt, y: body.position.y + body.velocity.y * dt };
   const hit = terrainHit(body.position, end, body.radius, system, dt);
-  if (!hit) { body.position = end; return; }
+  if (!hit) { body.position = end; return 0; }
   body.position = surfacePosition(hit.planet, hit.angle, body.radius + .001);
   const v = relativeVelocity(body.velocity, hit.planet, body.position), inward = dot(v, hit.normal), ground = groundVelocity(hit.planet, body.position);
   if (inward < 0) body.velocity = { x: ground.x + v.x * .8 - hit.normal.x * inward * 1.05, y: ground.y + v.y * .8 - hit.normal.y * inward * 1.05 };
-
+  return Math.max(0, -inward);
 }
 
 export function separateBodies(a: Body, b: Body): void {

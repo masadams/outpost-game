@@ -24,6 +24,7 @@ import { createStorm, type StormState } from './stormConfig';
 import { stepStorm, isStormAction, applyStormAction } from './storm';
 import { salvageWreck, stepWrecks, type Wreck } from './wrecks';
 import { bagToHold, collectOnFoot } from './bag';
+import { ROCK_SHATTER_SPEED, rockToOre } from './rockFall';
 import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, resolveDefenceHits } from './defence';
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
@@ -119,7 +120,14 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     world.astronaut.position = { ...world.ship.position }; world.astronaut.velocity = { ...world.ship.velocity };
     world.astronaut.oxygen = SUIT.oxygen;
   }
-  for (const body of [...world.asteroids, ...world.pickups]) moveBody(body, dt, world.system);
+  const shattered: Asteroid[] = [];
+  for (const body of world.pickups) moveBody(body, dt, world.system);
+  for (const rock of world.asteroids) if (moveBody(rock, dt, world.system) > ROCK_SHATTER_SPEED) shattered.push(rock);
+  // A rock that comes down hard breaks into loose ore on the ground (same mass), instead of landing on the pad as an obstacle.
+  if (shattered.length > 0) {
+    world.asteroids = world.asteroids.filter(r => !shattered.includes(r));
+    for (const rock of shattered) world.pickups.push(...rockToOre(rock, () => world.nextId++, world.system));
+  }
   for (let i = 0; i < world.asteroids.length; i++) {
     const rock = world.asteroids[i];
     for (let j = i + 1; j < world.asteroids.length; j++) separateBodies(rock, world.asteroids[j]);
