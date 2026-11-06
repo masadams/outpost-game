@@ -18,7 +18,7 @@ it('walks a real crew member with acceleration, moving gravity frame and finite 
 });
 it('dispatches paid queued work without teleporting, free supplies or remote construction',()=>{
  const w=setup();applyCommandAction(w,{type:'queueBuild',kind:'solar',angle:300/1800});applyCrewOrder(w,{type:'crewOrder',operation:'build'});tick(w,1);expect(w.colony.buildings).toHaveLength(0);expect(w.colony.command.queue[0].progress).toBe(0);
- tick(w,40);expect(w.colony.buildings).toHaveLength(1);expect(w.colony.buildings[0].angle).toBe(300/1800);expect(w.crewOrder).toBeNull();expect(w.colony.products).toMatchObject({alloy:24,wire:12,components:7});expect(w.astronaut.oxygen).toBeLessThan(160);expect(w.moon.colony.buildings).toHaveLength(0);
+ tick(w,40);expect(w.colony.buildings).toHaveLength(1);expect(w.colony.buildings[0].angle).toBe(300/1800);expect(w.crewOrder).toBeNull();expect(w.colony.products).toMatchObject({alloy:24,wire:12,components:7});expect(w.astronaut.oxygen).toBeLessThan(160);expect(w.outposts.moon.colony.buildings).toHaveLength(0);
 });
 it('manual movement, jumping, boarding and low air stop orders',()=>{
  for(const input of [{turn:-1},{turn:0,jump:true},{turn:0,board:true}]){const w=setup();applyCrewOrder(w,{type:'crewOrder',operation:'walk',angle:.5});stepWorld(w,{thrust:false,...input},1/60);expect(w.crewOrder).toBeNull();}

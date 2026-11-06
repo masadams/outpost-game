@@ -18,7 +18,7 @@ export function nacreSurvey(w: WorldState): NacreSurvey | null {
   const moon = CELESTIAL.moon;
   const gravity = moon.mu / moon.radius ** 2;
   const dayMinutes = (2 * Math.PI / ORBIT_RATE) / 60;
-  const seams = w.moon.surfaceDeposits;
+  const seams = w.outposts.moon.surfaceDeposits;
   const kinds = [...new Set(seams.map(d => d.resource))].map(r => RESOURCE_INFO[r].label);
   const total = seams.reduce((sum, d) => sum + d.initial, 0);
   return {

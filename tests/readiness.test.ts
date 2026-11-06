@@ -13,7 +13,7 @@ import { RECOVERY } from '../src/sim/combatConfig';
 const tick=(w:ReturnType<typeof createWorld>,seconds:number)=>{for(let i=0;i<seconds*60;i++)stepWorld(w,{thrust:false,turn:0},1/60);};
 it('quotes the real home recovery bill without reserving, transferring or pooling remote stock',()=>{
  const w=createWorld(),before=structuredClone(w);expect(recoveryReadiness(colonyWorld(w,'moon'))).toMatchObject({funded:true,canRecover:false,hull:30,fuel:20});expect(w).toEqual(before);
- w.colony.products.alloy=1;w.colony.products.components=1;w.moon.colony.products.alloy=w.moon.colony.products.components=100;
+ w.colony.products.alloy=1;w.colony.products.components=1;w.outposts.moon.colony.products.alloy=w.outposts.moon.colony.products.components=100;
  const plan=recoveryReadiness(colonyWorld(w,'moon'));expect(plan.funded).toBe(false);expect(plan.rows.map(r=>r.shortfall)).toEqual([7,1]);
 });
 it('distinguishes protected material from usable stock and prices repair/rearm separately',()=>{

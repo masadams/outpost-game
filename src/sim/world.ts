@@ -3,7 +3,7 @@ import {applyAutopilotAction,autopilotControls,stopAutopilot} from './autopilot'
 import {applyBuildingUpgrade} from './buildingUpgrades';
 import { applyCrewOrder, crewMove, type CrewOrder } from './crewOrders';
 import { createObjectives, observeObjectives, type ObjectiveState } from './objectives';
-import { planetAt, nearestPlanet, CELESTIAL, type SystemFrame, type BodyId } from './celestial';
+import { planetAt, nearestPlanet, CELESTIAL, BODY_IDS, type SystemFrame, type BodyId } from './celestial';
 import { activeWorld, allColonies, colonyPlanet, colonyWorld, localAngleAt } from './localWorld';
 import { isProgressionAction } from './progressionConfig';
 import { applyResearch } from './research';
@@ -44,12 +44,17 @@ import { notify } from './messages';
 export function unloadCargo(world: WorldState): number { return unloadDepot(colonyWorld(world, nearestPlanet(world.ship.position, world.system).id)); }
 
 export interface WorldControls extends Controls { combatFire?: boolean; combatActions?: CombatAction[]; mine?: boolean; tractor?: boolean; unload?: boolean; board?: boolean; jump?: boolean; colonyActions?: ColonyAction[] }
+/** Everything a body other than the home planet keeps for itself. */
+export interface Outpost { colony: Colony; depot: Inventory; surfaceDeposits: SurfaceDeposit[] }
+export type OutpostId = Exclude<BodyId, 'home'>;
+
 export interface WorldState {
   autopilot:AutopilotState;
   crewOrder: CrewOrder|null;
   objectives: ObjectiveState;
   system: SystemFrame;
-  moon: { colony: Colony; depot: Inventory; surfaceDeposits: SurfaceDeposit[] };
+  /** The colony, stores and ground deposits on every body other than the home planet. */
+  outposts: Record<OutpostId, Outpost>;
   /** Only local views expose these; never persisted on the root. */
   readonly siteBody?: BodyId; readonly rootWorld?: WorldState;
   exploration: ExplorationState;
@@ -60,6 +65,23 @@ export interface WorldState {
   buttons: { board: boolean; interact: boolean }; notice: { message: string; time: number };
   surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; storm: StormState; wrecks: Wreck[]; combat: CombatState;
 }
+/** An empty outpost for every body but the home planet. Ids on each start at a different thousand so they never clash. */
+function createOutposts(): Record<OutpostId, Outpost> {
+  const outposts = {} as Record<OutpostId, Outpost>;
+  BODY_IDS.filter((id): id is OutpostId => id !== 'home').forEach((id, i) => {
+    const colony = createColony();
+    for (const p of Object.keys(colony.products) as (keyof typeof colony.products)[]) colony.products[p] = 0;
+    colony.nextId = 1001 + 1000 * i;
+    outposts[id] = { colony, depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL[id].radius) };
+  });
+  return outposts;
+}
+
+/** Research is shared by every colony: one tree, one set of finished projects. */
+export function shareResearch(world: WorldState): void {
+  for (const outpost of Object.values(world.outposts)) outpost.colony.research = world.colony.research;
+}
+
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
   for (let i = 0; i < 15; i++) {
@@ -72,12 +94,9 @@ export function createWorld(): WorldState {
   // A radial iron sample above home makes the first sortie accessible without orbital rendezvous.
   asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
   asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
-  const moon = { colony: createColony(), depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL.moon.radius) };
-  for (const p of Object.keys(moon.colony.products) as (keyof typeof moon.colony.products)[]) moon.colony.products[p] = 0;
-  moon.colony.nextId = 1001;
-  const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
+  const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, outposts: createOutposts(), exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
     playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), storm: createStorm(), wrecks: [], combat: createCombat() };
-  world.moon.colony.research = world.colony.research;
+  shareResearch(world);
   seedNeighborhood(world);
   const velocity = planetAt('home', world.system).velocity;
   for (const actor of [world.ship, world.astronaut, ...world.asteroids, ...world.exploration.sites]) { actor.velocity.x += velocity.x; actor.velocity.y += velocity.y; }

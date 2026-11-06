@@ -24,7 +24,7 @@ test('loads a paid expedition with native controls, respects pause and preserves
  await page.goto('/');const hud=page.locator('#hud');await expect(hud).toHaveAttribute('data-state','landed');await page.keyboard.press('i');
  await page.locator('summary').filter({hasText:'Manufactured freight'}).click();const load=page.getByRole('button',{name:'Load Rig + solar expedition',exact:true});await expect(load).toBeEnabled();
  await load.click();await expect(hud).toHaveAttribute('data-cargo','25.00');await expect(load).toBeDisabled();await expect(page.locator('.manifest').first()).toContainText('Manifest already aboard');
- await page.keyboard.press('k');const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));expect(save.world.ship.freight).toMatchObject({alloy:15,wire:5,components:5});expect(save.world.colony.products).toMatchObject({alloy:13,wire:9,components:3});expect(save.world.moon.colony.products.alloy).toBe(0);
+ await page.keyboard.press('k');const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));expect(save.world.ship.freight).toMatchObject({alloy:15,wire:5,components:5});expect(save.world.colony.products).toMatchObject({alloy:13,wire:9,components:3});expect(save.world.outposts.moon.colony.products.alloy).toBe(0);
  await page.keyboard.press('p');await expect(hud).toHaveAttribute('data-state','paused');await expect(page.getByRole('button',{name:'Load Small habitat + solar',exact:true})).toBeDisabled();await page.reload();await expect(hud).toHaveAttribute('data-cargo','25.00');await expect(hud).toHaveAttribute('data-state','paused');
 });
 
@@ -59,7 +59,7 @@ test('bounds visual work with both colonies and full body budgets while distant 
  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Open settings',exact:true}).click();await page.getByLabel('Graphics quality',{exact:true}).selectOption('low');await page.getByLabel('Reduced motion and flashes').check();await page.getByRole('button',{name:'Return to game',exact:true}).click();await expect(hud).toHaveAttribute('data-star-count','80');await expect(hud).toHaveAttribute('data-effect-cap','0');
  const samples=await hud.getAttribute('data-draw-samples');await page.waitForTimeout(300);expect(await hud.getAttribute('data-draw-samples')).toBe(samples);
  await page.keyboard.press('p');await page.waitForTimeout(1200);await page.keyboard.press('p');await page.keyboard.press('k');
- const result=await page.evaluate(()=>JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));expect(result.world.system.time).toBeGreaterThan(.5);expect(result.world.moon.colony.buildings[0].progress+result.world.moon.depot.ice).toBeGreaterThan(0);expect(result.world.asteroids).toHaveLength(256);expect(result.world.pickups).toHaveLength(256);
+ const result=await page.evaluate(()=>JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));expect(result.world.system.time).toBeGreaterThan(.5);expect(result.world.outposts.moon.colony.buildings[0].progress+result.world.outposts.moon.depot.ice).toBeGreaterThan(0);expect(result.world.asteroids).toHaveLength(256);expect(result.world.pickups).toHaveLength(256);
  const live=await hud.evaluate(e=>({drawMean:e.dataset.renderMs,drawP95:e.dataset.renderP95,hudMean:e.dataset.hudMs,samples:e.dataset.drawSamples,nodes:document.querySelectorAll('*').length}));console.log('Presentation CPU submission sample (cloud Chromium):',JSON.stringify({paused:detailed,live}));
 });
 

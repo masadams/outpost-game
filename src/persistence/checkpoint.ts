@@ -2,7 +2,7 @@ import {validAutopilot} from '../sim/autopilot';
 import {validBuildingUpgrade} from '../sim/buildingUpgrades';
 import { validCrewOrder } from '../sim/crewOrders';
 import { validObjectives } from '../sim/objectives';
-import { planetAt, relative, relativeVelocity } from '../sim/celestial';
+import { BODY_IDS, planetAt, relative, relativeVelocity } from '../sim/celestial';
 import { colonyWorld } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
 import { validShields } from './validateShields';
@@ -17,14 +17,14 @@ import { validSchedule } from '../sim/scheduling';
 import { validPolicy } from '../sim/colonyPolicy';
 import { validCombat } from './validateCombat';
 import { validDefence } from './validateDefence';
-import { createWorld, type WorldState } from '../sim/world';
+import { createWorld, shareResearch, type OutpostId, type WorldState } from '../sim/world';
 import { BUILD_TYPES, PRODUCTS, REFINERY_RECIPES } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity } from '../sim/colony';
 import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=27;
+export const SAVE_VERSION=28;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -44,14 +44,14 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (remote && (Object.hasOwn(world, 'rootWorld') || Object.hasOwn(world, 'siteBody'))) return false;
   if (!number(world.system.time, 0, 1e9) || typeof world.system.binary !== 'boolean' || (world.system.sun !== undefined && typeof world.system.sun !== 'boolean') || !PRODUCTS.every(p => number(world.ship.freight[p], 0, cargoCapacity(world.ship))) || cargoMass(world.ship) > cargoCapacity(world.ship) + 1e-6 || world.ship.ground !== undefined && !['home', 'moon'].includes(world.ship.ground)) return false;
   if (remote) {
-    const facilities = [...world.colony.buildings, ...world.moon.colony.buildings];
+    const facilities = [world.colony, ...Object.values(world.outposts).map(o => o?.colony)].flatMap(c => c?.buildings ?? []);
     if (new Set(facilities.map(b => b?.id)).size !== facilities.length) return false;
   }
   if (world.ship.ground && world.ship.state !== 'flying') {
     const p = planetAt(world.ship.ground, world.system), r = relative(world.ship.position, p), v = relativeVelocity(world.ship.velocity, p, world.ship.position);
     if (Math.abs(Math.hypot(r.x, r.y) - p.radius - WORLD.shipRadius) > .2 || Math.hypot(v.x, v.y) > .5) return false;
   }
-  if (remote && (!object(world.moon) || JSON.stringify(world.moon.colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, 'moon'), false))) return false;
+  if (remote && (!object(world.outposts) || BODY_IDS.some(id => id !== 'home' && (!object(world.outposts[id as OutpostId]) || JSON.stringify(world.outposts[id as OutpostId].colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, id), false))))) return false;
   if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world) || !validAutopilot(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;
   if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100) || !RESOURCES.every(r => number(world.astronaut.bag[r], 0, SUIT.bagCapacity + 1e-6)) || inventoryMass(world.astronaut.bag) > SUIT.bagCapacity + 1e-6) return false;
@@ -112,7 +112,7 @@ export function decodeCheckpoint(text: string): WorldState {
   if (!object(envelope.environment) || envelope.environment.radius !== WORLD.radius || envelope.environment.model !== 'binary-flight-1') throw new Error('Checkpoint environment is incompatible');
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
-  world.moon.colony.research = world.colony.research;
+  shareResearch(world);
   if(world.autopilot.program){world.autopilot.program=null;world.autopilot.status='Checkpoint loaded · automation disarmed';}
   world.combat.flashes = [];
   world.defence.controlled = null; world.defence.beams = [];
