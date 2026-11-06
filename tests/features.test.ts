@@ -51,10 +51,10 @@ describe('focus feature set', () => {
       { type: 'toggleTow' },
       { type: 'autopilot', operation: 'cancel' },
       { type: 'upgradeBuilding', id: 1, level: 3 },
-      { type: 'researchStart', tech: 'combat' },
+      { type: 'researchStart', tech: 'thermal' },
       { type: 'toggleSchedule' },
       { type: 'select', kind: 'flak' },
-      { type: 'queueBuild', kind: 'shieldSmall', angle: 0 },
+      { type: 'queueBuild', kind: 'flak', angle: 0 },
       { type: 'navigate', target: 'moon' },
       { type: 'remote', id: 1, operation: 'auto' },
     ];

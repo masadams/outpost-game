@@ -45,8 +45,27 @@ describe('research from finds', () => {
 
   it('the new-player set may start only find research', () => {
     expect(actionAllowed({ type: 'researchStart', tech: 'materials' }, 'focus')).toBe(true);
-    expect(actionAllowed({ type: 'researchStart', tech: 'combat' }, 'focus')).toBe(false);
+    expect(actionAllowed({ type: 'researchStart', tech: 'thermal' }, 'focus')).toBe(false);
     expect(actionAllowed({ type: 'equipment', upgrade: 'armour', operation: 'install' }, 'focus')).toBe(true);
     expect(actionAllowed({ type: 'equipment', upgrade: 'coil', operation: 'install' }, 'focus')).toBe(false);
+  });
+});
+
+describe('shields and domes arrive in sequence', () => {
+  it('shields after the second storm, domes once a world has a base, larger ones after the small', async () => {
+    const { blueprintRevealed } = await import('../src/sim/unlocks');
+    const { completedBuilding } = await import('../src/sim/construction');
+    const w = createWorld();
+    for (const kind of ['shieldSmall', 'shieldLarge', 'habitatSmall', 'habitatLarge'] as const) expect(blueprintRevealed(w, kind)).toBe(false);
+    w.storm.wave = 2;
+    w.storm.phase = 'over';
+    expect(blueprintRevealed(w, 'shieldSmall')).toBe(true);
+    expect(openTechs(w)).toContain('combat');
+    w.outposts.moon.colony.buildings.push(completedBuilding(1001, 'solar', 0.05, w));
+    expect(blueprintRevealed(w, 'habitatSmall')).toBe(true);
+    expect(blueprintRevealed(w, 'habitatLarge')).toBe(false);
+    w.colony.buildings.push(completedBuilding(1, 'habitatSmall', 0.2, w), completedBuilding(2, 'shieldSmall', -0.2, w));
+    expect(blueprintRevealed(w, 'habitatLarge')).toBe(true);
+    expect(blueprintRevealed(w, 'shieldLarge')).toBe(true);
   });
 });
