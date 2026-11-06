@@ -1,6 +1,5 @@
-import { nearestPlanet } from '../sim/celestial';
-import { ATMOSPHERE } from '../sim/config';
-import { airDensity } from '../sim/environment';
+import { BODIES, nearestPlanet } from '../sim/celestial';
+import { airFraction } from '../sim/environment';
 import { flightRegion } from '../sim/flightRegion';
 import type { WorldState } from '../sim/world';
 
@@ -31,10 +30,10 @@ export function soundscape(w: WorldState): Soundscape {
   const body = nearestPlanet(viewer, w.system).id;
   const region = flightRegion(viewer, w.system);
   const landedOrWalking = onFoot || w.ship.state !== 'flying';
-  const air = body === 'home' ? Math.min(1, airDensity(viewer, w.system) / ATMOSPHERE.surfaceDensity) : 0;
+  const air = Math.min(1, airFraction(viewer, w.system));
   let area: Area;
   if (region === 'space') area = 'space';
-  else if (body === 'moon') area = landedOrWalking ? 'moon-surface' : 'moon-sky';
+  else if (!BODIES[body].air) area = landedOrWalking ? 'moon-surface' : 'moon-sky';
   else area = landedOrWalking && air > 0.5 ? 'home-surface' : 'home-sky';
   // Wind on Selene, rising with the air; a faint suit and hull hum in vacuum; a deep drone out in space.
   const ambience = area === 'home-surface' ? { frequency: 380, level: 0.012 * air }
