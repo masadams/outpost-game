@@ -14,7 +14,8 @@ export const MAX_RESERVE = 1000;
 export const createPolicy = (): ColonyPolicy => ({ energyReserve: 0, deliveryReserve: 0, alloyReserve: 0, componentsReserve: 0 });
 const DEFAULT_POLICY: Readonly<ColonyPolicy> = Object.freeze(createPolicy());
 export const policyFor = (colony: Colony): Readonly<ColonyPolicy> => colony.policy ?? DEFAULT_POLICY;
-export type PolicyAction = { type: 'adjustPolicy'; field: PolicyField; direction: -1 | 1 };
+/** `step` overrides the field's usual step (the Base window moves the turret power reserve in larger steps). */
+export type PolicyAction = { type: 'adjustPolicy'; field: PolicyField; direction: -1 | 1; step?: number };
 
 /** Turrets may spend their reserve. Every other manufactured-material consumer uses this budget. */
 export function availableProduct(colony: Colony, product: Product): number {

@@ -42,9 +42,12 @@ export function stormView(w: WorldState): StormView | null {
     return { tone: 'urgent', title: 'Rocks are coming down', detail: `${count}. Landing ${where(known.corridor, known.corridorMargin)}.` };
   }
   const urgent = known.eta < 90;
+  const turrets = root.colony.buildings.some(b => b.kind === 'laser' || b.kind === 'flak' || b.kind === 'missile');
+  const unguarded = turrets && (root.colony.policy?.energyReserve ?? 0) <= 0;
+  const tip = unguarded ? ' Keep some power for the turrets in Base.' : '';
   return {
     tone: urgent ? 'urgent' : 'warning',
     title: known.level === 'precise' ? 'Storm tracked' : 'Debris detected',
-    detail: `${count} arriving in ${when}. Landing ${where(known.corridor, known.corridorMargin)}.`,
+    detail: `${count} arriving in ${when}. Landing ${where(known.corridor, known.corridorMargin)}.${tip}`,
   };
 }

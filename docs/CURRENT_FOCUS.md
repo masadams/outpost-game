@@ -86,5 +86,8 @@ Also merged alongside it: right-click building menus with a confirmed Demolish (
 | Real planet rotation | Selene turns once a day, Nacre keeps one face to Selene, Helia stays fixed; ground speed, co-rotating air, ground-relative paths | Done |
 | Observatory and storm sounds | A rising scan when the Observatory starts, a two-note sighting, a calm chime when the storm is over | Done |
 
+## Power for storms and nights (roadmap 1F, first part)
+Base shows a **Keep for turrets** reserve (steps of 50 kJ). The Observatory, refinery and other machines stop before they use it ("Power held back"), so turrets still have power in a storm or at night. Base also says how many shots the stored power covers, and the storm warning suggests setting a reserve when you have turrets and none is set.
+
 ## Out of scope for now
 New worlds, new ship parts, the broad research tree, and the S0–S6 systems slices wait until the storm and the first night have been played and tuned.

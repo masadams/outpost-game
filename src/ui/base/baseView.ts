@@ -8,6 +8,7 @@ import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity } from '../../sim/shipStats';
 import { ANALYSIS_ENERGY } from '../../sim/stormConfig';
+import { policyFor } from '../../sim/colonyPolicy';
 import { SUN, sunClock } from '../../sim/sun';
 import { duration } from '../flight/stormView';
 import type { WorldState } from '../../sim/world';
@@ -53,6 +54,10 @@ export interface PowerView {
   level: 'good' | 'warn' | 'bad' | 'none';
   /** Only with the day and night cycle on: when the light changes and whether storage covers the dark. */
   forecast: string | null;
+  /** Power kept back for the turrets: other machines stop before they eat into it. */
+  reserve: number;
+  /** Shown once there is a turret: how many shots the stored power covers. */
+  defence: string | null;
 }
 
 export type Chip = 'running' | 'idle' | 'stopped' | 'off' | 'wrecked';
@@ -210,6 +215,14 @@ function powerForecast(w: WorldState): string | null {
   return covers ? `Dusk in ${when}. Your stored power covers a typical night.` : `Dusk in ${when}. A typical night needs about ${Math.ceil(need)} kJ; you have ${Math.floor(w.colony.energy)}.`;
 }
 
+function defenceLine(w: WorldState): string | null {
+  const turrets = w.colony.buildings.filter(b => isTurret(b.kind) && b.enabled && buildingHealth(b) > 0);
+  if (turrets.length === 0) return null;
+  const perShot = Math.min(...turrets.map(b => WEAPONS[b.kind as keyof typeof WEAPONS].energy));
+  const shots = Math.floor(w.colony.energy / perShot);
+  return `Turrets: stored power covers about ${shots} shots.`;
+}
+
 function powerView(w: WorldState): PowerView {
   const c = w.colony;
   const capacity = energyCapacity(c);
@@ -221,6 +234,8 @@ function powerView(w: WorldState): PowerView {
     capacity,
     summary: powerSummary(w),
     forecast: powerForecast(w),
+    reserve: policyFor(w.colony).energyReserve,
+    defence: defenceLine(w),
     level,
   };
 }

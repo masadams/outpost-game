@@ -98,7 +98,8 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
   if (action.type === 'adjustPolicy') {
     if (!POLICY_FIELDS.includes(action.field) || (action.direction !== -1 && action.direction !== 1)) return;
     const policy = world.colony.policy ??= createPolicy();
-    policy[action.field] = clamp(policy[action.field] + action.direction * POLICY_INFO[action.field].step, 0, MAX_RESERVE);
+    const step = Number.isFinite(action.step) && action.step! > 0 && action.step! <= 200 ? action.step! : POLICY_INFO[action.field].step;
+    policy[action.field] = clamp(policy[action.field] + action.direction * step, 0, MAX_RESERVE);
     return;
   }
   if(action.type==='buildMode'){if(typeof action.open==='boolean')world.colony.buildOpen=action.open;return;}
