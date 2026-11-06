@@ -108,6 +108,19 @@ function Overview({ view, open, analyse, study, research, fit, reserve, paused }
         <p class="base-note">Other machines stop before they use this, so turrets still have power in a storm or at night.</p>
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
       </div>
+      {view.elsewhere.length > 0 && (
+        <section class="base-storm base-elsewhere" aria-label="Other worlds">
+          <h3>Other worlds</h3>
+          {view.elsewhere.map(o => (
+            <div key={o.id} data-outpost={o.id} data-level={o.level}>
+              <strong>{o.label}</strong>
+              <p class="base-note">{o.power}. {o.stores}.</p>
+              <p class="base-note">{o.machines.map(m => `${m.label}: ${m.line}`).join(' · ')}</p>
+              {o.short.map(line => <p key={line} class="base-why">{line}</p>)}
+            </div>
+          ))}
+        </section>
+      )}
       {view.research && (
         <section class="base-storm" aria-label="Research">
           <h3>Research</h3>
