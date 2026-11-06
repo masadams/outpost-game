@@ -17,14 +17,24 @@ function onFoot() {
 }
 
 describe('build view', () => {
-  it('offers the first-sortie buildings with hotkeys 1–5 in the focus set (the Observatory is mouse-only)', () => {
+  it('starts with only solar and a refinery, and reveals the rest as earned', () => {
     setFeatureMode('focus');
-    const view = buildView(createWorld());
-    expect(view.groups).toBeNull();
-    expect(view.cards.map(c => c.kind)).toEqual(BUILD_TYPES.filter(k => FOCUS_BLUEPRINTS.includes(k)));
-    expect(view.cards.map(c => c.hotkey)).toEqual(['1', '2', '3', '4', '5', '7', null, null]);
-    expect(view.cards[0]).toMatchObject({ label: 'Solar array', purpose: 'Makes power in sunlight', selected: true });
+    const w = createWorld();
+    const kinds = () => buildView(w).cards.map(c => c.kind);
+    expect(buildView(w).groups).toBeNull();
+    expect(kinds()).toEqual(['solar', 'refinery']);
+    expect(buildView(w).cards[0]).toMatchObject({ label: 'Solar array', purpose: 'Makes power in sunlight', selected: true });
+    w.objectives.completed.push('industry');
+    expect(kinds()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'observatory']);
+    w.system.sun = true;
+    expect(kinds()).not.toContain('observatory');
+    w.exploration.surveyed.push('frost');
+    expect(kinds()).toContain('observatory');
+    expect(kinds()).not.toContain('laser');
+    w.colony.buildings.push({ id: 90, kind: 'observatory' } as never);
+    expect(kinds()).toContain('laser');
   });
+
 
   it('shows group tabs and only that group with all features', () => {
     setFeatureMode('all');

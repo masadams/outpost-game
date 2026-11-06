@@ -1,5 +1,6 @@
 import { featureVisible, blueprintVisible } from '../../preferences/features';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
+import { blueprintRevealed } from '../../sim/unlocks';
 import { blueprintLock } from '../../sim/colony';
 import { availableProduct } from '../../sim/colonyPolicy';
 import { CONSTRUCTION_SECONDS } from '../../sim/commandConfig';
@@ -148,7 +149,7 @@ export function buildView(w: WorldState, group: BuildGroup = 'power'): BuildView
   const full = featureVisible('catalogue');
   const kinds = full
     ? (GROUPS[GROUP_IDS.indexOf(group)]?.[1] ?? []).filter(k => blueprintVisible(k))
-    : BUILD_TYPES.filter(k => blueprintVisible(k));
+    : BUILD_TYPES.filter(k => blueprintVisible(k) && blueprintRevealed(w, k));
   const net = w.colony.generation - w.colony.demand;
   return {
     blocked,

@@ -1,4 +1,5 @@
 import { keyLabel, type BindingSlot } from '../preferences/presentation';
+import { blueprintRevealed } from '../sim/unlocks';
 import { actionAllowed, featureVisible, filterActions } from '../preferences/features';
 import {applyAutopilotAction} from '../sim/autopilot';
 import { GameMenu, type MenuAction } from '../ui/GameMenu';
@@ -106,7 +107,7 @@ export class FlightScene extends Phaser.Scene {
   constructor() { super('flight'); }
   create(): void {
     applyPresentation(this.preferences);
-    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (!actionAllowed(action)) return; if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.halted) this.colonyActions.push(action); }, this.preferences);
+    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (!actionAllowed(action, undefined, this.simulation.exploration.nacreSurveyed) || !this.revealed(action)) return; if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.halted) this.colonyActions.push(action); }, this.preferences);
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
@@ -306,6 +307,13 @@ export class FlightScene extends Phaser.Scene {
     this.keys.release(); this.colonyActions = []; this.clock.reset();
     if (next) this.audio.silence();
   }
+  /** In the new-player set, blueprints that have not been earned cannot be picked, even by number key. */
+  private revealed(action: { type: string; kind?: string }): boolean {
+    if (featureVisible('catalogue')) return true;
+    if (action.type !== 'select' && action.type !== 'queueBuild') return true;
+    return blueprintRevealed(this.simulation, action.kind as never);
+  }
+
   update(_time: number, delta: number): void {
     this.updateWindowPause();
     this.dispatchOnStepOut(delta);
@@ -329,7 +337,7 @@ export class FlightScene extends Phaser.Scene {
     if (!this.halted) {
       this.clock.advance(delta / 1000, dt => {
         const input = this.keys.read();
-        const actions = filterActions([...(input.colonyActions ?? []), ...this.colonyActions.splice(0)]);
+        const actions = filterActions([...(input.colonyActions ?? []), ...this.colonyActions.splice(0)], undefined, this.simulation.exploration.nacreSurveyed).filter(a => this.revealed(a));
         const combatFire = !!input.combatFire && featureVisible('combat');
         stepWorld(this.simulation, { ...input, combatFire, colonyActions: actions }, dt);
       });

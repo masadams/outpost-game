@@ -6,6 +6,9 @@ import { notify } from './messages';
 import { SIGHTING_SECONDS } from './stormKnowledge';
 import type { WorldState } from './world';
 
+/** Seconds of powered watching before Nacre is surveyed. */
+export const NACRE_SURVEY_SECONDS = 90;
+
 export const OBSERVATORY = {
   /** Kilowatts while scanning. */
   power: 3,
@@ -29,6 +32,14 @@ export function stepObservatory(w: WorldState, b: Building, dt: number): void {
   w.colony.energy = Math.max(0, w.colony.energy - cost);
   b.gridPower = cost / dt;
   b.status = 'running';
+  const ex = w.exploration;
+  if (!ex.nacreSurveyed) {
+    ex.nacreWatch += work;
+    if (ex.nacreWatch >= NACRE_SURVEY_SECONDS) {
+      ex.nacreSurveyed = true;
+      notify(w, 'NACRE SURVEYED · ROUTE OPEN ON THE MAP');
+    }
+  }
   if (w.storm.phase === 'approaching') {
     const before = w.storm.observed;
     w.storm.observed += work;
