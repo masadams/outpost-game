@@ -101,6 +101,18 @@ describe('salvaging a wreck', () => {
     w.ship.velocity = { x: w.ship.velocity.x + 20, y: w.ship.velocity.y };
     expect(reachableWreck(w)?.reason).toMatch(/Match its speed/);
   });
+
+  it('on foot, needs your lander parked close by to load what you take', async () => {
+    const { reachableWreck } = await import('../src/sim/wrecks');
+    const w = crashed();
+    printPilot(w);
+    const home = planetAt('home', w.system);
+    w.playerMode = 'astronaut';
+    w.astronaut.position = surfacePosition(home, 305 / WORLD.radius, 2.5);
+    expect(reachableWreck(w)?.reason).toMatch(/Land your lander next to it/);
+    w.ship.position = surfacePosition(home, 330 / WORLD.radius, WORLD.shipRadius);
+    expect(reachableWreck(w)?.reason).toBeNull();
+  });
 });
 
 describe('wrecks in space', () => {
@@ -139,5 +151,23 @@ describe('wrecks in space', () => {
     const loaded = decodeCheckpoint(encodeCheckpoint(w));
     expect(loaded.wrecks).toHaveLength(1);
     expect(loaded.wrecks[0].ship.cargo.iron).toBeCloseTo(w.wrecks[0].ship.cargo.iron, 5);
+  });
+});
+
+describe('wreck on screen', () => {
+  it('shows on the Map while the transponder lasts, and a card when you are close', async () => {
+    const { wreckCard, wreckMarks } = await import('../src/ui/flight/wreckView');
+    const w = crashed();
+    printPilot(w);
+    const marks = wreckMarks(w);
+    expect(marks).toHaveLength(1);
+    expect(marks[0].label).toMatch(/^Wreck · on the ground · transponder 1 min|^Wreck · on the ground · transponder 60 min/);
+    expect(wreckCard(w)).toBeNull();
+    const home = planetAt('home', w.system);
+    w.ship.position = surfacePosition(home, 310 / WORLD.radius, WORLD.shipRadius);
+    expect(wreckCard(w)?.detail).toBe('Press E to salvage what is left.');
+    w.system.time += WRECK.beacon + 1;
+    expect(wreckMarks(w)).toHaveLength(0);
+    expect(w.wrecks).toHaveLength(1);
   });
 });

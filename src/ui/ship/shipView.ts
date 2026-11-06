@@ -90,7 +90,7 @@ function foot(w: WorldState): FootView {
   }));
   const status =
     suit.health <= 0
-      ? 'Your suit is lost. Open the menu (Esc) to start over.'
+      ? 'Your pilot is lost. Press Backspace to print a new one at the base.'
       : habitatSource(w)
         ? 'Breathing habitat air.'
         : canBoard

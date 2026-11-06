@@ -4,6 +4,7 @@ import { WORLD } from '../../sim/config';
 import { farPosition } from '../../sim/storm';
 import { stormKnowledge } from '../../sim/stormKnowledge';
 import { STAR, starPosition } from '../../sim/star';
+import { wreckMarks } from '../flight/wreckView';
 import { BELTS, BELT_IDS, SITE_INFO, SITE_IDS, type BeltId, type Destination, type SiteId } from '../../sim/explorationConfig';
 import { destination, navigation, siteError } from '../../sim/exploration';
 import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../../sim/resources';
@@ -26,6 +27,8 @@ export interface MapView {
   storm: StormMark | null;
   /** The star: far beyond the chart, so only its direction shows, on the edge. Null with the day cycle off. */
   star: { at: Vec; label: string } | null;
+  /** Lost landers whose transponders are still on. */
+  wrecks: Array<{ id: number; at: Vec; label: string }>;
 }
 
 /** Rocks still far away are drawn at the edge of the chart, pointing the way they come from. */
@@ -205,6 +208,7 @@ export function mapView(w: WorldState): MapView {
     w.ship.position,
     ...(storm ? storm.rocks.map(r => r.at) : []),
     ...(w.system.sun ? [starMark(w)!.at] : []),
+    ...wreckMarks(w).map(x => x.at),
     ...sites.map(s => s.at),
     ...belts.flatMap(b => b.rocks.map(r => r.at)),
     ...bodies.flatMap(b => [
@@ -229,6 +233,7 @@ export function mapView(w: WorldState): MapView {
     note: routeNote(w),
     storm,
     star: starMark(w),
+    wrecks: wreckMarks(w),
   };
 }
 

@@ -266,8 +266,8 @@ export class Hud {
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
     const noticeText=world.notice.message.replace(/ · P TO RESUME$/,'');
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` :
-      onFoot && world.astronaut.health <= 0 ? 'Your suit is lost. Press L to load your last save, or open the menu (Esc) to start over.' :
-      !onFoot && ship.state === 'crashed' ? 'Your lander is wrecked. Press Backspace to recover it with supplies, L to load your last save, or open the menu (Esc) to start over.' :
+      onFoot && world.astronaut.health <= 0 ? 'Your pilot is lost. Press Backspace to print a new one at the base, or L to load your last save.' :
+      !onFoot && ship.state === 'crashed' ? 'Your lander is lost. Press Backspace to print a new pilot and lander. The wreck stays where it fell, and you can salvage it.' :
       world.notice.time > 0 ? noticeText :
       world.defence.controlled !== null ? 'Controlling the turret. A/D aims, Space fires, E lets go.' :
       onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'Low oxygen. Return to the lander or the service station.' : habitatNotice(world)) :

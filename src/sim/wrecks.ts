@@ -26,6 +26,8 @@ export const WRECK = {
   shipSpeed: 5,
   /** How close a pilot on foot must be. */
   suitReach: 14,
+  /** On foot, your lander must be parked this close to the wreck to load what you take. */
+  landerReach: 70,
   /** Printing a pilot alone, and a pilot with a basic lander. */
   pilotCost: { alloy: 2 } as Partial<ProductInventory>,
   landerCost: { alloy: 6, components: 2 } as Partial<ProductInventory>,
@@ -172,6 +174,9 @@ export function reachableWreck(world: WorldState): { wreck: Wreck; reason: strin
   const relative = Math.hypot(velocity.x - best.wreck.ship.velocity.x, velocity.y - best.wreck.ship.velocity.y);
   if (piloting && relative > WRECK.shipSpeed) return { wreck: best.wreck, reason: `Match its speed (${relative.toFixed(1)} m/s apart)` };
   if (!piloting && world.astronaut.health <= 0) return { wreck: best.wreck, reason: 'Your pilot is lost' };
+  // On foot you load what you strip into your own lander, so it has to be parked close by.
+  const lander = Math.hypot(world.ship.position.x - best.wreck.ship.position.x, world.ship.position.y - best.wreck.ship.position.y);
+  if (!piloting && (world.ship.state !== 'landed' || lander > WRECK.landerReach)) return { wreck: best.wreck, reason: 'Land your lander next to it first' };
   return { wreck: best.wreck, reason: null };
 }
 

@@ -34,7 +34,7 @@ const FOCUS_HELP = `
       <p>Build an <b>Observatory</b> and power it. It finds rocks heading your way and, the longer it watches, the better it can tell when and where they will land. Build a <b>Laser turret</b> near your buildings and turn on <b>Auto defence</b> on its card, or cut rocks apart with your own laser. In <b>Base</b>, <b>Keep for turrets</b> holds power back so the Observatory and refinery cannot drain it. After the storm, walk over the pieces on the ground and analyse one in Base.</p>
       <p>Right-click any building for its menu. <b>Demolish</b> asks first and gives back part of the materials.</p>
       <h2>If things go wrong</h2>
-      <p>If you crash, press <b>Backspace</b> to bring the lander back to the pad for 8 alloy and 2 components. Its cargo is lost. Press <b>K</b> to save and <b>L</b> to load.</p>
+      <p>Your pilots are printed at the base. If you lose the lander, press <b>Backspace</b> to print a new pilot and lander on the pad for 8 alloy and 2 components. The old lander stays where it fell, with what survived: its transponder shows it on the Map for an hour, so you can go back and salvage it with <b>E</b>. Press <b>K</b> to save and <b>L</b> to load.</p>
       <h2>Controls</h2>
       <p><b>P</b> pause · <b>I</b> ship and cargo · <b>H / Esc</b> close this guide · <b>M</b> mute · <b>J</b> coast path · <b>+ / −</b> zoom. Change any key in Settings.</p>`;
 

@@ -6,7 +6,7 @@ import { screenToWorld } from './pointer';
 import { drawCrewOrder } from './crewOrders';
 import { VisualEffects } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
-import { RenderBudget } from './budget';
+import { RenderBudget, visible } from './budget';
 import { drawShip } from './ship';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
@@ -43,6 +43,7 @@ import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
 import { dayView } from '../ui/flight/dayView';
+import { wreckCard, wreckMarks } from '../ui/flight/wreckView';
 import { daylightAt } from '../sim/sun';
 import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
@@ -253,6 +254,7 @@ export class FlightScene extends Phaser.Scene {
       pickups: this.pickupFeed.lines(),
       storm: stormView(world),
       day: dayView(world),
+      wreck: wreckCard(world),
       trajectory: this.flightTools.trajectory,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : this.prediction?.points.length ?? 0,
       keys: {
@@ -490,6 +492,14 @@ export class FlightScene extends Phaser.Scene {
     const coaching = coach(this.simulation, this.coachKeys());
     if (coaching?.target) drawCoachPointer(g, s.position, coaching.target, this.follow.zoom, this.time.now / 1000, !this.halted && !this.preferences.reducedMotion);
     this.effects.draw(g,this.follow.zoom);
+    // Lost landers stay in the world; while the transponder lasts a red light blinks on them.
+    for (const wreck of this.simulation.wrecks) {
+      if (!visible(view, wreck.ship.position, 30)) continue;
+      drawShip(g, wreck.ship, this.follow.zoom, this.time.now, true, true);
+      if (wreck.beaconUntil > this.simulation.system.time && (this.preferences.reducedMotion || Math.floor(this.time.now / 600) % 2 === 0)) {
+        g.fillStyle(0xff6b5a, 0.9); g.fillCircle(wreck.ship.position.x, wreck.ship.position.y, Math.max(1, 2.5 / this.follow.zoom));
+      }
+    }
     drawShip(g,s,this.follow.zoom,this.time.now,this.halted,this.preferences.reducedMotion);
     const mx = width - 92, my = height - 100, m = this.map;
     m.fillStyle(0x0a1724, .9); m.fillCircle(mx, my, 68); m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
@@ -498,6 +508,7 @@ export class FlightScene extends Phaser.Scene {
     for (const actor of [...this.simulation.asteroids, ...this.simulation.exploration.sites]) { const p = point(actor.position); m.fillStyle(0x9bb4c5, .7); m.fillCircle(p.x, p.y, 1.3); }
     // The storm: amber. Far bodies show only once the Observatory has seen them, as rings that tighten with better tracking.
     for (const rock of this.simulation.defence.meteors) { const p = point(rock.position); m.fillStyle(0xffb06a, .95); m.fillCircle(p.x, p.y, 1.8); }
+    for (const mark of wreckMarks(this.simulation)) { const p = point(mark.at); m.lineStyle(1, 0xff6b5a, .95); m.strokeRect(p.x - 2.5, p.y - 2.5, 5, 5); }
     const known = stormKnowledge(this.simulation);
     if (known) {
       const ring = known.level === 'sighted' ? 5 : known.level === 'tracked' ? 3 : 1.8;

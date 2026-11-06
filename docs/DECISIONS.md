@@ -290,3 +290,6 @@ Guidance is one pure function from world state to the next instruction (`coach`)
 
 ## Real planet rotation — 2026-11-06
 Planets turn when the day cycle is on: Selene once per 1000 s, Nacre once per orbit (tidally locked). The world frame is inertial and the star Helia is fixed, so it can one day be approached. Surface things keep surface angles and move with the ground (about 11 m/s at the equator); air turns with the planet; landing, drift and coast paths are measured against the ground. With the day cycle off nothing turns, so the regression suites and old behaviour are unchanged. The first storm now arrives at 1150 s, in daylight on the second day; storms armed later can arrive at night, when batteries matter. See `docs/tasks/sun-and-day.md`.
+
+## Printed pilots and wrecks — 2026-11-06
+Pilots are printed bodies. Losing the lander prints a new pilot and a basic lander for the old recovery price (8 alloy, 2 components); the old lander becomes a physical wreck with what survived (25–90% by crash speed, 60% if destroyed in flight), a one-hour transponder, and can be salvaged with E. Wrecks beyond 60 km are lost. This replaces "tow it home with 30 hull, cargo lost". See `docs/tasks/clones-and-wrecks.md`.
