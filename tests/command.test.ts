@@ -113,7 +113,7 @@ describe('supplied construction queue', () => {
   });
   it('preserves priorities, budgets and paid work through checkpoint continuation', () => {
     const w = fixture(); applyCommandAction(w, { type: 'powerLimit', id: 2, percent: 30 }); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); worker(w, 500); run(w, 2);
-    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(22); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
+    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(24); const loaded = decodeCheckpoint(text); expect(loaded.colony).toEqual(w.colony);
   });
   it('rejects malformed priorities, limits, duplicate orders and invalid paid progress', () => {
     const w = fixture(); applyCommandAction(w, { type: 'queueBuild', kind: 'solar', angle: .3 }); const text = encodeCheckpoint(w);

@@ -7,7 +7,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test('new players see only the first-sortie systems', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.locator('#objectives')).toContainText('Objective · 0/5');
+  await expect(page.locator('#objectives')).toContainText('Objective · 0/7');
 
   await page.getByRole('button', { name: 'Ship', exact: true }).click();
   const dock = page.locator('#operations-dock');
@@ -19,8 +19,8 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await page.getByRole('button', { name: 'Build', exact: true }).click();
   const bar = page.getByRole('region', { name: 'Build', exact: true });
   const cards = bar.locator('[data-select]');
-  await expect(cards).toHaveCount(8);
-  for (const name of ['Solar array', 'Battery', 'Storage', 'Refinery', 'Fuel processor', 'Mining rig']) {
+  await expect(cards).toHaveCount(2);
+  for (const name of ['Solar array', 'Refinery']) {
     await expect(cards.filter({ hasText: name })).toHaveCount(1);
   }
   await expect(bar.getByRole('navigation', { name: 'Building groups' })).toHaveCount(0);

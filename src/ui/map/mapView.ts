@@ -1,3 +1,4 @@
+import { nacreSurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
 import { planetAt, planets, surfacePosition } from '../../sim/celestial';
 import { WORLD } from '../../sim/config';
@@ -136,7 +137,12 @@ function selectedView(w: WorldState): SelectedView {
   const surveyed = belt ? w.exploration.surveyed.includes(belt) : true;
   let body = '';
   if (id === 'home') body = 'Your outpost and landing pad.';
-  else if (id === 'moon') body = 'Nacre: airless, low gravity. Bring supplies; nothing is waiting there.';
+  else if (id === 'moon') {
+    const survey = nacreSurvey(w);
+    body = survey
+      ? `Nacre, surveyed. Gravity ${survey.gravity}. Day ${survey.day}. Deposits: ${survey.deposits}. Airless; bring supplies.`
+      : 'Nacre: airless, low gravity. Bring supplies; nothing is waiting there.';
+  }
   else if (belt) body = surveyed ? beltStock(w, belt) : 'Unknown until surveyed. Survey the buoy in this arc to see what is here.';
   else if (site) body = siteLine(w, site);
   return {
@@ -184,7 +190,7 @@ function starMark(w: WorldState): { at: Vec; label: string } | null {
 }
 
 export function mapView(w: WorldState): MapView {
-  const moonVisible = featureVisible('moonTravel');
+  const moonVisible = featureVisible('moonTravel') || w.exploration.nacreSurveyed;
   const bodies = planets(w.system)
     .filter(b => b.id === 'home' || moonVisible)
     .map(b => ({ id: b.id, label: b.label, at: b.position, radius: b.radius, atmosphere: b.atmosphere }));

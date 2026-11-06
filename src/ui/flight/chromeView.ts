@@ -1,6 +1,7 @@
 import { featureVisible } from '../../preferences/features';
 import { flightRegion, REGION_LABELS, type FlightRegion } from '../../sim/flightRegion';
 import { OBJECTIVES, objectiveProgress, type ObjectiveId } from '../../sim/objectives';
+import { PRODUCTS } from '../../sim/colonyConfig';
 import { cargoMass } from '../../sim/shipMass';
 import type { WorldState } from '../../sim/world';
 import { stormView } from './stormView';
@@ -9,7 +10,7 @@ import { coach, DEFAULT_COACH_KEYS, type CoachKeys } from './coach';
 type Objective = typeof OBJECTIVES[number];
 
 /** Milestones shown to the player; the focus set keeps the first sortie only. */
-const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'buoy', 'sky', 'storm', 'analysis'];
+const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'buoy', 'sky', 'storm', 'analysis', 'moonWork', 'return'];
 
 export function shownObjectives(w?: WorldState): ReadonlyArray<Objective> {
   const all = featureVisible('catalogue') ? OBJECTIVES : OBJECTIVES.filter(o => FOCUS_OBJECTIVES.includes(o.id));
@@ -68,7 +69,26 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
     if (storm.phase === 'over') return 'Nothing left to collect.';
     return 'Get through the storm first.';
   }
+  if (id === 'moonWork') return moonWorkLine(w);
+  if (id === 'return') {
+    return w.ship.cargo.iron + w.ship.cargo.copper + w.ship.cargo.ice + w.ship.cargo.silicon + w.ship.cargo.rareMetals > 0
+      ? 'Fly home, land on the pad and press E to deliver your ore.'
+      : 'Fill the hold on Nacre, then fly home.';
+  }
   return '';
+}
+
+function moonWorkLine(w: WorldState): string {
+  if (!w.exploration.nacreSurveyed) return 'Keep the Observatory running; it is surveying Nacre.';
+  const onMoon = w.siteBody === 'moon';
+  const freight = PRODUCTS.some(p => w.ship.freight[p] > 0);
+  const kitBuilt = w.moon.colony.buildings.some(b => b.kind === 'miningRig');
+  const crystal = w.exploration.crystal === 'lying' ? ' A blue crystal glows about 240 m east of the pad: take it home.' : '';
+  if (kitBuilt) return `Give the rig power from a solar array, then fill your hold.${crystal}`;
+  if (freight && onMoon) return 'Land on the Nacre pad and press E to unload the kit.';
+  if (freight) return 'Pick Nacre on the Map and fly there.';
+  if (onMoon) return 'Step out and build a solar array and a mining rig on a marked seam.' + (w.exploration.crystal === 'lying' ? ' A blue crystal glows east of the pad.' : '');
+  return 'Open Ship and load the rig kit, then fly to Nacre.';
 }
 
 /** The objective card follows the tracked goal, or the next unfinished one. */

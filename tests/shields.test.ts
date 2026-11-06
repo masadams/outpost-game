@@ -167,7 +167,7 @@ describe('continuous selective shield interception', () => {
 describe('shield persistence and feedback', () => {
   it('round trips charge, breach timers, partial threats and accounting without recharge on load', () => {
     const { w, b } = fixture(); arm(b, 5); const m = meteor(w, 90, 300, 1200); m.impactBudget = 20; advanceMeteor(m, .1, w); w.defence.meteors = [m];
-    const saved = encodeCheckpoint(w), loaded = decodeCheckpoint(saved); expect(JSON.parse(saved).version).toBe(22); expect(loaded.colony.shielding).toEqual(w.colony.shielding); expect(loaded.colony.buildings[0].shield).toEqual(b.shield); expect(loaded.defence.meteors[0].impactBudget).toBe(15);
+    const saved = encodeCheckpoint(w), loaded = decodeCheckpoint(saved); expect(JSON.parse(saved).version).toBe(24); expect(loaded.colony.shielding).toEqual(w.colony.shielding); expect(loaded.colony.buildings[0].shield).toEqual(b.shield); expect(loaded.defence.meteors[0].impactBudget).toBe(15);
   });
   it.each(['charge', 'recovery', 'ready', 'missing', 'ledger', 'budget', 'zero budget', 'scale'])('rejects malformed %s checkpoint state', field => {
     const { w, b } = fixture(); arm(b); const raw = JSON.parse(encodeCheckpoint(w));

@@ -93,20 +93,21 @@ const ACTION_FEATURES: Partial<Record<string, Feature>> = {
 };
 
 /** Whether an action from the keyboard or interface may reach the simulation. */
-export function actionAllowed(action: ColonyAction, current: FeatureMode = featureMode()): boolean {
+export function actionAllowed(action: ColonyAction, current: FeatureMode = featureMode(), nacreOpen = false): boolean {
   if (current === 'all') return true;
   // The one reserve a new player sees: power kept back for the turrets, set from Base.
   if (action.type === 'adjustPolicy' && action.field === 'energyReserve') return true;
+  if (action.type === 'loadManifest' && nacreOpen && action.manifest === 'expedition') return true;
   const feature = ACTION_FEATURES[action.type];
   if (feature) return featureVisible(feature, current);
   if (action.type === 'select' || action.type === 'queueBuild') return blueprintVisible(action.kind, current);
-  if (action.type === 'navigate') return action.target !== 'moon';
+  if (action.type === 'navigate') return action.target !== 'moon' || nacreOpen;
   if (action.type === 'remote') return action.operation !== 'schedule' && action.operation !== 'auto';
   return true;
 }
 
-export function filterActions(actions: ColonyAction[], current: FeatureMode = featureMode()): ColonyAction[] {
-  return actions.filter(action => actionAllowed(action, current));
+export function filterActions(actions: ColonyAction[], current: FeatureMode = featureMode(), nacreOpen = false): ColonyAction[] {
+  return actions.filter(action => actionAllowed(action, current, nacreOpen));
 }
 
 /** Key bindings for hidden systems are left out of the Settings table in the focus set. */

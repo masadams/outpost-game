@@ -11,6 +11,7 @@ export interface BaseHandlers {
   toggle: (id: number) => void;
   recipe: (id: number) => void;
   analyse: () => void;
+  study: () => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -47,7 +48,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -103,6 +104,16 @@ function Overview({ view, open, analyse, reserve, paused }: { view: BaseView; op
         <p class="base-note">Other machines stop before they use this, so turrets still have power in a storm or at night.</p>
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
       </div>
+      {view.crystal && (
+        <section class="base-storm" aria-label="Nacre crystal" data-studied={String(view.crystal.studied)}>
+          <h3>Nacre crystal</h3>
+          <p class="base-note">{view.crystal.line}</p>
+          <button type="button" class="base-analyse" data-study="true" disabled={view.crystal.blocked !== null} onClick={click(study)}>
+            Study the crystal
+          </button>
+          {view.crystal.blocked && <p class="base-why">{view.crystal.blocked}</p>}
+        </section>
+      )}
       {view.storm && (
         <section class="base-storm" aria-label="Storm pieces" data-analysed={String(view.storm.analysed)}>
           <h3>Storm pieces</h3>
@@ -270,7 +281,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}

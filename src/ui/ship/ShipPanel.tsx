@@ -40,6 +40,20 @@ export function ShipPanelContent({ view }: { view: ShipPanelView }) {
         </tbody>
       </table>
 
+      {view.kit && (
+        <section class="ship-kit" aria-label="Nacre kit">
+          <h3>Nacre kit</h3>
+          <p>{view.kit.text}</p>
+          {view.kit.load && (
+            <>
+              <button type="button" data-kit="load" disabled={!view.kit.load.enabled}>
+                Load rig kit
+              </button>
+              <small>{view.kit.load.reason}</small>
+            </>
+          )}
+        </section>
+      )}
       {view.deposit && (
         <section class="ship-target" aria-label="Nearest rock">
           <h3>Nearest rock</h3>

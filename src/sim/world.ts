@@ -21,6 +21,7 @@ import { applyCombatAction, isCombatAction, stepCombat } from './combat';
 import { serviceCombatAtPad } from './combatSupply';
 import { createDefence, type DefenceState } from './defenceConfig';
 import { createStorm, type StormState } from './stormConfig';
+import { isCrystalAction, applyCrystalAction, stepCrystal } from './crystal';
 import { stepStorm, isStormAction, applyStormAction } from './storm';
 import { salvageWreck, stepWrecks, type Wreck } from './wrecks';
 import { bagToHold, collectOnFoot } from './bag';
@@ -33,6 +34,7 @@ import { fireLaser, fracture, tractor, powerTractor, type Beam } from './mining'
 import { createShip, stepShip, type Controls, type Ship } from './physics';
 import { emptyInventory, inventoryMass, RESOURCES, type Inventory } from './resources';
 import { unloadCargo as unloadDepot } from './cargo';
+import { unloadFreight } from './freight';
 import { createAstronaut, stepAstronaut, SUIT, type Astronaut } from './astronaut';
 import { boardOrExit, interactSurface, nearbyStation } from './surface';
 import { createColony, applyColonyAction, stepColony, type Colony, type ColonyAction } from './colony';
@@ -90,6 +92,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(action.type==='upgradeBuilding'){applyBuildingUpgrade(owner,action);continue;}
     if(action.type==='crewOrder'){applyCrewOrder(owner,action);continue;}
     if(isStormAction(action)){applyStormAction(world,action);continue;}
+    if(isCrystalAction(action)){applyCrystalAction(world);continue;}
     if(action.type==='salvageWreck'){salvageWreck(world);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
@@ -144,6 +147,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     // Ore only goes to the depot from the pad, not from wherever the lander happens to sit.
     const atPad = Math.abs(wrap(localAngleAt(local, world.ship.position) - WORLD.padAngle)) * colonyPlanet(local).radius <= WORLD.padHalfWidth;
     if (atPad) unloadCargo(local);
+    if (atPad && colonyPlanet(local).id === 'moon') {
+      const kit = unloadFreight(local);
+      if (kit > 0) notify(world, `KIT UNLOADED · ${kit.toFixed(0)} kg. Step out and build.`);
+    }
     serviceCombatAtPad(local);
     const fuel = refuelShip(local, world.ship.position);
     if (fuel > 0) notify(world, `FUEL TRANSFERRED · +${fuel.toFixed(1)} kg`);
@@ -151,6 +158,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   let researchStaffed = false;
   for (const site of allColonies(world)) researchStaffed = stepColony(site, dt, researchStaffed);
   stepStorm(world);
+  stepCrystal(world);
   stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });

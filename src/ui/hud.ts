@@ -194,6 +194,7 @@ export class Hud {
       toggle: id => onColonyAction({ type: 'remote', id, operation: 'toggle', body: body() }),
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
       analyse: () => onColonyAction({ type: 'analyseSample' }),
+      study: () => onColonyAction({ type: 'studyCrystal' }),
       reserve: direction => onColonyAction({ type: 'adjustPolicy', field: 'energyReserve', direction, step: 50, body: body() }),
       demolish: id => onColonyAction({ type: 'remote', id, operation: 'demolish', body: body() }),
     });
@@ -226,6 +227,10 @@ export class Hud {
     this.status = this.root.querySelector('.status')!;
     this.mining = this.dock.cargo; this.colony = this.dock.colony;
     this.shipHost.className = 'ship-host';
+    this.shipHost.addEventListener('click', event => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-kit="load"]');
+      if (button && !button.disabled) this.onAction({ type: 'loadManifest', manifest: 'expedition' });
+    });
     this.shipExtras.className = 'ship-extras';
     this.mining.append(this.shipHost, this.shipExtras);
     this.dock.root.addEventListener('click', event => {
