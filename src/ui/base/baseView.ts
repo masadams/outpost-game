@@ -1,3 +1,6 @@
+import { BATTERY_CAPACITY } from '../../sim/colony';
+import { upgradeView, type UpgradeView } from './upgradeView';
+import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
 import { researchView, type ResearchRow } from './researchView';
 import { crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
@@ -90,6 +93,8 @@ export interface BuildingView {
   autoRecipe: boolean | null;
   /** Present for turrets: whether they fire on their own. */
   turret: { auto: boolean } | null;
+  /** The first in-place upgrade, or null once done. */
+  upgrade: UpgradeView | null;
   /** What demolishing gives back, in words, e.g. "3 alloy, 1 wire". */
   salvage: string;
   /** Why it cannot be demolished right now, or null. */
@@ -188,8 +193,9 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     const weapon = WEAPONS[b.kind];
     facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
   }
-  if (b.kind === 'battery') facts.push(['Stores', '200 kJ']);
-  if (b.kind === 'storage') facts.push(['Holds', '+200 kg ore, +100 each product']);
+  if (b.kind === 'battery') facts.push(['Stores', `${BATTERY_CAPACITY * capacityFactor(b)} kJ`]);
+  if (b.kind === 'storage') facts.push(['Holds', `+${200 * capacityFactor(b)} kg ore, +${100 * capacityFactor(b)} each product`]);
+  if (facilityLevel(b) > 1) facts.push(['Tier', `${facilityLevel(b)}`]);
   facts.push(['Condition', `${health.toFixed(0)}%`]);
   const why = whyStopped(b);
   return {
@@ -206,6 +212,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     canCycleRecipe: b.kind === 'refinery' && health > 0,
     autoRecipe: b.kind === 'refinery' ? b.schedule?.enabled === true : null,
     turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic } : null,
+    upgrade: w && health > 0 ? upgradeView(w, b) : null,
     salvage: salvageText(b),
     demolishBlocked: w ? demolishError(w, b) : null,
   };

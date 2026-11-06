@@ -301,3 +301,5 @@ The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s,
 
 - **Soundscapes by area.** Music root, chord and loudness, background ambience and the engine voice change with where you are: home ground, home sky, open space, Nacre ground and Nacre sky. Engines roar in air and thrum quietly in vacuum. All procedural; no sound files. (`src/audio/soundscape.ts`)
 - **Research comes from finds.** In day-cycle games research projects open only when a find is studied; each find also names the part it lets you fabricate.
+
+- **Upgrade in place is the default way to grow.** Tier 1→2 is available to new players once Infrastructure retrofits is researched; each building defines what a tier does, including buildings added later.

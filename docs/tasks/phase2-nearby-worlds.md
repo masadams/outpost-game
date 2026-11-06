@@ -29,6 +29,8 @@ Builds on what is already in the code but hidden in the focus set: surface depos
 
 | P2.11 | **Probes to any point.** Click empty space on the Map to mark a point (it stays fixed in space; belts and moons move on). Send a probe there: it scans a 700 m radius where it stops and reports any belt, derelict or site it finds, or empty space. Probes reach 6 km from the home planet. The mark also works as a navigation target for the ship. Save version 27. | Built |
 
+| P2.12 | **Upgrade in place.** Every building's Base card has "Upgrade in place": it says what changes (power x1.5, battery 1800 kJ, machines 1.25x as fast, relay 900 m), what it costs (the build cost again) and why not yet (research, repairs, materials, charge). Needs Infrastructure retrofits, which opens in Research after Applied materials and Bulk logistics. New buildings must define their tier effect. | Built |
+
 ## Research and upgrades (from the bible, section 8.2)
 A technology may need a discovery or sample, lab time, material or energy inputs, and fabrication equipment to turn the knowledge into a part. Knowledge is not manufacturing: you can record a discovery long before you can exploit it. The existing research tree and ship parts stay; the focus set brings them back a little at a time, each unlocked by something the player actually found.
 

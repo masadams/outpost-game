@@ -10,6 +10,7 @@ export interface BaseHandlers {
   select: (id: number) => void;
   toggle: (id: number) => void;
   recipe: (id: number) => void;
+  upgrade: (id: number) => void;
   auto: (id: number) => void;
   analyse: () => void;
   study: () => void;
@@ -122,7 +123,7 @@ function Overview({ view, open, analyse, study, research, fit, reserve, paused }
                     class="base-analyse"
                     data-research={row.action.kind}
                     disabled={row.action.reason !== null}
-                    onClick={click(() => (row.action!.kind === 'research' ? research(row.action!.tech) : fit(row.action!.upgrade)))}
+                    onClick={click(() => (row.action!.kind === 'research' ? research(row.action!.tech) : fit(row.action!.upgrade ?? '')))}
                   >
                     {row.action.label}
                   </button>
@@ -231,6 +232,15 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
           <button type="button" disabled={paused} onClick={click(() => on.recipe(b.id))}>
             Next recipe
           </button>
+        )}
+        {b.upgrade && (
+          <div class="base-upgrade" data-upgrade>
+            <button type="button" disabled={paused || b.upgrade.blocked !== null} onClick={click(() => on.upgrade(b.id))}>
+              Upgrade in place
+            </button>
+            <p class="base-note">{b.upgrade.effect}. Costs {b.upgrade.cost}.</p>
+            {b.upgrade.blocked && <p class="base-why">{b.upgrade.blocked}</p>}
+          </div>
         )}
         <Demolish
           key={b.id}
