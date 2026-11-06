@@ -1,0 +1,40 @@
+import { BELTS } from './explorationConfig';
+import type { BeltId } from './explorationConfig';
+import { destination } from './exploration';
+import { planetAt } from './celestial';
+import type { Vec } from './math';
+import type { WorldState } from './world';
+
+/**
+ * Where a belt's centre will be after `seconds`. Belts circle their body on near-circular orbits, so the string of rocks turns
+ * about the body at the rate its gravity sets, and the body itself moves on its exact orbit. Real missions aim at this point,
+ * not at where the target is now.
+ */
+export function beltAfter(w: WorldState, belt: BeltId, seconds: number): { position: Vec; velocity: Vec } {
+  const spec = BELTS[belt];
+  const now = destination(w, belt);
+  const bodyNow = planetAt(spec.around, w.system);
+  const bodyThen = planetAt(spec.around, { ...w.system, time: w.system.time + seconds });
+  const rel = { x: now.position.x - bodyNow.position.x, y: now.position.y - bodyNow.position.y };
+  const r = Math.hypot(rel.x, rel.y) || 1;
+  const rate = Math.sqrt(bodyNow.mu / r ** 3);
+  const turn = rate * seconds;
+  const cos = Math.cos(turn);
+  const sin = Math.sin(turn);
+  const rotated = { x: rel.x * cos - rel.y * sin, y: rel.x * sin + rel.y * cos };
+  return {
+    position: { x: bodyThen.position.x + rotated.x, y: bodyThen.position.y + rotated.y },
+    velocity: { x: bodyThen.velocity.x - rate * rotated.y, y: bodyThen.velocity.y + rate * rotated.x },
+  };
+}
+
+/** The point to aim at to reach a belt from `from` at `speed` m/s: solved by repeating until the arrival time settles. */
+export function interceptBelt(w: WorldState, belt: BeltId, from: Vec, speed: number): { position: Vec; seconds: number } {
+  let seconds = 0;
+  let position = destination(w, belt).position;
+  for (let i = 0; i < 6; i++) {
+    seconds = Math.hypot(position.x - from.x, position.y - from.y) / Math.max(1, speed);
+    position = beltAfter(w, belt, seconds).position;
+  }
+  return { position, seconds };
+}

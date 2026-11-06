@@ -23,18 +23,12 @@ describe('survey probes', () => {
     expect(probeError(w)).toBe('Already surveyed.');
   });
 
-  it.each(['frost', 'copper'] as const)('reaches the %s belt', belt => {
+  it.each(['frost', 'copper', 'rim'] as const)('reaches the %s belt', belt => {
     const w = ready();
     w.exploration.selected = belt;
     launchProbe(w);
     for (let i = 0; i < 6000 && w.exploration.probes.length > 0; i++) stepWorld(w, { thrust: false, turn: 0 }, 0.1);
     expect(w.exploration.surveyed).toContain(belt);
-  });
-
-  it('cannot reach the far rim', () => {
-    const w = ready();
-    w.exploration.selected = 'rim';
-    expect(probeError(w)).toBe('Too far for a probe. Fly there.');
   });
 
   it('launches, spends its parts, flies to the belt and returns the survey', () => {
@@ -94,7 +88,7 @@ describe('probes to any point', () => {
   it('will not send a probe beyond its reach', async () => {
     const { applyExplorationAction } = await import('../src/sim/exploration');
     const w = ready();
-    applyExplorationAction(w, { type: 'mark', point: { x: 20000, y: 0 } });
+    applyExplorationAction(w, { type: 'mark', point: { x: 28000, y: 0 } });
     expect(probeError(w)).toBe('Too far for a probe. Fly there.');
   });
 });
