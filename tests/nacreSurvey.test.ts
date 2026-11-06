@@ -34,3 +34,31 @@ describe('surveying Nacre', () => {
     expect(mapView(fresh).places.some(p => p.id === 'moon')).toBe(true);
   });
 });
+
+describe('the Nacre kit', () => {
+  it('appears once Nacre is surveyed, says what is missing, and loads when stocked', async () => {
+    const { shipPanelView } = await import('../src/ui/ship/shipView');
+    const { unloadFreight } = await import('../src/sim/freight');
+    const w = createWorld();
+    expect(shipPanelView(w).kit).toBeNull();
+    w.exploration.nacreSurveyed = true;
+    w.colony.products.alloy = 0;
+    w.colony.products.wire = 0;
+    w.colony.products.components = 0;
+    w.ship.state = 'landed';
+    const view = shipPanelView(w).kit!;
+    expect(view.load?.enabled).toBe(false);
+    expect(view.load?.reason).toMatch(/^Needs \d+ more/);
+    w.colony.products.alloy = 15;
+    w.colony.products.wire = 5;
+    w.colony.products.components = 5;
+    w.ship.state = 'landed';
+    const { manifestPlan, loadManifest } = await import('../src/sim/manifests');
+    expect(manifestPlan(w, 'expedition').error).toBeNull();
+    loadManifest(w, 'expedition');
+    expect(shipPanelView(w).kit?.text).toMatch(/aboard/);
+    expect(unloadFreight(w)).toBe(25);
+    expect(w.ship.freight.alloy).toBe(0);
+    expect(w.colony.products.alloy).toBe(15);
+  });
+});

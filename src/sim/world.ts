@@ -33,6 +33,7 @@ import { fireLaser, fracture, tractor, powerTractor, type Beam } from './mining'
 import { createShip, stepShip, type Controls, type Ship } from './physics';
 import { emptyInventory, inventoryMass, RESOURCES, type Inventory } from './resources';
 import { unloadCargo as unloadDepot } from './cargo';
+import { unloadFreight } from './freight';
 import { createAstronaut, stepAstronaut, SUIT, type Astronaut } from './astronaut';
 import { boardOrExit, interactSurface, nearbyStation } from './surface';
 import { createColony, applyColonyAction, stepColony, type Colony, type ColonyAction } from './colony';
@@ -144,6 +145,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     // Ore only goes to the depot from the pad, not from wherever the lander happens to sit.
     const atPad = Math.abs(wrap(localAngleAt(local, world.ship.position) - WORLD.padAngle)) * colonyPlanet(local).radius <= WORLD.padHalfWidth;
     if (atPad) unloadCargo(local);
+    if (atPad && colonyPlanet(local).id === 'moon') {
+      const kit = unloadFreight(local);
+      if (kit > 0) notify(world, `KIT UNLOADED · ${kit.toFixed(0)} kg. Step out and build.`);
+    }
     serviceCombatAtPad(local);
     const fuel = refuelShip(local, world.ship.position);
     if (fuel > 0) notify(world, `FUEL TRANSFERRED · +${fuel.toFixed(1)} kg`);

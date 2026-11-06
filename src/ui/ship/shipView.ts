@@ -8,6 +8,9 @@ import { STATIONS, distance, nearbyStation } from '../../sim/surface';
 import { colonyPlanet, sitePosition } from '../../sim/localWorld';
 import { nearbyBuilding } from '../../sim/colony';
 import { BLUEPRINTS } from '../../sim/colonyConfig';
+import { manifestPlan } from '../../sim/manifests';
+import { availableProduct } from '../../sim/colonyPolicy';
+import { PRODUCTS } from '../../sim/colonyConfig';
 import type { WorldState } from '../../sim/world';
 
 /** Everything the Ship panel shows, derived from the simulation. Pure: no DOM, no Phaser. */
@@ -20,6 +23,13 @@ export interface ShipPanelView {
   tools: string;
   depot: boolean;
   foot: FootView | null;
+  kit: KitView | null;
+}
+
+export interface KitView {
+  text: string;
+  /** Set when the Load button should show. */
+  load: { enabled: boolean; reason: string } | null;
 }
 
 export interface OreRow {
@@ -110,6 +120,28 @@ function foot(w: WorldState): FootView {
   return { status, places, action, note };
 }
 
+const PRODUCT_NAME = { alloy: 'alloy', wire: 'wire', components: 'components', fuel: 'fuel', oxygen: 'oxygen' } as const;
+
+/** The rig kit for the first trip to Nacre. Shown once the Observatory has surveyed it. */
+function kit(w: WorldState): KitView | null {
+  if (!w.exploration.nacreSurveyed) return null;
+  const aboard = PRODUCTS.some(p => w.ship.freight[p] > 0);
+  const onMoon = w.siteBody === 'moon';
+  if (aboard) {
+    const where = onMoon ? 'Land on the pad and press E to unload it.' : 'Fly to Nacre and land on its pad.';
+    return { text: `Rig kit aboard. ${where}`, load: null };
+  }
+  if (onMoon) return null;
+  const plan = manifestPlan(w, 'expedition');
+  const short = PRODUCTS.flatMap(p => (plan.missing[p] > 0 && availableProduct(w.colony, p) + 1e-9 < plan.missing[p]
+    ? [`${Math.ceil(plan.missing[p] - availableProduct(w.colony, p))} more ${PRODUCT_NAME[p as keyof typeof PRODUCT_NAME] ?? p}`]
+    : []));
+  const reason = plan.error === null ? 'Ready to load.'
+    : short.length ? `Needs ${short.join(', ')}`
+      : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
+  return { text: 'A rig and a solar array for Nacre: 15 alloy, 5 wire, 5 components.', load: { enabled: plan.error === null, reason } };
+}
+
 export function shipPanelView(w: WorldState): ShipPanelView {
   const cargo = cargoMass(w.ship);
   const stored = inventoryMass(w.depot);
@@ -132,5 +164,6 @@ export function shipPanelView(w: WorldState): ShipPanelView {
     tools: toolsLine(w, cargo),
     depot: w.depotOpen,
     foot: w.playerMode === 'astronaut' ? foot(w) : null,
+    kit: kit(w),
   };
 }

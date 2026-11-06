@@ -23,6 +23,19 @@ export function transferFreight(w: WorldState, product: Product, delta: number):
   notify(w, amount ? `${product.toUpperCase()} FREIGHT ${delta > 0 ? 'LOADED' : 'UNLOADED'} · ${amount.toFixed(1)} kg` : 'NO TRANSFER · CHECK STOCK, RESERVES AND CARGO ROOM');
 }
 
+/** Everything in the freight bay goes into the local stores. Done by pressing E on the pad. Returns kg moved. */
+export function unloadFreight(w: WorldState): number {
+  let moved = 0;
+  for (const p of PRODUCTS) {
+    const amount = w.ship.freight[p];
+    if (amount <= 0) continue;
+    w.ship.freight[p] = 0;
+    w.colony.products[p] += amount;
+    moved += amount;
+  }
+  return moved;
+}
+
 export function loadDepotOre(w: WorldState, resource: Resource): void {
   if (!RESOURCES.includes(resource)) return;
   const error = freightError(w); if (error) { notify(w, error); return; }

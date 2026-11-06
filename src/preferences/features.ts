@@ -97,6 +97,7 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   if (current === 'all') return true;
   // The one reserve a new player sees: power kept back for the turrets, set from Base.
   if (action.type === 'adjustPolicy' && action.field === 'energyReserve') return true;
+  if (action.type === 'loadManifest' && nacreOpen && action.manifest === 'expedition') return true;
   const feature = ACTION_FEATURES[action.type];
   if (feature) return featureVisible(feature, current);
   if (action.type === 'select' || action.type === 'queueBuild') return blueprintVisible(action.kind, current);
