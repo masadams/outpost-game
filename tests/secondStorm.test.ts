@@ -62,7 +62,7 @@ describe('refinery auto recipe', () => {
     w.depot.copper = 10;
     const b = completedBuilding(77, 'refinery', 0.2, w);
     b.schedule = { cursor: 0, enabled: true, targets: { alloy: 20, wire: 10, components: 5, water: 10, oxygen: 5 } };
-    w.colony.products.alloy = 25;
+    w.colony.products = { ...w.colony.products, alloy: 25, wire: 0, components: 5, water: 10, oxygen: 5 };
     expect(selectScheduledRecipe(w, b, 400)).toBe(true);
     expect(b.recipe).toBe(1);
   });
