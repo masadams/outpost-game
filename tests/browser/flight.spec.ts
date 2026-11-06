@@ -71,7 +71,7 @@ test('mines the starter deposit, collects ore and resets the complete sortie', a
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/'); const hud = page.locator('#hud');
   await expect(hud).toHaveAttribute('data-state', 'landed');
-  await expect(hud).toHaveAttribute('data-asteroids', '27');
+  await expect(hud).toHaveAttribute('data-asteroids', '31');
   await page.keyboard.down('w'); await page.keyboard.down('Space'); await page.keyboard.down('c');
   await expect(hud).toHaveAttribute('data-mining', 'active');
   await expect.poll(async () => Number(await hud.getAttribute('data-cargo')), { timeout: 15000 }).toBeGreaterThan(0);
@@ -86,7 +86,7 @@ test('mines the starter deposit, collects ore and resets the complete sortie', a
   expect(await hud.getAttribute('data-cargo')).toBe(cargo); expect(await hud.getAttribute('data-pickups')).toBe(pickups);
   await restart(page); await expect(hud).toHaveAttribute('data-state', 'landed');
   await expect(hud).toHaveAttribute('data-cargo', '0.00'); await expect(hud).toHaveAttribute('data-depot', '0.00');
-  await expect(hud).toHaveAttribute('data-asteroids', '27'); await expect(hud).toHaveAttribute('data-pickups', '0');
+  await expect(hud).toHaveAttribute('data-asteroids', '31'); await expect(hud).toHaveAttribute('data-pickups', '0');
   expect(errors).toEqual([]);
 });
 
