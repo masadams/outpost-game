@@ -18,7 +18,7 @@ export const SITE_INFO: Record<SiteId, { label: string; belt: BeltId; color: num
 };
 export const EXPLORATION = { range: 120, relativeSpeed: 8, dryMass: 80, rocksPerBelt: 4, siteRadius: 8 } as const;
 export interface Site extends Asteroid { key: SiteId; stock: Inventory; fuel: number }
-export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; nacreWatch: number; nacreSurveyed: boolean }
-export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, nacreWatch: 0, nacreSurveyed: false });
+export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; nacreWatch: number; nacreSurveyed: boolean; crystal: 'lying' | 'carried' | 'studied' }
+export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, nacreWatch: 0, nacreSurveyed: false, crystal: 'lying' });
 export type ExplorationAction = { type: 'navigate'; target: Destination } | { type: 'visitSite' };
 export const isExplorationAction = (a: { type: string }): a is ExplorationAction => a.type === 'navigate' || a.type === 'visitSite';

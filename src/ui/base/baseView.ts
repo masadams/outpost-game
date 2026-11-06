@@ -1,3 +1,4 @@
+import { crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
 import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
@@ -24,6 +25,13 @@ export interface BaseView {
   ship: ShipView;
   /** Present once a storm has been seen: pieces to collect and what analysing them gives. */
   storm: StormLabView | null;
+  crystal: CrystalLabView | null;
+}
+
+export interface CrystalLabView {
+  studied: boolean;
+  line: string;
+  blocked: string | null;
 }
 
 export interface StormLabView {
@@ -299,7 +307,17 @@ export function baseView(w: WorldState): BaseView {
     buildings,
     ship: shipView(w),
     storm: stormLab(w),
+    crystal: crystalLab(w),
   };
+}
+
+function crystalLab(w: WorldState): CrystalLabView | null {
+  const ex = (w.rootWorld ?? w).exploration;
+  if (ex.crystal === 'lying') return null;
+  const line = ex.crystal === 'studied'
+    ? 'Your lander has a bigger hold.'
+    : 'A crystal from Nacre. Studying it teaches a bigger hold for your lander.';
+  return { studied: ex.crystal === 'studied', line, blocked: crystalBlock(w.rootWorld ?? w) };
 }
 
 function stormLab(w: WorldState): StormLabView | null {

@@ -4,6 +4,7 @@ import { createShip, IDLE, stepShip, type Ship } from './physics';
 import { PRODUCTS, type ProductInventory } from './colonyConfig';
 import { availableProduct } from './colonyPolicy';
 import { cargoMass } from './shipMass';
+import { grantHold } from './crystal';
 import { cargoCapacity, fuelCapacity } from './shipStats';
 import { RESOURCES } from './resources';
 import { length } from './math';
@@ -118,6 +119,7 @@ export function printPilot(world: WorldState): boolean {
     fresh.angle = home.spin;
     fresh.fuel = fuelCapacity(fresh) * WRECK.newFuel;
     world.ship = fresh;
+    grantHold(world);
   }
   world.astronaut.health = 100;
   world.astronaut.oxygen = 180;

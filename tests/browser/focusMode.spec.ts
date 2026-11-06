@@ -7,7 +7,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test('new players see only the first-sortie systems', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.locator('#objectives')).toContainText('Objective · 0/5');
+  await expect(page.locator('#objectives')).toContainText('Objective · 0/7');
 
   await page.getByRole('button', { name: 'Ship', exact: true }).click();
   const dock = page.locator('#operations-dock');

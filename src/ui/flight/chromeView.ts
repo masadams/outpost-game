@@ -83,10 +83,11 @@ function moonWorkLine(w: WorldState): string {
   const onMoon = w.siteBody === 'moon';
   const freight = PRODUCTS.some(p => w.ship.freight[p] > 0);
   const kitBuilt = w.moon.colony.buildings.some(b => b.kind === 'miningRig');
-  if (kitBuilt) return 'Give the rig power from a solar array, then fill your hold from the depot.';
+  const crystal = w.exploration.crystal === 'lying' ? ' A blue crystal glows about 240 m east of the pad: take it home.' : '';
+  if (kitBuilt) return `Give the rig power from a solar array, then fill your hold.${crystal}`;
   if (freight && onMoon) return 'Land on the Nacre pad and press E to unload the kit.';
   if (freight) return 'Pick Nacre on the Map and fly there.';
-  if (onMoon) return 'Step out and build a solar array and a mining rig on a marked seam.';
+  if (onMoon) return 'Step out and build a solar array and a mining rig on a marked seam.' + (w.exploration.crystal === 'lying' ? ' A blue crystal glows east of the pad.' : '');
   return 'Open Ship and load the rig kit, then fly to Nacre.';
 }
 
