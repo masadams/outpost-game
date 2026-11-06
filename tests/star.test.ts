@@ -12,7 +12,8 @@ describe('the star as a body', () => {
     expect(Math.hypot(p.x, p.y)).toBeCloseTo(STAR.distance, 0);
     const home = planetAt('home', sys(300));
     const light = lightAtPoint(sys(300), home.position, null);
-    const expected = heading(sunAngle(300));
+    // The subsolar point is a surface angle; in the world it is turned by the planet's spin.
+    const expected = heading(sunAngle(300) + home.spin);
     expect(light.direction.x).toBeCloseTo(expected.x, 3);
     expect(light.direction.y).toBeCloseTo(expected.y, 3);
   });

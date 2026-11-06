@@ -1,4 +1,5 @@
 import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
+import { groundVelocity } from './celestial';
 import { resupplyArmament } from './combatSupply';
 import { applyDefenceAction } from './defence';
 import { isTurret } from './defenceConfig';
@@ -20,9 +21,9 @@ export function boardOrExit(world: WorldState): void {
   if (world.ship.state !== 'landed') { notify(world, 'LAND SAFELY BEFORE USING THE AIRLOCK'); return; }
   if (world.playerMode === 'ship') {
     const angle = localAngleAt(world, world.ship.position) + SUIT.exitOffset / colonyPlanet(world).radius;
-    const n = heading(angle);
+    const n = heading(angle + colonyPlanet(world).spin);
     world.astronaut.position = sitePosition(world, angle, SUIT.radius);
-    world.astronaut.velocity = { ...colonyPlanet(world).velocity }; world.astronaut.grounded = true;
+    world.astronaut.velocity = groundVelocity(colonyPlanet(world), world.astronaut.position); world.astronaut.grounded = true;
     world.astronaut.jumpHeld = false; world.playerMode = 'astronaut';
     notify(world, 'AIRLOCK OPEN · A/D WALK · SPACE JUMP');
   } else if (distance(world.astronaut.position, world.ship.position) <= SUIT.boardingRange) {

@@ -1,4 +1,4 @@
-import { planets, relative, STATIC_SYSTEM, type SystemFrame } from './celestial';
+import { groundVelocity, planets, relative, STATIC_SYSTEM, type SystemFrame } from './celestial';
 import { ATMOSPHERE, WORLD } from './config';
 import { clamp, length, type Vec } from './math';
 
@@ -18,9 +18,9 @@ export function airDensity(position: Vec, system = STATIC_SYSTEM): number {
   return ATMOSPHERE.surfaceDensity * Math.exp(-altitude / ATMOSPHERE.scaleHeight) * (1 - fade * fade * (3 - 2 * fade));
 }
 // Exact quadratic drag decay at the current density: it can remove energy but cannot reverse velocity.
-// Air translates with the nonrotating home surface. Cd*A is in square metres, mass in kg.
+// Air moves and turns with the home planet's surface. Cd*A is in square metres, mass in kg.
 export function applyAirDrag(position: Vec, velocity: Vec, mass: number, dragArea: number, dt: number, system: SystemFrame = STATIC_SYSTEM): Vec {
-  const air = planets(system)[0].velocity;
+  const air = groundVelocity(planets(system)[0], position);
   const v = { x: velocity.x - air.x, y: velocity.y - air.y };
   const factor = 1 / (1 + airDensity(position, system) * Math.max(0, dragArea) * length(v) * dt / (2 * mass));
   return { x: air.x + v.x * factor, y: air.y + v.y * factor };

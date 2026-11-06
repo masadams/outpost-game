@@ -26,6 +26,6 @@ function drawShieldsLocal(g: Phaser.GameObjects.Graphics, w: WorldState, accents
 }
 
 export function drawShields(g: Phaser.GameObjects.Graphics, world: WorldState, accents = true): void {
-  const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y);
+  const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y); g.rotateCanvas(p.spin);
   drawShieldsLocal(g, world, accents); g.restore();
 }

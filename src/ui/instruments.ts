@@ -1,4 +1,4 @@
-import { localAngleAt } from '../sim/localWorld';
+import { localAngleAt, upAngleAt } from '../sim/localWorld';
 import { fuelCapacity } from '../sim/shipStats';
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { habitatSource } from '../sim/habitats';
@@ -18,7 +18,7 @@ const neutral=():InstrumentSafety=>({level:'neutral',label:''});
 /** All values stay in the current body's surface frame. Scale changes never alter the numbers. */
 export function instrumentReadings(w:WorldState):InstrumentReading[]{
  const foot=w.playerMode==='astronaut',s=w.ship;
- const t=foot?telemetry({...w.astronaut,angle:localAngleAt(w,w.astronaut.position)},SUIT.radius,w.system):telemetry(s,WORLD.shipRadius,w.system);
+ const t=foot?telemetry({...w.astronaut,angle:upAngleAt(w,w.astronaut.position)},SUIT.radius,w.system):telemetry(s,WORLD.shipRadius,w.system);
  const safety=flightSafety(s,w.system),habitat=habitatSource(w);
  const reading=(key:InstrumentKey,label:string,short:string,value:number|string,unit:string,digits:number,min:number,max:number,primary=true):InstrumentReading=>({key,label,short,value,unit,digits,min,max,primary,state:foot?neutral():safety.instruments[key as FlightMetric]});
  const altitudeMax=[100,500,1200,5000,20000,100000,1e6,1e9].find(n=>n>=t.altitude)??1e9;
@@ -36,7 +36,7 @@ export function instrumentReadings(w:WorldState):InstrumentReading[]{
  rows.push(reserve,reading(foot?'suit':'hull',foot?'Suit integrity':'Hull integrity',foot?'SUIT':'HULL',foot?w.astronaut.health:s.hull,'%',0,0,100));
  if(foot)rows.push(reading('footing','Footing','FOOTING',w.astronaut.grounded?'GROUND':'AIR','',0,0,1,false));
  else{
-  const attitude=reading('tilt','Attitude to local up','ATT',t.tilt*180/Math.PI,'°',0,0,180);attitude.attitude=wrap(s.angle-localAngleAt(w,s.position))*180/Math.PI;
+  const attitude=reading('tilt','Attitude to local up','ATT',t.tilt*180/Math.PI,'°',0,0,180);attitude.attitude=wrap(s.angle-upAngleAt(w,s.position))*180/Math.PI;
   rows.splice(3,0,attitude);rows.push(reading('spin','Angular velocity','SPIN',s.angularVelocity,'rad/s',2,-2,2,false));
  }
  return rows;

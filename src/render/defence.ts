@@ -28,11 +28,11 @@ export function drawDefence(g: Phaser.GameObjects.Graphics, world: WorldState, p
   for (const site of allColonies(world)) for (const b of site.colony.buildings) {
     const at = turretPosition(b, site);
     if (isTurret(b.kind)) {
-      const n = heading(b.angle + (b.turret?.aim ?? 0)); g.lineStyle(3, b.health === 0 ? 0x624c4a : 0xffc085); g.lineBetween(at.x, at.y, at.x + n.x * 18, at.y + n.y * 18);
+      const n = heading(b.angle + colonyPlanet(site).spin + (b.turret?.aim ?? 0)); g.lineStyle(3, b.health === 0 ? 0x624c4a : 0xffc085); g.lineBetween(at.x, at.y, at.x + n.x * 18, at.y + n.y * 18);
       if (world.defence.controlled === b.id) { g.lineStyle(1 / zoom, 0x73f3cf); g.strokeCircle(at.x, at.y, 24 / zoom); }
     }
     if (buildingHealth(b) < 100) {
-      const n = heading(b.angle), tangent = { x: -n.y, y: n.x }, height = colonyPlanet(site).radius + 35;
+      const n = heading(b.angle + colonyPlanet(site).spin), tangent = { x: -n.y, y: n.x }, height = colonyPlanet(site).radius + 35;
       const x = colonyPlanet(site).position.x + n.x * height, y = colonyPlanet(site).position.y + n.y * height, half = 12 / zoom;
       g.lineStyle(3 / zoom, 0x643f3a); g.lineBetween(x - tangent.x * half, y - tangent.y * half, x + tangent.x * half, y + tangent.y * half);
       g.lineStyle(2 / zoom, 0xffa36f); g.lineBetween(x - tangent.x * half, y - tangent.y * half, x + tangent.x * half * (2 * buildingHealth(b) / 100 - 1), y + tangent.y * half * (2 * buildingHealth(b) / 100 - 1));

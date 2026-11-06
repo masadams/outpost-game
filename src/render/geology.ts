@@ -29,6 +29,6 @@ function drawGeologyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, zoo
 }
 
 export function drawGeology(g: Phaser.GameObjects.Graphics, world: WorldState, zoom: number): void {
-  const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y);
+  const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y); g.rotateCanvas(p.spin);
   drawGeologyLocal(g, world, zoom); g.restore();
 }

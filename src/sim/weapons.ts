@@ -1,5 +1,5 @@
 import { pursuitAcceleration } from './guidance';
-import { relative } from './celestial';
+import { groundVelocity, relative } from './celestial';
 import { allColonies, sitePosition, colonyPlanet } from './localWorld';
 import { STATIC_SYSTEM, clearTerrain, terrainHit } from './celestial';
 import { orderedBuildings } from './power';
@@ -27,7 +27,7 @@ function targetFor(world: WorldState, b: Building) {
   if (!isTurret(b.kind)) return undefined;
   const at = turretPosition(b, world), range = WEAPONS[b.kind].range;
   return world.defence.meteors.filter(m => Math.hypot(m.position.x - at.x, m.position.y - at.y) <= range && lineOfSight(at, m.position, world.system) &&
-    Math.abs(wrap(localAngle({ x: m.position.x - at.x, y: m.position.y - at.y }) - b.angle)) <= 1.4)
+    Math.abs(wrap(localAngle({ x: m.position.x - at.x, y: m.position.y - at.y }) - b.angle - colonyPlanet(world).spin)) <= 1.4)
     .sort((a, c) => length(relative(a.position, colonyPlanet(world))) - length(relative(c.position, colonyPlanet(world))) || a.id - c.id)[0];
 }
 function blast(world: WorldState, at: Vec, radius: number, damage: number): void {
@@ -46,7 +46,8 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     if (manual) state.aim = clamp(state.aim + turn * 1.1 * dt, -1.4, 1.4);
     else if (state.automatic && target) {
       const flight = spec.speed ? Math.min(6, Math.hypot(target.position.x - at.x, target.position.y - at.y) / spec.speed) : 0;
-      const desired = clamp(wrap(localAngle({ x: target.position.x + (target.velocity.x - colonyPlanet(site).velocity.x) * flight - at.x, y: target.position.y + (target.velocity.y - colonyPlanet(site).velocity.y) * flight - at.y }) - b.angle), -1.4, 1.4);
+      const frame = groundVelocity(colonyPlanet(site), at);
+      const desired = clamp(wrap(localAngle({ x: target.position.x + (target.velocity.x - frame.x) * flight - at.x, y: target.position.y + (target.velocity.y - frame.y) * flight - at.y }) - b.angle - colonyPlanet(site).spin), -1.4, 1.4);
       state.aim += clamp(wrap(desired - state.aim), -1.5 * dt, 1.5 * dt);
       if (Math.abs(desired - state.aim) > 0.06) continue;
     }
@@ -56,7 +57,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     if (site.colony.energy + 1e-9 < spec.energy) { b.status = 'no power'; continue; }
     if (site.colony.products.alloy + 1e-9 < spec.alloy || site.colony.products.components + 1e-9 < spec.components) { b.status = 'no feedstock'; continue; }
     if (b.kind !== 'laser' && defence.projectiles.length >= 32) continue;
-    const direction = heading(b.angle + state.aim);
+    const direction = heading(b.angle + colonyPlanet(site).spin + state.aim);
     site.colony.energy = Math.max(0, site.colony.energy - spec.energy);
     site.colony.products.alloy = Math.max(0, site.colony.products.alloy - spec.alloy);
     site.colony.products.components = Math.max(0, site.colony.products.components - spec.components);
@@ -73,8 +74,9 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
       defence.beams.push({ start: at, end: { x: at.x + direction.x * distance, y: at.y + direction.y * distance }, life: 0.13 });
     } else {
       const targetDistance = target ? Math.hypot(target.position.x - at.x, target.position.y - at.y) : 550;
-      defence.projectiles.push({ id: site.nextId++, kind: b.kind, position: at, frameVelocity: { ...colonyPlanet(site).velocity },
-        velocity: { x: colonyPlanet(site).velocity.x + direction.x * spec.speed, y: colonyPlanet(site).velocity.y + direction.y * spec.speed }, targetId: target?.id ?? null,
+      const frame = groundVelocity(colonyPlanet(site), at);
+      defence.projectiles.push({ id: site.nextId++, kind: b.kind, position: at, frameVelocity: { ...frame },
+        velocity: { x: frame.x + direction.x * spec.speed, y: frame.y + direction.y * spec.speed }, targetId: target?.id ?? null,
         life: b.kind === 'missile' ? 20 : 8, fuse: b.kind === 'flak' ? clamp(targetDistance / spec.speed, 0.3, 5) : 20 });
     }
   }

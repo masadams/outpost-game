@@ -1,5 +1,5 @@
 import { colonyWorld } from './localWorld';
-import { planetAt } from './celestial';
+import { groundVelocity, planetAt, surfaceAngle } from './celestial';
 import { cargoMass } from './shipMass';
 import { nearestPlanet, relative, surfacePosition } from './celestial';
 import { cannonStats, thermalStats } from './shipStats';
@@ -37,9 +37,9 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     stock.alloy -= RECOVERY.cost.alloy; stock.components -= RECOVERY.cost.components; c.lostCargo += cargoMass(s); c.recoveries++;
     releaseTow(world, true);
     c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
-    const recovered = createShip(), home = planetAt('home', world.system); recovered.ground = 'home'; recovered.position = surfacePosition(home, 0, WORLD.shipRadius); recovered.velocity = { ...home.velocity }; recovered.hull = RECOVERY.hull; recovered.fuel = Math.min(s.fuel, RECOVERY.fuel);
+    const recovered = createShip(), home = planetAt('home', world.system); recovered.ground = 'home'; recovered.position = surfacePosition(home, 0, WORLD.shipRadius); recovered.velocity = groundVelocity(home, recovered.position); recovered.angle = home.spin; recovered.hull = RECOVERY.hull; recovered.fuel = Math.min(s.fuel, RECOVERY.fuel);
     recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig; recovered.equipment = [...s.equipment];
-    world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { ...home.velocity }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
+    world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = groundVelocity(home, recovered.position); world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
     world.defence.controlled = null; world.colony.buildOpen = false; world.depotOpen = false;
     notify(world, `RECOVERED AT HOME · CARGO LOST · HULL ${RECOVERY.hull} · E USES SUPPLIES TO SERVICE`); return;
   }
@@ -50,7 +50,7 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     const n = heading(s.angle + (i === 0 ? 0 : i === 1 ? 0.55 : -0.55));
     let position = { x: s.position.x + n.x * (320 + i * 100), y: s.position.y + n.y * (320 + i * 100) };
     const planet = nearestPlanet(position, world.system);
-    if (length(relative(position, planet)) < planet.radius + 120) position = surfacePosition(planet, localAngle(relative(position, planet)), 120);
+    if (length(relative(position, planet)) < planet.radius + 120) position = surfacePosition(planet, surfaceAngle(planet, position), 120);
     c.enemies.push({ id: world.nextId++, position, velocity: { ...s.velocity }, angle: localAngle({ x: s.position.x - position.x, y: s.position.y - position.y }),
       hull: 48, fuel: 120, ammo: 24, energy: 50, cooldown: 0, windup: 0, retreatTime: 0, state: 'approach' });
   }

@@ -1,5 +1,5 @@
-import { nearestPlanet, type BodyId } from './celestial';
-import { colonyWorld, colonyPlanet, localAngleAt } from './localWorld';
+import { groundVelocity, nearestPlanet, type BodyId } from './celestial';
+import { colonyWorld, colonyPlanet, localAngleAt, upAngleAt } from './localWorld';
 import { SUIT } from './astronaut';
 import { habitatSource } from './habitats';
 import { orderError } from './construction';
@@ -28,7 +28,7 @@ export function crewMove(w:WorldState,manual:boolean):number {
  if(order.type==='build'&&!job){w.crewOrder=null;notify(w,'CREW WORK COMPLETE · NO ACTIVE ORDERS');return 0;}
  if(job){const error=orderError(site,job.kind,job.angle,job.id);if(error){w.crewOrder=null;notify(w,`CREW ORDER BLOCKED · ${error}`);return 0;}}
  const target=order.type==='walk'?order.angle:job!.angle,distance=wrap(target-localAngleAt(site,s.position))*p.radius;
- const n=heading(localAngleAt(site,s.position)),speed=(s.velocity.x-p.velocity.x)*-n.y+(s.velocity.y-p.velocity.y)*n.x;
+ const n=heading(upAngleAt(site,s.position)),ground=groundVelocity(p,s.position),speed=(s.velocity.x-ground.x)*-n.y+(s.velocity.y-ground.y)*n.x;
  const remaining=Math.max(0,Math.abs(distance)-(order.type==='build'?80:0));
  if(order.type==='walk'&&Math.abs(distance)<.5&&Math.abs(speed)<.5){w.crewOrder=null;notify(w,'CREW WAYPOINT REACHED');return 0;}
  return Math.sign(distance)*Math.min(1,remaining*2/SUIT.walkSpeed);

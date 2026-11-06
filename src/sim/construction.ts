@@ -1,4 +1,4 @@
-import { nearestPlanet } from './celestial';
+import { nearestPlanet, relativeVelocity } from './celestial';
 import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
 import { isShield, createShield } from './shieldConfig';
 import { orderedBuildings } from './power';
@@ -38,7 +38,7 @@ export function stepConstruction(w: WorldState, dt: number): void {
   if (!o) return;
   const error = orderError(w, o.kind, o.angle, o.id); if (error) { o.status = error; return; }
   const suit = w.astronaut;
-  if (nearestPlanet(suit.position, w.system).id !== colonyPlanet(w).id || w.playerMode !== 'astronaut' || !suit.grounded || suit.health <= 0 || length({ x: suit.velocity.x - colonyPlanet(w).velocity.x, y: suit.velocity.y - colonyPlanet(w).velocity.y }) > .5 || Math.abs(wrap(o.angle - localAngleAt(w, suit.position))) * colonyPlanet(w).radius > 96) { o.status = 'waiting for stationary crew within 96 m'; return; }
+  if (nearestPlanet(suit.position, w.system).id !== colonyPlanet(w).id || w.playerMode !== 'astronaut' || !suit.grounded || suit.health <= 0 || length(relativeVelocity(suit.velocity, colonyPlanet(w), suit.position)) > .5 || Math.abs(wrap(o.angle - localAngleAt(w, suit.position))) * colonyPlanet(w).radius > 96) { o.status = 'waiting for stationary crew within 96 m'; return; }
   o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt); o.status = 'crew building';
   if (o.progress + 1e-9 < CONSTRUCTION_SECONDS) return;
   w.colony.buildings.push(completedBuilding(allocateBuildingId(w), o.kind, o.angle, w));

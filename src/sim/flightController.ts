@@ -17,6 +17,6 @@ export function flightControl(s:Ship,target:{position:Vec;velocity:Vec},system:S
  const turn=Math.abs(drive)>.025?Math.sign(drive):0;
  program.duty=Math.min(1.99,program.duty+Math.min(1,(landing?Math.max(0,-ay)/Math.cos(desired):Math.hypot(ax,ay))/authority));
  let thrust=Math.abs(error)<.15&&program.duty>=1;if(thrust)program.duty-=1;
- if(landing){const p=nearestPlanet(target.position,system),r=relative(s.position,p),v=relativeVelocity(s.velocity,p);if(Math.hypot(r.x,r.y)-p.radius-WORLD.shipRadius<1.5&&Math.hypot(v.x,v.y)<4)thrust=false;}
+ if(landing){const p=nearestPlanet(target.position,system),r=relative(s.position,p),v=relativeVelocity(s.velocity,p,s.position);if(Math.hypot(r.x,r.y)-p.radius-WORLD.shipRadius<1.5&&Math.hypot(v.x,v.y)<4)thrust=false;}
  return {thrust,turn};
 }

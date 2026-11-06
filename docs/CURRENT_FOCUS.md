@@ -83,7 +83,7 @@ Also merged alongside it: right-click building menus with a confirmed Demolish (
 |---|---|---|
 | Playtest the storm and the first night | Balance: day length, storm timing against night, how hard the storm is with one turret | Needs hands-on play |
 | Sun S3 | Power forecast in Base: done. The moon already has its own day; eclipses still to do | Partly done |
-| Real planet rotation | Ground speed, launch assist, co-rotating air. A separate decision | Not decided |
+| Real planet rotation | Selene turns once a day, Nacre keeps one face to Selene, Helia stays fixed; ground speed, co-rotating air, ground-relative paths | Done |
 | Observatory and storm sounds | A rising scan when the Observatory starts, a two-note sighting, a calm chime when the storm is over | Done |
 
 ## Out of scope for now

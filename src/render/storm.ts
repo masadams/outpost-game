@@ -12,7 +12,7 @@ export function drawStormSamples(g: Phaser.GameObjects.Graphics, w: WorldState, 
   const planet = planetAt('home', w.system);
   const px = 1 / zoom;
   for (const sample of storm.samples) {
-    const up = heading(sample.angle);
+    const up = heading(sample.angle + planet.spin);
     const at = { x: planet.position.x + up.x * (planet.radius + 0.6), y: planet.position.y + up.y * (planet.radius + 0.6) };
     if (!visible(view, at, 60)) continue;
     const side = { x: -up.y, y: up.x };

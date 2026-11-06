@@ -39,7 +39,7 @@ export function observeObjectives(w: WorldState, paidHabitatSeconds = 0): void {
   const body=nearestPlanet(w.ship.position,w.system),position=relative(w.ship.position,body);
   if(w.ship.state==='crashed'||w.astronaut.health<=0)w.objectives.returnArmed=false;
   if(w.astronaut.health>0&&done.includes('moonWork')&&w.playerMode==='ship'&&w.ship.state==='flying'&&body.id==='moon')w.objectives.returnArmed=true;
-  const homePad=body.id==='home' && Math.abs(Math.hypot(position.x,position.y)-body.radius-WORLD.shipRadius)<.2 && Math.abs(Math.atan2(position.x,-position.y))*body.radius<=WORLD.padHalfWidth;
+  const homePad=body.id==='home' && Math.abs(Math.hypot(position.x,position.y)-body.radius-WORLD.shipRadius)<.2 && Math.abs(Math.atan2(Math.sin(Math.atan2(position.x,-position.y)-body.spin),Math.cos(Math.atan2(position.x,-position.y)-body.spin)))*body.radius<=WORLD.padHalfWidth;
   add('return', w.objectives.returnArmed && done.includes('moonWork') && w.playerMode === 'ship' && w.ship.state === 'landed' && homePad);
 }
 export function validObjectives(value: ObjectiveState): boolean {

@@ -1,5 +1,4 @@
-import { nearestPlanet, relative } from '../../sim/celestial';
-import { localAngle } from '../../sim/math';
+import { nearestPlanet, surfaceAngle } from '../../sim/celestial';
 import { sunClock, type DayPhase } from '../../sim/sun';
 import { lightAt } from '../../sim/star';
 import type { WorldState } from '../../sim/world';
@@ -22,7 +21,7 @@ export function dayView(w: WorldState): DayView | null {
   if (!root.system.sun) return null;
   const position = w.playerMode === 'astronaut' ? w.astronaut.position : w.ship.position;
   const planet = nearestPlanet(position, w.system);
-  const angle = localAngle(relative(position, planet));
+  const angle = surfaceAngle(planet, position);
   const clock = sunClock(w.system, angle);
   const light = lightAt(w.system, planet.id, angle);
   if (light.eclipse > 0.15 && light.elevation > 0) {

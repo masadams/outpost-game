@@ -21,7 +21,7 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
   if (!draft && colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world), working: false });
   for (const entry of entries) {
     const blueprint = BLUEPRINTS[entry.kind], n = heading(entry.angle), tangent = { x: -n.y, y: n.x };
-    const body=colonyPlanet(world);if(!visible(view,{x:body.position.x+n.x*body.radius,y:body.position.y+n.y*body.radius},isHabitat(entry.kind)?HABITATS[entry.kind].halfSpan+HABITATS[entry.kind].height:50))continue;
+    const body=colonyPlanet(world),seen=heading(entry.angle+body.spin);if(!visible(view,{x:body.position.x+seen.x*body.radius,y:body.position.y+seen.y*body.radius},isHabitat(entry.kind)?HABITATS[entry.kind].halfSpan+HABITATS[entry.kind].height:50))continue;
     const p = (x: number, height: number) => new Phaser.Geom.Point(n.x * (colonyPlanet(world).radius + height) + tangent.x * x, n.y * (colonyPlanet(world).radius + height) + tangent.y * x);
     const color = entry.ghost ? entry.active ? 0x73f3cf : 0xff8f75 : blueprint.color;
     if (isHabitat(entry.kind)) {
@@ -70,6 +70,6 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
 }
 
 export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true, time=0, animate=false): void {
-  const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y);
+  const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y); g.rotateCanvas(p.spin);
   drawColonyLocal(g, world, selected, draft, view, detail, time, animate); g.restore();
 }

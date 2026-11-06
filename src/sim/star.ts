@@ -37,7 +37,8 @@ export function sunAngle(time: number): number {
 
 /** Where the star is in the world frame. */
 export function starPosition(system: SystemFrame): Vec {
-  const n = heading(sunAngle(system.time));
+  // With the day cycle on the planets turn and the star stays put. Without it nothing turns, so it moves round instead.
+  const n = heading(system.sun ? SUN.startAngle : sunAngle(system.time));
   return { x: n.x * STAR.distance, y: n.y * STAR.distance };
 }
 
@@ -92,5 +93,5 @@ export function lightAtPoint(system: SystemFrame, point: Vec, up: Vec | null, ig
 /** The light on a planet's surface at a surface angle (and height). The planet itself blocks the star below the horizon, through `elevation`. */
 export function lightAt(system: SystemFrame, body: BodyId, angle: number, height = 1): Light {
   const planet = planetAt(body, system);
-  return lightAtPoint(system, surfacePosition(planet, angle, height), heading(angle), body);
+  return lightAtPoint(system, surfacePosition(planet, angle, height), heading(angle + planet.spin), body);
 }

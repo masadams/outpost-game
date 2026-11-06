@@ -103,7 +103,7 @@ export class FlightCamera {
     // Smoothly blend the local frame into the fixed world frame, including at the angle seam.
     const targetAngle = !this.rotate || this.reducedMotion ? 0 : this.angle + wrap(localAngle(relative(ship.position, nearestPlanet(ship.position, system))) - this.angle) * (1 - smooth) + wrap(-this.angle) * smooth;
     // Look ahead in the direction of travel (relative to the ground), so there is more room in front than behind.
-    const motion = ship.velocity ? relativeVelocity(ship.velocity, planet) : { x: 0, y: 0 };
+    const motion = ship.velocity ? relativeVelocity(ship.velocity, planet, ship.position) : { x: 0, y: 0 };
     const maxLead = (LOOK_AHEAD_MAX * this.viewportHeight) / Math.max(this.zoom, 1e-6);
     const speed = Math.hypot(motion.x, motion.y);
     const reach = Math.min(maxLead, speed * LOOK_AHEAD_SECONDS);

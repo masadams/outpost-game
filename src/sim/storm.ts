@@ -1,4 +1,4 @@
-import { planetAt, relative, type SystemFrame } from './celestial';
+import { planetAt, relative, surfaceAngle, type SystemFrame } from './celestial';
 import { WORLD } from './config';
 import { localAngle, heading, wrap, type Vec } from './math';
 import { predictMeteor } from './meteor';
@@ -12,7 +12,7 @@ import type { WorldState } from './world';
 /** The state a body has when it is handed to the detailed meteor physics. */
 function entryMeteor(id: number, angle: number, tangential: number, system: SystemFrame, radius: number, mass: number): Meteor {
   const planet = planetAt('home', system);
-  const up = heading(angle);
+  const up = heading(angle + planet.spin);
   const side = { x: -up.y, y: up.x };
   return {
     id,
@@ -30,14 +30,14 @@ function landingAngle(meteor: Meteor, system: SystemFrame): number | null {
   const result = predictMeteor(meteor, 300, system);
   if (!result.impact) return null;
   const planet = planetAt('home', { ...system, time: system.time + result.seconds });
-  return localAngle(relative(result.impact, planet));
+  return surfaceAngle(planet, result.impact);
 }
 
 function landing(meteor: Meteor, system: SystemFrame): { angle: number; time: number } | null {
   const result = predictMeteor(meteor, 300, system);
   if (!result.impact) return null;
   const planet = planetAt('home', { ...system, time: system.time + result.seconds });
-  return { angle: localAngle(relative(result.impact, planet)), time: system.time + result.seconds };
+  return { angle: surfaceAngle(planet, result.impact), time: system.time + result.seconds };
 }
 
 /** Adjust the sideways speed until the body comes down where it is meant to. */
@@ -152,7 +152,7 @@ function collectSamples(world: WorldState): void {
   const planet = planetAt('home', world.system);
   const here = relative(world.astronaut.position, planet);
   if (Math.hypot(here.x, here.y) > planet.radius + 40) return;
-  const angle = localAngle(here);
+  const angle = surfaceAngle(planet, world.astronaut.position);
   const near = storm.samples.filter(s => Math.abs(wrap(s.angle - angle)) * planet.radius <= PICKUP_REACH);
   if (near.length === 0) return;
   storm.samples = storm.samples.filter(s => !near.includes(s));

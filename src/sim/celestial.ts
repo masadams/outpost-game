@@ -1,5 +1,5 @@
-import { ATMOSPHERE, WORLD } from './config';
-import { heading, length, localAngle, type Vec } from './math';
+import { ATMOSPHERE, DAY_LENGTH, WORLD } from './config';
+import { heading, length, localAngle, wrap, type Vec } from './math';
 export type BodyId = 'home' | 'moon';
 /** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
 export interface SystemFrame { time: number; binary: boolean; sun?: boolean }
@@ -10,22 +10,45 @@ export const CELESTIAL = {
 } as const;
 export const SEPARATION = 9500;
 export const ORBIT_RATE = Math.sqrt((CELESTIAL.home.mu + CELESTIAL.moon.mu) / SEPARATION ** 3);
-export interface Planet { id: BodyId; label: string; radius: number; mu: number; atmosphere: number; position: Vec; velocity: Vec }
+/**
+ * `spin` is how far the planet has turned (radians, added to surface angles to get world angles) and `spinRate` how fast it turns.
+ * Planets turn only when the day cycle is on: Selene once per day, Nacre once per orbit so the same face looks at Selene.
+ */
+export interface Planet { id: BodyId; label: string; radius: number; mu: number; atmosphere: number; position: Vec; velocity: Vec; spin: number; spinRate: number }
+/** Selene turns so its star crosses the sky from the pad's left to its right, once per day. */
+export const HOME_SPIN_RATE = -2 * Math.PI / DAY_LENGTH;
+function spinOf(id: BodyId, system: SystemFrame): { spin: number; spinRate: number } {
+  if (!system.sun) return { spin: 0, spinRate: 0 };
+  const rate = id === 'home' ? HOME_SPIN_RATE : system.binary ? ORBIT_RATE : 0;
+  return { spin: rate * system.time, spinRate: rate };
+}
 export function planetAt(id: BodyId, system = STATIC_SYSTEM): Planet {
   const spec = CELESTIAL[id];
-  if (!system.binary) return { ...spec, id, position: { x: id === 'home' ? 0 : SEPARATION, y: 0 }, velocity: { x: 0, y: 0 } };
+  const turn = spinOf(id, system);
+  if (!system.binary) return { ...spec, id, ...turn, position: { x: id === 'home' ? 0 : SEPARATION, y: 0 }, velocity: { x: 0, y: 0 } };
   const offset = SEPARATION * CELESTIAL.moon.mu / (CELESTIAL.home.mu + CELESTIAL.moon.mu);
   const arm = id === 'home' ? -offset : SEPARATION - offset, phase = system.time * ORBIT_RATE;
-  return { ...spec, id, position: { x: offset + arm * Math.cos(phase), y: arm * Math.sin(phase) }, velocity: { x: -arm * ORBIT_RATE * Math.sin(phase), y: arm * ORBIT_RATE * Math.cos(phase) } };
+  return { ...spec, id, ...turn, position: { x: offset + arm * Math.cos(phase), y: arm * Math.sin(phase) }, velocity: { x: -arm * ORBIT_RATE * Math.sin(phase), y: arm * ORBIT_RATE * Math.cos(phase) } };
 }
 export const planets = (system = STATIC_SYSTEM): Planet[] => (system.binary ? ['home', 'moon'] as const : ['home'] as const).map(id => planetAt(id, system));
 export const relative = (position: Vec, planet: Planet): Vec => ({ x: position.x - planet.position.x, y: position.y - planet.position.y });
-export const relativeVelocity = (velocity: Vec, planet: Planet): Vec => ({ x: velocity.x - planet.velocity.x, y: velocity.y - planet.velocity.y });
+/** The velocity of the ground (and the air, which turns with it) at a point, from the planet's motion and its turning. */
+export function groundVelocity(planet: Planet, position: Vec): Vec {
+  const r = relative(position, planet);
+  return { x: planet.velocity.x - planet.spinRate * r.y, y: planet.velocity.y + planet.spinRate * r.x };
+}
+/** Velocity relative to the planet: to the ground under a point when `position` is given, otherwise to the planet's centre. */
+export const relativeVelocity = (velocity: Vec, planet: Planet, position?: Vec): Vec => {
+  const frame = position ? groundVelocity(planet, position) : planet.velocity;
+  return { x: velocity.x - frame.x, y: velocity.y - frame.y };
+};
+/** Where on the planet's surface a point is, as a surface angle (fixed to the ground, turning with the planet). */
+export const surfaceAngle = (planet: Planet, position: Vec): number => wrap(localAngle(relative(position, planet)) - planet.spin);
 export function nearestPlanet(position: Vec, system = STATIC_SYSTEM): Planet {
   return planets(system).sort((a, b) => length(relative(position, a)) - a.radius - (length(relative(position, b)) - b.radius))[0];
 }
 export function surfacePosition(planet: Planet, angle: number, height = 0): Vec {
-  const n = heading(angle); return { x: planet.position.x + n.x * (planet.radius + height), y: planet.position.y + n.y * (planet.radius + height) };
+  const n = heading(angle + planet.spin); return { x: planet.position.x + n.x * (planet.radius + height), y: planet.position.y + n.y * (planet.radius + height) };
 }
 // Kept independent of physics.ts so terrain sweeps can be shared by every actor without a cycle.
 export function circleHit(start: Vec, end: Vec, radius: number): number | null {
@@ -35,6 +58,7 @@ export function circleHit(start: Vec, end: Vec, radius: number): number | null {
   if (a === 0 || d < 0) return null;
   const t = (-b - Math.sqrt(d)) / (2 * a); return t >= 0 && t <= 1 ? t : null;
 }
+/** `angle` is a surface angle on `planet` (the planet as it is at the end of the step). */
 export interface TerrainContact { t: number; planet: Planet; normal: Vec; angle: number }
 export function terrainHit(start: Vec, end: Vec, radius: number, system = STATIC_SYSTEM, dt = 0): TerrainContact | null {
   let best: TerrainContact | null = null;
@@ -42,9 +66,20 @@ export function terrainHit(start: Vec, end: Vec, radius: number, system = STATIC
     const next = planetAt(planet.id, { ...system, time: system.time + dt });
     const a = relative(start, planet), b = relative(end, next), t = circleHit(a, b, planet.radius + radius);
     if (t === null || best && t >= best.t) continue;
-    const angle = localAngle({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-    best = { t, planet: next, normal: heading(angle), angle };
+    const world = localAngle({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+    // `angle` is on the ground (it turns with the planet); the normal is in the world.
+    best = { t, planet: next, normal: heading(world), angle: wrap(world - next.spin) };
   }
   return best;
 }
 export const clearTerrain = (a: Vec, b: Vec, system = STATIC_SYSTEM): boolean => terrainHit(a, b, 0, system) === null;
+
+/** Turns a point reached `seconds` from now back by however far the planet's ground turns meanwhile: where it falls on the ground as it is now. */
+export function onGroundNow(body: BodyId, system: SystemFrame, point: Vec, seconds: number): Vec {
+  const now = planetAt(body, system);
+  if (!now.spinRate) return { ...point };
+  const later = planetAt(body, { ...system, time: system.time + seconds });
+  const a = -(later.spin - now.spin), c = Math.cos(a), s = Math.sin(a);
+  const v = { x: point.x - later.position.x, y: point.y - later.position.y };
+  return { x: now.position.x + v.x * c - v.y * s, y: now.position.y + v.x * s + v.y * c };
+}

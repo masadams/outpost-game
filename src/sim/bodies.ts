@@ -1,4 +1,4 @@
-import { STATIC_SYSTEM, terrainHit, surfacePosition, relativeVelocity, type SystemFrame } from './celestial';
+import { STATIC_SYSTEM, terrainHit, surfacePosition, relativeVelocity, groundVelocity, type SystemFrame } from './celestial';
 import { damageFactor } from './shipStats';
 import { shipMass } from './shipMass';
 import { WORLD } from './config';
@@ -19,8 +19,8 @@ export function moveBody(body: Body, dt: number, system: SystemFrame = STATIC_SY
   const hit = terrainHit(body.position, end, body.radius, system, dt);
   if (!hit) { body.position = end; return; }
   body.position = surfacePosition(hit.planet, hit.angle, body.radius + .001);
-  const v = relativeVelocity(body.velocity, hit.planet), inward = dot(v, hit.normal);
-  if (inward < 0) body.velocity = { x: hit.planet.velocity.x + v.x * .8 - hit.normal.x * inward * 1.05, y: hit.planet.velocity.y + v.y * .8 - hit.normal.y * inward * 1.05 };
+  const v = relativeVelocity(body.velocity, hit.planet, body.position), inward = dot(v, hit.normal), ground = groundVelocity(hit.planet, body.position);
+  if (inward < 0) body.velocity = { x: ground.x + v.x * .8 - hit.normal.x * inward * 1.05, y: ground.y + v.y * .8 - hit.normal.y * inward * 1.05 };
 
 }
 

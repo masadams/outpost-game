@@ -1,4 +1,4 @@
-import { planetAt, relative, type Planet } from './celestial';
+import { planetAt, relative, surfaceAngle, type Planet } from './celestial';
 import { colonyPlanet } from './localWorld';
 import { orderedBuildings, powerFraction } from './power';
 import { HABITAT, HABITATS, isHabitat } from './habitatConfig';
@@ -11,7 +11,7 @@ import type { WorldState } from './world';
 
 export function habitatContains(building: Building, position: { x: number; y: number }, planet: Planet = planetAt('home')): boolean {
   if (!isHabitat(building.kind)) return false;
-  const spec = HABITATS[building.kind], arc = Math.abs(wrap(localAngle(relative(position, planet)) - building.angle)) * planet.radius;
+  const spec = HABITATS[building.kind], arc = Math.abs(wrap(surfaceAngle(planet, position) - building.angle)) * planet.radius;
   if (arc + SUIT.radius > spec.halfSpan + 1e-7) return false;
   // Conservative bounding box keeps the entire suit below even the lower, outer roof edge.
   const ceiling = spec.height * Math.sqrt(Math.max(0, 1 - ((arc + SUIT.radius) / spec.halfSpan) ** 2));

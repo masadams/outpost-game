@@ -48,7 +48,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
     if (new Set(facilities.map(b => b?.id)).size !== facilities.length) return false;
   }
   if (world.ship.ground && world.ship.state !== 'flying') {
-    const p = planetAt(world.ship.ground, world.system), r = relative(world.ship.position, p), v = relativeVelocity(world.ship.velocity, p);
+    const p = planetAt(world.ship.ground, world.system), r = relative(world.ship.position, p), v = relativeVelocity(world.ship.velocity, p, world.ship.position);
     if (Math.abs(Math.hypot(r.x, r.y) - p.radius - WORLD.shipRadius) > .2 || Math.hypot(v.x, v.y) > .5) return false;
   }
   if (remote && (!object(world.moon) || JSON.stringify(world.moon.colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, 'moon'), false))) return false;

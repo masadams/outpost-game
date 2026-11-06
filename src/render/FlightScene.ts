@@ -11,7 +11,7 @@ import { drawShip } from './ship';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
-import { nearestPlanet, planetAt, planets, relative } from '../sim/celestial';
+import { nearestPlanet, onGroundNow, planetAt, planets, relative, surfaceAngle } from '../sim/celestial';
 import { localAngle } from '../sim/math';
 import { flightSafety } from '../sim/flightSafety';
 import { drawShields } from './shields';
@@ -156,7 +156,7 @@ export class FlightScene extends Phaser.Scene {
         this.hud.closeContextMenu();
         this.hud.clearBuildPointer();
         if(this.hud.pointerBuilding){applyColonyAction(local,{type:'buildMode',open:false});return;}
-        if(!this.halted){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:Math.atan2(at.x-p.position.x,-(at.y-p.position.y)),body:p.id});}}
+        if(!this.halted){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:surfaceAngle(p,at),body:p.id});}}
         return;
       }
       if(this.hud.pointerBuilding){
@@ -345,7 +345,7 @@ export class FlightScene extends Phaser.Scene {
     }
     this.threatTime += delta / 1000;
     if ((!this.halted && this.threatTime >= 0.5) || this.threats.length !== Math.min(12, this.simulation.defence.meteors.length)) {
-      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => predictMeteor(m, 120, this.simulation.system)); this.threatTime = 0;
+      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => this.onGround(predictMeteor(m, 120, this.simulation.system))); this.threatTime = 0;
     }
     this.flightTools.update(this.ship, this.prediction, this.simulation.towing.targetId !== null, this.simulation.system);
     this.audio.update(activeWorld(this.simulation), this.halted, delta / 1000);
@@ -384,7 +384,7 @@ export class FlightScene extends Phaser.Scene {
     if (!system.sun) return;
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
     const planet = nearestPlanet(eye, system);
-    const here = localAngle(relative(eye, planet));
+    const here = surfaceAngle(planet, eye);
     const light = lightAt(system, planet.id, here, Math.max(1, Math.hypot(eye.x - planet.position.x, eye.y - planet.position.y) - planet.radius));
     const height01 = light.elevation;
     if (height01 < -0.25) return;
@@ -402,6 +402,15 @@ export class FlightScene extends Phaser.Scene {
     sky.fillCircle(x, y, 11);
     void daylight;
   }
+  /** Threat paths and impact markers drawn on the ground as it is now, so they point at the right place on a turning planet. */
+  private onGround(p: ThreatPrediction): ThreatPrediction {
+    const system = this.simulation.system;
+    return {
+      ...p,
+      points: p.points.map((point, i) => onGroundNow('home', system, point, Math.min(i * 0.5, p.seconds))),
+      impact: p.impact ? onGroundNow('home', system, p.impact, p.seconds) : null,
+    };
+  }
   private draw(): void {
     const { width, height } = this.scale;
     const g = this.art; g.clear(); this.map.clear();
@@ -418,7 +427,7 @@ export class FlightScene extends Phaser.Scene {
     // Light: the sky, the ground and the stars follow the sun where the player is.
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
     const eyePlanet = nearestPlanet(eye, this.simulation.system);
-    const daylight = daylightAt(this.simulation.system, localAngle(relative(eye, eyePlanet)), eyePlanet.id);
+    const daylight = daylightAt(this.simulation.system, surfaceAngle(eyePlanet, eye), eyePlanet.id);
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
@@ -435,7 +444,7 @@ export class FlightScene extends Phaser.Scene {
     const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;
     for (const body of planets(this.simulation.system)) {
       g.lineStyle(.6,body.id==='home'?0xa9d2c7:0xd0c4dd,.7);g.strokeCircle(body.position.x,body.position.y,body.radius);
-      g.save(); g.translateCanvas(body.position.x, body.position.y);
+      g.save(); g.translateCanvas(body.position.x, body.position.y); g.rotateCanvas(body.spin);
     // Landing pad: a flat plate just under the surface, so the feet stand on its top edge.
     g.fillStyle(0x3fbfa8); g.fillRect(-30, -body.radius, 60, 1.8);
     g.lineStyle(0.5, 0xb7fff0); g.lineBetween(-30, -body.radius, 30, -body.radius);

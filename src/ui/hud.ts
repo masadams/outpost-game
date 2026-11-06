@@ -23,7 +23,7 @@ import type { Vec } from '../sim/math';
 import { Objectives } from './Objectives';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { freightPanel } from './freight';
-import { allColonies, colonyPlanet, localAngleAt } from '../sim/localWorld';
+import { allColonies, colonyPlanet, localAngleAt, upAngleAt } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
 import { isShield } from '../sim/shieldConfig';
 import { shieldActive } from '../sim/shields';
@@ -84,7 +84,7 @@ export class Hud {
   /** Build mode is a world flag; the mouse places sites whenever it is on. */
   get pointerBuilding():boolean{return !!this.latestWorld?.colony.buildOpen;}
   get buildPointer():BuildDraft|null{return this.pointerDraft;}
-  setBuildPointer(w:WorldState,at:Vec,zoom:number):void{if(!this.pointerBuilding){this.pointerDraft=null;return;}const body=colonyPlanet(w),x=at.x-body.position.x,y=at.y-body.position.y,angle=Math.atan2(x,-y),inputError=Math.abs(Math.hypot(x,y)-body.radius)>Math.max(60,30/zoom)?'Point near this world’s surface':null,error=inputError??orderError(w,w.colony.selected,angle);this.pointerDraft={kind:w.colony.selected,angle,body:body.id,valid:!error,error,inputError};}
+  setBuildPointer(w:WorldState,at:Vec,zoom:number):void{if(!this.pointerBuilding){this.pointerDraft=null;return;}const body=colonyPlanet(w),x=at.x-body.position.x,y=at.y-body.position.y,angle=Math.atan2(Math.sin(Math.atan2(x,-y)-body.spin),Math.cos(Math.atan2(x,-y)-body.spin)),inputError=Math.abs(Math.hypot(x,y)-body.radius)>Math.max(60,30/zoom)?'Point near this world’s surface':null,error=inputError??orderError(w,w.colony.selected,angle);this.pointerDraft={kind:w.colony.selected,angle,body:body.id,valid:!error,error,inputError};}
   showBuildTip(x:number,y:number):void{
     const d=this.pointerDraft,w=this.latestWorld;
     if(!d||!w||!this.pointerBuilding){this.buildBar.tip(null);return;}
@@ -254,7 +254,7 @@ export class Hud {
     this.objectives.update(world,this.preferences);this.root.dataset.objectives=world.objectives.completed.join(',');
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
-    const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
+    const t = onFoot ? telemetry({ ...world.astronaut, angle: upAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
     const region = flightRegion(onFoot ? world.astronaut.position : ship.position, world.system);
     this.instruments.update(world);
     const safety = flightSafety(ship, world.system), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;
