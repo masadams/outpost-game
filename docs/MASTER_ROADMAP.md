@@ -381,3 +381,10 @@ These are requirements for future implementation reviews, not claims of new test
 8. **Current-save contract:** Persist worker identity/location/occupancy, jobs/escrow, supplies, thermal state, terrain/support, observations and in-transit deliveries as each ships. Development format resets are allowed; legacy migrations remain deferred until near completion.
 
 For each implementation PR: name the smallest story, current baseline, decisions settled/deferred, gate evidence, invariants, normal-input playtest and targeted regressions actually run. Do not tick completion solely because prose or an isolated subsystem exists. No code work or merge is authorized by this planning change.
+
+
+## Queued ideas from playtests (2026-11-06)
+Not scheduled yet; each needs its own small spec before work starts.
+- **Pad upgrades: catch arms.** A pad upgrade that catches the lander (launch-tower style), widening the touchdown limits further. Today the pad is already more forgiving than open ground (6 m/s descent and 4 m/s drift on the pad, 3.5 and 2 elsewhere).
+- **AI helpers.** Printed robot crew and assisted flight that take on routine jobs (hauling, salvage runs, repairs), built on the earned-automation work in 5B and the printed-pilot story.
+- **Wreck variety.** Different wreck damage states and art; a lost pilot leaving a recoverable body or suit.

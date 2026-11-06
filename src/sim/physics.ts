@@ -39,10 +39,16 @@ export function telemetry(ship: Pick<Ship, 'position' | 'velocity' | 'angle'>, b
     speed: length(velocity), tilt: Math.abs(wrap(ship.angle - localAngle(position))) };
 }
 export interface Contact { onPad: boolean; radial: number; tangential: number; tilt: number; spin: number }
+export interface LandingLimits { radial: number; tangential: number; tilt: number; spin: number }
+/** A prepared pad is forgiving. */
+export const PAD_LIMITS: LandingLimits = { radial: WORLD.safeRadialSpeed, tangential: WORLD.safeTangentialSpeed, tilt: WORLD.safeTilt, spin: WORLD.safeAngularSpeed };
+/** Anywhere else you can land too, but rough ground needs a gentler touchdown. */
+export const GROUND_LIMITS: LandingLimits = { radial: 3.5, tangential: 2, tilt: Math.PI / 18, spin: WORLD.safeAngularSpeed };
+export const landingLimits = (onPad: boolean): LandingLimits => (onPad ? PAD_LIMITS : GROUND_LIMITS);
 export function safeLanding(contact: Contact): boolean {
-  return contact.onPad && Math.abs(contact.radial) <= WORLD.safeRadialSpeed &&
-    Math.abs(contact.tangential) <= WORLD.safeTangentialSpeed &&
-    Math.abs(contact.tilt) <= WORLD.safeTilt && Math.abs(contact.spin) <= WORLD.safeAngularSpeed;
+  const l = landingLimits(contact.onPad);
+  return Math.abs(contact.radial) <= l.radial && Math.abs(contact.tangential) <= l.tangential &&
+    Math.abs(contact.tilt) <= l.tilt && Math.abs(contact.spin) <= l.spin;
 }
 // Earliest segment/circle intersection, including a start already in contact.
 export function surfaceHit(start: Vec, end: Vec, radius: number): number | null {

@@ -60,7 +60,7 @@ describe('thrust, rotation and clock', () => {
 describe('landing and collision', () => {
   const safe = { onPad: true, radial: -3, tangential: 1, tilt: 0.1, spin: 0.1 };
   it('accepts a controlled pad touchdown', () => expect(safeLanding(safe)).toBe(true));
-  it.each([{ onPad: false }, { radial: -7 }, { tangential: 5 }, { tilt: Math.PI / 6 }, { spin: 0.5 }])('rejects unsafe condition %o', change => {
+  it.each([{ onPad: false, radial: -4 }, { onPad: false, tangential: 3 }, { radial: -7 }, { tangential: 5 }, { tilt: Math.PI / 6 }, { spin: 0.5 }])('rejects unsafe condition %o', change => {
     expect(safeLanding({ ...safe, ...change })).toBe(false);
   });
   it('catches a segment that crosses the entire moon', () => {
@@ -81,10 +81,11 @@ describe('landing and collision', () => {
     ship.position.y = -WORLD.radius - WORLD.shipRadius - 0.01; ship.velocity.y = 40;
     stepShip(ship, IDLE, STEP); expect(ship.state).toBe('crashed'); expect(ship.hull).toBe(0);
   });
-  it('does not accept a touchdown beyond the pad or with excess tilt', () => {
+  it('accepts a gentle touchdown off the pad', () => expect(safeLanding({ ...safe, onPad: false, radial: -2, tangential: 1, tilt: 0.1 })).toBe(true));
+  it('does not accept a sideways landing off the pad or one with excess tilt', () => {
     for (const mode of ['terrain', 'tilted']) {
       const ship = createShip(); ship.state = 'flying';
-      if (mode === 'terrain') { ship.position = { x: WORLD.radius + WORLD.shipRadius + 0.01, y: 0 }; ship.angle = Math.PI / 2; ship.velocity = { x: -1, y: 0 }; }
+      if (mode === 'terrain') { ship.position = { x: WORLD.radius + WORLD.shipRadius + 0.01, y: 0 }; ship.angle = Math.PI / 2; ship.velocity = { x: -1, y: 3 }; }
       else { ship.position.y -= 0.01; ship.angle = 0.5; ship.velocity.y = 1; }
       stepShip(ship, IDLE, STEP); expect(ship.state).not.toBe('landed'); expect(ship.hull).toBeLessThan(100);
     }

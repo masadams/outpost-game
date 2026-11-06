@@ -1,7 +1,7 @@
 import { WORLD } from '../../sim/config';
 import { flightSafety, type SafetyLevel } from '../../sim/flightSafety';
 import { colonyPlanet } from '../../sim/localWorld';
-import { telemetry } from '../../sim/physics';
+import { landingLimits as touchdownLimits, telemetry } from '../../sim/physics';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity } from '../../sim/shipStats';
 import type { WorldState } from '../../sim/world';
@@ -117,7 +117,7 @@ function landingLimits(w: WorldState): LimitView[] {
       label: 'Descent',
       value: Math.max(0, -t.radial).toFixed(1),
       unit: 'm/s',
-      max: `${WORLD.safeRadialSpeed}`,
+      max: `${touchdownLimits(safety.onPad).radial}`,
       level: safety.instruments.radial.level,
     },
     {
@@ -125,7 +125,7 @@ function landingLimits(w: WorldState): LimitView[] {
       label: 'Drift',
       value: Math.abs(t.tangential).toFixed(1),
       unit: 'm/s',
-      max: `${WORLD.safeTangentialSpeed}`,
+      max: `${touchdownLimits(safety.onPad).tangential}`,
       level: safety.instruments.drift.level,
     },
     {
@@ -133,7 +133,7 @@ function landingLimits(w: WorldState): LimitView[] {
       label: 'Tilt',
       value: (t.tilt * RAD_TO_DEG).toFixed(0),
       unit: '°',
-      max: `${Math.round(WORLD.safeTilt * RAD_TO_DEG)}°`,
+      max: `${Math.round(touchdownLimits(safety.onPad).tilt * RAD_TO_DEG)}°`,
       level: safety.instruments.tilt.level,
     },
   ];

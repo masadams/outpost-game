@@ -32,10 +32,13 @@ describe('landing instrument safety shares physical touchdown limits', () => {
   it('accounts for local up, drift direction and pad alignment around the circular surface', () => {
     const ship = approach(20, -2, -5, 0.1, -0.4, 1.2), s = flightSafety(ship);
     expect(s.instruments.tilt.level).toBe('safe'); expect(s.instruments.drift.level).toBe('critical'); expect(s.instruments.spin.level).toBe('critical');
-    expect(s.onPad).toBe(false); expect(s.message).toContain('OFF PAD'); expect(s.instruments.altitude.level).toBe('critical');
+    expect(s.onPad).toBe(false); expect(s.message).toContain('ROUGH GROUND'); expect(s.instruments.altitude.level).toBe('critical');
   });
-  it('does not call an off-pad low approach safe even with gentle velocities', () => {
-    const s = flightSafety(approach(20, -1, 0, 0, 0, 0.2)); expect(s.urgent).toBe(true); expect(s.message).toContain('OFF PAD');
+  it('lets you land off the pad, but holds rough ground to gentler limits', () => {
+    const gentle = flightSafety(approach(20, -1, 0, 0, 0, 0.2));
+    expect(gentle.urgent).toBe(false); expect(gentle.message).toContain('ROUGH GROUND');
+    const padSpeed = flightSafety(approach(20, -5, 0, 0, 0, 0.2));
+    expect(padSpeed.instruments.radial.level).toBe('critical');
   });
   it('only enables landing cues near a descending/hovering approach, with early fast-descent warning', () => {
     expect(flightSafety(approach(100, 10)).approach).toBe(false); expect(flightSafety(approach(1500, -10)).approach).toBe(false);

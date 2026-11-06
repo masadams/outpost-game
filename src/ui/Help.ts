@@ -22,7 +22,7 @@ const FOCUS_HELP = `
       <p>You start landed on the pad at your outpost on Selene. Mine ore from the rocks above, bring it home, and use it to build.</p>
       <h2>Fly</h2>
       <p><b>W</b> fires the main engine. <b>A / D</b> turn. Gravity always pulls toward the planet's center, so tilt to move sideways and keep some fuel for the landing.</p>
-      <p>The bottom gauges show your altitude, descent speed, drift and tilt. Land gently on the green pad: slow descent, little drift, nose up.</p>
+      <p>The bottom gauges show your altitude, descent speed, drift and tilt. Land gently on the green pad: slow descent, little drift, nose up. You can land anywhere else too, but open ground needs an even gentler touchdown (the limits on your gauges change when you are not over the pad).</p>
       <h2>Mine</h2>
       <p>Point the nose at a rock and hold <b>Space</b> to cut it apart. Hold <b>C</b> nearby to pull the fragments into your hold. A full hold makes the lander heavier and slower to stop.</p>
       <h2>Unload and build</h2>

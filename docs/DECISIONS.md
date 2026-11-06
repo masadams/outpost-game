@@ -293,3 +293,6 @@ Planets turn when the day cycle is on: Selene once per 1000 s, Nacre once per or
 
 ## Printed pilots and wrecks — 2026-11-06
 Pilots are printed bodies. Losing the lander prints a new pilot and a basic lander for the old recovery price (8 alloy, 2 components); the old lander becomes a physical wreck with what survived (25–90% by crash speed, 60% if destroyed in flight), a one-hour transponder, and can be salvaged with E. Wrecks beyond 60 km are lost. This replaces "tow it home with 30 hull, cargo lost". See `docs/tasks/clones-and-wrecks.md`.
+
+## Land anywhere — 2026-11-06
+The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s, drift 4 m/s, tilt 15°); open ground needs a gentler touchdown (3.5 m/s, 2 m/s, 10°) and the instruments and touchdown limits switch to those numbers off the pad, with "ROUGH GROUND" in the approach message. Ore still only unloads, and service and refuelling still only happen, on the pad. Pad upgrades (catch arms) and AI helpers are queued in the roadmap.
