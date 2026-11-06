@@ -106,6 +106,7 @@ const STATUS: Record<string, { chip: Chip; label: string }> = {
   'research staffed': { chip: 'running', label: 'Running' },
   idle: { chip: 'idle', label: 'Idle' },
   'target met': { chip: 'idle', label: 'Target met' },
+  starting: { chip: 'running', label: 'Starting up' },
   'no power': { chip: 'stopped', label: 'No power' },
   'no feedstock': { chip: 'stopped', label: 'No input' },
   'output full': { chip: 'stopped', label: 'Storage full' },
@@ -134,6 +135,8 @@ export function whyStopped(b: Building): string | null {
       return isTurret(b.kind)
         ? 'Out of power: it cannot fire. Turn off the Observatory or refinery, or set Keep for turrets in Base.'
         : 'Not enough power. Build another solar array, or a battery for the dark.';
+    case 'starting':
+      return 'Starting up. It needs steady power for a few seconds before it runs.';
     case 'power limited':
       return 'Running slowly because power is short.';
     case 'no feedstock':

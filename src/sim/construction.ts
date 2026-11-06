@@ -9,6 +9,7 @@ import { placementError, productCapacity, type Building } from './colony';
 import { CONSTRUCTION_SECONDS, type ConstructionOrder } from './commandConfig';
 import { length, wrap } from './math';
 import { notify } from './messages';
+import { needsBoot } from './boot';
 import type { WorldState } from './world';
 export function completedBuilding(id: number, kind: BuildType, angle: number, w: WorldState): Building {
   const configured = w.colony.buildings.some(b => b.dispatch !== undefined);
@@ -41,6 +42,9 @@ export function stepConstruction(w: WorldState, dt: number): void {
   if (nearestPlanet(suit.position, w.system).id !== colonyPlanet(w).id || w.playerMode !== 'astronaut' || !suit.grounded || suit.health <= 0 || length(relativeVelocity(suit.velocity, colonyPlanet(w), suit.position)) > .5 || Math.abs(wrap(o.angle - localAngleAt(w, suit.position))) * colonyPlanet(w).radius > 96) { o.status = 'waiting for stationary crew within 96 m'; return; }
   o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt); o.status = 'crew building';
   if (o.progress + 1e-9 < CONSTRUCTION_SECONDS) return;
-  w.colony.buildings.push(completedBuilding(allocateBuildingId(w), o.kind, o.angle, w));
+  const finished = completedBuilding(allocateBuildingId(w), o.kind, o.angle, w);
+  // A freshly built machine has to warm up before it works.
+  if (needsBoot(o.kind) && w.system.sun) finished.boot = 0;
+  w.colony.buildings.push(finished);
   command.queue = command.queue.filter(q => q.id !== o.id); notify(w, `${BLUEPRINTS[o.kind].label.toUpperCase()} ORDER COMPLETE`);
 }

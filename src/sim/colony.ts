@@ -1,4 +1,5 @@
 import { stepObservatory } from './observatory';
+import { bootStep, needsBoot } from './boot';
 import { solarFactor } from './sun';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
@@ -38,12 +39,16 @@ export interface Building {
   level?:1|2|3;
   dispatch?: { rank: number; limit: number };
   gridPower?: number; requestedPower?: number;
+  /** Seconds of steady power so far while starting up (see boot.ts); undefined means always online. */
+  boot?: number;
+  /** Seconds without power while online. */
+  dark?: number;
   habitat?: HabitatState;
   shield?: ShieldState;
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached';
 }
 export interface Colony {
   shielding: ShieldLedger;
@@ -113,7 +118,7 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     const error = placementError(world); if (error) { notify(world, error); return; }
     const blueprint = BLUEPRINTS[colony.selected];
     for (const product of PRODUCTS) colony.products[product] = Math.max(0, colony.products[product] - (blueprint.cost[product] ?? 0));
-    colony.buildings.push(completedBuilding(allocateBuildingId(world), colony.selected, previewAngle(world), world));
+    colony.buildings.push({ ...completedBuilding(allocateBuildingId(world), colony.selected, previewAngle(world), world), ...(needsBoot(colony.selected) && world.system.sun ? { boot: 0 } : {}) });
     notify(world, `${blueprint.label.toUpperCase()} BUILT`); return;
   }
   const building = nearbyBuilding(world);
@@ -197,6 +202,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     if (!operational(building)) continue;
     if (!building.enabled) continue;
     if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
+    if (needsBoot(building.kind) && !bootStep(world, building, dt)) continue;
     if (building.kind === 'observatory') { stepObservatory(world, building, dt); continue; }
     if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
     if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;
