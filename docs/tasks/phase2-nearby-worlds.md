@@ -7,6 +7,7 @@ Builds on what is already in the code but hidden in the focus set: surface depos
 ## Slices
 | # | What | Status |
 |---|---|---|
+| P2.0b | **Earn the Observatory.** The Observatory is not in the build bar at first. After your first industry, the next goal is the Frost survey buoy orbiting about 1.5 km up: fly out, match its speed and press E to download its data. That unlocks the Observatory blueprint, and building it starts the storm story as now. The coach points at the buoy. | Planned |
 | P2.1 | **Mining rigs back in the focus set.** Surface deposits on Selene show on the ground and in the build bar; a mining rig placed on one extracts ore into the depot while powered, and the deposit runs out. Clear reasons when a rig can't run. | Planned |
 | P2.2 | **Survey Nacre from the Observatory.** Nacre goes from "seen" to "surveyed" after the Observatory watches it: its gravity, day length and estimated deposits appear on the Map, with uncertainty. This opens the route to Nacre in the focus set. | Planned |
 | P2.3 | **First expedition.** Load a rig kit as freight, fly to Nacre, land anywhere, step out, build a rig on a surveyed deposit and fill the hold. Nacre's own gravity and day apply. | Planned |
