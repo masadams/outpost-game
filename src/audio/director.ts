@@ -66,7 +66,7 @@ export class AudioDirector {
       if (!prev.grounded && next.grounded) cues.push('step');
       if (prev.grounded && next.grounded) {
         this.footDistance += Math.hypot(next.position.x - prev.position.x, next.position.y - prev.position.y);
-        if (this.footDistance >= 4) { cues.push('step'); this.footDistance %= 4; }
+        if (this.footDistance >= 6) { cues.push('step'); this.footDistance %= 6; }
       } else this.footDistance = 0;
       if (next.oxygen > prev.oxygen + 1 || next.suitHealth > prev.suitHealth) cues.push('service');
     }
@@ -85,10 +85,7 @@ export class AudioDirector {
     const machinery = world.colony.buildings.some(b => {
       const n = heading(b.angle); return b.status === 'running' && near(sitePosition(world, b.angle).x, sitePosition(world, b.angle).y, 150);
     });
-    if (!added && !removed && machinery && world.colony.buildings.some(b => {
-      const old = prev.buildings.get(b.id), n = heading(b.angle);
-      return old && old.recipe === b.recipe && b.progress < old.progress && b.status === 'running' && near(sitePosition(world, b.angle).x, sitePosition(world, b.angle).y, 150);
-    })) cues.push('production');
+    // Machines finishing a batch make no sound of their own: the quiet hum while they run is enough.
     const safety = flightSafety(world.ship, world.system), fuelLevel = safety.instruments.fuel.level;
     const landing = alive && !onFoot && safety.urgent, fuel = alive && !onFoot && next.state === 'flying' && (fuelLevel === 'caution' || fuelLevel === 'critical');
     const generic = alive && (next.threats > 0 || (onFoot ? (!next.habitat && next.oxygen < 30) || world.colony.buildings.some(b => isHabitat(b.kind) && b.habitat?.powered && habitatContains(b, world.astronaut.position, colonyPlanet(world)) && (b.status === 'air low' || b.habitat.backup && b.habitat.energy / HABITATS[b.kind].power <= 3)) : next.state === 'flying' && next.hull < 25));

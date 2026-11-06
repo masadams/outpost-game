@@ -48,7 +48,7 @@ export class GameAudio {
         this.music=new AdaptiveMusic(this.context,this.master);
         const compressor = this.context.createDynamicsCompressor(); compressor.threshold.value = -16; compressor.ratio.value = 3;
         this.master.connect(compressor); compressor.connect(this.context.destination);
-        for (const [name, frequency, type] of [['engine', 54, 'sine'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 62, 'triangle']] as const) {
+        for (const [name, frequency, type] of [['engine', 54, 'sine'], ['mining', 220, 'triangle'], ['tractor', 108, 'sine'], ['machinery', 70, 'sine']] as const) {
           const oscillator = this.context.createOscillator(), gain = this.context.createGain(), filter = this.context.createBiquadFilter();
           oscillator.type = type; oscillator.frequency.value = frequency; filter.type = 'lowpass'; filter.frequency.value = name === 'engine' ? 450 : 1000;
           gain.gain.value = 0; oscillator.connect(filter); filter.connect(gain); gain.connect(this.effects!); oscillator.start();
@@ -119,7 +119,7 @@ export class GameAudio {
     if (!this.context) return;
     for (const [name, loop] of this.loops) {
       const enabled = !paused && frame[name];
-      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.07 : name === 'machinery' ? 0.018 : 0.035 : 0, this.context.currentTime, 0.04);
+      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.07 : name === 'machinery' ? 0.007 : 0.035 : 0, this.context.currentTime, 0.04);
     }
     if (frame.cues.some(c=>['warning','landingWarning','fuelWarning','shieldBreach','crash'].includes(c))) this.duckTime=2;
     this.duckTime=Math.max(0,this.duckTime-seconds);
@@ -130,20 +130,29 @@ export class GameAudio {
   private track(source: AudioScheduledSourceNode, gain: GainNode): void {
     this.voices.add(source); source.onended = () => { this.voices.delete(source); source.disconnect(); gain.disconnect(); };
   }
-  private tone(frequency: number, end: number, duration: number, delay = 0, type: OscillatorType = 'triangle'): void {
+  private tone(frequency: number, end: number, duration: number, delay = 0, type: OscillatorType = 'triangle', level = 0.11): void {
     if (!this.context || !this.master || this.voices.size >= 20) return;
     const now = this.context.currentTime + delay, oscillator = this.context.createOscillator(), gain = this.context.createGain();
     oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, now); oscillator.frequency.exponentialRampToValueAtTime(end, now + duration);
-    gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.11, now + 0.008); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(level, now + 0.008); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     oscillator.connect(gain); gain.connect(this.effects!); this.track(oscillator, gain); oscillator.start(now); oscillator.stop(now + duration + 0.01);
   }
-  private noise(duration: number, level: number): void {
+  private noiseSeed = 19;
+  /** A burst of noise; `cutoff` (Hz) softens it into a thud or scuff instead of a hiss. Each burst is slightly different. */
+  private noise(duration: number, level: number, cutoff = 0): void {
     if (!this.context || !this.master || this.voices.size >= 20) return;
     const buffer = this.context.createBuffer(1, Math.ceil(this.context.sampleRate * duration), this.context.sampleRate), data = buffer.getChannelData(0);
-    let seed = 19; for (let i = 0; i < data.length; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) | 0; data[i] = seed / 2147483648; }
+    let seed = (this.noiseSeed = (this.noiseSeed * 7 + 13) % 100003);
+    for (let i = 0; i < data.length; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) | 0; data[i] = seed / 2147483648; }
     const source = this.context.createBufferSource(), gain = this.context.createGain(); source.buffer = buffer;
     const now = this.context.currentTime; gain.gain.setValueAtTime(level, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    source.connect(gain); gain.connect(this.effects!); this.track(source, gain); source.start(now);
+    if (cutoff > 0) {
+      const filter = this.context.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = cutoff;
+      source.connect(filter); filter.connect(gain);
+    } else source.connect(gain);
+    gain.connect(this.effects!); this.track(source, gain); source.start(now);
   }
   private play(cue: Cue): void {
     if(cue==='airlessArrival'){this.tone(220,330,.3,0,'sine');this.tone(440,330,.35,.3,'sine');}
@@ -153,7 +162,8 @@ export class GameAudio {
     else if (cue === 'shieldHit') { this.tone(260, 720, 0.16, 0, 'sine'); }
     else if (cue === 'shieldBreach') { this.tone(520, 100, 0.28); this.tone(180, 90, 0.18, 0.28); }
     else if (cue === 'shot') this.tone(920, 180, 0.1, 0, 'sawtooth');
-    else if (cue === 'step') this.noise(0.045, 0.035);
+    // Footsteps: a soft, low scuff, not a click.
+    else if (cue === 'step') { this.noise(0.07, 0.02, 420); this.tone(95, 70, 0.06, 0, 'sine', 0.02); }
     else if (cue === 'airlock') { this.noise(0.18, 0.04); this.tone(230, 320, 0.1); }
     else if (cue === 'warning') { this.tone(660, 600, 0.12); this.tone(660, 600, 0.12, 0.2); }
     else if (cue === 'landingWarning') { this.tone(880, 520, 0.16); this.tone(880, 520, 0.16, 0.24); }
@@ -172,12 +182,13 @@ export class GameAudio {
       const rise = 2 ** (this.pickupRun / 7);
       this.tone(740 * rise, 980 * rise, 0.08);
     }
-    else if (cue === 'production') this.tone(440, 980, 0.08);
+    else if (cue === 'production') { this.tone(523, 523, 0.18, 0, 'sine', 0.04); this.tone(784, 784, 0.25, 0.12, 'sine', 0.035); }
     else if (cue === 'scan') { this.tone(300, 900, 0.5, 0, 'sine'); this.tone(450, 1350, 0.5, 0.35, 'sine'); this.tone(600, 1800, 0.45, 0.7, 'sine'); }
     else if (cue === 'sighting') { this.tone(520, 520, 0.12, 0, 'sine'); this.tone(780, 780, 0.2, 0.16, 'sine'); }
     else if (cue === 'stormOver') { this.tone(330, 440, 0.3, 0, 'sine'); this.tone(495, 660, 0.4, 0.2, 'sine'); }
-    else if (cue === 'build') { this.noise(0.08, 0.035); this.tone(260, 520, 0.18); }
-    else if (cue === 'demolish') this.tone(220, 90, 0.2);
+    // Finished building: a soft two-note chime.
+    else if (cue === 'build') { this.tone(392, 392, 0.2, 0, 'sine', 0.045); this.tone(587, 587, 0.28, 0.12, 'sine', 0.04); }
+    else if (cue === 'demolish') { this.noise(0.25, 0.03, 600); this.tone(220, 110, 0.25, 0, 'sine', 0.05); }
     else if (cue === 'jump') this.tone(170, 280, 0.12);
     else if (cue === 'launch') this.tone(90, 160, 0.2);
     else this.tone(260, 380, 0.12);

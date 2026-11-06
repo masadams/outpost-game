@@ -33,19 +33,19 @@ describe('audio events stay separate from simulation', () => {
   });
   it('paces footsteps by distance, detects jumps and rate-limits low oxygen warnings', () => {
     const world = createWorld(), director = new AudioDirector(); world.playerMode = 'astronaut'; director.reset(world);
-    world.astronaut.position.x += 2; expect(director.update(world, 1, false).cues).toEqual([]);
-    world.astronaut.position.x += 2; expect(director.update(world, 1, false).cues).toContain('step');
+    world.astronaut.position.x += 3; expect(director.update(world, 1, false).cues).toEqual([]);
+    world.astronaut.position.x += 3; expect(director.update(world, 1, false).cues).toContain('step');
     world.astronaut.grounded = false; expect(director.update(world, 1, false).cues).toContain('jump');
     world.astronaut.oxygen = 29; expect(director.update(world, 1, false).cues).toContain('warning');
     for (let i = 0; i < 7; i++) expect(director.update(world, 1, false).cues).not.toContain('warning');
     expect(director.update(world, 1, false).cues).toContain('warning');
   });
-  it('coalesces construction cues and restricts production hum to nearby working facilities', () => {
+  it('coalesces construction cues, stays quiet on each finished batch and keeps the hum to nearby working facilities', () => {
     const world = createWorld(), director = new AudioDirector(); director.reset(world);
     world.colony.buildings.push({ id: 1, kind: 'refinery', angle: 120 / WORLD.radius, enabled: true, recipe: 0, progress: 1.9, status: 'running' });
     expect(director.update(world, 1 / 60, false)).toMatchObject({ cues: ['build'], machinery: true });
     world.colony.buildings[0].progress = 0;
-    expect(director.update(world, 1 / 60, false).cues).toContain('production');
+    expect(director.update(world, 1 / 60, false).cues).not.toContain('production');
     world.ship.position.y = -10000; expect(director.update(world, 1 / 60, false).machinery).toBe(false);
     world.colony.buildings = []; expect(director.update(world, 1 / 60, false).cues).toContain('demolish');
   });
@@ -74,7 +74,7 @@ it('paces footsteps by surface travel rather than the moving moon carrying idle 
  const {colonyWorld}=await import('../src/sim/localWorld'),{planetAt,surfacePosition}=await import('../src/sim/celestial');
  const w=createWorld();w.playerMode='astronaut';const moon=colonyWorld(w,'moon'),director=new AudioDirector();w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);director.reset(moon);
  for(let i=0;i<10;i++){w.system.time+=1;w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);expect(director.update(moon,1,false).cues).not.toContain('step');}
- w.astronaut.position=surfacePosition(planetAt('moon',w.system),4.1/450,2.5);expect(director.update(moon,1,false).cues).toContain('step');
+ w.astronaut.position=surfacePosition(planetAt('moon',w.system),6.1/450,2.5);expect(director.update(moon,1,false).cues).toContain('step');
 });
 
 describe('rock break cues', () => {
