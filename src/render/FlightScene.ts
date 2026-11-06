@@ -54,6 +54,7 @@ import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
 import { coach } from '../ui/flight/coach';
+import { guideTarget } from '../ui/flight/guide';
 import { drawCoachPointer } from './coachPointer';
 import { FlightTools } from '../ui/FlightTools';
 import { predictCoast, type Trajectory } from '../sim/trajectory';
@@ -516,7 +517,9 @@ export class FlightScene extends Phaser.Scene {
     drawCombat(g, this.simulation, this.follow.zoom, this.preferences.reducedMotion, view, this.preferences.quality==='high');
     const s = this.ship;
     const coaching = coach(this.simulation, this.coachKeys());
-    if (coaching?.target) drawCoachPointer(g, s.position, coaching.target, this.follow.zoom, this.time.now / 1000, !this.halted && !this.preferences.reducedMotion);
+    const guide = coaching ? null : guideTarget(this.simulation);
+    const pointAt = coaching?.target ?? guide;
+    if (pointAt) drawCoachPointer(g, s.position, pointAt, this.follow.zoom, this.time.now / 1000, !this.halted && !this.preferences.reducedMotion);
     this.effects.draw(g,this.follow.zoom);
     // Lost landers stay in the world; while the transponder lasts a red light blinks on them.
     for (const wreck of this.simulation.wrecks) {

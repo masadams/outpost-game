@@ -17,6 +17,7 @@ function snapshot(world: WorldState) {
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
+    crystal: world.exploration.crystal, held: world.storm.held,
     scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over',
     rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position, stage: b.stage }])),
     buildings: new Map(world.colony.buildings.map(b => [b.id, { progress: b.progress, recipe: b.recipe }])) };
@@ -40,6 +41,7 @@ export class AudioDirector {
     if (!onFoot && prev.mode === 'ship' && next.state === 'flying' && prev.state === 'flying' && next.space !== prev.space && this.regionCooldown <= 1e-9) {
       cues.push(next.space ? 'atmosphereExit' : 'atmosphereEntry'); this.regionCooldown = 6;
     }
+    if ((next.crystal === 'carried' && prev.crystal === 'lying') || next.held > prev.held) cues.push('pickup');
     if (next.scanning && !prev.scanning) cues.push('scan');
     if (next.sighted && !prev.sighted) cues.push('sighting');
     if (next.stormOver && !prev.stormOver) cues.push('stormOver');
