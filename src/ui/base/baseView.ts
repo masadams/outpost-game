@@ -1,3 +1,4 @@
+import { RELAY_CAPACITY } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
@@ -207,6 +208,10 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
   if (isTurret(b.kind)) {
     const weapon = WEAPONS[b.kind];
     facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
+  }
+  if (b.kind === 'relay') facts.push(['Carrying', `${(b.gridPower ?? 0).toFixed(1)} of ${RELAY_CAPACITY * capacityFactor(b)} kW`]);
+  if (b.kind === 'solar' && (b.requestedPower ?? 0) - (b.gridPower ?? 0) > 0.05) {
+    facts.push(['Lost on the way', `${((b.requestedPower ?? 0) - (b.gridPower ?? 0)).toFixed(1)} kW (relay lines and limits)`]);
   }
   if (b.kind === 'battery') facts.push(['Stores', `${BATTERY_CAPACITY * capacityFactor(b)} kJ`]);
   if (b.kind === 'storage') facts.push(['Holds', `+${200 * capacityFactor(b)} kg ore, +${100 * capacityFactor(b)} each product`]);
