@@ -100,3 +100,16 @@ describe('power forecast', () => {
     expect(baseView(w).power.forecast).toMatch(/^Light returns in/);
   });
 });
+
+describe('sky clock on the moon', () => {
+  it('counts down to the real change of light on Nacre, which turns at its own rate', async () => {
+    const { daylightAt: light } = await import('../src/sim/sun');
+    const s = (time: number) => ({ time, binary: true, sun: true });
+    for (const t of [100, 900, 1700]) {
+      const c = sunClock(s(t), 0.3, 'moon');
+      const later = sunClock(s(t + c.secondsToChange + 0.5), 0.3, 'moon');
+      expect(later.day).toBe(!c.day);
+      expect(Math.abs(light(s(t + c.secondsToChange), 0.3, 'moon') - 0.5)).toBeLessThan(0.05);
+    }
+  });
+});

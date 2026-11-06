@@ -1,6 +1,6 @@
-import type { BodyId, SystemFrame } from './celestial';
+import { planetAt, type BodyId, type SystemFrame } from './celestial';
 import { lightAt, SUN, sunAngle } from './star';
-import { heading, type Vec } from './math';
+import { heading, wrap, type Vec } from './math';
 
 export { SUN, sunAngle } from './star';
 
@@ -47,14 +47,18 @@ export interface SunClock {
 }
 
 /** What the sky is doing at a place: used for the clock chip and for forecasts. */
-export function sunClock(system: SystemFrame, angle: number): SunClock {
-  const rate = TURN / SUN.dayLength;
-  const daylight = daylightAt(system, angle);
+export function sunClock(system: SystemFrame, angle: number, body: BodyId = 'home'): SunClock {
+  // Where the sun stands overhead on this body, and how fast that point moves across its ground.
+  const planet = planetAt(body, system);
+  const subsolar = planet.spinRate ? wrap(SUN.startAngle - planet.spin) : sunAngle(system.time);
+  const rate = planet.spinRate ? Math.abs(planet.spinRate) : TURN / SUN.dayLength;
+  const daylight = daylightAt(system, angle, body);
   // The elevation at which the light is half strength.
   const half = SUN.zeroElevation + 0.5 * (SUN.fullElevation - SUN.zeroElevation);
   const edge = Math.acos(half);
-  const offset = ((sunAngle(system.time) - angle) % TURN + TURN) % TURN;
-  const rising = Math.sin(angle - sunAngle(system.time)) > 0;
+  const sense = planet.spinRate ? -Math.sign(planet.spinRate) : 1;
+  const offset = (((subsolar - angle) * sense) % TURN + TURN) % TURN;
+  const rising = Math.sin((angle - subsolar) * sense) > 0;
   const day = offset < edge || offset > TURN - edge;
   let ahead: number;
   if (offset < edge) ahead = edge - offset;

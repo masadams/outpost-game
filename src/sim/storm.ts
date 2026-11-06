@@ -65,33 +65,41 @@ function aimTangential(angle: number, system: SystemFrame, radius: number, mass:
 
 /** Plan the first storm once. Deterministic: the same seed and world time give the same bodies. */
 export function planStorm(world: WorldState): void {
+  while (!world.storm.planned) planNextBody(world);
+}
+
+/**
+ * Plans one more body. Aiming a body means simulating its fall a few times, which takes a moment, so the game plans
+ * one body per step instead of all at once (the bodies appear at least 30 s later). Same result as planning together.
+ */
+export function planNextBody(world: WorldState): void {
   const storm = world.storm;
   if (storm.planned) return;
-  storm.planned = true;
   if (storm.arrival <= 0) storm.arrival = STORM.arrivalTime;
+  const i = storm.plan.length;
   const rand = seeded(STORM.seed);
+  for (let j = 0; j < i; j++) rand();
   const home = planetAt('home', world.system);
-  for (let i = 0; i < STORM.aim.length; i++) {
-    const entryTime = storm.arrival + i * STORM.spacing;
-    const system = { ...world.system, time: entryTime };
-    const target = WORLD.padAngle + (STORM.targetOffset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
-    const tangential = aimTangential(target, system, STORM.radii[i], STORM.masses[i]);
-    const meteor = entryMeteor(world.nextId++, target, tangential, system, STORM.radii[i], STORM.masses[i]);
-    const fall = landing(meteor, system);
-    storm.ids.push(meteor.id);
-    storm.plan.push({ id: meteor.id, impactAngle: fall?.angle ?? null, impactTime: fall?.time ?? null });
-    storm.far.push({
-      id: meteor.id,
-      entry: { ...meteor.position },
-      velocity: { ...meteor.velocity },
-      entryTime,
-      radius: meteor.radius,
-      mass: meteor.mass,
-      health: STORM.health[i],
-      impactAngle: fall?.angle ?? null,
-      impactTime: fall?.time ?? null,
-    });
-  }
+  const entryTime = storm.arrival + i * STORM.spacing;
+  const system = { ...world.system, time: entryTime };
+  const target = WORLD.padAngle + (STORM.targetOffset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
+  const tangential = aimTangential(target, system, STORM.radii[i], STORM.masses[i]);
+  const meteor = entryMeteor(world.nextId++, target, tangential, system, STORM.radii[i], STORM.masses[i]);
+  const fall = landing(meteor, system);
+  storm.ids.push(meteor.id);
+  storm.plan.push({ id: meteor.id, impactAngle: fall?.angle ?? null, impactTime: fall?.time ?? null });
+  storm.far.push({
+    id: meteor.id,
+    entry: { ...meteor.position },
+    velocity: { ...meteor.velocity },
+    entryTime,
+    radius: meteor.radius,
+    mass: meteor.mass,
+    health: STORM.health[i],
+    impactAngle: fall?.angle ?? null,
+    impactTime: fall?.time ?? null,
+  });
+  if (storm.plan.length >= STORM.aim.length) storm.planned = true;
 }
 
 /** Where a body in the far field is at a given time. */
@@ -111,8 +119,9 @@ export function stepStorm(world: WorldState): void {
   }
   if (!storm.planned) {
     // Never sooner than the fixed first-storm time, and always with the full warning window ahead.
-    storm.arrival = Math.max(STORM.arrivalTime, time + STORM.lead + 30);
-    planStorm(world);
+    if (storm.plan.length === 0) storm.arrival = Math.max(STORM.arrivalTime, time + STORM.lead + 30);
+    planNextBody(world);
+    if (!storm.planned) return;
   }
   if (storm.phase === 'quiet' && time >= storm.arrival - STORM.lead) storm.phase = 'approaching';
   if (storm.phase === 'quiet') return;

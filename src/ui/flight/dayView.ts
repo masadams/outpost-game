@@ -22,7 +22,7 @@ export function dayView(w: WorldState): DayView | null {
   const position = w.playerMode === 'astronaut' ? w.astronaut.position : w.ship.position;
   const planet = nearestPlanet(position, w.system);
   const angle = surfaceAngle(planet, position);
-  const clock = sunClock(w.system, angle);
+  const clock = sunClock(w.system, angle, planet.id);
   const light = lightAt(w.system, planet.id, angle);
   if (light.eclipse > 0.15 && light.elevation > 0) {
     return { phase: 'eclipse', label: 'Eclipse', detail: 'The moon is in front of the sun', daylight: clock.daylight * (1 - light.eclipse) };
