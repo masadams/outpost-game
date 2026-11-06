@@ -11,7 +11,7 @@ export interface ResearchRow {
   line: string;
   /** 0 to 1 while research is running, otherwise null. */
   progress: number | null;
-  action: { kind: 'research' | 'fit'; label: string; reason: string | null; tech: string; upgrade: string } | null;
+  action: { kind: 'research' | 'fit'; label: string; reason: string | null; tech: string; upgrade: string | null } | null;
 }
 
 const HINT: Record<FindId, string> = {
@@ -19,6 +19,7 @@ const HINT: Record<FindId, string> = {
   buoy: 'Fly to the Frost survey buoy and survey it.',
   crystal: 'Find the crystal on Nacre, bring it home and study it.',
   derelict: 'Fly to the Copper derelict and salvage it.',
+  retrofit: 'Research Applied materials and Bulk logistics first.',
 };
 
 const costText = (cost: Partial<Record<string, number>>): string =>
@@ -31,7 +32,7 @@ export function researchView(w: WorldState): ResearchRow[] | null {
   const hasLab = root.colony.buildings.some(b => b.kind === 'researchLab');
   return FINDS.map(f => {
     const tech = TECHNOLOGIES[f.tech];
-    const part = UPGRADES[f.upgrade];
+    const part = f.upgrade ? UPGRADES[f.upgrade] : null;
     const base = { id: f.id, find: f.label };
     if (!findStudied(root, f.id)) return { ...base, line: HINT[f.id], progress: null, action: null };
     const queued = root.colony.research.queue.find(p => p.tech === f.tech);
@@ -45,8 +46,11 @@ export function researchView(w: WorldState): ResearchRow[] | null {
         ...base,
         line: `${tech.label}: costs ${costText(tech.cost)}.`,
         progress: null,
-        action: { kind: 'research', label: 'Start research', reason, tech: f.tech, upgrade: f.upgrade },
+        action: { kind: 'research', label: 'Start research', reason, tech: f.tech, upgrade: f.upgrade ?? null },
       };
+    }
+    if (!f.upgrade || !part) {
+      return { ...base, line: 'Done. Upgrade any building in place from Base.', progress: null, action: null };
     }
     if (root.ship.equipment.includes(f.upgrade)) {
       return { ...base, line: `${part.label} fitted: ${part.benefit}.`, progress: null, action: null };

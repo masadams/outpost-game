@@ -1,5 +1,6 @@
 import { wrap } from './math';
 import { colonyPlanet } from './localWorld';
+import { capacityFactor } from './facilityStats';
 import type { Building } from './colony';
 import type { WorldState } from './world';
 
@@ -8,7 +9,7 @@ export const LINK_RANGE = 150;
 /** A relay pylon reaches much farther. */
 export const RELAY_RANGE = 600;
 
-const reach = (b: Pick<Building, 'kind'>): number => (b.kind === 'relay' ? RELAY_RANGE : LINK_RANGE);
+const reach = (b: Building): number => (b.kind === 'relay' ? RELAY_RANGE * capacityFactor(b) : LINK_RANGE);
 
 /**
  * Which buildings are wired to the base. The base starts at the landing pad; a building joins when it is within

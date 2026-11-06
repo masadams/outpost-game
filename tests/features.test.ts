@@ -50,7 +50,7 @@ describe('focus feature set', () => {
       { type: 'cycleWeapon' },
       { type: 'toggleTow' },
       { type: 'autopilot', operation: 'cancel' },
-      { type: 'upgradeBuilding', id: 1, level: 2 },
+      { type: 'upgradeBuilding', id: 1, level: 3 },
       { type: 'researchStart', tech: 'combat' },
       { type: 'toggleSchedule' },
       { type: 'select', kind: 'flak' },

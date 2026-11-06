@@ -13,3 +13,6 @@ How menus behave, so everything works the way players of other games expect.
 
 ## Still to normalise
 - The legacy management console (only with `?features=all`) still uses the old wording and layout.
+
+## Upgrade in place (building rule)
+Improving a building where it stands is preferred to building more of it. Every building defines what a tier changes (see `tierEffect` in `src/ui/base/upgradeView.ts`): solar output, battery and storage capacity, machine speed, relay reach. When you add a building, add its tier effect and make sure the grid, power and rendering code read `capacityFactor` and `workFactor`. New players see the first tier only; tier 1 to 2 needs Infrastructure retrofits, which opens after Applied materials and Bulk logistics.
