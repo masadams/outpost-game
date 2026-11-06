@@ -88,7 +88,7 @@ function moonWorkLine(w: WorldState): string {
   if (!w.exploration.nacreSurveyed) return 'Keep the Observatory running; it is surveying Nacre.';
   const onMoon = w.siteBody === 'moon';
   const freight = PRODUCTS.some(p => w.ship.freight[p] > 0);
-  const kitBuilt = w.moon.colony.buildings.some(b => b.kind === 'miningRig');
+  const kitBuilt = w.outposts.moon.colony.buildings.some(b => b.kind === 'miningRig');
   const crystal = w.exploration.crystal === 'lying' ? ' A blue crystal glows about 240 m east of the pad: take it home.' : '';
   if (kitBuilt) return `Give the rig power from a solar array, then fill your hold.${crystal}`;
   if (freight && onMoon) return 'Land on the Nacre pad and press E to unload the kit.';

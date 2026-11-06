@@ -8,7 +8,7 @@ export const TECH_POSITIONS:Record<TechId,[number,number]>={materials:[0,2],prop
 const techIcon=(id:TechId)=>({materials:'materials',propulsion:'drive',extraction:'mining',combat:'weapon',orbital:'drive',logistics:'hold',precision:'tractor',thermal:'cooling',ballistics:'weapon',composites:'armour',ionics:'drive',reactor:'cooling',industrial:'mining',lightweight:'hold',flightControl:'avionics',navigation:'avionics',autonomy:'avionics',infrastructure:'facilities',industrialSystems:'facilities'})[id];
 export function techTree(w:WorldState,paused:boolean,selected:TechId,filter:ResearchFilter):string{
  const r=w.colony.research,s=TECHNOLOGIES[selected],complete=r.completed.includes(selected),project=r.queue.find(p=>p.tech===selected),error=researchError(w,selected);
- const root=w.rootWorld??w,working=[root.colony,root.moon.colony].some(c=>c.buildings.some(b=>b.kind==='researchLab'&&b.status==='running'));
+ const root=w.rootWorld??w,working=[root.colony,root.outposts.moon.colony].some(c=>c.buildings.some(b=>b.kind==='researchLab'&&b.status==='running'));
  const active=r.queue.find(p=>!p.paused)?.tech;
  const state=(id:TechId)=>r.completed.includes(id)?'Complete':r.queue.some(p=>p.tech===id)?(r.queue.find(p=>p.tech===id)!.paused?'Paused':active===id&&working?'Researching':'Queued'):TECHNOLOGIES[id].requires.every(t=>r.completed.includes(t))?'Ready':'Locked';
  const edges=TECH_IDS.flatMap(id=>TECHNOLOGIES[id].requires.map(from=>{const [a,b]=TECH_POSITIONS[from],[x,y]=TECH_POSITIONS[id],start=a*210+192,end=x*210+10;return `<path data-edge="${from}-${id}" class="${r.completed.includes(from)?'unlocked':''}" d="M${start} ${b*136+66} C${(start+end)/2} ${b*136+66},${(start+end)/2} ${y*136+66},${end} ${y*136+66}"/>`;})).join('');

@@ -18,7 +18,7 @@ const tick = (w:ReturnType<typeof createWorld>,seconds:number) => { for(let i=0;
 function worker(body:BodyId='home') {
  const w=createWorld();w.asteroids=[];w.exploration.sites=[];w.playerMode='astronaut';
  const p=planetAt(body,w.system);w.astronaut.position=surfacePosition(p,120/p.radius,2.5);w.astronaut.velocity={...p.velocity};
- if(body==='moon')for(const product of PRODUCTS){w.moon.colony.products[product]=w.colony.products[product];w.colony.products[product]=0;}
+ if(body==='moon')for(const product of PRODUCTS){w.outposts.moon.colony.products[product]=w.colony.products[product];w.colony.products[product]=0;}
  return w;
 }
 function supplied(body:BodyId='home') {
@@ -31,7 +31,7 @@ it('derives a finite starter bill from actual costs and reads without mutating o
  const w=createWorld(),before=structuredClone(w),plan=starterPlan(colonyWorld(w,'moon'));
  expect(plan.required).toMatchObject({alloy:26,wire:11,components:6});expect(plan.rows.every(r=>r.shortfall===0)).toBe(true);
  expect(plan).toMatchObject({researchEnergy:60,fabricationEnergy:20,usableEnergy:0});expect(w).toEqual(before);
- w.colony.products.alloy=0;w.moon.colony.products.alloy=100;w.ship.freight.alloy=20;
+ w.colony.products.alloy=0;w.outposts.moon.colony.products.alloy=100;w.ship.freight.alloy=20;
  expect(starterPlan(w).rows.find(r=>r.product==='alloy')).toMatchObject({usable:0,shortfall:26});
 });
 it('accounts for committed work and research once, then restores the bill on cancellation',()=>{

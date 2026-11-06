@@ -29,14 +29,14 @@ export function observeObjectives(w: WorldState, paidHabitatSeconds = 0): void {
   const done = w.objectives.completed;
   const add = (id: ObjectiveId, condition: boolean) => { if (condition && !done.includes(id)) done.push(id); };
   add('delivery', w.unloaded > 0);
-  add('industry', [w.colony, w.moon.colony].some(c => c.buildings.some(b => ['refinery', 'miningRig', 'fuelProcessor'].includes(b.kind) && b.status === 'running')));
+  add('industry', [w.colony, w.outposts.moon.colony].some(c => c.buildings.some(b => ['refinery', 'miningRig', 'fuelProcessor'].includes(b.kind) && b.status === 'running')));
   add('buoy', w.exploration.surveyed.includes('frost'));
   add('sky', w.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'));
   add('storm', w.storm.phase === 'over' && w.ship.state !== 'crashed' && w.astronaut.health > 0);
   add('analysis', w.storm.analysed);
   add('storm2', w.storm.wave === 2 && w.storm.phase === 'over' && w.ship.state !== 'crashed' && w.astronaut.health > 0);
   add('equipment', w.ship.equipment.length > 0);
-  add('moonWork', w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position, w.system).id === 'moon' && w.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.moon.colony.buildings.some(b => b.kind === 'miningRig' && b.status === 'running'));
+  add('moonWork', w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position, w.system).id === 'moon' && w.outposts.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.outposts.moon.colony.buildings.some(b => b.kind === 'miningRig' && b.status === 'running'));
   add('habitat', w.objectives.habitatSeconds >= HABITAT_WORK_GOAL - 1e-6);
   add('research', TECH_IDS.every(id => w.colony.research.completed.includes(id)));
   add('defence', w.defence.intercepted > 0);
@@ -56,14 +56,14 @@ export function objectiveProgress(source: WorldState, id: ObjectiveId): { value:
   let value = 0, target = 1, unit = 'milestone';
   switch (id) {
     case 'delivery': value = w.unloaded > 0 ? 1 : 0; break;
-    case 'industry': value = [w.colony, w.moon.colony].some(c => c.buildings.some(b => ['refinery', 'miningRig', 'fuelProcessor'].includes(b.kind) && b.status === 'running')) ? 1 : 0; break;
+    case 'industry': value = [w.colony, w.outposts.moon.colony].some(c => c.buildings.some(b => ['refinery', 'miningRig', 'fuelProcessor'].includes(b.kind) && b.status === 'running')) ? 1 : 0; break;
     case 'buoy': value = w.exploration.surveyed.includes('frost') ? 1 : 0; break;
     case 'sky': value = w.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running') ? 1 : 0; break;
     case 'storm': value = w.storm.phase === 'over' ? 1 : 0; break;
     case 'storm2': value = w.storm.wave === 2 && w.storm.phase === 'over' ? 1 : 0; break;
     case 'analysis': value = w.storm.analysed ? 1 : 0; break;
     case 'equipment': value = w.ship.equipment.length > 0 ? 1 : 0; break;
-    case 'moonWork': target = 2; unit = 'steps'; value = (w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position,w.system).id === 'moon' ? 1 : 0) + (w.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.moon.colony.buildings.some(b=>b.kind==='miningRig'&&b.status==='running') ? 1 : 0); break;
+    case 'moonWork': target = 2; unit = 'steps'; value = (w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position,w.system).id === 'moon' ? 1 : 0) + (w.outposts.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.outposts.moon.colony.buildings.some(b=>b.kind==='miningRig'&&b.status==='running') ? 1 : 0); break;
     case 'return': target = 2; unit = 'steps'; value = w.objectives.returnArmed ? 1 : 0; break;
     case 'habitat': target = HABITAT_WORK_GOAL; unit = 's of supplied air'; value = w.objectives.habitatSeconds; break;
     case 'research': target = TECH_IDS.length; unit = 'technologies'; value = w.colony.research.completed.length; break;

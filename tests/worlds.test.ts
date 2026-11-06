@@ -69,7 +69,7 @@ describe('continuous binary-world physics', () => {
 
 describe('supplied local colonies and freight', () => {
   it('starts the moon empty and conserves manufactured stock, total hold capacity and ship mass', () => {
-    const w = createWorld(), before = shipMass(w.ship); expect(w.moon.colony.products.alloy).toBe(0); expect(w.moon.colony.buildings).toHaveLength(0);
+    const w = createWorld(), before = shipMass(w.ship); expect(w.outposts.moon.colony.products.alloy).toBe(0); expect(w.outposts.moon.colony.buildings).toHaveLength(0);
     transferFreight(w, 'alloy', 5); expect(w.colony.products.alloy).toBe(23); expect(shipMass(w.ship) - before).toBe(5);
     w.ship.cargo.iron = 114; transferFreight(w, 'alloy', 5); expect(cargoMass(w.ship)).toBe(120); expect(w.ship.freight.alloy).toBe(6);
     const { w: remote, site } = moonFixture(); remote.ship.freight.alloy = 5; const home = remote.colony.products.alloy; transferFreight(site, 'alloy', -5); expect(site.colony.products.alloy).toBe(5); expect(remote.colony.products.alloy).toBe(home);
@@ -83,8 +83,8 @@ describe('supplied local colonies and freight', () => {
   });
   it('preserves both colonies, freight, research identity and the exact moving-frame continuation', () => {
     const { w, site } = moonFixture(); w.ship.freight.wire = 7; site.colony.products.alloy = 5; run(w, 2);
-    const loaded = decodeCheckpoint(encodeCheckpoint(w)); expect(loaded.moon.colony.research).toBe(loaded.colony.research);
-    run(w, 2); run(loaded, 2); expect(loaded.ship).toEqual(w.ship); expect(loaded.moon).toEqual(w.moon); expect(loaded.system).toEqual(w.system);
+    const loaded = decodeCheckpoint(encodeCheckpoint(w)); expect(loaded.outposts.moon.colony.research).toBe(loaded.colony.research);
+    run(w, 2); run(loaded, 2); expect(loaded.ship).toEqual(w.ship); expect(loaded.outposts.moon).toEqual(w.outposts.moon); expect(loaded.system).toEqual(w.system);
   });
   it('flies from home to the moon, lands, returns and lands at home using only normal thrust and rotation', () => {
     const w = createWorld(); w.asteroids = []; w.exploration.sites = [];

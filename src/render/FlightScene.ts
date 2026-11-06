@@ -361,7 +361,7 @@ export class FlightScene extends Phaser.Scene {
     this.updateChrome();
     this.pickupFeed.update(this.simulation,this.halted?0:Math.min(delta/1000,.1));
     this.effects.update(this.simulation,Math.min(delta/1000,.1),this.halted,this.preferences.reducedMotion?0:this.preferences.quality==='low'?4:12,{centre:{x:this.follow.x,y:this.follow.y},radius:Math.hypot(this.scale.width,this.scale.height)/2/this.follow.zoom+128/this.follow.zoom});
-    const drawKey=[this.scale.width,this.scale.height,this.follow.x.toFixed(3),this.follow.y.toFixed(3),this.follow.angle.toFixed(4),this.follow.zoom.toFixed(4),this.preferences.quality,this.preferences.reducedMotion,this.flightTools.trajectory,this.hud.selectedBuildingId,JSON.stringify(this.hud.buildPreview),this.hud.shieldAccents,this.simulation.system.time,this.simulation.colony.buildOpen,this.simulation.moon.colony.buildOpen].join(':');
+    const drawKey=[this.scale.width,this.scale.height,this.follow.x.toFixed(3),this.follow.y.toFixed(3),this.follow.angle.toFixed(4),this.follow.zoom.toFixed(4),this.preferences.quality,this.preferences.reducedMotion,this.flightTools.trajectory,this.hud.selectedBuildingId,JSON.stringify(this.hud.buildPreview),this.hud.shieldAccents,this.simulation.system.time,this.simulation.colony.buildOpen,this.simulation.outposts.moon.colony.buildOpen].join(':');
     if(!this.halted || drawKey!==this.lastDrawKey){const started=performance.now();this.draw();this.budget.record('draw',performance.now()-started);this.lastDrawKey=drawKey;}
 
     this.hudTime += delta;

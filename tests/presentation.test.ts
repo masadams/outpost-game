@@ -30,17 +30,17 @@ it('blocks over-capacity, reserved, scarce, off-pad and foreign-world manifests 
  for(const configure of [(w:ReturnType<typeof createWorld>)=>w.ship.cargo.iron=110,(w:ReturnType<typeof createWorld>)=>w.colony.policy={energyReserve:0,deliveryReserve:0,alloyReserve:20,componentsReserve:0},(w:ReturnType<typeof createWorld>)=>w.colony.products.wire=0,(w:ReturnType<typeof createWorld>)=>w.ship.state='flying' as const]){
   const w=createWorld();configure(w);const stocks=structuredClone(w.colony.products);expect(manifestPlan(w,'expedition').error).toBeTruthy();loadManifest(w,'expedition');expect(cargoMass(w.ship)).toBe(w.ship.cargo.iron);expect(w.colony.products).toEqual(stocks);
  }
- const w=createWorld(),moon=colonyWorld(w,'moon');moon.colony.products.alloy=50;const before=structuredClone(w.moon);loadManifest(moon,'expedition');expect(w.moon).toEqual(before);expect(cargoMass(w.ship)).toBe(0);
+ const w=createWorld(),moon=colonyWorld(w,'moon');moon.colony.products.alloy=50;const before=structuredClone(w.outposts.moon);loadManifest(moon,'expedition');expect(w.outposts.moon).toEqual(before);expect(cargoMass(w.ship)).toBe(0);
 });
 it('routes native manifest actions through ordinary fixed simulation steps',()=>{
  const w=createWorld();stepWorld(w,{thrust:false,turn:0,colonyActions:[{type:'loadManifest',manifest:'expedition'}]},1/60);
- expect(cargoMass(w.ship)).toBe(25);expect(w.colony.products.alloy).toBe(13);expect(w.moon.colony.products.alloy).toBe(0);
+ expect(cargoMass(w.ship)).toBe(25);expect(w.colony.products.alloy).toBe(13);expect(w.outposts.moon.colony.products.alloy).toBe(0);
  expect(decodeCheckpoint(encodeCheckpoint(w)).ship.freight).toEqual(w.ship.freight);
 });
 it('records real objective results, requires moon crew/extraction and preserves progression in current saves',()=>{
  const w=createWorld();observeObjectives(w);expect(w.objectives.completed).toEqual([]);
  w.unloaded=1;observeObjectives(w);expect(w.objectives.completed).toEqual(['delivery']);
- const moon=colonyWorld(w,'moon'),b=completedBuilding(1001,'miningRig',160/450,moon);moon.colony.buildings.push(b);moon.colony.nextId=1002;b.status='running';w.moon.surfaceDeposits[0].remaining-=1;
+ const moon=colonyWorld(w,'moon'),b=completedBuilding(1001,'miningRig',160/450,moon);moon.colony.buildings.push(b);moon.colony.nextId=1002;b.status='running';w.outposts.moon.surfaceDeposits[0].remaining-=1;
  observeObjectives(w);expect(w.objectives.completed).not.toContain('moonWork');
  w.playerMode='astronaut';w.astronaut.position=surfacePosition(planetAt('moon',w.system),0,2.5);observeObjectives(w);expect(w.objectives.completed).toContain('moonWork');expect(w.objectives.completed).not.toContain('return');
  w.playerMode='ship';observeObjectives(w);expect(w.objectives.completed).not.toContain('return');
