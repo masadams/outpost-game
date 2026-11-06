@@ -32,7 +32,7 @@ describe('power kept for the turrets', () => {
     for (let i = 0; i < 60 * 30; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.colony.energy).toBeCloseTo(40, 3);
     expect(w.colony.buildings[0].status).toBe('power reserved');
-    expect(baseView(w).power.defence).toMatch(/about 26 shots/);
+    expect(baseView(w).power.defence).toMatch(/about 13 shots/);
     const open = base();
     for (let i = 0; i < 60 * 30; i++) stepWorld(open, { thrust: false, turn: 0 }, 1 / 60);
     expect(open.colony.energy).toBeLessThan(1);

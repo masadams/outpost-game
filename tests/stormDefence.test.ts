@@ -37,12 +37,13 @@ describe('first storm against a prepared and an unprepared base', { timeout: 120
       { kind: 'battery', angle: 0.06 },
       { kind: 'battery', angle: 0.065 },
     ]));
-    const single = outcome(base([{ kind: 'laser', angle: 0.075 }]));
+    const single = outcome(base([{ kind: 'laser', angle: 0.075 }, { kind: 'battery', angle: 0.06 }]));
     const nobattery = outcome(base([{ kind: 'laser', angle: 0.075 }, { kind: 'laser', angle: 0.085 }]));
-    // More preparation means fewer impacts: no defence, one turret, two turrets without a battery, two with batteries.
-    expect(bare.impacts).toBeGreaterThan(single.impacts);
-    expect(single.impacts).toBeGreaterThanOrEqual(nobattery.impacts);
-    expect(nobattery.impacts).toBeGreaterThan(guarded.impacts);
+    // Preparation matters, and power is the limit: turrets with no battery run dry almost at once, one turret with a
+    // battery stops about half, two turrets with two batteries stop everything.
+    expect(single.impacts).toBeLessThan(bare.impacts);
+    expect(nobattery.impacts).toBeGreaterThanOrEqual(single.impacts);
+    expect(guarded.impacts).toBeLessThan(single.impacts);
     expect(guarded.impacts).toBe(0);
     // Nobody is wiped out: the first storm is survivable even with no defence at all.
     expect(bare.wrecks).toBe(0);

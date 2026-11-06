@@ -68,7 +68,9 @@ export function createColony(): Colony {
 }
 export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
 export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
-export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
+/** A battery holds enough to carry a small base through much of a night. */
+export const BATTERY_CAPACITY = 1200;
+export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
 export const previewAngle = (world: WorldState): number => wrap(localAngleAt(world, world.astronaut.position) + world.colony.offset / colonyPlanet(world).radius);
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
   if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';

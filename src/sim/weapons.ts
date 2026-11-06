@@ -13,6 +13,12 @@ import { operational } from './buildingHealth';
 import type { Building } from './colony';
 import type { WorldState } from './world';
 
+/** Power a turret on automatic draws just to stay ready, in kilowatts. */
+export const AUTO_STANDBY_KW = 0.5;
+/** How far, in radians either way, a laser shot can stray from where it was aimed. */
+export const LASER_SPREAD = 0.012;
+/** A repeatable pseudo-random number from 0 to 1 for a shot, so saved games play out the same. */
+export const shotNoise = (shot: number, id: number): number => { const x = Math.sin(shot * 12.9898 + id * 78.233) * 43758.5453; return x - Math.floor(x); };
 export function turretState(building: Building) {
   return building.turret ??= { aim: 0, cooldown: 0, automatic: false };
 }
@@ -51,13 +57,17 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
       state.aim += clamp(wrap(desired - state.aim), -1.5 * dt, 1.5 * dt);
       if (Math.abs(desired - state.aim) > 0.06) continue;
     }
+    // A turret left on automatic draws a little power just to stay ready, whether or not it is firing.
+    if (state.automatic && !manual) { b.requestedPower = Math.max(b.requestedPower ?? 0, AUTO_STANDBY_KW); site.colony.demand += AUTO_STANDBY_KW; site.colony.energy = Math.max(0, site.colony.energy - AUTO_STANDBY_KW * dt); }
     if (!(manual ? fire : state.automatic && target)) continue;
     b.requestedPower = spec.energy / spec.cooldown; site.colony.demand += b.requestedPower;
     if (state.cooldown > 1e-9) continue;
     if (site.colony.energy + 1e-9 < spec.energy) { b.status = 'no power'; continue; }
     if (site.colony.products.alloy + 1e-9 < spec.alloy || site.colony.products.components + 1e-9 < spec.components) { b.status = 'no feedstock'; continue; }
     if (b.kind !== 'laser' && defence.projectiles.length >= 32) continue;
-    const direction = heading(b.angle + colonyPlanet(site).spin + state.aim);
+    // Lasers are not perfectly true: each shot can stray a little, so small or distant rocks are sometimes missed.
+    const stray = b.kind === 'laser' ? (shotNoise(defence.shots, b.id) - 0.5) * 2 * LASER_SPREAD : 0;
+    const direction = heading(b.angle + colonyPlanet(site).spin + state.aim + stray);
     site.colony.energy = Math.max(0, site.colony.energy - spec.energy);
     site.colony.products.alloy = Math.max(0, site.colony.products.alloy - spec.alloy);
     site.colony.products.components = Math.max(0, site.colony.products.components - spec.components);
