@@ -195,6 +195,8 @@ export class Hud {
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
       analyse: () => onColonyAction({ type: 'analyseSample' }),
       study: () => onColonyAction({ type: 'studyCrystal' }),
+      research: tech => onColonyAction({ type: 'researchStart', tech: tech as never }),
+      fit: upgrade => onColonyAction({ type: 'equipment', upgrade: upgrade as never, operation: 'install' }),
       reserve: direction => onColonyAction({ type: 'adjustPolicy', field: 'energyReserve', direction, step: 50, body: body() }),
       demolish: id => onColonyAction({ type: 'remote', id, operation: 'demolish', body: body() }),
     });
