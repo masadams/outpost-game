@@ -1,4 +1,5 @@
 import { AdaptiveMusic } from './AdaptiveMusic';
+import { soundscape, engineVoice } from './soundscape';
 import { AudioDirector, type Cue, type SoundFrame } from './director';
 import { AUDIO_KEY, parsePreferences, type AudioPreferences } from './preferences';
 import type { WorldState } from '../sim/world';
@@ -20,6 +21,8 @@ export class GameAudio {
   private failed = false;
   private disposed = false;
   private engineRumble: AudioBufferSourceNode | null = null;
+  private engineFilters: { tone: BiquadFilterNode; rumble: BiquadFilterNode } | null = null;
+  private ambience: { filter: BiquadFilterNode; gain: GainNode } | null = null;
   private pickupRun = 0;
   private lastPickup = -10;
   private frame: SoundFrame = { cues: [], engine: false, mining: false, tractor: false, machinery: false };
@@ -77,6 +80,7 @@ export class GameAudio {
             rumbleGain.connect(gain);
             rumble.start();
             this.engineRumble = rumble;
+            this.engineFilters = { tone: filter, rumble: rumbleFilter };
           }
           if (name === 'mining') {
             // A slow wobble makes the beam hum feel alive rather than a flat tone.
@@ -90,6 +94,30 @@ export class GameAudio {
           }
           this.loops.set(name, { oscillator, gain });
         }
+      }
+      if (!this.ambience) {
+        // Background air or hum for wherever you are: wind on Selene, a deep drone in space, near silence on Nacre.
+        const length = this.context.sampleRate * 3;
+        const buffer = this.context.createBuffer(1, length, this.context.sampleRate);
+        const data = buffer.getChannelData(0);
+        let seed = 31;
+        for (let i = 0; i < length; i++) {
+          seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+          data[i] = seed / 2147483648;
+        }
+        const source = this.context.createBufferSource();
+        const filter = this.context.createBiquadFilter();
+        const gain = this.context.createGain();
+        source.buffer = buffer;
+        source.loop = true;
+        filter.type = 'bandpass';
+        filter.Q.value = 0.7;
+        gain.gain.value = 0;
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.effects!);
+        source.start();
+        this.ambience = { filter, gain };
       }
       if (this.context.state === 'suspended') void this.context.resume().catch(() => { /* Retry on the next user gesture. */ });
     } catch { this.failed = true; }
@@ -117,9 +145,18 @@ export class GameAudio {
     this.frame = frame;
     this.active = !paused && !document.hidden; this.mix();
     if (!this.context) return;
+    const scape = soundscape(world);
+    const engine = engineVoice(scape.air);
+    const now = this.context.currentTime;
+    this.engineFilters?.tone.frequency.setTargetAtTime(engine.toneCutoff, now, 0.3);
+    this.engineFilters?.rumble.frequency.setTargetAtTime(engine.rumbleCutoff, now, 0.3);
+    if (this.ambience) {
+      this.ambience.filter.frequency.setTargetAtTime(scape.ambience.frequency, now, 0.8);
+      this.ambience.gain.gain.setTargetAtTime(paused ? 0 : scape.ambience.level, now, 0.8);
+    }
     for (const [name, loop] of this.loops) {
       const enabled = !paused && frame[name];
-      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? 0.07 : name === 'machinery' ? 0.007 : 0.035 : 0, this.context.currentTime, 0.04);
+      loop.gain.gain.setTargetAtTime(enabled ? name === 'engine' ? engine.level : name === 'machinery' ? 0.007 : 0.035 : 0, this.context.currentTime, 0.04);
     }
     if (frame.cues.some(c=>['warning','landingWarning','fuelWarning','shieldBreach','crash'].includes(c))) this.duckTime=2;
     this.duckTime=Math.max(0,this.duckTime-seconds);
