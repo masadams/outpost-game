@@ -1,12 +1,12 @@
 import { probeError } from '../../sim/probes';
 import { nacreSurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
-import { planetAt, planets, surfacePosition } from '../../sim/celestial';
+import { BODIES, BODY_IDS, planetAt, planets, surfacePosition, type BodyId } from '../../sim/celestial';
 import { WORLD } from '../../sim/config';
 import { farPosition } from '../../sim/storm';
 import { stormKnowledge } from '../../sim/stormKnowledge';
 import { wreckMarks } from '../flight/wreckView';
-import { BELTS, BELT_IDS, SITE_INFO, SITE_IDS, type BeltId, type Destination, type SiteId } from '../../sim/explorationConfig';
+import { bodyKnown, BELTS, BELT_IDS, SITE_INFO, SITE_IDS, type BeltId, type Destination, type SiteId } from '../../sim/explorationConfig';
 import { destination, navigation, siteError } from '../../sim/exploration';
 import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import type { Vec } from '../../sim/math';
@@ -185,9 +185,9 @@ function stormMark(w: WorldState): StormMark | null {
 }
 
 export function mapView(w: WorldState): MapView {
-  const moonVisible = featureVisible('moonTravel') || w.exploration.nacreSurveyed;
+  const shown = (id: BodyId): boolean => id === 'home' || featureVisible('moonTravel') || bodyKnown(w.exploration, id);
   const bodies = planets(w.system)
-    .filter(b => b.id === 'home' || moonVisible)
+    .filter(b => shown(b.id))
     .map(b => ({ id: b.id, label: b.label, at: b.position, radius: b.radius, atmosphere: b.atmosphere }));
   const belts = BELT_IDS.map(id => ({
     id,
@@ -196,10 +196,10 @@ export function mapView(w: WorldState): MapView {
     rocks: [...w.asteroids, ...w.pickups].filter(r => r.belt === id).map(r => ({ at: r.position, ore: r.mass > 0 })),
   }));
   const sites = w.exploration.sites.map(s => ({ id: s.key, label: SITE_INFO[s.key].label, at: s.position, intact: s.health > 0 }));
-  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...(moonVisible && w.system.binary ? (['moon'] as const) : []), ...BELT_IDS, ...SITE_IDS];
+  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...BODY_IDS.filter(id => id !== 'home' && w.system.binary && shown(id)), ...BELT_IDS, ...SITE_IDS];
   const places = ids.map(id => ({
     id,
-    label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : id === 'moon' ? 'Nacre moon' : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
+    label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : (BODY_IDS as readonly string[]).includes(id) ? BODIES[id as BodyId].label : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
     at: destination(w, id).position,
     kind: kindOf(id),
     selected: w.exploration.selected === id,

@@ -83,6 +83,7 @@ export class FlightScene extends Phaser.Scene {
   private art!: Phaser.GameObjects.Graphics;
   private atmosphere!: Phaser.GameObjects.Image;
   private moon!: Phaser.GameObjects.Image;
+  private cinder!: Phaser.GameObjects.Image;
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
   private map!: Phaser.GameObjects.Graphics;
@@ -108,7 +109,7 @@ export class FlightScene extends Phaser.Scene {
   constructor() { super('flight'); }
   create(): void {
     applyPresentation(this.preferences);
-    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (!actionAllowed(action, undefined, this.simulation.exploration.nacreSurveyed) || !this.revealed(action)) return; if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.halted) this.colonyActions.push(action); }, this.preferences);
+    this.keys = new Keyboard(this, this.preferences.bindings); this.hud = new Hud(action => { if (!actionAllowed(action, undefined, this.simulation.exploration.known) || !this.revealed(action)) return; if(action.type==='autopilot'&&action.operation==='cancel')applyAutopilotAction(this.simulation,action);else if (action.type === 'navigate') applyExplorationAction(this.simulation, action); else if(['toggleBuild','buildMode','select','shift'].includes(action.type))applyColonyAction(activeWorld(this.simulation),action);else if (!this.halted) this.colonyActions.push(action); }, this.preferences);
     this.audio = new GameAudio();
     this.help = new Help(open => {
       if (open) this.pausedBeforeHelp = this.paused;
@@ -145,7 +146,8 @@ export class FlightScene extends Phaser.Scene {
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
     this.planet = createPlanet(this);
     this.moon = createPlanet(this, 'moon');
-    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.art]);
+    this.cinder = createPlanet(this, 'cinder').setTint(0xcdb3a2);
+    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.cinder, this.art]);
     this.map = this.add.graphics();
     this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
       if(this.menu?.isOpen||this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
@@ -338,7 +340,7 @@ export class FlightScene extends Phaser.Scene {
     if (!this.halted) {
       this.clock.advance(delta / 1000, dt => {
         const input = this.keys.read();
-        const actions = filterActions([...(input.colonyActions ?? []), ...this.colonyActions.splice(0)], undefined, this.simulation.exploration.nacreSurveyed).filter(a => this.revealed(a));
+        const actions = filterActions([...(input.colonyActions ?? []), ...this.colonyActions.splice(0)], undefined, this.simulation.exploration.known).filter(a => this.revealed(a));
         const combatFire = !!input.combatFire && featureVisible('combat');
         stepWorld(this.simulation, { ...input, combatFire, colonyActions: actions }, dt);
       });
@@ -468,6 +470,8 @@ export class FlightScene extends Phaser.Scene {
     this.atmosphere.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
     this.moon.setVisible(this.simulation.system.binary).setPosition(moon.position.x - this.follow.x, moon.position.y - this.follow.y);
     this.planet.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
+    const cinder = planetAt('cinder', this.simulation.system);
+    this.cinder.setVisible(this.simulation.system.binary).setPosition(cinder.position.x - this.follow.x, cinder.position.y - this.follow.y);
     const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
     const padLevel = padSafety.approach ? padSafety.level : 'neutral';
     const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;

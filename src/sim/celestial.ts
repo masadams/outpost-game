@@ -1,6 +1,6 @@
 import { ATMOSPHERE, DAY_LENGTH, WORLD } from './config';
 import { heading, length, localAngle, wrap, type Vec } from './math';
-export const BODY_IDS = ['home', 'moon'] as const;
+export const BODY_IDS = ['home', 'moon', 'cinder'] as const;
 export type BodyId = typeof BODY_IDS[number];
 /** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
 export interface SystemFrame { time: number; binary: boolean; sun?: boolean }
@@ -12,16 +12,22 @@ export const STATIC_SYSTEM: SystemFrame = { time: 0, binary: false };
  */
 export interface BodySpec {
   label: string; radius: number; mu: number; atmosphere: number;
-  orbit: { kind: 'pair'; partner: BodyId; role: 'primary' | 'secondary' };
+  orbit: { kind: 'pair'; partner: BodyId; role: 'primary' | 'secondary' }
+    | { kind: 'circle'; radius: number; phase: number };
   spin: 'day' | 'tidal';
   requiresBinary: boolean;
+  /** Seconds a powered Observatory must watch before this body is surveyed and shows on the Map. 0 means known from the start. */
+  surveySeconds: number;
 }
 /** Every body in the system, as data. Add a body here and the rest of the physics (gravity, landing, light) follows. */
 export const BODIES: Record<BodyId, BodySpec> = {
   home: { label: 'Selene', radius: WORLD.radius, mu: WORLD.mu, atmosphere: ATMOSPHERE.height,
-    orbit: { kind: 'pair', partner: 'moon', role: 'primary' }, spin: 'day', requiresBinary: false },
+    orbit: { kind: 'pair', partner: 'moon', role: 'primary' }, spin: 'day', requiresBinary: false, surveySeconds: 0 },
   moon: { label: 'Nacre', radius: 450, mu: 1.6 * 450 ** 2, atmosphere: 0,
-    orbit: { kind: 'pair', partner: 'home', role: 'secondary' }, spin: 'tidal', requiresBinary: true },
+    orbit: { kind: 'pair', partner: 'home', role: 'secondary' }, spin: 'tidal', requiresBinary: true, surveySeconds: 90 },
+  // A small airless world far out, circling the shared centre of Selene and Nacre. Faint: it takes long watching to find.
+  cinder: { label: 'Cinder', radius: 260, mu: 0.9 * 260 ** 2, atmosphere: 0,
+    orbit: { kind: 'circle', radius: 22000, phase: 2.2 }, spin: 'tidal', requiresBinary: true, surveySeconds: 420 },
 };
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;
@@ -34,9 +40,15 @@ export const ORBIT_RATE = Math.sqrt((BODIES.home.mu + BODIES.moon.mu) / SEPARATI
 export interface Planet { id: BodyId; label: string; radius: number; mu: number; atmosphere: number; position: Vec; velocity: Vec; spin: number; spinRate: number }
 /** Selene turns so its star crosses the sky from the pad's left to its right, once per day. */
 export const HOME_SPIN_RATE = -2 * Math.PI / DAY_LENGTH;
+/** Angular speed (rad/s) of a body around its orbit centre. */
+export function orbitRate(id: BodyId): number {
+  const orbit = BODIES[id].orbit;
+  if (orbit.kind === 'pair') return ORBIT_RATE;
+  return Math.sqrt((BODIES.home.mu + BODIES.moon.mu) / orbit.radius ** 3);
+}
 function spinOf(id: BodyId, system: SystemFrame): { spin: number; spinRate: number } {
   if (!system.sun) return { spin: 0, spinRate: 0 };
-  const rate = BODIES[id].spin === 'day' ? HOME_SPIN_RATE : system.binary ? ORBIT_RATE : 0;
+  const rate = BODIES[id].spin === 'day' ? HOME_SPIN_RATE : system.binary ? orbitRate(id) : 0;
   return { spin: rate * system.time, spinRate: rate };
 }
 export function planetAt(id: BodyId, system = STATIC_SYSTEM): Planet {
@@ -45,10 +57,22 @@ export function planetAt(id: BodyId, system = STATIC_SYSTEM): Planet {
   const spec = { label, radius, mu, atmosphere };
   const turn = spinOf(id, system);
   const orbit = body.orbit;
+  const pairMu = BODIES.home.mu + BODIES.moon.mu;
+  // The shared centre of Selene and Nacre sits on the line between them, nearer the heavier one.
+  const centre = SEPARATION * BODIES.moon.mu / pairMu;
+  if (orbit.kind === 'circle') {
+    const rate = system.binary ? orbitRate(id) : 0;
+    const angle = orbit.phase + rate * system.time;
+    return {
+      ...spec, id, ...turn,
+      position: { x: centre + orbit.radius * Math.cos(angle), y: orbit.radius * Math.sin(angle) },
+      velocity: { x: -orbit.radius * rate * Math.sin(angle), y: orbit.radius * rate * Math.cos(angle) },
+    };
+  }
   const partner = BODIES[orbit.partner];
   const primary = orbit.role === 'primary';
   if (!system.binary) return { ...spec, id, ...turn, position: { x: primary ? 0 : SEPARATION, y: 0 }, velocity: { x: 0, y: 0 } };
-  const offset = SEPARATION * (primary ? partner.mu : body.mu) / (BODIES.home.mu + BODIES.moon.mu);
+  const offset = SEPARATION * (primary ? partner.mu : body.mu) / pairMu;
   const arm = primary ? -offset : SEPARATION - offset;
   const phase = system.time * ORBIT_RATE;
   return {

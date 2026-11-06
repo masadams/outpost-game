@@ -20,7 +20,7 @@ describe('map view', () => {
     setFeatureMode('all');
     const view = mapView(createWorld());
     expect(view.places.map(p => p.id)).toContain('moon');
-    expect(view.bodies.map(b => b.id)).toEqual(['home', 'moon']);
+    expect(view.bodies.map(b => b.id)).toEqual(['home', 'moon', 'cinder']);
   });
 
   it('keeps an unsurveyed cluster unknown and reveals it after a survey', () => {

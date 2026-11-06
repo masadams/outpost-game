@@ -1,3 +1,4 @@
+import { bodyKnown } from '../../sim/explorationConfig';
 import { SUIT } from '../../sim/astronaut';
 import { habitatSource } from '../../sim/habitats';
 import { localAngle, wrap } from '../../sim/math';
@@ -124,7 +125,7 @@ const PRODUCT_NAME = { alloy: 'alloy', wire: 'wire', components: 'components', f
 
 /** The rig kit for the first trip to Nacre. Shown once the Observatory has surveyed it. */
 function kit(w: WorldState): KitView | null {
-  if (!w.exploration.nacreSurveyed) return null;
+  if (!bodyKnown(w.exploration, 'moon')) return null;
   const aboard = PRODUCTS.some(p => w.ship.freight[p] > 0);
   const onMoon = w.siteBody === 'moon';
   if (aboard) {

@@ -1,3 +1,4 @@
+import { bodyKnown } from '../../sim/explorationConfig';
 import { featureVisible } from '../../preferences/features';
 import { flightRegion, REGION_LABELS, type FlightRegion } from '../../sim/flightRegion';
 import { OBJECTIVES, objectiveProgress, type ObjectiveId } from '../../sim/objectives';
@@ -85,7 +86,7 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
 }
 
 function moonWorkLine(w: WorldState): string {
-  if (!w.exploration.nacreSurveyed) return 'Keep the Observatory running; it is surveying Nacre.';
+  if (!bodyKnown(w.exploration, 'moon')) return 'Keep the Observatory running; it is surveying Nacre.';
   const onMoon = w.siteBody === 'moon';
   const freight = PRODUCTS.some(p => w.ship.freight[p] > 0);
   const kitBuilt = w.outposts.moon.colony.buildings.some(b => b.kind === 'miningRig');
