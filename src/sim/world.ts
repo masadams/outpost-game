@@ -72,7 +72,7 @@ function createOutposts(): Record<OutpostId, Outpost> {
     const colony = createColony();
     for (const p of Object.keys(colony.products) as (keyof typeof colony.products)[]) colony.products[p] = 0;
     colony.nextId = 1001 + 1000 * i;
-    outposts[id] = { colony, depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL[id].radius) };
+    outposts[id] = { colony, depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL[id].radius, id) };
   });
   return outposts;
 }
@@ -168,7 +168,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     // Ore only goes to the depot from the pad, not from wherever the lander happens to sit.
     const atPad = Math.abs(wrap(localAngleAt(local, world.ship.position) - WORLD.padAngle)) * colonyPlanet(local).radius <= WORLD.padHalfWidth;
     if (atPad) unloadCargo(local);
-    if (atPad && colonyPlanet(local).id === 'moon') {
+    if (atPad && colonyPlanet(local).id !== 'home') {
       const kit = unloadFreight(local);
       if (kit > 0) notify(world, `KIT UNLOADED · ${kit.toFixed(0)} kg. Step out and build.`);
     }

@@ -86,3 +86,38 @@ describe('belts as data', () => {
     expect(w.exploration.surveyed).toContain('cinderDebris');
   });
 });
+
+describe('a reason to go to Cinder', () => {
+  it('the Observatory hints at it before it is found, once', () => {
+    const w = createWorld();
+    w.colony.buildings.push(completedBuilding(1, 'observatory', 0.1, w), completedBuilding(2, 'solar', -0.1, w));
+    w.colony.energy = 500;
+    const seen: string[] = [];
+    for (let i = 0; i < 4 * 330; i++) {
+      stepWorld(w, { thrust: false, turn: 0 }, 0.25);
+      if (/faint point of light/.test(w.notice.message) && !seen.includes(w.notice.message)) seen.push(w.notice.message);
+    }
+    expect(seen).toHaveLength(1);
+    expect(w.exploration.hinted).toEqual(['cinder']);
+    expect(w.exploration.known).toEqual(['moon']);
+  });
+
+  it('is rich in the metals Selene lacks, and its survey says so', async () => {
+    const { bodySurvey } = await import('../src/sim/nacreSurvey');
+    const w = createWorld();
+    expect(bodySurvey(w, 'cinder')).toBeNull();
+    w.exploration.known.push('cinder');
+    const survey = bodySurvey(w, 'cinder')!;
+    expect(survey.deposits).toMatch(/Rare metals/);
+    expect(survey.deposits).not.toMatch(/Ice|Iron|Copper/);
+    expect(w.outposts.cinder.surfaceDeposits.every(d => ['rareMetals', 'silicon'].includes(d.resource))).toBe(true);
+  });
+
+  it('shows the rig kit once any other world is found', async () => {
+    const { shipPanelView } = await import('../src/ui/ship/shipView');
+    const w = createWorld();
+    expect(shipPanelView(w).kit).toBeNull();
+    w.exploration.known.push('cinder');
+    expect(shipPanelView(w).kit).not.toBeNull();
+  });
+});

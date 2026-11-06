@@ -1,6 +1,6 @@
 import { interceptBelt } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
-import { nacreSurvey } from '../../sim/nacreSurvey';
+import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
 import { BODIES, BODY_IDS, planetAt, planets, surfacePosition, type BodyId } from '../../sim/celestial';
 import { WORLD } from '../../sim/config';
@@ -146,11 +146,11 @@ function selectedView(w: WorldState): SelectedView {
   let body = '';
   if (id === 'home') body = 'Your outpost and landing pad.';
   else if (id === 'mark') body = 'A point you marked on the chart. It stays fixed in space while belts and moons move on. Send a probe to scan it, or fly there. Click the chart to move the mark.';
-  else if (id === 'moon') {
-    const survey = nacreSurvey(w);
+  else if ((BODY_IDS as readonly string[]).includes(id)) {
+    const survey = bodySurvey(w, id as Exclude<BodyId, 'home'>);
     body = survey
-      ? `Nacre, surveyed. Gravity ${survey.gravity}. Day ${survey.day}, ${survey.night}. Deposits: ${survey.deposits}. Airless; bring supplies.`
-      : 'Nacre: airless, low gravity. Bring supplies; nothing is waiting there.';
+      ? `${BODIES[id as BodyId].label}, surveyed. Gravity ${survey.gravity}. Day ${survey.day}, ${survey.night}. Deposits: ${survey.deposits}. Airless; bring supplies.`
+      : `${BODIES[id as BodyId].label}: airless, low gravity. Bring supplies; nothing is waiting there.`;
   }
   else if (belt) body = surveyed ? beltStock(w, belt) : 'Unknown until surveyed. Survey the buoy in this arc to see what is here.';
   else if (site) body = siteLine(w, site);

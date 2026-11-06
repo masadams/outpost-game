@@ -1,3 +1,4 @@
+import { CELESTIAL, type BodyId } from './celestial';
 import { WORLD } from './config';
 import { wrap } from './math';
 import type { Resource } from './resources';
@@ -10,8 +11,12 @@ const SEAMS: readonly [Resource, number, number, number][] = [
   ['silicon', 760, 40, 160], ['rareMetals', 1160, 24, 60], ['ice', 2100, 45, 240],
   ['iron', 3200, 48, 360], ['copper', -1700, 40, 300], ['silicon', -3000, 40, 240], ['rareMetals', -4400, 30, 100],
 ];
-export function createSurfaceDeposits(radius: number = WORLD.radius): SurfaceDeposit[] {
-  const seams: typeof SEAMS = radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
+/** Cinder: small, and rich where Selene is poor. Rare metals and silicon, nothing else. */
+const CINDER_SEAMS: typeof SEAMS = [['rareMetals', 100, 30, 220], ['rareMetals', -250, 30, 180], ['silicon', 380, 36, 200]];
+
+export function createSurfaceDeposits(radius: number = WORLD.radius, body?: BodyId): SurfaceDeposit[] {
+  if (body === 'cinder') radius = CELESTIAL.cinder.radius;
+  const seams: typeof SEAMS = body === 'cinder' ? CINDER_SEAMS : radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
   return seams.map(([resource, arc, halfWidth, initial], i) => ({ id: i + 1, resource, angle: arc / radius, halfWidth, initial, remaining: initial }));
 }
 export const surfaceDistance = (a: number, b: number): number => Math.abs(wrap(a - b)) * WORLD.radius;

@@ -22,6 +22,8 @@ export interface BodySpec {
   requiresBinary: boolean;
   /** Seconds a powered Observatory must watch before this body is surveyed and shows on the Map. 0 means known from the start. */
   surveySeconds: number;
+  /** A line the Observatory raises once it has watched this long (seconds), if the body is still unfound. */
+  hint?: { at: number; text: string };
 }
 /** Every body in the system, as data. Add a body here and the rest of the physics (gravity, landing, light) follows. */
 export const BODIES: Record<BodyId, BodySpec> = {
@@ -32,7 +34,8 @@ export const BODIES: Record<BodyId, BodySpec> = {
     orbit: { kind: 'pair', partner: 'home', role: 'secondary' }, spin: 'tidal', requiresBinary: true, surveySeconds: 90 },
   // A small airless world far out, circling the shared centre of Selene and Nacre. Faint: it takes long watching to find.
   cinder: { label: 'Cinder', radius: 260, mu: 0.9 * 260 ** 2, atmosphere: 0, air: null,
-    orbit: { kind: 'circle', radius: 22000, phase: 2.2 }, spin: 'tidal', requiresBinary: true, surveySeconds: 420 },
+    orbit: { kind: 'circle', radius: 22000, phase: 2.2 }, spin: 'tidal', requiresBinary: true, surveySeconds: 420,
+    hint: { at: 200, text: 'The Observatory keeps catching a faint point of light, far out. Keep watching.' } },
 };
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;

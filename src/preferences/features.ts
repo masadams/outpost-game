@@ -99,7 +99,7 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   if (current === 'all') return true;
   // The one reserve a new player sees: power kept back for the turrets, set from Base.
   if (action.type === 'adjustPolicy' && action.field === 'energyReserve') return true;
-  if (action.type === 'loadManifest' && known.includes('moon') && action.manifest === 'nacreKit') return true;
+  if (action.type === 'loadManifest' && known.length > 0 && action.manifest === 'nacreKit') return true;
   // Research projects and fabrication are limited by what the player has found (checked in the simulation).
   // Buildings can be upgraded in place once, to tier 2; the research behind it is checked in the simulation.
   if (action.type === 'upgradeBuilding') return action.level === 2;
