@@ -48,6 +48,7 @@ import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
 import { drawStormSamples } from './storm';
+import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
 import { coach } from '../ui/flight/coach';
@@ -474,6 +475,7 @@ export class FlightScene extends Phaser.Scene {
       animate: !this.halted && !this.preferences.reducedMotion,
       light: this.simulation.system.sun ? lightAtPoint(this.simulation.system, this.simulation.ship.position, null).direction : undefined,
     });
+    drawGround(g, this.simulation, view, this.follow.zoom);
     drawStormSamples(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawTowing(g, this.simulation, this.follow.zoom);
     drawCrewOrder(g,this.simulation,this.follow.zoom);
