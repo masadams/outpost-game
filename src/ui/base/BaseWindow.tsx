@@ -10,6 +10,7 @@ export interface BaseHandlers {
   select: (id: number) => void;
   toggle: (id: number) => void;
   recipe: (id: number) => void;
+  auto: (id: number) => void;
   analyse: () => void;
   study: () => void;
   research: (tech: string) => void;
@@ -219,6 +220,11 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
         {b.canToggle && (
           <button type="button" disabled={paused} onClick={click(() => on.toggle(b.id))}>
             {b.enabled ? 'Turn off' : 'Turn on'}
+          </button>
+        )}
+        {b.canCycleRecipe && b.autoRecipe !== null && (
+          <button type="button" disabled={paused} data-auto={String(b.autoRecipe)} onClick={click(() => on.auto(b.id))}>
+            Auto recipe: {b.autoRecipe ? 'on' : 'off'}
           </button>
         )}
         {b.canCycleRecipe && (

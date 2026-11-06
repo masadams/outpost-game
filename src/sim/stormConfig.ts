@@ -23,6 +23,27 @@ export const STORM = {
   health: [6, 2.4, 3, 1.8, 3.3, 2.4, 2.7],
 } as const;
 
+/** The second storm: more bodies, faster, with small tough ones that are hard to hit with a laser. Missiles help. */
+export const STORM_2 = {
+  seed: 23,
+  /** Starts when planned (after the quiet spell), not at a fixed time. */
+  arrivalTime: 0,
+  lead: 420,
+  entryRadius: 14000,
+  entrySpeed: 130,
+  spacing: 1.2,
+  targetOffset: -80,
+  aim: [0, 40, -50, 90, -110, 160, -190, 300, -420],
+  radii: [14, 8, 8, 10, 7, 9, 6, 8, 7],
+  masses: [1500, 380, 360, 520, 240, 420, 200, 340, 260],
+  health: [5, 3.6, 3.6, 4.2, 3, 3.8, 2.6, 3.4, 3],
+} as const;
+
+/** Seconds of quiet after the first storm before the second is on its way. */
+export const SECOND_STORM_DELAY = 500;
+
+export const stormFor = (wave: 1 | 2): typeof STORM | typeof STORM_2 => (wave === 2 ? STORM_2 : STORM);
+
 /** A body still travelling in the far field. Straight line at constant velocity. */
 export interface FarBody {
   id: number;
@@ -61,6 +82,10 @@ export interface StormState {
   held: number;
   /** Once a sample has been analysed, buildings take less blast damage. */
   analysed: boolean;
+  /** 1 for the first storm, 2 for the second. */
+  wave: 1 | 2;
+  /** When the current storm ended (world seconds), for timing the next. */
+  endedAt: number;
 }
 
 /** A piece of a storm body lying on the home planet's surface. */
@@ -76,6 +101,6 @@ export const ANALYSIS_ENERGY = 20;
 export function createStorm(): StormState {
   return {
     phase: 'quiet', far: [], ids: [], planned: false, arrival: 0, observed: 0, plan: [], armed: false,
-    samples: [], held: 0, analysed: false,
+    samples: [], held: 0, analysed: false, wave: 1, endedAt: 0,
   };
 }

@@ -17,6 +17,8 @@ Builds on what is already in the code but hidden in the focus set: surface depos
 
 | P2.5 | **Research from what you find.** Base gets a Research section once something has been studied. Three finds, each opens one project and one part: storm pieces → Applied materials → Impact armour; the Frost buoy data → Powered extraction → Powered mining head; the Nacre crystal → Bulk logistics → Bulk cargo hold. Build a Research lab (it appears in the build menu after the first find), start the project, then fabricate and fit the part at the home pad. In day-cycle games only find-opened projects can be researched. (`src/sim/finds.ts`, `src/ui/base/researchView.ts`.) Derelict salvage data and richer finds are later. | Built, needs a playthrough |
 
+| P2.6 | **The second storm and the derelict.** After a quiet spell (500 s) a bigger storm forms: nine bodies, faster, tougher, with its own warning. The missile turret joins the build menu when it forms; the goal "Survive the second storm" is added. The Copper derelict now counts as a find (Derelict data → Propulsion → High-thrust engine). New refineries start on Auto recipe (they pick what the base is short of; "Next recipe" switches it off, a button turns it back on). Save version 25. | Built, needs a playthrough |
+
 ## Research and upgrades (from the bible, section 8.2)
 A technology may need a discovery or sample, lab time, material or energy inputs, and fabrication equipment to turn the knowledge into a part. Knowledge is not manufacturing: you can record a discovery long before you can exploit it. The existing research tree and ship parts stay; the focus set brings them back a little at a time, each unlocked by something the player actually found.
 

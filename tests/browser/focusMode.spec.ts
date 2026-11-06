@@ -7,7 +7,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test('new players see only the first-sortie systems', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.locator('#objectives')).toContainText('Objective · 0/7');
+  await expect(page.locator('#objectives')).toContainText('Objective · 0/8');
 
   await page.getByRole('button', { name: 'Ship', exact: true }).click();
   const dock = page.locator('#operations-dock');
@@ -48,7 +48,7 @@ test('new players see only the first-sortie systems', async ({ page }) => {
 
 test('the all-features switch restores hidden systems', async ({ page }) => {
   await page.goto('/?features=all');
-  await expect(page.locator('#objectives')).toContainText('Objective · 0/11');
+  await expect(page.locator('#objectives')).toContainText('Objective · 0/12');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
   await expect(page.locator('#operations-dock [data-page="research"]')).toBeVisible();
 });

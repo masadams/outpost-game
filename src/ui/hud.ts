@@ -193,6 +193,7 @@ export class Hud {
       select: id => { this.baseSelected = id; this.renderBase(); },
       toggle: id => onColonyAction({ type: 'remote', id, operation: 'toggle', body: body() }),
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
+      auto: id => onColonyAction({ type: 'remote', id, operation: 'schedule', body: body() }),
       analyse: () => onColonyAction({ type: 'analyseSample' }),
       study: () => onColonyAction({ type: 'studyCrystal' }),
       research: tech => onColonyAction({ type: 'researchStart', tech: tech as never }),

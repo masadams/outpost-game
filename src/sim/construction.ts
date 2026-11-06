@@ -1,3 +1,4 @@
+import { createSchedule } from './scheduling';
 import { nearestPlanet, relativeVelocity } from './celestial';
 import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
 import { isShield, createShield } from './shieldConfig';
@@ -45,6 +46,8 @@ export function stepConstruction(w: WorldState, dt: number): void {
   const finished = completedBuilding(allocateBuildingId(w), o.kind, o.angle, w);
   // A freshly built machine has to warm up before it works.
   if (needsBoot(o.kind) && w.system.sun) finished.boot = 0;
+  // New refineries pick their own recipe from what the base is short of.
+  if (o.kind === 'refinery' && w.system.sun) finished.schedule = { ...createSchedule(), enabled: true };
   w.colony.buildings.push(finished);
   command.queue = command.queue.filter(q => q.id !== o.id); notify(w, `${BLUEPRINTS[o.kind].label.toUpperCase()} ORDER COMPLETE`);
 }

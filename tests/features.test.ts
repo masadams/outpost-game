@@ -56,7 +56,7 @@ describe('focus feature set', () => {
       { type: 'select', kind: 'flak' },
       { type: 'queueBuild', kind: 'shieldSmall', angle: 0 },
       { type: 'navigate', target: 'moon' },
-      { type: 'remote', id: 1, operation: 'schedule' },
+      { type: 'remote', id: 1, operation: 'auto' },
     ];
     for (const action of hidden) {
       expect(actionAllowed(action, 'focus'), action.type).toBe(false);

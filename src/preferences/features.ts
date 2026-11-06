@@ -33,7 +33,7 @@ export type Feature =
   | 'catalogue';
 
 /** Buildings a new player can place. The first five match number keys 1–5; the rest are mouse-only. */
-export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'researchLab', 'observatory', 'laser'];
+export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'researchLab', 'observatory', 'laser', 'missile'];
 
 export const FEATURE_STORAGE_KEY = 'outpost.features';
 
@@ -106,7 +106,7 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   if (feature) return featureVisible(feature, current);
   if (action.type === 'select' || action.type === 'queueBuild') return blueprintVisible(action.kind, current);
   if (action.type === 'navigate') return action.target !== 'moon' || nacreOpen;
-  if (action.type === 'remote') return action.operation !== 'schedule' && action.operation !== 'auto';
+  if (action.type === 'remote') return action.operation !== 'auto';
   return true;
 }
 

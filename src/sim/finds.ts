@@ -1,7 +1,7 @@
 import type { TechId, UpgradeId } from './progressionConfig';
 import type { WorldState } from './world';
 
-export type FindId = 'storm' | 'buoy' | 'crystal';
+export type FindId = 'storm' | 'buoy' | 'crystal' | 'derelict';
 
 export interface Find {
   id: FindId;
@@ -16,6 +16,7 @@ export interface Find {
 export const FINDS: readonly Find[] = [
   { id: 'storm', label: 'Pieces of the storm', tech: 'materials', upgrade: 'armour' },
   { id: 'buoy', label: 'Survey buoy data', tech: 'extraction', upgrade: 'mining' },
+  { id: 'derelict', label: 'Derelict data', tech: 'propulsion', upgrade: 'engine' },
   { id: 'crystal', label: 'Nacre crystal', tech: 'logistics', upgrade: 'bulkHold' },
 ];
 
@@ -24,6 +25,7 @@ export function findStudied(w: WorldState, id: FindId): boolean {
   const root = w.rootWorld ?? w;
   if (id === 'storm') return root.storm.analysed;
   if (id === 'buoy') return root.exploration.surveyed.includes('frost');
+  if (id === 'derelict') return root.exploration.surveyed.includes('copper');
   return root.exploration.crystal === 'studied';
 }
 
