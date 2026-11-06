@@ -1,7 +1,8 @@
 import { moveBody, type Body } from './bodies';
 import type { BeltId } from './explorationConfig';
-import { BELT_IDS, BELTS, SITE_INFO } from './explorationConfig';
+import { bodyKnown, BELT_IDS, BELTS, SITE_INFO } from './explorationConfig';
 import { destination } from './exploration';
+import { beltAfter } from './intercept';
 import { freightError } from './freight';
 import { gravity } from './environment';
 import { availableProduct } from './colonyPolicy';
@@ -24,20 +25,19 @@ export interface Probe extends Body {
   dv: number;
 }
 
-/** Belts a probe's tank can reach. The far rim needs a ship. */
-export const PROBE_BELTS: readonly BeltId[] = ['frost', 'copper'];
-
 export const PROBE = {
   cost: { alloy: 4, wire: 3, components: 3 } satisfies Partial<ProductInventory>,
   /** m/s² of push while it has propellant. */
   thrust: 9,
-  dv: 450,
+  dv: 600,
+  /** Speed (m/s) it settles at between the two ends of a long trip. */
+  cruise: 110,
   /** Distance to the belt (m) at which it can read it. */
   range: 450,
   /** Seconds before an unfinished probe is given up as lost. */
-  life: 600,
+  life: 900,
   /** How far from the home planet's centre a probe can be sent (m). */
-  reach: 6000,
+  reach: 25000,
   /** Radius (m) a probe scans around where it arrives at a marked point. */
   scan: 700,
   /** Probes in flight at once. */
@@ -58,7 +58,7 @@ export function probeError(w: WorldState): string | null {
   } else {
     if (!(BELT_IDS as readonly string[]).includes(target)) return 'Pick a belt or mark a point on the Map.';
     if (w.exploration.surveyed.includes(target as BeltId)) return 'Already surveyed.';
-    if (!PROBE_BELTS.includes(target as BeltId)) return 'Too far for a probe. Fly there.';
+    if (!bodyKnown(w.exploration, BELTS[target as BeltId].around)) return 'Pick a belt or mark a point on the Map.';
   }
   if (w.exploration.probes.length >= PROBE.max) return 'Both probes are still out.';
   const pad = freightError(w);
@@ -110,7 +110,10 @@ export function stepProbes(w: WorldState, dt: number): void {
   const keep: Probe[] = [];
   for (const probe of ex.probes) {
     probe.age += dt;
-    const aim = probe.target === 'mark' && probe.point ? { position: probe.point, velocity: { x: 0, y: 0 } } : destination(w, probe.target);
+    // A belt moves on, so aim where it will be when the probe gets there, not where it is.
+    const here = probe.target === 'mark' && probe.point ? { position: probe.point, velocity: { x: 0, y: 0 } } : destination(w, probe.target);
+    const togo = Math.hypot(here.position.x - probe.position.x, here.position.y - probe.position.y) / PROBE.cruise;
+    const aim = probe.target === 'mark' ? here : beltAfter(w, probe.target, Math.min(togo, 400));
     const target = aim.position;
     const to = { x: target.x - probe.position.x, y: target.y - probe.position.y };
     const distance = length(to);
@@ -130,7 +133,7 @@ export function stepProbes(w: WorldState, dt: number): void {
       const up = { x: -g.x / gl, y: -g.y / gl };
       const low = Math.max(0, 1 - (probe.age / 25));
       const frame = aim.velocity;
-      const closing = Math.min(80, Math.max(12, distance * 0.12));
+      const closing = Math.min(PROBE.cruise, Math.max(12, distance * 0.12));
       // If the planet is in the way, climb and swing around it instead of aiming straight through.
       const dir = { x: to.x / distance, y: to.y / distance };
       const blocked = rayCircle(probe.position, dir, { x: 0, y: 0 }, WORLD.radius + 150) !== null;

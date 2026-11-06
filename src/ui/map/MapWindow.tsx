@@ -100,6 +100,12 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
           <path d={`M${at(p.at).x - 8} ${at(p.at).y}H${at(p.at).x + 8}M${at(p.at).x} ${at(p.at).y - 8}V${at(p.at).y + 8}`} />
         </g>
       ))}
+      {view.intercept && (
+        <g class="map-intercept" aria-label={`Aim point, about ${Math.round(view.intercept.seconds)} seconds away`}>
+          <circle cx={at(view.intercept.at).x} cy={at(view.intercept.at).y} r={9} />
+          <circle cx={at(view.intercept.at).x} cy={at(view.intercept.at).y} r={2} />
+        </g>
+      )}
       {view.probes.map((p, i) => (
         <circle key={`probe-${i}`} cx={at(p.at).x} cy={at(p.at).y} r={3.5} class="map-probe" aria-label="Survey probe" />
       ))}

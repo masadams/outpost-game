@@ -1,3 +1,4 @@
+import { interceptBelt } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
 import { nacreSurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
@@ -18,6 +19,8 @@ export interface MapView {
   belts: BeltMark[];
   sites: SiteMark[];
   probes: Array<{ at: Vec }>;
+  /** Where a belt you picked will be when you get there, aiming from your ship. */
+  intercept: { at: Vec; seconds: number } | null;
   ship: Vec;
   pad: Vec;
   places: PlaceView[];
@@ -184,6 +187,13 @@ function stormMark(w: WorldState): StormMark | null {
   return { rocks, doubt, zone, line: `Landing about ${Math.round(Math.abs(known.corridor) / 10) * 10} m ${side} of the pad` };
 }
 
+function interceptMark(w: WorldState): { at: Vec; seconds: number } | null {
+  const id = w.exploration.selected;
+  if (!(BELT_IDS as readonly string[]).includes(id)) return null;
+  const aim = interceptBelt(w, id as BeltId, w.ship.position, 110);
+  return { at: aim.position, seconds: aim.seconds };
+}
+
 export function mapView(w: WorldState): MapView {
   const shown = (id: BodyId): boolean => id === 'home' || featureVisible('moonTravel') || bodyKnown(w.exploration, id);
   const bodies = planets(w.system)
@@ -225,6 +235,7 @@ export function mapView(w: WorldState): MapView {
     belts,
     sites,
     probes: w.exploration.probes.map(p => ({ at: p.position })),
+    intercept: interceptMark(w),
     ship: w.ship.position,
     pad: destination(w, 'home').position,
     places,

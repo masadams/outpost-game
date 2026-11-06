@@ -71,13 +71,18 @@ describe('belts as data', () => {
     setFeatureMode(null);
   });
 
-  it('is out of a probe\'s reach', async () => {
-    const { probeError } = await import('../src/sim/probes');
+  it('can be reached by a probe once Cinder is found, aiming ahead of its orbit', async () => {
+    const { probeError, launchProbe } = await import('../src/sim/probes');
     const w = createWorld();
     w.exploration.selected = 'cinderDebris';
     w.colony.products.alloy = 9;
     w.colony.products.wire = 9;
     w.colony.products.components = 9;
-    expect(probeError(w)).toBe('Too far for a probe. Fly there.');
+    expect(probeError(w)).toBe('Pick a belt or mark a point on the Map.');
+    w.exploration.known.push('cinder');
+    expect(probeError(w)).toBeNull();
+    launchProbe(w);
+    for (let i = 0; i < 9000 && w.exploration.probes.length > 0; i++) stepWorld(w, { thrust: false, turn: 0 }, 0.1);
+    expect(w.exploration.surveyed).toContain('cinderDebris');
   });
 });

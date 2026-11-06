@@ -78,3 +78,4 @@
 
 .map-chart .map-probe { fill: #9fe4ff; stroke: #dff6ff; stroke-width: 1; }
 .map-chart .map-mark path { stroke: #ffd98a; stroke-width: 2; fill: none; }
+.map-chart .map-intercept circle { fill: none; stroke: #9fe4ff; stroke-width: 1.5; stroke-dasharray: 3 3; }
