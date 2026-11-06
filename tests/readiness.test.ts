@@ -41,8 +41,9 @@ it('constructs supplied industry, pays recovery/repair and manufactures finite f
  const w=createWorld();w.asteroids=[];w.exploration.sites=[];w.playerMode='astronaut';const p=planetAt('home',w.system);w.astronaut.position=surfacePosition(p,120/p.radius,2.5);w.astronaut.velocity={...p.velocity};w.depot.iron=10;w.depot.ice=30;
  for(const [kind,metres]of [['solar',120],['refinery',160],['fuelProcessor',200],['service',76]] as const)applyCommandAction(w,{type:'queueBuild',kind,angle:metres/p.radius});
  tick(w,45);expect(w.colony.buildings).toHaveLength(4);expect(w.colony.products.alloy).toBe(18);expect(w.colony.products.fuel).toBeCloseTo(5);w.ship.state='crashed';w.ship.hull=0;w.ship.fuel=0;
- expect(recoveryReadiness(w).canRecover).toBe(true);applyCombatAction(w,{type:'recoverShip'});expect(w.ship.hull).toBe(30);expect(w.ship.fuel).toBe(0);expect(w.colony.products).toMatchObject({alloy:10,components:2});
- serviceCombatAtPad(w);expect(w.ship.hull).toBe(100);expect(w.colony.products.alloy).toBe(3);expect(refuelShip(w,w.ship.position)).toBeCloseTo(5);
+ expect(recoveryReadiness(w).canRecover).toBe(true);applyCombatAction(w,{type:'recoverShip'});expect(w.ship.hull).toBe(100);expect(w.wrecks).toHaveLength(1);expect(w.colony.products).toMatchObject({alloy:10,components:2});
+ // The rest checks service and refuelling, from a battered, empty lander.
+ w.ship.hull=30;w.ship.fuel=0;serviceCombatAtPad(w);expect(w.ship.hull).toBe(100);expect(w.colony.products.alloy).toBe(3);expect(refuelShip(w,w.ship.position)).toBeCloseTo(5);
  const refinery=w.colony.buildings.find(b=>b.kind==='refinery')!;for(let i=0;i<3;i++)applyFacilityAction(w,refinery,{type:'cycleRecipe'});tick(w,180);refuelShip(w,w.ship.position);
  expect(w.depot.ice).toBe(0);expect(w.ship.fuel).toBeCloseTo(31.25);expect(w.colony.products.fuel).toBe(0);expect(w.colony.products.water).toBeCloseTo(0);expect(w.colony.products.oxygen).toBeCloseTo(4.75);expect(w.ship.fuel+w.colony.products.water+w.colony.products.oxygen).toBeCloseTo(36);expect(w.defence.wave).toBe(0);
 });

@@ -24,7 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=20;
+export const SAVE_VERSION=21;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -76,7 +76,16 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && validWrecks(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+}
+function validWrecks(world: WorldState): boolean {
+  if (!Array.isArray(world.wrecks) || world.wrecks.length > 8) return false;
+  const vec = (v: unknown) => object(v) && number(v.x, -1e7, 1e7) && number(v.y, -1e7, 1e7);
+  return world.wrecks.every(w => object(w) && Number.isInteger(w.id) && w.id > 0 && number(w.beaconUntil, 0, 1e9) && number(w.condition, 0, 1) &&
+    typeof w.cause === 'string' && w.cause.length <= 40 && object(w.ship) && w.ship.state === 'crashed' && vec(w.ship.position) && vec(w.ship.velocity) &&
+    number(w.ship.angle, -1e3, 1e3) && number(w.ship.fuel, 0, 1e4) && object(w.ship.cargo) && object(w.ship.freight) &&
+    RESOURCES.every(r => number(w.ship.cargo[r], 0, 1e4)) && PRODUCTS.every(p => number(w.ship.freight[p], 0, 1e4)) &&
+    (w.ship.ground === undefined || ['home', 'moon'].includes(w.ship.ground)));
 }
 function validStorm(world: WorldState): boolean {
   const s = world.storm;

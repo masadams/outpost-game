@@ -20,6 +20,8 @@ export interface Ship {
   towRig: boolean;
   position: Vec; velocity: Vec; angle: number; angularVelocity: number;
   fuel: number; hull: number; state: FlightState; thrusting: boolean;
+  /** Speed against the ground at the moment of a crash, for how much of a wreck survives. */
+  crashSpeed?: number;
   impact: number; landings: number;
   cargo: Inventory; armament: Armament;
 }
@@ -116,7 +118,7 @@ export function stepShip(ship: Ship, input: Controls, dt: number, system: System
   ship.hull = Math.max(0, ship.hull - damage * damageFactor(ship));
   ship.impact = 1;
   if (ship.hull <= 0 || data.speed > 28 || data.tilt > Math.PI / 3) {
-    ship.hull = 0; ship.state = 'crashed'; ship.ground = planet.id; ship.thrusting = false; ship.velocity = groundVelocity(planet, ship.position);
+    ship.hull = 0; ship.state = 'crashed'; ship.ground = planet.id; ship.thrusting = false; ship.crashSpeed = data.speed; ship.velocity = groundVelocity(planet, ship.position);
   } else {
     // Inelastic ground response; air drag is handled separately by the shared integrator.
     const ground = groundVelocity(planet, ship.position);

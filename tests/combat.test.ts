@@ -115,7 +115,7 @@ describe('supplied recovery and persistence', () => {
     applyCombatAction(w, { type: 'recoverShip' }); expect(w.combat.recoveries).toBe(0);
     damageShip(w, 100); w.colony.products.components = 0; applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.state).toBe('crashed');
     w.colony.products.components = 2; applyCombatAction(w, { type: 'recoverShip' });
-    expect(w.ship.state).toBe('landed'); expect(w.ship.hull).toBe(30); expect(w.ship.fuel).toBe(9); expect(w.ship.armament.cannon).toBe(3); expect(w.ship.cargo.ice).toBe(0);
+    expect(w.ship.state).toBe('landed'); expect(w.ship.hull).toBe(100); expect(w.wrecks).toHaveLength(1); expect(w.wrecks[0].ship.armament.cannon).toBe(3); expect(w.ship.cargo.ice).toBe(0);
     expect(w.combat.lostCargo).toBe(12); expect(w.depot.iron).toBe(7); expect(w.asteroids).toHaveLength(0); expect(w.colony.products.alloy).toBe(20);
     expect(w.combat.recoveries).toBe(1); expect(() => encodeCheckpoint(w)).not.toThrow();
   });
