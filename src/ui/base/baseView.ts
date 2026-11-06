@@ -131,7 +131,9 @@ function inputNeed(b: Building): string {
 export function whyStopped(b: Building): string | null {
   switch (b.status) {
     case 'no power':
-      return 'Not enough power. Build another solar array, or a battery for the dark.';
+      return isTurret(b.kind)
+        ? 'Out of power: it cannot fire. Turn off the Observatory or refinery, or set Keep for turrets in Base.'
+        : 'Not enough power. Build another solar array, or a battery for the dark.';
     case 'power limited':
       return 'Running slowly because power is short.';
     case 'no feedstock':
@@ -145,7 +147,7 @@ export function whyStopped(b: Building): string | null {
     case 'no deposit':
       return 'It is not on a surface deposit.';
     case 'power reserved':
-      return 'Power is being held back for essential systems.';
+      return 'Waiting: power is being kept for the turrets (Keep for turrets in Base).';
     case 'delivery reserved':
       return 'Storage room is being held back for deliveries.';
     default:
