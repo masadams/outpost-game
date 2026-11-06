@@ -1,6 +1,7 @@
 import { CELESTIAL, type BodyId } from './celestial';
 import { WORLD } from './config';
 import { wrap } from './math';
+import { around, streamFor } from './seed';
 import type { Resource } from './resources';
 import type { Building } from './colony';
 
@@ -14,10 +15,21 @@ const SEAMS: readonly [Resource, number, number, number][] = [
 /** Cinder: small, and rich where Selene is poor. Rare metals and silicon, nothing else. */
 const CINDER_SEAMS: typeof SEAMS = [['rareMetals', 100, 30, 220], ['rareMetals', -250, 30, 180], ['silicon', 380, 36, 200]];
 
-export function createSurfaceDeposits(radius: number = WORLD.radius, body?: BodyId): SurfaceDeposit[] {
+/** The first seams near the pad are never made smaller than the standard game: a fair start for every seed. */
+const FAIR_SEAMS = 3;
+
+export function createSurfaceDeposits(radius: number = WORLD.radius, body?: BodyId, seed = 0): SurfaceDeposit[] {
   if (body === 'cinder') radius = CELESTIAL.cinder.radius;
   const seams: typeof SEAMS = body === 'cinder' ? CINDER_SEAMS : radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
-  return seams.map(([resource, arc, halfWidth, initial], i) => ({ id: i + 1, resource, angle: arc / radius, halfWidth, initial, remaining: initial }));
+  // Seed 0 is the standard game. Any other seed varies each seam's size a little, the same way every time.
+  const rand = streamFor(seed, `ground/${body ?? 'home'}`);
+  return seams.map(([resource, arc, halfWidth, initial], i) => {
+    if (seed === 0) return { id: i + 1, resource, angle: arc / radius, halfWidth, initial, remaining: initial };
+    const size = i < FAIR_SEAMS && (body ?? 'home') === 'home' ? Math.max(1, around(rand, 0.25)) : around(rand, 0.25);
+    const width = around(rand, 0.1);
+    const amount = Math.round(initial * size);
+    return { id: i + 1, resource, angle: arc / radius, halfWidth: Math.round(halfWidth * width * 10) / 10, initial: amount, remaining: amount };
+  });
 }
 export const surfaceDistance = (a: number, b: number): number => Math.abs(wrap(a - b)) * WORLD.radius;
 export function depositAt(deposits: SurfaceDeposit[], angle: number, footprint = 0, radius: number = WORLD.radius): SurfaceDeposit | undefined {

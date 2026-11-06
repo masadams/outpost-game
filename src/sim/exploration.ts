@@ -8,6 +8,7 @@ import { emptyInventory, inventoryMass, RESOURCES } from './resources';
 import { heading, length, dot, wrap, localAngle, type Vec } from './math';
 import { rayCircle } from './mining';
 import { shipMass } from './shipMass';
+import { around, streamFor } from './seed';
 import { launchProbe } from './probes';
 import { notify } from './messages';
 import type { ExplorationAction } from './explorationConfig';
@@ -26,9 +27,11 @@ export function seedNeighborhood(w: WorldState): void {
   if (w.exploration.sites.length) return;
   for (const belt of w.asteroids.length + 12 <= 256 ? BELT_IDS : []) {
     const spec = BELTS[belt];
+    const rand = streamFor(w.seed, `belt/${belt}`);
     for (let i = 0; i < EXPLORATION.rocksPerBelt; i++) {
+      const size = w.seed === 0 ? 1 : around(rand, 0.15);
       const state = orbitalState(spec.altitude + (i % 2 ? 40 : -40), spec.angle + (i - 1.5) * spec.step, spec.around);
-      w.asteroids.push({ ...state, id: w.nextId++, belt, resource: spec.resources[i], radius: 14 + i * 2, mass: 36 + i * 8, stage: 0, health: 1, maxHealth: 1 });
+      w.asteroids.push({ ...state, id: w.nextId++, belt, resource: spec.resources[i], radius: Math.round((14 + i * 2) * size * 10) / 10, mass: Math.round((36 + i * 8) * size * size), stage: 0, health: 1, maxHealth: 1 });
     }
   }
   for (const key of SITE_IDS) {

@@ -55,6 +55,8 @@ export interface WorldState {
   system: SystemFrame;
   /** The colony, stores and ground deposits on every body other than the home planet. */
   outposts: Record<OutpostId, Outpost>;
+  /** Seed for the layout of the world. 0 is the standard layout; any other value varies deposits and rocks, repeatably. */
+  seed: number;
   /** Only local views expose these; never persisted on the root. */
   readonly siteBody?: BodyId; readonly rootWorld?: WorldState;
   exploration: ExplorationState;
@@ -66,13 +68,13 @@ export interface WorldState {
   surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; storm: StormState; wrecks: Wreck[]; combat: CombatState;
 }
 /** An empty outpost for every body but the home planet. Ids on each start at a different thousand so they never clash. */
-function createOutposts(): Record<OutpostId, Outpost> {
+function createOutposts(seed: number): Record<OutpostId, Outpost> {
   const outposts = {} as Record<OutpostId, Outpost>;
   BODY_IDS.filter((id): id is OutpostId => id !== 'home').forEach((id, i) => {
     const colony = createColony();
     for (const p of Object.keys(colony.products) as (keyof typeof colony.products)[]) colony.products[p] = 0;
     colony.nextId = 1001 + 1000 * i;
-    outposts[id] = { colony, depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL[id].radius, id) };
+    outposts[id] = { colony, depot: emptyInventory(), surfaceDeposits: createSurfaceDeposits(CELESTIAL[id].radius, id, seed) };
   });
   return outposts;
 }
@@ -82,7 +84,7 @@ export function shareResearch(world: WorldState): void {
   for (const outpost of Object.values(world.outposts)) outpost.colony.research = world.colony.research;
 }
 
-export function createWorld(): WorldState {
+export function createWorld(seed = 0): WorldState {
   const asteroids: Asteroid[] = [];
   for (let i = 0; i < 15; i++) {
     const radius = WORLD.radius + ATMOSPHERE.height + 400 + (i % 3) * 200, n = heading(i * 2.399963);
@@ -94,8 +96,8 @@ export function createWorld(): WorldState {
   // A radial iron sample above home makes the first sortie accessible without orbital rendezvous.
   asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
   asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
-  const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, outposts: createOutposts(), exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
-    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), storm: createStorm(), wrecks: [], combat: createCombat() };
+  const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, seed, outposts: createOutposts(seed), exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
+    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(undefined, 'home', seed), colony: createColony(), defence: createDefence(), storm: createStorm(), wrecks: [], combat: createCombat() };
   shareResearch(world);
   seedNeighborhood(world);
   const velocity = planetAt('home', world.system).velocity;
