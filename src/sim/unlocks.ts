@@ -20,6 +20,7 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
     return industry && (!w.system.sun || w.exploration.surveyed.includes('frost'));
   }
   if (kind === 'researchLab') return studiedFinds(w).length > 0;
+  if (kind === 'missile') return w.storm.wave >= 2;
   if (kind === 'laser') {
     return w.colony.buildings.some(b => b.kind === 'observatory') || w.objectives.completed.includes('sky');
   }

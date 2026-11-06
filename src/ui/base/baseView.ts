@@ -86,6 +86,8 @@ export interface BuildingView {
   canToggle: boolean;
   enabled: boolean;
   canCycleRecipe: boolean;
+  /** Refineries only: whether the machine picks its own recipe. */
+  autoRecipe: boolean | null;
   /** Present for turrets: whether they fire on their own. */
   turret: { auto: boolean } | null;
   /** What demolishing gives back, in words, e.g. "3 alloy, 1 wire". */
@@ -201,6 +203,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     canToggle: b.kind !== 'storage' && b.kind !== 'battery' && health > 0,
     enabled: b.enabled,
     canCycleRecipe: b.kind === 'refinery' && health > 0,
+    autoRecipe: b.kind === 'refinery' ? b.schedule?.enabled === true : null,
     turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic } : null,
     salvage: salvageText(b),
     demolishBlocked: w ? demolishError(w, b) : null,

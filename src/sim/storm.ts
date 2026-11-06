@@ -5,12 +5,13 @@ import { predictMeteor } from './meteor';
 import { notify } from './messages';
 import { seeded } from './random';
 import { operational } from './buildingHealth';
-import { ANALYSIS_ENERGY, PICKUP_REACH, STORM, type FarBody } from './stormConfig';
+import { ANALYSIS_ENERGY, PICKUP_REACH, SECOND_STORM_DELAY, stormFor, type FarBody } from './stormConfig';
 import type { Meteor } from './defenceConfig';
 import type { WorldState } from './world';
 
 /** The state a body has when it is handed to the detailed meteor physics. */
-function entryMeteor(id: number, angle: number, tangential: number, system: SystemFrame, radius: number, mass: number): Meteor {
+function entryMeteor(id: number, angle: number, tangential: number, system: SystemFrame, radius: number, mass: number, wave: 1 | 2): Meteor {
+  const STORM = stormFor(wave);
   const planet = planetAt('home', system);
   const up = heading(angle + planet.spin);
   const side = { x: -up.y, y: up.x };
@@ -41,9 +42,9 @@ function landing(meteor: Meteor, system: SystemFrame): { angle: number; time: nu
 }
 
 /** Adjust the sideways speed until the body comes down where it is meant to. */
-function aimTangential(angle: number, system: SystemFrame, radius: number, mass: number): number {
+function aimTangential(angle: number, system: SystemFrame, radius: number, mass: number, wave: 1 | 2): number {
   const error = (tangential: number): number | null => {
-    const landed = landingAngle(entryMeteor(0, angle, tangential, system, radius, mass), system);
+    const landed = landingAngle(entryMeteor(0, angle, tangential, system, radius, mass, wave), system);
     return landed === null ? null : wrap(landed - angle);
   };
   let a = 0;
@@ -74,6 +75,7 @@ export function planStorm(world: WorldState): void {
  */
 export function planNextBody(world: WorldState): void {
   const storm = world.storm;
+  const STORM = stormFor(storm.wave);
   if (storm.planned) return;
   if (storm.arrival <= 0) storm.arrival = STORM.arrivalTime;
   const i = storm.plan.length;
@@ -83,8 +85,8 @@ export function planNextBody(world: WorldState): void {
   const entryTime = storm.arrival + i * STORM.spacing;
   const system = { ...world.system, time: entryTime };
   const target = WORLD.padAngle + (STORM.targetOffset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
-  const tangential = aimTangential(target, system, STORM.radii[i], STORM.masses[i]);
-  const meteor = entryMeteor(world.nextId++, target, tangential, system, STORM.radii[i], STORM.masses[i]);
+  const tangential = aimTangential(target, system, STORM.radii[i], STORM.masses[i], storm.wave);
+  const meteor = entryMeteor(world.nextId++, target, tangential, system, STORM.radii[i], STORM.masses[i], storm.wave);
   const fall = landing(meteor, system);
   storm.ids.push(meteor.id);
   storm.plan.push({ id: meteor.id, impactAngle: fall?.angle ?? null, impactTime: fall?.time ?? null });
@@ -111,6 +113,7 @@ export function farPosition(body: FarBody, time: number): Vec {
 /** Advances the storm one step: plan it, hand arriving bodies to the meteor physics, notice when it is over. */
 export function stepStorm(world: WorldState): void {
   const storm = world.storm;
+  const STORM = stormFor(storm.wave);
   const time = world.system.time;
   if (!storm.armed) {
     // Building an Observatory is what starts the story.
@@ -144,6 +147,7 @@ export function stepStorm(world: WorldState): void {
   const clear = world.defence.meteors.length === 0 && world.defence.projectiles.length === 0;
   if (storm.phase === 'approaching' && storm.far.length === 0 && clear) {
     storm.phase = 'over';
+    storm.endedAt = time;
     // Pieces come down in the zone the bodies were aimed at, whether or not they were shot apart.
     for (const planned of storm.plan) {
       if (planned.impactAngle !== null) storm.samples.push({ id: planned.id, angle: planned.impactAngle });
@@ -152,6 +156,7 @@ export function stepStorm(world: WorldState): void {
     else notify(world, 'The sky is clear.');
   }
   if (storm.phase === 'over') collectSamples(world);
+  if (storm.phase === 'over' && storm.wave === 1 && time >= storm.endedAt + SECOND_STORM_DELAY) startSecondStorm(world);
 }
 
 /** Walking over a piece picks it up. */
@@ -197,4 +202,19 @@ export function applyStormAction(world: WorldState, action: StormAction): void {
   storm.held -= 1;
   storm.analysed = true;
   notify(world, 'Analysis done. Buildings now take less damage from blasts.');
+}
+
+/** After a quiet spell the sky fills again. The first storm's pieces stay where they are. */
+function startSecondStorm(world: WorldState): void {
+  const storm = world.storm;
+  storm.wave = 2;
+  storm.phase = 'quiet';
+  storm.far = [];
+  storm.ids = [];
+  storm.plan = [];
+  storm.planned = false;
+  storm.arrival = 0;
+  storm.observed = 0;
+  storm.endedAt = 0;
+  notify(world, 'The sky is changing. Another storm is forming.');
 }

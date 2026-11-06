@@ -103,7 +103,7 @@ describe('oxygen habitats', () => {
   });
   it('round trips habitat gas, backup, usage and other equipment through the current format', () => {
     const { w, h } = fixture(); h.energy = 7; w.colony.oxygenUsed = 3; w.ship.towRig = true;
-    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(24); const loaded = decodeCheckpoint(text);
+    const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(25); const loaded = decodeCheckpoint(text);
     expect(loaded.colony.buildings[0].habitat).toEqual(h); expect(loaded.colony.oxygenUsed).toBe(3); expect(loaded.ship.towRig).toBe(true);
   });
   it.each(['oxygen', 'energy'] as const)('rejects invalid %s buffers', field => {

@@ -1,7 +1,7 @@
 import { WORLD } from './config';
 import { wrap } from './math';
 import { seeded } from './random';
-import { STORM } from './stormConfig';
+import { stormFor } from './stormConfig';
 import type { WorldState } from './world';
 
 /** Seconds of powered scanning before anything is seen at all. */
@@ -41,7 +41,7 @@ export function stormKnowledge(w: WorldState): StormKnowledge | null {
   const metres = coming.map(p => wrap(p.impactAngle! - WORLD.padAngle) * WORLD.radius);
   const low = Math.min(...metres);
   const high = Math.max(...metres);
-  const rand = seeded(STORM.seed + 1);
+  const rand = seeded(stormFor(s.wave).seed + 1);
   // A fixed error for this storm that shrinks as the watching goes on, so the estimate settles instead of jittering.
   const etaError = (rand() * 2 - 1) * 0.6;
   const corridorError = (rand() * 2 - 1) * 0.6;

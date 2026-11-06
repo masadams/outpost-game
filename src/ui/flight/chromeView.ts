@@ -10,7 +10,7 @@ import { coach, DEFAULT_COACH_KEYS, type CoachKeys } from './coach';
 type Objective = typeof OBJECTIVES[number];
 
 /** Milestones shown to the player; the focus set keeps the first sortie only. */
-const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'buoy', 'sky', 'storm', 'analysis', 'moonWork', 'return'];
+const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'buoy', 'sky', 'storm', 'analysis', 'storm2', 'moonWork', 'return'];
 
 export function shownObjectives(w?: WorldState): ReadonlyArray<Objective> {
   const all = featureVisible('catalogue') ? OBJECTIVES : OBJECTIVES.filter(o => FOCUS_OBJECTIVES.includes(o.id));
@@ -68,6 +68,12 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
     if (storm.samples.length > 0) return 'Pieces of the storm are on the ground. Walk over one.';
     if (storm.phase === 'over') return 'Nothing left to collect.';
     return 'Get through the storm first.';
+  }
+  if (id === 'storm2') {
+    const view = stormView(w);
+    if (view) return view.detail;
+    if (w.storm.wave === 1) return 'Get through the first storm. A bigger one follows.';
+    return 'Another storm is forming. Build missile turrets and keep your power up.';
   }
   if (id === 'moonWork') return moonWorkLine(w);
   if (id === 'return') {

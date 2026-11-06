@@ -18,6 +18,7 @@ const HINT: Record<FindId, string> = {
   storm: 'Pick up a piece of the storm and analyse it.',
   buoy: 'Fly to the Frost survey buoy and survey it.',
   crystal: 'Find the crystal on Nacre, bring it home and study it.',
+  derelict: 'Fly to the Copper derelict and salvage it.',
 };
 
 const costText = (cost: Partial<Record<string, number>>): string =>

@@ -24,7 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=24;
+export const SAVE_VERSION=25;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -91,7 +91,7 @@ function validWrecks(world: WorldState): boolean {
 function validStorm(world: WorldState): boolean {
   const s = world.storm;
   if (!['quiet', 'approaching', 'over'].includes(s.phase) || typeof s.planned !== 'boolean' || typeof s.armed !== 'boolean' || !number(s.arrival, 0, 1e9) || !number(s.observed, 0, 1e9) || !Array.isArray(s.plan) || s.plan.length > 16) return false;
-  if (!Array.isArray(s.samples) || s.samples.length > 16 || !Number.isInteger(s.held) || s.held < 0 || s.held > 16 || typeof s.analysed !== 'boolean') return false;
+  if (!Array.isArray(s.samples) || s.samples.length > 16 || !Number.isInteger(s.held) || s.held < 0 || s.held > 16 || typeof s.analysed !== 'boolean' || ![1, 2].includes(s.wave) || !number(s.endedAt, 0, 1e9)) return false;
   if (!s.samples.every(p => object(p) && Number.isInteger(p.id) && number(p.angle, -Math.PI - 1e-6, Math.PI + 1e-6))) return false;
   if (!s.plan.every(p => object(p) && Number.isInteger(p.id) && (p.impactAngle === null || number(p.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (p.impactTime === null || number(p.impactTime, 0, 1e9)))) return false;
   if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 16 || s.ids.length > 16) return false;
