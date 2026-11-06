@@ -4,7 +4,6 @@ import { planetAt, planets, surfacePosition } from '../../sim/celestial';
 import { WORLD } from '../../sim/config';
 import { farPosition } from '../../sim/storm';
 import { stormKnowledge } from '../../sim/stormKnowledge';
-import { STAR, starPosition } from '../../sim/star';
 import { wreckMarks } from '../flight/wreckView';
 import { BELTS, BELT_IDS, SITE_INFO, SITE_IDS, type BeltId, type Destination, type SiteId } from '../../sim/explorationConfig';
 import { destination, navigation, siteError } from '../../sim/exploration';
@@ -26,8 +25,6 @@ export interface MapView {
   note: string;
   /** What the Observatory knows of an incoming storm; null when nothing is known. */
   storm: StormMark | null;
-  /** The star: far beyond the chart, so only its direction shows, on the edge. Null with the day cycle off. */
-  star: { at: Vec; label: string } | null;
   /** Lost landers whose transponders are still on. */
   wrecks: Array<{ id: number; at: Vec; label: string }>;
 }
@@ -178,17 +175,6 @@ function stormMark(w: WorldState): StormMark | null {
   return { rocks, doubt, zone, line: `Landing about ${Math.round(Math.abs(known.corridor) / 10) * 10} m ${side} of the pad` };
 }
 
-function starMark(w: WorldState): { at: Vec; label: string } | null {
-  if (!w.system.sun) return null;
-  const home = planetAt('home', w.system);
-  const star = starPosition(w.system);
-  const dx = star.x - home.position.x;
-  const dy = star.y - home.position.y;
-  const distance = Math.hypot(dx, dy);
-  const k = STORM_CHART_RADIUS * 1.15 / distance;
-  return { at: { x: home.position.x + dx * k, y: home.position.y + dy * k }, label: `${STAR.label} (${Math.round(distance / 1000)} km away)` };
-}
-
 export function mapView(w: WorldState): MapView {
   const moonVisible = featureVisible('moonTravel') || w.exploration.nacreSurveyed;
   const bodies = planets(w.system)
@@ -213,7 +199,6 @@ export function mapView(w: WorldState): MapView {
   const anchors: Vec[] = [
     w.ship.position,
     ...(storm ? storm.rocks.map(r => r.at) : []),
-    ...(w.system.sun ? [starMark(w)!.at] : []),
     ...wreckMarks(w).map(x => x.at),
     ...sites.map(s => s.at),
     ...belts.flatMap(b => b.rocks.map(r => r.at)),
@@ -238,7 +223,6 @@ export function mapView(w: WorldState): MapView {
     },
     note: routeNote(w),
     storm,
-    star: starMark(w),
     wrecks: wreckMarks(w),
   };
 }

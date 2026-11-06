@@ -19,6 +19,8 @@ Builds on what is already in the code but hidden in the focus set: surface depos
 
 | P2.6 | **The second storm and the derelict.** After a quiet spell (500 s) a bigger storm forms: nine bodies, faster, tougher, with its own warning. The missile turret joins the build menu when it forms; the goal "Survive the second storm" is added. The Copper derelict now counts as a find (Derelict data → Propulsion → High-thrust engine). New refineries start on Auto recipe (they pick what the base is short of; "Next recipe" switches it off, a button turns it back on). Save version 25. | Built, needs a playthrough |
 
+| P2.7 | **Guiding the way.** After the first delivery a pointer shows the way to the Frost survey buoy, and on Nacre to the crystal. Picking up the crystal or a storm piece plays the pickup sound. The Map no longer draws the star (it sat at the chart edge and read as a distance, not a place). | Built |
+
 ## Research and upgrades (from the bible, section 8.2)
 A technology may need a discovery or sample, lab time, material or energy inputs, and fabrication equipment to turn the knowledge into a part. Knowledge is not manufacturing: you can record a discovery long before you can exploit it. The existing research tree and ship parts stay; the focus set brings them back a little at a time, each unlocked by something the player actually found.
 

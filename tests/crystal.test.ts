@@ -41,3 +41,30 @@ describe('the Nacre crystal', () => {
     stepWorld(w, { thrust: false, turn: 0 }, 0.1);
   });
 });
+
+describe('guiding the player', () => {
+  it('points at the buoy after the first delivery, and at the crystal on Nacre', async () => {
+    const { guideTarget } = await import('../src/ui/flight/guide');
+    const w = createWorld();
+    w.system.sun = true;
+    expect(guideTarget(w)).toBeNull();
+    w.unloaded = 5;
+    w.ship.state = 'flying';
+    const buoy = w.exploration.sites.find(site => site.key === 'survey')!;
+    expect(guideTarget(w)).toEqual(buoy.position);
+    w.exploration.surveyed.push('frost');
+    expect(guideTarget(w)).toBeNull();
+    const moon = planetAt('moon', w.system);
+    w.ship.position = surfacePosition(moon, 0, 200);
+    expect(guideTarget(w)).not.toBeNull();
+  });
+
+  it('plays the pickup sound when the crystal is picked up', async () => {
+    const { AudioDirector } = await import('../src/audio/director');
+    const w = createWorld();
+    const director = new AudioDirector();
+    director.reset(w);
+    w.exploration.crystal = 'carried';
+    expect(director.update(w, 1 / 60, false).cues).toContain('pickup');
+  });
+});
