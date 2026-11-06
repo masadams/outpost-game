@@ -1,3 +1,4 @@
+import { BODY_IDS } from '../../sim/celestial';
 import { bodyKnown } from '../../sim/explorationConfig';
 import { SUIT } from '../../sim/astronaut';
 import { habitatSource } from '../../sim/habitats';
@@ -123,13 +124,13 @@ function foot(w: WorldState): FootView {
 
 const PRODUCT_NAME = { alloy: 'alloy', wire: 'wire', components: 'components', fuel: 'fuel', oxygen: 'oxygen' } as const;
 
-/** The rig kit for the first trip to Nacre. Shown once the Observatory has surveyed it. */
+/** The rig kit for a trip to another world. Shown once the Observatory has surveyed one. */
 function kit(w: WorldState): KitView | null {
-  if (!bodyKnown(w.exploration, 'moon')) return null;
+  if (!BODY_IDS.some(id => id !== 'home' && bodyKnown(w.exploration, id))) return null;
   const aboard = PRODUCTS.some(p => w.ship.freight[p] > 0);
-  const onMoon = w.siteBody === 'moon';
+  const onMoon = (w.siteBody ?? 'home') !== 'home';
   if (aboard) {
-    const where = onMoon ? 'Land on the pad and press E to unload it.' : 'Fly to Nacre and land on its pad.';
+    const where = onMoon ? 'Land on the pad and press E to unload it.' : 'Pick a world on the Map, fly there and land on its pad.';
     return { text: `Rig kit aboard. ${where}`, load: null };
   }
   if (onMoon) return null;
@@ -140,7 +141,7 @@ function kit(w: WorldState): KitView | null {
   const reason = plan.error === null ? 'Ready to load.'
     : short.length ? `Needs ${short.join(', ')}`
       : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
-  return { text: 'A rig, a solar array, a battery and a power relay for Nacre: 18 alloy, 10 wire, 5 components. Nacre has long nights; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
+  return { text: 'A rig, a solar array, a battery and a power relay for another world: 18 alloy, 10 wire, 5 components. Nights there are long; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
 }
 
 export function shipPanelView(w: WorldState): ShipPanelView {

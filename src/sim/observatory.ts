@@ -34,6 +34,10 @@ export function stepObservatory(w: WorldState, b: Building, dt: number): void {
   ex.watch += work;
   for (const id of BODY_IDS) {
     const spec = BODIES[id];
+    if (spec.hint && ex.watch >= spec.hint.at && !ex.known.includes(id) && !ex.hinted.includes(id)) {
+      ex.hinted.push(id);
+      notify(w, spec.hint.text);
+    }
     if (spec.surveySeconds <= 0 || ex.known.includes(id) || ex.watch < spec.surveySeconds) continue;
     ex.known.push(id);
     notify(w, `${spec.label.toUpperCase()} SURVEYED · ROUTE OPEN ON THE MAP`);

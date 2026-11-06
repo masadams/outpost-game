@@ -2,7 +2,7 @@ import { colonyPlanet } from '../sim/localWorld';
 import { createSurfaceDeposits, rigDeposit } from '../sim/geology';
 import type { WorldState } from '../sim/world';
 export function validGeology(world: WorldState): boolean {
-  const deposits = world.surfaceDeposits, expected = createSurfaceDeposits(colonyPlanet(world).radius);
+  const deposits = world.surfaceDeposits, expected = createSurfaceDeposits(colonyPlanet(world).radius, colonyPlanet(world).id);
   if (!Array.isArray(deposits) || deposits.length !== expected.length) return false;
   const seen = new Set<number>();
   for (const d of deposits) {
