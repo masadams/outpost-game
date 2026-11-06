@@ -25,7 +25,7 @@ it.each(BUILD_TYPES)('upgrades %s in place, preserving every existing field and 
 });
 it('expands storage/battery capacity empty, increases paid generation, and removes wrecked capacity',()=>{
  const {w,b}=fixture('storage');const initial={products:{...w.colony.products},depot:{...w.depot}},ore=oreCapacity(w.colony),products=productCapacity(w.colony);applyBuildingUpgrade(w,{type:'upgradeBuilding',id:1,level:2});expect(oreCapacity(w.colony)-ore).toBe(100);expect(productCapacity(w.colony)-products).toBe(50);expect(w.depot).toEqual(initial.depot);
- w.colony.energy=20;applyBuildingUpgrade(w,{type:'upgradeBuilding',id:2,level:2});expect(energyCapacity(w.colony)).toBe(320);expect(w.colony.energy).toBe(0);
+ w.colony.energy=20;applyBuildingUpgrade(w,{type:'upgradeBuilding',id:2,level:2});expect(energyCapacity(w.colony)).toBe(1820);expect(w.colony.energy).toBe(0);
  w.colony.products.alloy=240;w.depot.iron=690;b.health=0;constrainDamagedStorage(w);expect(w.depot.iron).toBe(400);expect(w.colony.products.alloy).toBe(100);expect(w.defence.lostStock).toBe(430);
  const solar=fixture();applyBuildingUpgrade(solar.w,{type:'upgradeBuilding',id:1,level:2});stepColony(solar.w,1);expect(solar.w.colony.generation).toBe(12);expect(solar.w.colony.energy).toBe(12);
 });

@@ -4,7 +4,7 @@ import {applyBuildingUpgrade} from './buildingUpgrades';
 import { applyCrewOrder, crewMove, type CrewOrder } from './crewOrders';
 import { createObjectives, observeObjectives, type ObjectiveState } from './objectives';
 import { planetAt, nearestPlanet, CELESTIAL, type SystemFrame, type BodyId } from './celestial';
-import { activeWorld, allColonies, colonyWorld } from './localWorld';
+import { activeWorld, allColonies, colonyPlanet, colonyWorld, localAngleAt } from './localWorld';
 import { isProgressionAction } from './progressionConfig';
 import { applyResearch } from './research';
 import { applyEquipment } from './equipment';
@@ -22,13 +22,16 @@ import { serviceCombatAtPad } from './combatSupply';
 import { createDefence, type DefenceState } from './defenceConfig';
 import { createStorm, type StormState } from './stormConfig';
 import { stepStorm, isStormAction, applyStormAction } from './storm';
+import { salvageWreck, stepWrecks, type Wreck } from './wrecks';
+import { bagToHold, collectOnFoot } from './bag';
+import { ROCK_SHATTER_SPEED, rockToOre } from './rockFall';
 import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, resolveDefenceHits } from './defence';
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
-import { heading } from './math';
+import { heading, wrap } from './math';
 import { fireLaser, fracture, tractor, powerTractor, type Beam } from './mining';
 import { createShip, stepShip, type Controls, type Ship } from './physics';
-import { emptyInventory, RESOURCES, type Inventory } from './resources';
+import { emptyInventory, inventoryMass, RESOURCES, type Inventory } from './resources';
 import { unloadCargo as unloadDepot } from './cargo';
 import { createAstronaut, stepAstronaut, SUIT, type Astronaut } from './astronaut';
 import { boardOrExit, interactSurface, nearbyStation } from './surface';
@@ -52,7 +55,7 @@ export interface WorldState {
   beam: Beam | null; tractorActive: boolean; nextId: number; unloaded: number;
   playerMode: 'ship' | 'astronaut'; astronaut: Astronaut; depotOpen: boolean;
   buttons: { board: boolean; interact: boolean }; notice: { message: string; time: number };
-  surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; storm: StormState; combat: CombatState;
+  surfaceDeposits: SurfaceDeposit[]; colony: Colony; defence: DefenceState; storm: StormState; wrecks: Wreck[]; combat: CombatState;
 }
 export function createWorld(): WorldState {
   const asteroids: Asteroid[] = [];
@@ -70,7 +73,7 @@ export function createWorld(): WorldState {
   for (const p of Object.keys(moon.colony.products) as (keyof typeof moon.colony.products)[]) moon.colony.products[p] = 0;
   moon.colony.nextId = 1001;
   const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true }, moon, exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
-    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), storm: createStorm(), combat: createCombat() };
+    playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(), colony: createColony(), defence: createDefence(), storm: createStorm(), wrecks: [], combat: createCombat() };
   world.moon.colony.research = world.colony.research;
   seedNeighborhood(world);
   const velocity = planetAt('home', world.system).velocity;
@@ -87,11 +90,14 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(action.type==='upgradeBuilding'){applyBuildingUpgrade(owner,action);continue;}
     if(action.type==='crewOrder'){applyCrewOrder(owner,action);continue;}
     if(isStormAction(action)){applyStormAction(world,action);continue;}
+    if(action.type==='salvageWreck'){salvageWreck(world);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
   for (const action of input.combatActions ?? []) applyCombatAction(local, action);
   stepTow(world, dt);
-  const interact = !!input.unload && !world.buttons.interact;
+  let interact = !!input.unload && !world.buttons.interact;
+  // E next to a wreck salvages it, before anything else E might do.
+  if (interact && salvageWreck(world)) interact = false;
   world.buttons = { board: !!input.board, interact: !!input.unload };
   const piloting = world.playerMode === 'ship';
   const startSuit = { ...world.astronaut.position }, meteorStarts = new Map(world.defence.meteors.map(m => [m.id, { ...m.position }]));
@@ -107,11 +113,21 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn || automatic, jump: !controlling && !!input.jump }, dt, paidHabitatSeconds, world.system);
     if (nearbyStation(local)?.kind !== 'depot') world.depotOpen = false;
     if (interact) interactSurface(local);
+    collectOnFoot(world);
   } else {
+    // Whatever the pilot carried in goes into the hold.
+    if (world.astronaut.bag && inventoryMass(world.astronaut.bag) > 0) { const moved = bagToHold(world); if (moved > 0) notify(world, `Moved ${moved.toFixed(1)} kg of ore from your bag to the hold.`); }
     world.astronaut.position = { ...world.ship.position }; world.astronaut.velocity = { ...world.ship.velocity };
     world.astronaut.oxygen = SUIT.oxygen;
   }
-  for (const body of [...world.asteroids, ...world.pickups]) moveBody(body, dt, world.system);
+  const shattered: Asteroid[] = [];
+  for (const body of world.pickups) moveBody(body, dt, world.system);
+  for (const rock of world.asteroids) if (moveBody(rock, dt, world.system) > ROCK_SHATTER_SPEED) shattered.push(rock);
+  // A rock that comes down hard breaks into loose ore on the ground (same mass), instead of landing on the pad as an obstacle.
+  if (shattered.length > 0) {
+    world.asteroids = world.asteroids.filter(r => !shattered.includes(r));
+    for (const rock of shattered) world.pickups.push(...rockToOre(rock, () => world.nextId++, world.system));
+  }
   for (let i = 0; i < world.asteroids.length; i++) {
     const rock = world.asteroids[i];
     for (let j = i + 1; j < world.asteroids.length; j++) separateBodies(rock, world.asteroids[j]);
@@ -125,7 +141,9 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   world.pickups = world.pickups.filter(pickup => pickup.mass > 1e-9);
   if (piloting && interact && world.ship.state === 'flying') applyExplorationAction(world, { type: 'visitSite' });
   if (piloting && input.unload) {
-    unloadCargo(local);
+    // Ore only goes to the depot from the pad, not from wherever the lander happens to sit.
+    const atPad = Math.abs(wrap(localAngleAt(local, world.ship.position) - WORLD.padAngle)) * colonyPlanet(local).radius <= WORLD.padHalfWidth;
+    if (atPad) unloadCargo(local);
     serviceCombatAtPad(local);
     const fuel = refuelShip(local, world.ship.position);
     if (fuel > 0) notify(world, `FUEL TRANSFERRED · +${fuel.toFixed(1)} kg`);
@@ -133,6 +151,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   let researchStaffed = false;
   for (const site of allColonies(world)) researchStaffed = stepColony(site, dt, researchStaffed);
   stepStorm(world);
+  stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });
   resolveDefenceHits(world);

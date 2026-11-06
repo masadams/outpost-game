@@ -101,7 +101,7 @@ describe('finite cable dynamics and vulnerability', () => {
   });
   it('preserves paid equipment through recovery, loses the cable and still charges recovery supplies', () => {
     const w = fixture(); applyTowAction(w, { type: 'toggleTow' }); w.ship.state = 'crashed'; w.ship.hull = 0;
-    applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.towRig).toBe(true); expect(w.ship.hull).toBe(30);
+    applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.towRig).toBe(false); expect(w.wrecks[0].ship.towRig).toBe(true); expect(w.ship.hull).toBe(100);
     expect(w.towing.targetId).toBeNull(); expect(w.colony.products.alloy).toBe(20); expect(w.colony.products.components).toBe(6);
   });
 });

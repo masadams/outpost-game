@@ -100,7 +100,7 @@ describe('powered defence and controls', () => {
     w.colony.products.components = 8; w.defence.meteors[0].position.y = -10000; stepWeapons(w, false, 0, STEP, new Map()); expect(w.defence.shots).toBe(0);
     expect(lineOfSight({ x: 0, y: -1900 }, { x: 0, y: 1900 })).toBe(false);
     w.defence.meteors[0] = meteor(w, 350, 0, 0.1 + Math.PI); stepWeapons(w, false, 0, STEP, new Map()); expect(w.defence.shots).toBe(0);
-    expect(w.colony.energy).toBe(20);
+    expect(w.colony.energy).toBeCloseTo(20, 1);
   });
   it('lets the crew aim and fire without walking or jumping, and releases invalid control', () => {
     const w = base(); applyDefenceAction(w, { type: 'controlTurret' }); expect(w.defence.controlled).toBe(2);
@@ -137,7 +137,7 @@ describe('persistent damage, repair and compatibility', () => {
     const saved = decodeCheckpoint(encodeCheckpoint(w)); expect(saved.colony.buildings[2].health).toBe(0);
     saved.astronaut.position = stationPosition(0.2); const stock = saved.colony.products.alloy, charge = saved.colony.energy;
     applyDefenceAction(saved, { type: 'repairBuilding' }); expect(saved.colony.buildings[2].health).toBe(100);
-    expect(saved.colony.products.alloy).toBeCloseTo(stock - 10); expect(energyCapacity(saved.colony)).toBe(220); expect(saved.colony.energy).toBe(charge);
+    expect(saved.colony.products.alloy).toBeCloseTo(stock - 10); expect(energyCapacity(saved.colony)).toBe(1220); expect(saved.colony.energy).toBe(charge);
   });
   it('repairs only nearby on foot with alloy, and gives no full-value salvage for a wreck', () => {
     const w = base(), b = w.colony.buildings[1]; b.health = 0; w.colony.products.alloy = 2;

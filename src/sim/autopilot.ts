@@ -1,4 +1,4 @@
-import {planetAt,nearestPlanet,relative,surfacePosition,type BodyId} from './celestial';
+import {groundVelocity,planetAt,nearestPlanet,relative,surfaceAngle,surfacePosition,type BodyId} from './celestial';
 import {telemetry,type Controls} from './physics';
 import {WORLD} from './config';
 import {gravity} from './environment';
@@ -25,7 +25,7 @@ export function autopilotError(w:WorldState,mode:AutopilotMode):string|null{
  const p=nearestPlanet(w.ship.position,w.system),t=telemetry(w.ship,WORLD.shipRadius,w.system);
  if(mode==='land'){
   if(w.ship.state!=='flying')return 'Already on the surface';
-  const arc=Math.abs(wrap(localAngle(relative(w.ship.position,p))))*p.radius;
+  const arc=Math.abs(wrap(surfaceAngle(p,w.ship.position)))*p.radius;
   if(t.altitude>500||arc>250||Math.abs(t.tangential)>10||-t.radial>15||t.tilt>Math.PI/3)return 'Prepare approach: within 500 m altitude / 250 m of pad; drift ≤10, descent ≤15 m/s, tilt ≤60°';
   if(t.altitude<30&&(t.tilt>.15||Math.abs(t.tangential)>2||arc>8))return 'Climb above 30 m or align over the pad before automatic landing';
   const g=gravity(w.ship.position,w.system),net=engineStats(w.ship).thrust/shipMass(w.ship)-Math.hypot(g.x,g.y),down=Math.max(0,-t.radial);
@@ -44,7 +44,7 @@ export function applyAutopilotAction(source:WorldState,a:AutopilotAction):void{
  const error=autopilotError(w,a.operation);if(error){notify(w,error);return;}
  const origin=nearestPlanet(w.ship.position,w.system).id,target=a.operation==='land'?origin:a.operation==='home'?'home':w.exploration.selected,body=bodyTarget(target)?target:origin,t=telemetry(w.ship,WORLD.shipRadius,w.system);
  const phase=a.operation==='land'?(t.altitude<30&&t.speed<2&&t.tilt<.1?'landing':'approach'):'ascent';
- w.autopilot.program={mode:a.operation,target,body,origin,phase,angle:localAngle(relative(w.ship.position,planetAt(origin,w.system))),duty:0,elapsed:0};w.autopilot.status='Engaged';notify(w,'AUTOPILOT ENGAGED · MANUAL FLIGHT OR TOOL INPUT DISENGAGES');
+ w.autopilot.program={mode:a.operation,target,body,origin,phase,angle:surfaceAngle(planetAt(origin,w.system),w.ship.position),duty:0,elapsed:0};w.autopilot.status='Engaged';notify(w,'AUTOPILOT ENGAGED · MANUAL FLIGHT OR TOOL INPUT DISENGAGES');
 }
 function hazard(w:WorldState):boolean{
  const s=w.ship;
@@ -59,9 +59,10 @@ function goal(w:WorldState,p:FlightProgram):{position:Vec;velocity:Vec}{
   return {position:{x:d.position.x+r.x/length*offset,y:d.position.y+r.y/length*offset},velocity:{x:d.velocity.x+(vx-r.x*radial)*offset/length,y:d.velocity.y+(vy-r.y*radial)*offset/length}};
  }
  const height=p.phase==='landing'?WORLD.shipRadius:p.phase==='approach'?150:routeHeight(body.id);
- return {position:surfacePosition(body,p.phase==='landing'||p.phase==='approach'?0:p.angle,height),velocity:body.velocity};
+ const position=surfacePosition(body,p.phase==='landing'||p.phase==='approach'?0:p.angle,height);
+ return {position,velocity:groundVelocity(body,position)};
 }
-function exitAngle(w:WorldState,p:FlightProgram):number{return bodyTarget(p.target)&&p.target===p.origin?0:localAngle(relative(destination(w,p.target).position,planetAt(p.origin,w.system)));}
+function exitAngle(w:WorldState,p:FlightProgram):number{return bodyTarget(p.target)&&p.target===p.origin?0:surfaceAngle(planetAt(p.origin,w.system),destination(w,p.target).position);}
 function advance(w:WorldState,p:FlightProgram):void{
  if(p.phase==='ascent'){p.phase='depart';p.angle=advanceAngle(p.angle,exitAngle(w,p));}
  else if(p.phase==='depart'){
@@ -69,7 +70,7 @@ function advance(w:WorldState,p:FlightProgram):void{
   const exit=exitAngle(w,p);if(Math.abs(wrap(exit-p.angle))>(bodyTarget(p.target)?.2:.8))p.angle=advanceAngle(p.angle,exit);
   else if(!bodyTarget(p.target))p.phase='rendezvous';
   else if(p.body===p.origin)p.phase='approach';
-  else{p.phase='transfer';p.angle=localAngle(relative(w.ship.position,planetAt(p.body,w.system)));}
+  else{p.phase='transfer';p.angle=surfaceAngle(planetAt(p.body,w.system),w.ship.position);}
  }else if(p.phase==='transfer'){p.phase='arc';p.angle=advanceAngle(p.angle,0);}
  else if(p.phase==='arc'){if(Math.abs(p.angle)>.01)p.angle=advanceAngle(p.angle,0);else p.phase='approach';}
  else if(p.phase==='approach')p.phase='landing';

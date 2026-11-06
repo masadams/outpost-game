@@ -1,4 +1,4 @@
-import { planetAt, surfacePosition, clearTerrain, nearestPlanet, relative as bodyRelative } from './celestial';
+import { groundVelocity, planetAt, surfacePosition, clearTerrain, nearestPlanet, relative as bodyRelative } from './celestial';
 import { cargoMass } from './shipMass';
 import { fuelCapacity, cargoCapacity } from './shipStats';
 import { moveBody, separateBodies, collideShip } from './bodies';
@@ -32,7 +32,7 @@ export function seedNeighborhood(w: WorldState): void {
   }
 }
 export function destination(w: WorldState, key = w.exploration.selected): { label: string; position: Vec; velocity: Vec; site?: Site } {
-  if (key === 'home' || key === 'moon') { const p = planetAt(key, w.system); return { label: key === 'home' ? 'Home pad' : 'Nacre moon pad · airless', position: surfacePosition(p, 0, WORLD.shipRadius), velocity: p.velocity }; }
+  if (key === 'home' || key === 'moon') { const p = planetAt(key, w.system); return { label: key === 'home' ? 'Home pad' : 'Nacre moon pad · airless', position: surfacePosition(p, 0, WORLD.shipRadius), velocity: groundVelocity(p, surfacePosition(p, 0, WORLD.shipRadius)) }; }
   const site = w.exploration.sites.find(s => s.key === key);
   if (site) return { label: SITE_INFO[site.key].label, position: site.position, velocity: site.velocity, site };
   const belt = BELT_IDS.find(b => b === key);

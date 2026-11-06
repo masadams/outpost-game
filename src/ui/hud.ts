@@ -23,7 +23,7 @@ import type { Vec } from '../sim/math';
 import { Objectives } from './Objectives';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { freightPanel } from './freight';
-import { allColonies, colonyPlanet, localAngleAt } from '../sim/localWorld';
+import { allColonies, colonyPlanet, localAngleAt, upAngleAt } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
 import { isShield } from '../sim/shieldConfig';
 import { shieldActive } from '../sim/shields';
@@ -84,7 +84,7 @@ export class Hud {
   /** Build mode is a world flag; the mouse places sites whenever it is on. */
   get pointerBuilding():boolean{return !!this.latestWorld?.colony.buildOpen;}
   get buildPointer():BuildDraft|null{return this.pointerDraft;}
-  setBuildPointer(w:WorldState,at:Vec,zoom:number):void{if(!this.pointerBuilding){this.pointerDraft=null;return;}const body=colonyPlanet(w),x=at.x-body.position.x,y=at.y-body.position.y,angle=Math.atan2(x,-y),inputError=Math.abs(Math.hypot(x,y)-body.radius)>Math.max(60,30/zoom)?'Point near this world’s surface':null,error=inputError??orderError(w,w.colony.selected,angle);this.pointerDraft={kind:w.colony.selected,angle,body:body.id,valid:!error,error,inputError};}
+  setBuildPointer(w:WorldState,at:Vec,zoom:number):void{if(!this.pointerBuilding){this.pointerDraft=null;return;}const body=colonyPlanet(w),x=at.x-body.position.x,y=at.y-body.position.y,angle=Math.atan2(Math.sin(Math.atan2(x,-y)-body.spin),Math.cos(Math.atan2(x,-y)-body.spin)),inputError=Math.abs(Math.hypot(x,y)-body.radius)>Math.max(60,30/zoom)?'Point near this world’s surface':null,error=inputError??orderError(w,w.colony.selected,angle);this.pointerDraft={kind:w.colony.selected,angle,body:body.id,valid:!error,error,inputError};}
   showBuildTip(x:number,y:number):void{
     const d=this.pointerDraft,w=this.latestWorld;
     if(!d||!w||!this.pointerBuilding){this.buildBar.tip(null);return;}
@@ -194,6 +194,7 @@ export class Hud {
       toggle: id => onColonyAction({ type: 'remote', id, operation: 'toggle', body: body() }),
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
       analyse: () => onColonyAction({ type: 'analyseSample' }),
+      reserve: direction => onColonyAction({ type: 'adjustPolicy', field: 'energyReserve', direction, step: 50, body: body() }),
       demolish: id => onColonyAction({ type: 'remote', id, operation: 'demolish', body: body() }),
     });
     this.dock.command.append(this.base.host);
@@ -254,7 +255,7 @@ export class Hud {
     this.objectives.update(world,this.preferences);this.root.dataset.objectives=world.objectives.completed.join(',');
     const ship: Ship = world.ship;
     const onFoot = world.playerMode === 'astronaut';
-    const t = onFoot ? telemetry({ ...world.astronaut, angle: localAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
+    const t = onFoot ? telemetry({ ...world.astronaut, angle: upAngleAt(world, world.astronaut.position) }, SUIT.radius, world.system) : telemetry(ship, WORLD.shipRadius, world.system);
     const region = flightRegion(onFoot ? world.astronaut.position : ship.position, world.system);
     this.instruments.update(world);
     const safety = flightSafety(ship, world.system), flightAlert = this.root.querySelector<HTMLElement>('#flight-alert')!;
@@ -265,8 +266,8 @@ export class Hud {
     this.root.dataset.warningPaused = String(paused || ship.state === 'crashed');
     const noticeText=world.notice.message.replace(/ · P TO RESUME$/,'');
     const message = paused ? `PAUSED · ${world.notice.time > 0 ? `${noticeText} · ` : ''}P TO RESUME` :
-      onFoot && world.astronaut.health <= 0 ? 'Your suit is lost. Press L to load your last save, or open the menu (Esc) to start over.' :
-      !onFoot && ship.state === 'crashed' ? 'Your lander is wrecked. Press Backspace to recover it with supplies, L to load your last save, or open the menu (Esc) to start over.' :
+      onFoot && world.astronaut.health <= 0 ? 'Your pilot is lost. Press Backspace to print a new one at the base, or L to load your last save.' :
+      !onFoot && ship.state === 'crashed' ? 'Your lander is lost. Press Backspace to print a new pilot and lander. The wreck stays where it fell, and you can salvage it.' :
       world.notice.time > 0 ? noticeText :
       world.defence.controlled !== null ? 'Controlling the turret. A/D aims, Space fires, E lets go.' :
       onFoot ? (!habitatSource(world) && world.astronaut.oxygen < 30 ? 'Low oxygen. Return to the lander or the service station.' : habitatNotice(world)) :

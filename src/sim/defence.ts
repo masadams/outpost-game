@@ -1,4 +1,4 @@
-import { nearestPlanet } from './celestial';
+import { groundVelocity, nearestPlanet } from './celestial';
 import { activeWorld } from './localWorld';
 import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
 import { ATMOSPHERE } from './config';
@@ -60,7 +60,7 @@ export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: 
     if (m.health <= 0) { d.intercepted++; continue; }
     if (contact) {
       d.impacts++;
-      damageColony(world, contact, meteorDamage(m, nearestPlanet(contact, world.system).velocity), 65 + m.radius);
+      damageColony(world, contact, meteorDamage(m, groundVelocity(nearestPlanet(contact, world.system), contact)), 65 + m.radius);
     } else survivors.push(m);
   }
   d.meteors = survivors;

@@ -3,8 +3,8 @@ import type { Vec } from './math';
 /** Numbers for the first storm. Times are simulation seconds from the start of a game. */
 export const STORM = {
   seed: 7,
-  /** The first body reaches the local region (handed to the meteor physics) at this time. */
-  arrivalTime: 1500,
+  /** The first body reaches the local region (handed to the meteor physics) at this time: early on the second day, in daylight with the sun on, so solar can power the turrets. */
+  arrivalTime: 1150,
   /** Bodies travel this many seconds in the far field before that, which is the warning window. */
   lead: 420,
   /** Distance from the planet centre at which a body is handed to the detailed physics. */

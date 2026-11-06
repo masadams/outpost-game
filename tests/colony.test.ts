@@ -22,7 +22,7 @@ describe('surface construction', () => {
     expect(world.colony.buildings).toHaveLength(6); expect(new Set(world.colony.buildings.map(b => b.id)).size).toBe(6);
     expect(world.colony.products.alloy).toBe(0); expect(world.colony.products.wire).toBe(2);
     expect(world.colony.buildings[0].angle * WORLD.radius).toBeCloseTo(120);
-    expect(oreCapacity(world.colony)).toBe(600); expect(energyCapacity(world.colony)).toBe(220);
+    expect(oreCapacity(world.colony)).toBe(600); expect(energyCapacity(world.colony)).toBe(1220);
   });
   it('rejects piloting, airborne, pad/terminal, overlapping and unaffordable sites without spending', () => {
     const world = createWorld(), original = { ...world.colony.products };
@@ -47,7 +47,7 @@ describe('surface construction', () => {
     world.astronaut.position = stationPosition(120 / WORLD.radius); applyColonyAction(world, { type: 'demolish' });
     expect(world.colony.buildings).toHaveLength(1);
     world.depot.iron = 390; applyColonyAction(world, { type: 'demolish' }); expect(world.colony.buildings).toHaveLength(0);
-    build(world, 'battery', 160); world.colony.energy = 220;
+    build(world, 'battery', 160); world.colony.energy = 1220;
     world.astronaut.position = stationPosition(160 / WORLD.radius); applyColonyAction(world, { type: 'demolish' });
     expect(world.colony.energy).toBe(20);
   });
@@ -68,8 +68,8 @@ describe('power and manufacturing', () => {
   });
   it('stores solar energy, caps battery charge, and retains it after the generator is disabled', () => {
     const world = createWorld(); build(world, 'solar', 120); build(world, 'battery', 160);
-    run(world, 40); expect(world.colony.energy).toBeCloseTo(220);
-    world.colony.buildings[0].enabled = false; run(world, 10); expect(world.colony.energy).toBeCloseTo(220);
+    run(world, 160); expect(world.colony.energy).toBeCloseTo(1220);
+    world.colony.buildings[0].enabled = false; run(world, 10); expect(world.colony.energy).toBeCloseTo(1220);
   });
   it('shares limited power deterministically without negative energy or free output', () => {
     const world = createWorld(); build(world, 'solar', 120); build(world, 'refinery', 160); build(world, 'refinery', 200); build(world, 'fuelProcessor', 240);

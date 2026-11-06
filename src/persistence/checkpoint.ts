@@ -24,7 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=20;
+export const SAVE_VERSION=22;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -48,21 +48,22 @@ function validWorld(value: unknown, remote = true): value is WorldState {
     if (new Set(facilities.map(b => b?.id)).size !== facilities.length) return false;
   }
   if (world.ship.ground && world.ship.state !== 'flying') {
-    const p = planetAt(world.ship.ground, world.system), r = relative(world.ship.position, p), v = relativeVelocity(world.ship.velocity, p);
+    const p = planetAt(world.ship.ground, world.system), r = relative(world.ship.position, p), v = relativeVelocity(world.ship.velocity, p, world.ship.position);
     if (Math.abs(Math.hypot(r.x, r.y) - p.radius - WORLD.shipRadius) > .2 || Math.hypot(v.x, v.y) > .5) return false;
   }
   if (remote && (!object(world.moon) || JSON.stringify(world.moon.colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, 'moon'), false))) return false;
   if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world) || !validAutopilot(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;
-  if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
+  if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100) || !RESOURCES.every(r => number(world.astronaut.bag[r], 0, SUIT.bagCapacity + 1e-6)) || inventoryMass(world.astronaut.bag) > SUIT.bagCapacity + 1e-6) return false;
   if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > cargoCapacity(world.ship) + 1e-6) return false;
   const colony = world.colony;
   if (colony.policy !== undefined && !validPolicy(colony.policy)) return false;
   if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'research staffed', 'shield active', 'shield charging', 'shield breached'].includes(b.status))) return false;
+    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached'].includes(b.status))) return false;
   if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
+  if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, HABITATS[b.kind].capacity) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
@@ -76,7 +77,16 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && validWrecks(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+}
+function validWrecks(world: WorldState): boolean {
+  if (!Array.isArray(world.wrecks) || world.wrecks.length > 8) return false;
+  const vec = (v: unknown) => object(v) && number(v.x, -1e7, 1e7) && number(v.y, -1e7, 1e7);
+  return world.wrecks.every(w => object(w) && Number.isInteger(w.id) && w.id > 0 && number(w.beaconUntil, 0, 1e9) && number(w.condition, 0, 1) &&
+    typeof w.cause === 'string' && w.cause.length <= 40 && object(w.ship) && w.ship.state === 'crashed' && vec(w.ship.position) && vec(w.ship.velocity) &&
+    number(w.ship.angle, -1e3, 1e3) && number(w.ship.fuel, 0, 1e4) && object(w.ship.cargo) && object(w.ship.freight) &&
+    RESOURCES.every(r => number(w.ship.cargo[r], 0, 1e4)) && PRODUCTS.every(p => number(w.ship.freight[p], 0, 1e4)) &&
+    (w.ship.ground === undefined || ['home', 'moon'].includes(w.ship.ground)));
 }
 function validStorm(world: WorldState): boolean {
   const s = world.storm;

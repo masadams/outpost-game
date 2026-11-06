@@ -1,5 +1,6 @@
 import { featureVisible, blueprintVisible } from '../../preferences/features';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
+import { blueprintLock } from '../../sim/colony';
 import { availableProduct } from '../../sim/colonyPolicy';
 import { CONSTRUCTION_SECONDS } from '../../sim/commandConfig';
 import { inventoryMass } from '../../sim/resources';
@@ -114,7 +115,7 @@ function card(w: WorldState, kind: BuildType): CardView {
     hotkey: index >= 0 && index < 9 ? String(index + 1) : null,
     purpose: PURPOSE[kind],
     cost,
-    missing: locked ? 'Needs Combat engineering research' : missingLine(w, kind),
+    missing: locked ? 'Needs Combat engineering research' : blueprintLock(w, kind) ?? missingLine(w, kind),
     selected: w.colony.selected === kind,
   };
 }

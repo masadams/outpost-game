@@ -77,7 +77,7 @@ it('trades cell recharge for stronger cooling and preserves fatal landing rules 
 it('persists exclusive advanced parts, rejects duplicate slots/prerequisite skips, and retains paid parts on recovery',()=>{
  const w=shop();fit(w,'efficientEngine');fit(w,'surveyTank');expect(decodeCheckpoint(encodeCheckpoint(w)).ship.equipment).toEqual(w.ship.equipment);
  for(const mutate of [(x:any)=>x.world.ship.equipment=['engine','efficientEngine'],(x:any)=>x.world.colony.research.completed=['materials','orbital'],(x:any)=>x.world.ship.fuel=401]){const saved=JSON.parse(encodeCheckpoint(w));mutate(saved);expect(()=>decodeCheckpoint(JSON.stringify(saved))).toThrow();}
- w.ship.state='crashed';w.ship.fuel=300;applyCombatAction(w,{type:'recoverShip'});expect(w.ship.equipment).toEqual(['efficientEngine','surveyTank']);expect(w.ship.fuel).toBe(20);expect(w.ship.hull).toBe(30);
+ w.ship.state='crashed';w.ship.fuel=300;applyCombatAction(w,{type:'recoverShip'});expect(w.ship.equipment).toEqual([]);expect(w.wrecks[0].ship.equipment).toEqual(['efficientEngine','surveyTank']);expect(w.ship.hull).toBe(100);
 });
 it('has identical advanced flight/tool outcomes at 30 and 144 renderer frames per second',()=>{
  const runs=[30,144].map(fps=>{const w=shop(),clock=new FixedClock();w.ship.equipment=PART_SLOTS.map(slot=>UPGRADE_IDS.filter(id=>UPGRADES[id].slot===slot).at(-1)!);for(let i=0;i<fps*4;i++)clock.advance(1/fps,dt=>stepWorld(w,{thrust:true,turn:0,mine:true,tractor:true},dt));return w;});

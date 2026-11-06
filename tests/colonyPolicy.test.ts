@@ -41,7 +41,7 @@ describe('power and storage reserves', () => {
     const { w, building, policy } = fixture(); policy.energyReserve = 20;
     const turret = machine(3, 'laser', 0.3); w.colony.buildings.push(turret); w.colony.nextId = 4; w.defence.controlled = 3;
     stepColony(w, STEP); expect(building.status).toBe('power reserved');
-    stepWeapons(w, true, 0, STEP, new Map()); expect(w.defence.shots).toBe(1); expect(w.colony.energy).toBe(18.5);
+    stepWeapons(w, true, 0, STEP, new Map()); expect(w.defence.shots).toBe(1); expect(w.colony.energy).toBe(17);
   });
   it('lets supplied service spend protected power while respecting turret material floors', () => {
     const { w, policy } = fixture(); policy.energyReserve = 20; policy.alloyReserve = 28; w.astronaut.oxygen = 100;

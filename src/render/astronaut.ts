@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
-import { colonyPlanet, localAngleAt } from '../sim/localWorld';
-import { nearestPlanet } from '../sim/celestial';
+import { colonyPlanet, upAngleAt } from '../sim/localWorld';
+import { nearestPlanet, relativeVelocity } from '../sim/celestial';
 import { heading } from '../sim/math';
 import type { WorldState } from '../sim/world';
 
@@ -20,9 +20,10 @@ export function drawAstronaut(g: Phaser.GameObjects.Graphics, world: WorldState,
   const suit = world.astronaut;
   if (world.playerMode !== 'astronaut' || nearestPlanet(suit.position, world.system).id !== body.id) return;
 
-  const up = heading(localAngleAt(world, suit.position));
+  const up = heading(upAngleAt(world, suit.position));
   const along = { x: -up.y, y: up.x };
-  const speed = (suit.velocity.x - body.velocity.x) * along.x + (suit.velocity.y - body.velocity.y) * along.y;
+  const ground = relativeVelocity(suit.velocity, body, suit.position);
+  const speed = ground.x * along.x + ground.y * along.y;
   if (Math.abs(speed) > 0.6) facing = Math.sign(speed);
   const walking = suit.grounded && Math.abs(speed) > 1;
   const stride = walking ? Math.sin(time * 11) : 0;

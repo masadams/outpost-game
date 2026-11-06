@@ -6,12 +6,12 @@ import { screenToWorld } from './pointer';
 import { drawCrewOrder } from './crewOrders';
 import { VisualEffects } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
-import { RenderBudget } from './budget';
+import { RenderBudget, visible } from './budget';
 import { drawShip } from './ship';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
-import { nearestPlanet, planetAt, planets, relative } from '../sim/celestial';
+import { nearestPlanet, onGroundNow, planetAt, planets, relative, surfaceAngle } from '../sim/celestial';
 import { localAngle } from '../sim/math';
 import { flightSafety } from '../sim/flightSafety';
 import { drawShields } from './shields';
@@ -43,10 +43,13 @@ import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
 import { dayView } from '../ui/flight/dayView';
-import { daylightAt, sunAngle, sunDirection, sunElevation } from '../sim/sun';
+import { wreckCard, wreckMarks } from '../ui/flight/wreckView';
+import { daylightAt } from '../sim/sun';
+import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
 import { drawStormSamples } from './storm';
+import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
 import { coach } from '../ui/flight/coach';
@@ -155,7 +158,7 @@ export class FlightScene extends Phaser.Scene {
         this.hud.closeContextMenu();
         this.hud.clearBuildPointer();
         if(this.hud.pointerBuilding){applyColonyAction(local,{type:'buildMode',open:false});return;}
-        if(!this.halted){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:Math.atan2(at.x-p.position.x,-(at.y-p.position.y)),body:p.id});}}
+        if(!this.halted){if(this.simulation.playerMode==='astronaut'){const p=planetAt(local.siteBody??'home',this.simulation.system);if(Math.abs(Math.hypot(at.x-p.position.x,at.y-p.position.y)-p.radius)<Math.max(60,30/this.follow.zoom))this.colonyActions.push({type:'crewOrder',operation:'walk',angle:surfaceAngle(p,at),body:p.id});}}
         return;
       }
       if(this.hud.pointerBuilding){
@@ -251,6 +254,7 @@ export class FlightScene extends Phaser.Scene {
       pickups: this.pickupFeed.lines(),
       storm: stormView(world),
       day: dayView(world),
+      wreck: wreckCard(world),
       trajectory: this.flightTools.trajectory,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : this.prediction?.points.length ?? 0,
       keys: {
@@ -339,13 +343,10 @@ export class FlightScene extends Phaser.Scene {
     if(this.pointerInside){this.hud.setBuildPointer(activeWorld(this.simulation),screenToWorld(this.input.activePointer,{...this.follow,width:this.scale.width,height:this.scale.height}),this.follow.zoom);this.hud.showBuildTip(this.input.activePointer.x,this.input.activePointer.y);}
     this.predictionTime += delta / 1000;
     if (this.simulation.towing.targetId !== null) this.prediction = null;
-    if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.halted && this.predictionTime >= 0.2))) {
+    if (this.simulation.towing.targetId === null && this.flightTools.trajectory && (this.prediction === null || (!this.halted && this.predictionTime >= 0.4))) {
       this.prediction = predictCoast(this.ship, 180, this.simulation.system); this.predictionTime = 0;
     }
-    this.threatTime += delta / 1000;
-    if ((!this.halted && this.threatTime >= 0.5) || this.threats.length !== Math.min(12, this.simulation.defence.meteors.length)) {
-      this.threats = this.simulation.defence.meteors.slice(0, 12).map(m => predictMeteor(m, 120, this.simulation.system)); this.threatTime = 0;
-    }
+    this.updateThreats(delta / 1000);
     this.flightTools.update(this.ship, this.prediction, this.simulation.towing.targetId !== null, this.simulation.system);
     this.audio.update(activeWorld(this.simulation), this.halted, delta / 1000);
     this.updateChrome();
@@ -383,11 +384,12 @@ export class FlightScene extends Phaser.Scene {
     if (!system.sun) return;
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
     const planet = nearestPlanet(eye, system);
-    const here = localAngle(relative(eye, planet));
-    const height01 = sunElevation(here, system.time);
+    const here = surfaceAngle(planet, eye);
+    const light = lightAt(system, planet.id, here, Math.max(1, Math.hypot(eye.x - planet.position.x, eye.y - planet.position.y) - planet.radius));
+    const height01 = light.elevation;
     if (height01 < -0.25) return;
-    const shown = Math.max(0, Math.min(1, (height01 + 0.25) / 0.4));
-    const heading = sunAngle(system.time) - this.follow.angle;
+    const shown = Math.max(0, Math.min(1, (height01 + 0.25) / 0.4)) * (1 - 0.9 * light.eclipse);
+    const heading = Math.atan2(light.direction.x, -light.direction.y) - this.follow.angle;
     const reach = 0.4 * Math.min(width, height);
     const x = width / 2 + Math.sin(heading) * reach;
     const y = height * FOCUS_Y - Math.cos(heading) * reach;
@@ -399,6 +401,35 @@ export class FlightScene extends Phaser.Scene {
     sky.fillStyle(warm, 0.95 * shown);
     sky.fillCircle(x, y, 11);
     void daylight;
+  }
+  private threatCache = new Map<number, { prediction: ThreatPrediction; age: number }>();
+  /**
+   * Predictions for the incoming rocks are the costly part of a storm, so they are cheap and spread out: one rock per frame,
+   * on a coarse step, each refreshed about once a second and a half. A rock with no prediction yet is done first.
+   */
+  private updateThreats(seconds: number): void {
+    const rocks = this.simulation.defence.meteors.slice(0, 12);
+    const ids = new Set(rocks.map(m => m.id));
+    for (const id of this.threatCache.keys()) if (!ids.has(id)) this.threatCache.delete(id);
+    if (!this.halted) for (const entry of this.threatCache.values()) entry.age += seconds;
+    const due = rocks
+      .map(m => ({ m, age: this.threatCache.get(m.id)?.age ?? Infinity }))
+      .filter(v => v.age >= 1.5 && (!this.halted || v.age === Infinity))
+      .sort((a, b) => b.age - a.age)[0];
+    if (due) {
+      const prediction = this.onGround(predictMeteor(due.m, 90, this.simulation.system, 0.1));
+      this.threatCache.set(due.m.id, { prediction, age: 0 });
+    }
+    this.threats = rocks.map(m => this.threatCache.get(m.id)?.prediction).filter((p): p is ThreatPrediction => !!p);
+  }
+  /** Threat paths and impact markers drawn on the ground as it is now, so they point at the right place on a turning planet. */
+  private onGround(p: ThreatPrediction): ThreatPrediction {
+    const system = this.simulation.system;
+    return {
+      ...p,
+      points: p.points.map((point, i) => onGroundNow('home', system, point, Math.min(i * 0.5, p.seconds))),
+      impact: p.impact ? onGroundNow('home', system, p.impact, p.seconds) : null,
+    };
   }
   private draw(): void {
     const { width, height } = this.scale;
@@ -416,7 +447,7 @@ export class FlightScene extends Phaser.Scene {
     // Light: the sky, the ground and the stars follow the sun where the player is.
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
     const eyePlanet = nearestPlanet(eye, this.simulation.system);
-    const daylight = daylightAt(this.simulation.system, localAngle(relative(eye, eyePlanet)));
+    const daylight = daylightAt(this.simulation.system, surfaceAngle(eyePlanet, eye), eyePlanet.id);
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
@@ -433,7 +464,7 @@ export class FlightScene extends Phaser.Scene {
     const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;
     for (const body of planets(this.simulation.system)) {
       g.lineStyle(.6,body.id==='home'?0xa9d2c7:0xd0c4dd,.7);g.strokeCircle(body.position.x,body.position.y,body.radius);
-      g.save(); g.translateCanvas(body.position.x, body.position.y);
+      g.save(); g.translateCanvas(body.position.x, body.position.y); g.rotateCanvas(body.spin);
     // Landing pad: a flat plate just under the surface, so the feet stand on its top edge.
     g.fillStyle(0x3fbfa8); g.fillRect(-30, -body.radius, 60, 1.8);
     g.lineStyle(0.5, 0xb7fff0); g.lineBetween(-30, -body.radius, 30, -body.radius);
@@ -461,8 +492,9 @@ export class FlightScene extends Phaser.Scene {
       detail: this.preferences.quality === 'high',
       time: this.time.now / 1000,
       animate: !this.halted && !this.preferences.reducedMotion,
-      light: this.simulation.system.sun ? sunDirection(this.simulation.system.time) : undefined,
+      light: this.simulation.system.sun ? lightAtPoint(this.simulation.system, this.simulation.ship.position, null).direction : undefined,
     });
+    drawGround(g, this.simulation, view, this.follow.zoom);
     drawStormSamples(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawTowing(g, this.simulation, this.follow.zoom);
     drawCrewOrder(g,this.simulation,this.follow.zoom);
@@ -477,6 +509,14 @@ export class FlightScene extends Phaser.Scene {
     const coaching = coach(this.simulation, this.coachKeys());
     if (coaching?.target) drawCoachPointer(g, s.position, coaching.target, this.follow.zoom, this.time.now / 1000, !this.halted && !this.preferences.reducedMotion);
     this.effects.draw(g,this.follow.zoom);
+    // Lost landers stay in the world; while the transponder lasts a red light blinks on them.
+    for (const wreck of this.simulation.wrecks) {
+      if (!visible(view, wreck.ship.position, 30)) continue;
+      drawShip(g, wreck.ship, this.follow.zoom, this.time.now, true, true);
+      if (wreck.beaconUntil > this.simulation.system.time && (this.preferences.reducedMotion || Math.floor(this.time.now / 600) % 2 === 0)) {
+        g.fillStyle(0xff6b5a, 0.9); g.fillCircle(wreck.ship.position.x, wreck.ship.position.y, Math.max(1, 2.5 / this.follow.zoom));
+      }
+    }
     drawShip(g,s,this.follow.zoom,this.time.now,this.halted,this.preferences.reducedMotion);
     const mx = width - 92, my = height - 100, m = this.map;
     m.fillStyle(0x0a1724, .9); m.fillCircle(mx, my, 68); m.lineStyle(1, 0x233c4b); m.strokeCircle(mx, my, 62);
@@ -485,6 +525,7 @@ export class FlightScene extends Phaser.Scene {
     for (const actor of [...this.simulation.asteroids, ...this.simulation.exploration.sites]) { const p = point(actor.position); m.fillStyle(0x9bb4c5, .7); m.fillCircle(p.x, p.y, 1.3); }
     // The storm: amber. Far bodies show only once the Observatory has seen them, as rings that tighten with better tracking.
     for (const rock of this.simulation.defence.meteors) { const p = point(rock.position); m.fillStyle(0xffb06a, .95); m.fillCircle(p.x, p.y, 1.8); }
+    for (const mark of wreckMarks(this.simulation)) { const p = point(mark.at); m.lineStyle(1, 0xff6b5a, .95); m.strokeRect(p.x - 2.5, p.y - 2.5, 5, 5); }
     const known = stormKnowledge(this.simulation);
     if (known) {
       const ring = known.level === 'sighted' ? 5 : known.level === 'tracked' ? 3 : 1.8;

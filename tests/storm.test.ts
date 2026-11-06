@@ -46,6 +46,9 @@ describe('first storm in flight', { timeout: 60000 }, () => {
     w.storm.armed = true;
     w.system.time = STORM.arrivalTime - STORM.lead - 61;
     stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    // Planned one body per step, so the work is spread out.
+    expect(w.storm.plan).toHaveLength(1);
+    for (let i = 1; i < STORM.aim.length; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.storm.planned).toBe(true);
     expect(w.storm.phase).toBe('quiet');
     for (let i = 0; i < 70 * 60; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
@@ -79,7 +82,7 @@ describe('storm arming', () => {
     const w = createWorld();
     w.system.time = 1400;
     w.colony.buildings.push({ id: 90, kind: 'observatory', angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'idle' } as never);
-    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    for (let i = 0; i < STORM.aim.length; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.storm.armed).toBe(true);
     expect(w.storm.arrival).toBeGreaterThanOrEqual(1400 + STORM.lead + 30);
     expect(w.storm.plan).toHaveLength(STORM.aim.length);
@@ -151,5 +154,26 @@ describe('observatory and what is known', () => {
     const k = await watched(100);
     const truth = Math.min(...k.w.storm.plan.map(p => p.impactTime!)) - k.w.system.time;
     expect(Math.abs(k.knowledge!.eta - truth)).toBeLessThanOrEqual(k.knowledge!.etaMargin);
+  });
+});
+
+describe('threat predictions on screen', () => {
+  it('a coarse step gives nearly the same landing, for a fraction of the work', async () => {
+    const { predictMeteor } = await import('../src/sim/meteor');
+    const { planetAt } = await import('../src/sim/celestial');
+    const w = createWorld();
+    const home = planetAt('home', w.system);
+    const rock = { id: 99, position: { x: home.position.x + 40, y: home.position.y - WORLD.radius - 900 }, velocity: { x: home.velocity.x, y: home.velocity.y + 60 }, radius: 9, mass: 400, stage: 0, resource: 'iron' as const, health: 1, maxHealth: 1 };
+    const fineStart = performance.now();
+    const fine = predictMeteor(rock, 90, w.system);
+    const fineMs = performance.now() - fineStart;
+    const coarseStart = performance.now();
+    const coarse = predictMeteor(rock, 90, w.system, 0.1);
+    const coarseMs = performance.now() - coarseStart;
+    expect(fine.impact).not.toBeNull();
+    expect(coarse.impact).not.toBeNull();
+    expect(Math.abs(coarse.seconds - fine.seconds)).toBeLessThan(0.5);
+    expect(Math.hypot(coarse.impact!.x - fine.impact!.x, coarse.impact!.y - fine.impact!.y)).toBeLessThan(15);
+    expect(coarseMs).toBeLessThan(fineMs);
   });
 });

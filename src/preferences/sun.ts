@@ -1,4 +1,5 @@
 import { createWorld, type WorldState } from '../sim/world';
+import { oldImpactOre } from '../sim/rockFall';
 
 export const SUN_STORAGE_KEY = 'outpost.sun';
 
@@ -23,5 +24,6 @@ export function sunEnabled(): boolean {
 export function newWorld(): WorldState {
   const world = createWorld();
   world.system.sun = sunEnabled();
+  if (world.system.sun) world.pickups.push(...oldImpactOre(() => world.nextId++, world.system));
   return world;
 }

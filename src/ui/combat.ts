@@ -1,3 +1,4 @@
+import { printPlan } from '../sim/wrecks';
 import { featureVisible } from '../preferences/features';
 import { WORLD } from '../sim/config';
 import type { WorldState } from '../sim/world';
@@ -12,21 +13,24 @@ export function combatPanel(world: WorldState, paused: boolean): string {
     <small>${world.playerMode === 'ship' ? 'Shift fires' : 'Board the ship to fire'} · Z switches · E repairs/rearms when landed using colony materials.</small>
     <button ${paused ? 'disabled' : ''} data-colony="cycleWeapon">Switch ship weapon [Z]</button>
     <button ${paused || world.playerMode !== 'ship' || s.state !== 'flying' || telemetry(s, WORLD.shipRadius, world.system).altitude < 200 || c.enemies.length || c.projectiles.length ? 'disabled' : ''} data-colony="startEncounter">Start hostile patrol [O] · tier ${threatTier(world)}</button>
-    ${s.state === 'crashed' ? `<button ${paused ? 'disabled' : ''} data-colony="recoverShip">Recover ship [Backspace] · 8 alloy + 2 components</button>` : ''}
-    <small>Save with K before combat. Land to disengage. Recovery loses cargo; L restores a checkpoint.</small>
+    ${s.state === 'crashed' ? `<button ${paused ? 'disabled' : ''} data-colony="recoverShip">Print new pilot and lander [Backspace] · 8 alloy + 2 components</button>` : ''}
+    <small>Save with K before combat. Land to disengage. A lost lander stays where it fell; salvage it with E.</small>
   </div>`;
 }
 
 /** Focus-set view of the ship panel: only what a wrecked lander needs. */
 function recoveryPanel(world: WorldState, paused: boolean): string {
   const c = world.combat;
-  if (world.ship.state !== 'crashed') {
+  const plan = printPlan(world);
+  if (!plan) {
     return `<div class="combat-panel" data-recoveries="${c.recoveries}"><label>SHIP</label><p>Your lander is intact.</p></div>`;
   }
+  const cost = Object.entries(plan.cost).filter(([, n]) => (n ?? 0) > 0).map(([p, n]) => `${n} ${p}`).join(' and ');
   return `<div class="combat-panel" data-recoveries="${c.recoveries}">
-    <label>LANDER WRECKED</label>
-    <p>Bring the lander back to the pad for 8 alloy and 2 components from your base. Its cargo is lost.</p>
-    <button ${paused ? 'disabled' : ''} data-colony="recoverShip">Recover lander [Backspace]</button>
+    <label>${plan.lander ? 'LANDER LOST' : 'PILOT LOST'}</label>
+    <p>Your pilots are printed at the base. ${plan.lander ? `Print a new pilot and a basic lander on the pad for ${cost}. The old lander stays where it fell, with what survived; its transponder shows it on the Map for an hour, so you can fly out and salvage it.` : `Print a new pilot at the base for ${cost}.`}</p>
+    ${plan.blocked ? `<p class="why">${plan.blocked}.</p>` : ''}
+    <button ${paused || plan.blocked ? 'disabled' : ''} data-colony="recoverShip">Print new pilot${plan.lander ? ' and lander' : ''} [Backspace]</button>
     <small>Or press L to load your last save.</small>
   </div>`;
 }

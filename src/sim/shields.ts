@@ -1,4 +1,4 @@
-import { planetAt, surfacePosition } from './celestial';
+import { groundVelocity, planetAt, surfacePosition } from './celestial';
 import { allColonies, colonyPlanet } from './localWorld';
 import { SHIELDS, SHIELD, isShield } from './shieldConfig';
 import { operational } from './buildingHealth';
@@ -61,7 +61,7 @@ export function firstShieldHit(w: WorldState, start: Vec, end: Vec, radius: numb
     if (a.x * a.x + a.y * a.y < r * r - 1e-7 || a.x * (z.x - a.x) + a.y * (z.y - a.y) >= 0) continue;
     const t = surfaceHit(a, z, r);
     if (t === null || t >= before || best && (t > best.t + 1e-10 || Math.abs(t - best.t) <= 1e-10 && b.id > best.building.id)) continue;
-    best = { building: b, t, site, velocity: planet.velocity };
+    best = { building: b, t, site, velocity: groundVelocity(planet, centre) };
   }
   return best;
 }

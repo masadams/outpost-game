@@ -11,10 +11,29 @@
 - **Year / orbit round the star** is only a slow change of the sun's direction in a later slice; it has no effect on play yet.
 - **Tests and the browser suite** run with the sun off (constant daylight, as before), the same way they run with every feature on. Dedicated tests cover the sun itself.
 
+## The star is a body (added 2026-11-05)
+Helia is a real object with a position, a size and a brightness (`src/sim/star.ts`). Light at any point comes from geometry:
+- **Direction** is the line from the point to the star, so the sun's height, the rock shading and the sun disc in the sky all come from one source.
+- **Brightness** falls as one over distance squared, and is 1 at the usual distance. Solar panels follow it (capped at double), so flying toward the star will one day mean more power and more danger. In a flat 2D world real light would fall off more gently; we use the familiar square law.
+- **Shadows and eclipses** are circle overlap: the share of the star's disc hidden by the moon (or by the home planet, for someone on the moon). The moon is bigger in the sky than the star, so eclipses can be total. The first one happens within the first hour or so; roughly one every 55 minutes after that.
+- **Night** is the planet blocking the star below the horizon, through the sun's height.
+
+**Why the star circled at first (superseded by real rotation below).** The day comes from the planet turning relative to the star. The game's world frame is the planet's own surface frame, which does not spin, so in this frame the star circles once per day (that is the only place the day is decided: `starPosition`). It sits 3,000 km away, so nothing can reach it and its speed in this frame does not matter. When planets get real rotation the world frame becomes inertial, the star stops moving, and `starPosition` becomes a fixed point. Nothing else changes, and a ship can then fly toward it.
+
+## Real rotation (added 2026-11-06)
+With the day cycle on, planets really turn. The world frame is now inertial and Helia stays where it is.
+- **Surface angles turn with the ground.** Buildings, the pad, orders, deposits and storm pieces keep their surface angle; the world position of any of them is `surfacePosition(planet, angle)`, which adds the planet's spin. `surfaceAngle(planet, point)` goes the other way.
+- **The ground moves.** At Selene's equator it moves at about 11 m/s. A landed ship, a walking astronaut, a dome or turret all move with it (`groundVelocity`), and the air turns with the planet, so drag pulls toward the ground's speed.
+- **Flying.** You leave the pad already moving with the ground, so a straight hop comes back down close to where it left; the slight sideways push you feel (Coriolis) is small at these speeds. Drift on the instruments is measured against the ground under you.
+- **Paths are shown on today's ground.** The coast path and storm impact markers are turned back by how far the ground will have turned when you get there, so they point at the right spot.
+- **Nacre** turns once per orbit, so the same face always looks at Selene.
+- **Day cycle off** (tests, `?sun=off`): nothing turns and the star circles instead, exactly as before.
+
 ## Slices
 | # | What | Status |
 |---|---|---|
 | S1 | `sun.ts`: day phase, sun direction, illumination at a surface angle; solar output and the Base power numbers follow it; a clock chip ("Day · dusk in 3 min 10 s") | Done |
 | S2 | Lighting: sky colour and stars by sun height, sun and its glow in the sky, rock shading from the real sun direction, the world dims and buildings glow at night | Done |
-| S3 | Moon day, long-night play tuning, eclipses by the moon, Map and Base power forecast | Planned |
-| S4 | True planet rotation and ground speed (separate decision) | Not started |
+| S3 | Eclipses by the moon, the star on the Map, Base power forecast. Moon day works through the same light code | Done |
+| S3b | Long-night play tuning | Needs hands-on play |
+| S4 | Real planet rotation: Selene turns once a day, Nacre keeps one face to Selene, the star stays still | Done |

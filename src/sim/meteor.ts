@@ -42,13 +42,15 @@ export function advanceMeteor(meteor: Meteor, dt: number, world?: WorldState, sh
   meteor.position = surfacePosition(hit.planet, hit.angle, meteor.radius);
   return surfacePosition(hit.planet, hit.angle, 0);
 }
-export function predictMeteor(source: Meteor, horizon = 120, system = STATIC_SYSTEM): ThreatPrediction {
+/** `step` is the time between predicted points (the game's own step by default; the screen uses a coarser one, which is much cheaper). */
+export function predictMeteor(source: Meteor, horizon = 120, system = STATIC_SYSTEM, step = STEP): ThreatPrediction {
   const meteor = { ...source, position: { ...source.position }, velocity: { ...source.velocity } };
   const result: ThreatPrediction = { id: source.id, points: [{ ...meteor.position }], impact: null, seconds: 0 };
-  const count = Math.ceil(Math.min(300, Math.max(0, horizon)) / STEP);
+  const count = Math.ceil(Math.min(300, Math.max(0, horizon)) / step);
+  const every = Math.max(1, Math.round(0.5 / step));
   for (let i = 1; i <= count; i++) {
-    result.impact = advanceMeteor(meteor, STEP, undefined, undefined, { ...system, time: system.time + (i - 1) * STEP }); result.seconds = i * STEP;
-    if (i % 30 === 0 || result.impact) result.points.push({ ...meteor.position });
+    result.impact = advanceMeteor(meteor, step, undefined, undefined, { ...system, time: system.time + (i - 1) * step }); result.seconds = i * step;
+    if (i % every === 0 || result.impact) result.points.push({ ...meteor.position });
     if (result.impact || length(meteor.position) > WORLD.radius + 20000) break;
   }
   return result;

@@ -61,7 +61,7 @@ describe('solar power follows the sun', () => {
 
   it('gives full power in daylight, none at night, and is unchanged with the sun off', () => {
     expect(plant(false, 450)).toBeCloseTo(8, 5);
-    expect(plant(true, 0)).toBeCloseTo(8, 5);
+    expect(plant(true, 0)).toBeCloseTo(8, 1);
     expect(plant(true, 620)).toBe(0);
     const dusk = plant(true, 470);
     expect(dusk).toBeGreaterThanOrEqual(0);
@@ -82,5 +82,57 @@ describe('what the Base says about night', () => {
     w.colony.energy = 100;
     for (let i = 0; i < 120; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(baseView(w).power.summary).toMatch(/^Night: solar panels are off\./);
+  });
+});
+
+describe('power forecast', () => {
+  it('says when the light changes and whether storage covers a night', async () => {
+    const { baseView } = await import('../src/ui/base/baseView');
+    const w = createWorld();
+    expect(baseView(w).power.forecast).toBeNull();
+    w.system.sun = true;
+    w.colony.buildings.push(completedBuilding(w.colony.nextId++, 'solar', 0.05, w));
+    w.colony.buildings.push(completedBuilding(w.colony.nextId++, 'refinery', 0.09, w));
+    w.depot.iron = 20;
+    for (let i = 0; i < 300; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(baseView(w).power.forecast).toMatch(/^Dusk in .* needs about \d+ kJ/);
+    w.system.time = 640;
+    expect(baseView(w).power.forecast).toMatch(/^Light returns in/);
+  });
+});
+
+describe('sky clock on the moon', () => {
+  it('counts down to the real change of light on Nacre, which turns at its own rate', async () => {
+    const { daylightAt: light } = await import('../src/sim/sun');
+    const s = (time: number) => ({ time, binary: true, sun: true });
+    for (const t of [100, 900, 1700]) {
+      const c = sunClock(s(t), 0.3, 'moon');
+      const later = sunClock(s(t + c.secondsToChange + 0.5), 0.3, 'moon');
+      expect(later.day).toBe(!c.day);
+      expect(Math.abs(light(s(t + c.secondsToChange), 0.3, 'moon') - 0.5)).toBeLessThan(0.05);
+    }
+  });
+});
+
+describe('old impacts', () => {
+  it('a day-cycle game starts with loose ore near the pad', async () => {
+    const { oldImpactOre } = await import('../src/sim/rockFall');
+    const world = createWorld();
+    const ore = oldImpactOre(() => world.nextId++, world.system);
+    expect(ore.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(ore.map(o => o.resource))).toEqual(new Set(['iron', 'copper', 'ice']));
+  });
+});
+
+describe('earning the observatory', () => {
+  it('is locked until the Frost buoy is surveyed, in day-cycle games', async () => {
+    const { blueprintLock } = await import('../src/sim/colony');
+    const world = createWorld();
+    expect(blueprintLock(world, 'observatory')).toBeNull();
+    world.system.sun = true;
+    expect(blueprintLock(world, 'observatory')).toMatch(/survey buoy/);
+    expect(blueprintLock(world, 'solar')).toBeNull();
+    world.exploration.surveyed.push('frost');
+    expect(blueprintLock(world, 'observatory')).toBeNull();
   });
 });

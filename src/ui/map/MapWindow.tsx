@@ -88,6 +88,22 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
         const c = at(s.at);
         return <circle key={s.id} cx={c.x} cy={c.y} r={7} class="map-site" data-intact={String(s.intact)} />;
       })}
+      {view.wrecks.map(x => (
+        <g key={x.id} class="map-wreck" aria-label={x.label}>
+          <rect x={at(x.at).x - 6} y={at(x.at).y - 6} width={12} height={12} class="map-wreck-mark" />
+          <text x={at(x.at).x} y={at(x.at).y - 14} class="map-label map-wreck-label" text-anchor="middle">
+            {x.label}
+          </text>
+        </g>
+      ))}
+      {view.star && (
+        <g class="map-star" aria-label={view.star.label}>
+          <circle cx={at(view.star.at).x} cy={at(view.star.at).y} r={9} class="map-star-disc" />
+          <text x={at(view.star.at).x} y={at(view.star.at).y + 24} class="map-label" text-anchor="middle">
+            {view.star.label}
+          </text>
+        </g>
+      )}
       {view.storm && (
         <g class="map-storm" aria-label={`Incoming storm. ${view.storm.line}`}>
           {view.storm.zone && (

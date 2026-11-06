@@ -1,5 +1,6 @@
 import { stepObservatory } from './observatory';
-import { daylightAt } from './sun';
+import { bootStep, needsBoot } from './boot';
+import { solarFactor } from './sun';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -38,12 +39,16 @@ export interface Building {
   level?:1|2|3;
   dispatch?: { rank: number; limit: number };
   gridPower?: number; requestedPower?: number;
+  /** Seconds of steady power so far while starting up (see boot.ts); undefined means always online. */
+  boot?: number;
+  /** Seconds without power while online. */
+  dark?: number;
   habitat?: HabitatState;
   shield?: ShieldState;
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached';
 }
 export interface Colony {
   shielding: ShieldLedger;
@@ -54,7 +59,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -63,13 +68,25 @@ export function createColony(): Colony {
 }
 export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
 export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
-export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
+/** A battery holds enough to carry a small base through much of a night. */
+export const BATTERY_CAPACITY = 1200;
+export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
 export const previewAngle = (world: WorldState): number => wrap(localAngleAt(world, world.astronaut.position) + world.colony.offset / colonyPlanet(world).radius);
+/** Why a blueprint cannot be used yet, or null. The Observatory is earned from the Frost survey buoy (day-cycle games only). */
+export function blueprintLock(world: WorldState, kind: BuildType): string | null {
+  if (kind === 'observatory' && world.system.sun && !world.exploration.surveyed.includes('frost')) {
+    return 'Recover the survey buoy data first';
+  }
+  return null;
+}
+
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
   if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
   if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= 48) return 'Colony limit: 48 facilities';
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
   if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
+  const lock = blueprintLock(world, kind);
+  if (lock) return lock;
   if (isShield(kind) && !world.colony.research.completed.includes('combat')) return 'Requires Combat engineering research';
   const width = BLUEPRINTS[kind].halfWidth;
   const sites = foundationSites(kind, angle, colonyPlanet(world).radius);
@@ -78,8 +95,8 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   if (sites.some(site => [...world.colony.buildings, ...(options.reservations ?? world.colony.command.queue)].some(b => foundationSites(b.kind, b.angle, colonyPlanet(world).radius).some(other => Math.abs(wrap(site.angle - other.angle)) * colonyPlanet(world).radius < site.halfWidth + other.halfWidth + 4 - 1e-7)))) return 'Facilities overlap';
   if (kind === 'miningRig') {
     const d = depositAt(world.surfaceDeposits, angle, width, colonyPlanet(world).radius);
-    if (!d) return 'Place the whole rig footprint on a marked surface deposit';
-    if (d.remaining <= 1e-9) return 'Deposit exhausted · prospect another seam';
+    if (!d) return 'Place the rig on a marked ore deposit';
+    if (d.remaining <= 1e-9) return 'This deposit is exhausted';
   }
   if (!options.paid && PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Insufficient fabrication materials';
   if (!options.paid && PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Build';
@@ -98,7 +115,8 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
   if (action.type === 'adjustPolicy') {
     if (!POLICY_FIELDS.includes(action.field) || (action.direction !== -1 && action.direction !== 1)) return;
     const policy = world.colony.policy ??= createPolicy();
-    policy[action.field] = clamp(policy[action.field] + action.direction * POLICY_INFO[action.field].step, 0, MAX_RESERVE);
+    const step = Number.isFinite(action.step) && action.step! > 0 && action.step! <= 200 ? action.step! : POLICY_INFO[action.field].step;
+    policy[action.field] = clamp(policy[action.field] + action.direction * step, 0, MAX_RESERVE);
     return;
   }
   if(action.type==='buildMode'){if(typeof action.open==='boolean')world.colony.buildOpen=action.open;return;}
@@ -112,7 +130,7 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     const error = placementError(world); if (error) { notify(world, error); return; }
     const blueprint = BLUEPRINTS[colony.selected];
     for (const product of PRODUCTS) colony.products[product] = Math.max(0, colony.products[product] - (blueprint.cost[product] ?? 0));
-    colony.buildings.push(completedBuilding(allocateBuildingId(world), colony.selected, previewAngle(world), world));
+    colony.buildings.push({ ...completedBuilding(allocateBuildingId(world), colony.selected, previewAngle(world), world), ...(needsBoot(colony.selected) && world.system.sun ? { boot: 0 } : {}) });
     notify(world, `${blueprint.label.toUpperCase()} BUILT`); return;
   }
   const building = nearbyBuilding(world);
@@ -181,7 +199,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
   // Panels follow the sun: full power in daylight, none at night.
-  const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * daylightAt(world.system, b.angle);
+  const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * solarFactor(world.system, b.angle, colonyPlanet(world).id);
   colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b)).reduce((sum, b) => sum + panel(b), 0);
   for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b)) b.gridPower = b.requestedPower = panel(b);
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
@@ -196,6 +214,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     if (!operational(building)) continue;
     if (!building.enabled) continue;
     if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
+    if (needsBoot(building.kind) && !bootStep(world, building, dt)) continue;
     if (building.kind === 'observatory') { stepObservatory(world, building, dt); continue; }
     if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
     if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;

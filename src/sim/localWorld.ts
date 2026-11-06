@@ -1,4 +1,4 @@
-import { nearestPlanet, planetAt, relative, surfacePosition, type BodyId, type Planet } from './celestial';
+import { nearestPlanet, planetAt, relative, surfaceAngle, surfacePosition, type BodyId, type Planet } from './celestial';
 import type { WorldState } from './world';
 /** Typed local inventory view. All actor/scalar writes still go to the same continuous world. */
 const views = new WeakMap<WorldState, WorldState>();
@@ -22,7 +22,10 @@ export function colonyWorld(w: WorldState, id: BodyId): WorldState {
 }
 export const colonyPlanet = (w: WorldState): Planet => planetAt(w.siteBody ?? 'home', w.system);
 export const localPosition = (w: WorldState, p: { x: number; y: number }) => relative(p, colonyPlanet(w));
-export const localAngleAt = (w: WorldState, p: { x: number; y: number }) => Math.atan2(localPosition(w, p).x, -localPosition(w, p).y);
+/** Surface angle at a point: fixed to the ground of the colony's planet, turning with it. Buildings and orders use these. */
+export const localAngleAt = (w: WorldState, p: { x: number; y: number }) => surfaceAngle(colonyPlanet(w), p);
+/** The direction of local up at a point, as a world angle (for attitude, art and the camera). */
+export const upAngleAt = (w: WorldState, p: { x: number; y: number }) => Math.atan2(localPosition(w, p).x, -localPosition(w, p).y);
 export const sitePosition = (w: WorldState, angle: number, height = 2.5) => surfacePosition(colonyPlanet(w), angle, height);
 export const activeWorld = (w: WorldState): WorldState => colonyWorld(w, nearestPlanet(w.playerMode === 'ship' ? w.ship.position : w.astronaut.position, w.system).id);
 export const allColonies = (w: WorldState): WorldState[] => [colonyWorld(w, 'home'), colonyWorld(w, 'moon')];

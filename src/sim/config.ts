@@ -9,3 +9,6 @@ export const WORLD = {
 } as const;
 export const ATMOSPHERE = { height: 1200, scaleHeight: 320, surfaceDensity: 0.08, shipDragArea: 8, suitDragArea: 0.7, suitMass: 100 } as const;
 export const STEP = 1 / 60;
+
+/** Seconds for Selene to turn once relative to its star: one day. Planets only turn when the day cycle is on (`system.sun`). */
+export const DAY_LENGTH = 1000;

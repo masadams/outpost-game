@@ -1,3 +1,4 @@
+import { SIGHTING_SECONDS } from '../sim/stormKnowledge';
 import { relative } from '../sim/celestial';
 import { airDensity } from '../sim/environment';
 import { colonyPlanet, sitePosition } from '../sim/localWorld';
@@ -8,7 +9,7 @@ import { heading } from '../sim/math';
 import { flightSafety } from '../sim/flightSafety';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach';
+export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
@@ -16,6 +17,7 @@ function snapshot(world: WorldState) {
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
+    scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over',
     rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position, stage: b.stage }])),
     buildings: new Map(world.colony.buildings.map(b => [b.id, { progress: b.progress, recipe: b.recipe }])) };
 }
@@ -38,6 +40,9 @@ export class AudioDirector {
     if (!onFoot && prev.mode === 'ship' && next.state === 'flying' && prev.state === 'flying' && next.space !== prev.space && this.regionCooldown <= 1e-9) {
       cues.push(next.space ? 'atmosphereExit' : 'atmosphereEntry'); this.regionCooldown = 6;
     }
+    if (next.scanning && !prev.scanning) cues.push('scan');
+    if (next.sighted && !prev.sighted) cues.push('sighting');
+    if (next.stormOver && !prev.stormOver) cues.push('stormOver');
     if (next.shieldBreaches > prev.shieldBreaches) cues.push('shieldBreach');
     else if (next.shieldHits > prev.shieldHits) cues.push('shieldHit');
     if (next.research > prev.research) cues.push('production');
@@ -61,7 +66,7 @@ export class AudioDirector {
       if (!prev.grounded && next.grounded) cues.push('step');
       if (prev.grounded && next.grounded) {
         this.footDistance += Math.hypot(next.position.x - prev.position.x, next.position.y - prev.position.y);
-        if (this.footDistance >= 4) { cues.push('step'); this.footDistance %= 4; }
+        if (this.footDistance >= 6) { cues.push('step'); this.footDistance %= 6; }
       } else this.footDistance = 0;
       if (next.oxygen > prev.oxygen + 1 || next.suitHealth > prev.suitHealth) cues.push('service');
     }
@@ -80,10 +85,7 @@ export class AudioDirector {
     const machinery = world.colony.buildings.some(b => {
       const n = heading(b.angle); return b.status === 'running' && near(sitePosition(world, b.angle).x, sitePosition(world, b.angle).y, 150);
     });
-    if (!added && !removed && machinery && world.colony.buildings.some(b => {
-      const old = prev.buildings.get(b.id), n = heading(b.angle);
-      return old && old.recipe === b.recipe && b.progress < old.progress && b.status === 'running' && near(sitePosition(world, b.angle).x, sitePosition(world, b.angle).y, 150);
-    })) cues.push('production');
+    // Machines finishing a batch make no sound of their own: the quiet hum while they run is enough.
     const safety = flightSafety(world.ship, world.system), fuelLevel = safety.instruments.fuel.level;
     const landing = alive && !onFoot && safety.urgent, fuel = alive && !onFoot && next.state === 'flying' && (fuelLevel === 'caution' || fuelLevel === 'critical');
     const generic = alive && (next.threats > 0 || (onFoot ? (!next.habitat && next.oxygen < 30) || world.colony.buildings.some(b => isHabitat(b.kind) && b.habitat?.powered && habitatContains(b, world.astronaut.position, colonyPlanet(world)) && (b.status === 'air low' || b.habitat.backup && b.habitat.energy / HABITATS[b.kind].power <= 3)) : next.state === 'flying' && next.hull < 25));

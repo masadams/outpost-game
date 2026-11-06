@@ -1,26 +1,31 @@
-import { STATIC_SYSTEM, nearestPlanet, planetAt, relative, relativeVelocity, surfacePosition, terrainHit, type SystemFrame } from './celestial';
+import { emptyInventory, type Inventory } from './resources';
+import { STATIC_SYSTEM, nearestPlanet, planetAt, relative, relativeVelocity, surfaceAngle, groundVelocity, surfacePosition, terrainHit, type SystemFrame } from './celestial';
 import { ATMOSPHERE, WORLD } from './config';
 import { clamp, dot, heading, length, localAngle, type Vec } from './math';
 import { integrateVelocity } from './environment';
 
 export const SUIT = { radius: 2.5, walkSpeed: 12, acceleration: 30, jumpSpeed: 12, oxygen: 180,
-  boardingRange: 20, exitOffset: 14, safeImpact: 14 } as const;
+  boardingRange: 20, exitOffset: 14, safeImpact: 14,
+  /** Kilograms of loose ore the pilot can carry in a sample bag, and how close (metres) a piece must be to pick it up. */
+  bagCapacity: 20, pickupReach: 3.5 } as const;
 export interface Astronaut {
   position: Vec; velocity: Vec; grounded: boolean; oxygen: number; health: number; jumpHeld: boolean;
+  /** Loose ore picked up on foot. It goes into the lander on boarding, or to the depot at the terminal. */
+  bag: Inventory;
 }
 export interface SuitControls { move: number; jump: boolean }
 export function createAstronaut(): Astronaut {
   return { position: { x: 0, y: -WORLD.radius - SUIT.radius }, velocity: { x: 0, y: 0 },
-    grounded: true, oxygen: SUIT.oxygen, health: 100, jumpHeld: false };
+    grounded: true, oxygen: SUIT.oxygen, health: 100, jumpHeld: false, bag: emptyInventory() };
 }
 export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number, environmentalAirSeconds = 0, system: SystemFrame = STATIC_SYSTEM): void {
   if (suit.health <= 0) {
     const p = nearestPlanet(suit.position, system), next = planetAt(p.id, { ...system, time: system.time + dt });
-    if (suit.grounded) { suit.position = surfacePosition(next, localAngle(relative(suit.position, p)), SUIT.radius); suit.velocity = { ...next.velocity }; }
+    if (suit.grounded) { suit.position = surfacePosition(next, surfaceAngle(p, suit.position), SUIT.radius); suit.velocity = groundVelocity(next, suit.position); }
     else {
       suit.velocity = integrateVelocity(suit.position, suit.velocity, { x: 0, y: 0 }, ATMOSPHERE.suitMass, ATMOSPHERE.suitDragArea, dt, system);
       const end = { x: suit.position.x + suit.velocity.x * dt, y: suit.position.y + suit.velocity.y * dt }, hit = terrainHit(suit.position, end, SUIT.radius, system, dt);
-      if (hit) { suit.position = surfacePosition(hit.planet, hit.angle, SUIT.radius); suit.velocity = { ...hit.planet.velocity }; suit.grounded = true; } else suit.position = end;
+      if (hit) { suit.position = surfacePosition(hit.planet, hit.angle, SUIT.radius); suit.velocity = groundVelocity(hit.planet, suit.position); suit.grounded = true; } else suit.position = end;
     }
     return;
   }
@@ -29,7 +34,7 @@ export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number, 
   suit.oxygen -= oxygenUsed;
   suit.health = Math.max(0, suit.health - (suitSeconds - oxygenUsed) * 5);
   if (suit.health <= 0) { suit.velocity = { x: 0, y: 0 }; return; }
-  const planet = nearestPlanet(suit.position, system), position = relative(suit.position, planet), velocity = relativeVelocity(suit.velocity, planet);
+  const planet = nearestPlanet(suit.position, system), position = relative(suit.position, planet), velocity = relativeVelocity(suit.velocity, planet, suit.position);
   const next = planetAt(planet.id, { ...system, time: system.time + dt });
   const normal = heading(localAngle(position)), tangent = { x: -normal.y, y: normal.x };
   const jump = input.jump && !suit.jumpHeld; suit.jumpHeld = input.jump;
@@ -38,23 +43,25 @@ export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number, 
     const speed = current + clamp(target - current, -SUIT.acceleration * dt, SUIT.acceleration * dt);
     if (!jump) {
       // Ground constraint follows the circular surface exactly, rather than integrating through it.
-      const angle = localAngle(position) + speed * dt / (planet.radius + SUIT.radius);
-      const n = heading(angle);
+      const angle = surfaceAngle(planet, suit.position) + speed * dt / (planet.radius + SUIT.radius);
       suit.position = surfacePosition(next, angle, SUIT.radius);
-      suit.velocity = { x: next.velocity.x - n.y * speed, y: next.velocity.y + n.x * speed };
+      const n = heading(angle + next.spin), ground = groundVelocity(next, suit.position);
+      suit.velocity = { x: ground.x - n.y * speed, y: ground.y + n.x * speed };
       return;
     }
-    suit.velocity = { x: planet.velocity.x + tangent.x * speed + normal.x * SUIT.jumpSpeed, y: planet.velocity.y + tangent.y * speed + normal.y * SUIT.jumpSpeed };
+    const ground = groundVelocity(planet, suit.position);
+    suit.velocity = { x: ground.x + tangent.x * speed + normal.x * SUIT.jumpSpeed, y: ground.y + tangent.y * speed + normal.y * SUIT.jumpSpeed };
     suit.grounded = false;
   }
   suit.velocity = integrateVelocity(suit.position, suit.velocity, { x: 0, y: 0 }, ATMOSPHERE.suitMass, ATMOSPHERE.suitDragArea, dt, system);
   const end = { x: suit.position.x + suit.velocity.x * dt, y: suit.position.y + suit.velocity.y * dt };
   const hit = terrainHit(suit.position, end, SUIT.radius, system, dt);
   if (!hit) { suit.position = end; return; }
-  const n = hit.normal, v = relativeVelocity(suit.velocity, hit.planet), impact = Math.max(0, -dot(v, n));
   suit.position = surfacePosition(hit.planet, hit.angle, SUIT.radius);
+  const n = hit.normal, v = relativeVelocity(suit.velocity, hit.planet, suit.position), impact = Math.max(0, -dot(v, n));
   const drift = dot(v, { x: -n.y, y: n.x });
-  suit.velocity = { x: hit.planet.velocity.x - n.y * drift, y: hit.planet.velocity.y + n.x * drift }; suit.grounded = true;
+  const ground = groundVelocity(hit.planet, suit.position);
+  suit.velocity = { x: ground.x - n.y * drift, y: ground.y + n.x * drift }; suit.grounded = true;
   suit.health = Math.max(0, suit.health - Math.max(0, impact - SUIT.safeImpact) * 4);
   if (suit.health === 0) suit.velocity = { x: 0, y: 0 };
 }

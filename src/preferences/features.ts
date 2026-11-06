@@ -32,7 +32,7 @@ export type Feature =
   | 'catalogue';
 
 /** Buildings a new player can place. The first five match number keys 1–5; the rest are mouse-only. */
-export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'observatory', 'laser'];
+export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'observatory', 'laser'];
 
 export const FEATURE_STORAGE_KEY = 'outpost.features';
 
@@ -95,6 +95,8 @@ const ACTION_FEATURES: Partial<Record<string, Feature>> = {
 /** Whether an action from the keyboard or interface may reach the simulation. */
 export function actionAllowed(action: ColonyAction, current: FeatureMode = featureMode()): boolean {
   if (current === 'all') return true;
+  // The one reserve a new player sees: power kept back for the turrets, set from Base.
+  if (action.type === 'adjustPolicy' && action.field === 'energyReserve') return true;
   const feature = ACTION_FEATURES[action.type];
   if (feature) return featureVisible(feature, current);
   if (action.type === 'select' || action.type === 'queueBuild') return blueprintVisible(action.kind, current);

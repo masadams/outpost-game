@@ -287,3 +287,12 @@ Guidance is one pure function from world state to the next instruction (`coach`)
 - **Menus.** Right-click a building for its menu; Demolish always asks, shows the refund and works from anywhere. The X key no longer demolishes. Key hints sit beside labels. Rules are in `docs/UI_CONVENTIONS.md`.
 - **Sun and day.** The sun moves round the sky once every 1000 s instead of the planet spinning, so flight and landing physics stay as they are; real rotation is a later decision. Solar output follows the sun at each building; batteries bridge the night. A new game starts in the morning with the first dusk about 6½ minutes in. The cycle is on by default and off with `?sun=off` or localStorage `outpost.sun=off`; the browser suite runs with it off. See `docs/tasks/sun-and-day.md`.
 - **Storm on the Map.** Rocks the Observatory has seen appear on the chart with their uncertainty, far ones pinned to the edge, plus the predicted landing zone.
+
+## Real planet rotation — 2026-11-06
+Planets turn when the day cycle is on: Selene once per 1000 s, Nacre once per orbit (tidally locked). The world frame is inertial and the star Helia is fixed, so it can one day be approached. Surface things keep surface angles and move with the ground (about 11 m/s at the equator); air turns with the planet; landing, drift and coast paths are measured against the ground. With the day cycle off nothing turns, so the regression suites and old behaviour are unchanged. The first storm now arrives at 1150 s, in daylight on the second day; storms armed later can arrive at night, when batteries matter. See `docs/tasks/sun-and-day.md`.
+
+## Printed pilots and wrecks — 2026-11-06
+Pilots are printed bodies. Losing the lander prints a new pilot and a basic lander for the old recovery price (8 alloy, 2 components); the old lander becomes a physical wreck with what survived (25–90% by crash speed, 60% if destroyed in flight), a one-hour transponder, and can be salvaged with E. Wrecks beyond 60 km are lost. This replaces "tow it home with 30 hull, cargo lost". See `docs/tasks/clones-and-wrecks.md`.
+
+## Land anywhere — 2026-11-06
+The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s, drift 4 m/s, tilt 15°); open ground needs a gentler touchdown (3.5 m/s, 2 m/s, 10°) and the instruments and touchdown limits switch to those numbers off the pad, with "ROUGH GROUND" in the approach message. Ore still only unloads, and service and refuelling still only happen, on the pad. Pad upgrades (catch arms) and AI helpers are queued in the roadmap.

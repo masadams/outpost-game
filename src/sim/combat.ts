@@ -1,9 +1,10 @@
 import { colonyWorld } from './localWorld';
-import { planetAt } from './celestial';
+import { groundVelocity, planetAt, surfaceAngle } from './celestial';
 import { cargoMass } from './shipMass';
 import { nearestPlanet, relative, surfacePosition } from './celestial';
 import { cannonStats, thermalStats } from './shipStats';
-import { createCombat, SHIP_WEAPONS, RECOVERY, type CombatAction, type Drone } from './combatConfig';
+import { createCombat, SHIP_WEAPONS, type CombatAction, type Drone } from './combatConfig';
+import { printPilot, printPlan } from './wrecks';
 import { createShip, telemetry } from './physics';
 import { shipMass } from './shipMass';
 import { heading, length, localAngle, wrap } from './math';
@@ -29,19 +30,18 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     notify(world, `${s.armament.selected.toUpperCase()} SELECTED · SHIFT TO FIRE`); return;
   }
   if (action.type === 'recoverShip') {
+    // Pilots are printed: a lost pilot or lander is replaced from base stores and the old lander stays as a wreck.
     world = colonyWorld(world, 'home');
-    if (s.state !== 'crashed') { notify(world, 'RECOVERY IS FOR A LOST SHIP · LAND AND E FOR SERVICE'); return; }
-    const stock = world.colony.products;
-    if (stock.alloy < RECOVERY.cost.alloy || stock.components < RECOVERY.cost.components) { notify(world, `RECOVERY NEEDS ${RECOVERY.cost.alloy} ALLOY + ${RECOVERY.cost.components} COMPONENTS · L LOADS CHECKPOINT · R RESETS`); return; }
-    if (availableProduct(world.colony, 'alloy') < RECOVERY.cost.alloy || availableProduct(world.colony, 'components') < RECOVERY.cost.components) { notify(world, 'RECOVERY MATERIALS RESERVED FOR TURRETS · LOWER RESERVES IN BUILD'); return; }
-    stock.alloy -= RECOVERY.cost.alloy; stock.components -= RECOVERY.cost.components; c.lostCargo += cargoMass(s); c.recoveries++;
-    releaseTow(world, true);
-    c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
-    const recovered = createShip(), home = planetAt('home', world.system); recovered.ground = 'home'; recovered.position = surfacePosition(home, 0, WORLD.shipRadius); recovered.velocity = { ...home.velocity }; recovered.hull = RECOVERY.hull; recovered.fuel = Math.min(s.fuel, RECOVERY.fuel);
-    recovered.armament = { ...s.armament, energy: 0, heat: 0, cooldown: 0, overheated: false }; recovered.towRig = s.towRig; recovered.equipment = [...s.equipment];
-    world.ship = recovered; world.playerMode = 'ship'; world.astronaut.health = 100; world.astronaut.oxygen = 180; world.astronaut.position = { ...recovered.position }; world.astronaut.velocity = { ...home.velocity }; world.astronaut.jumpHeld = false; world.astronaut.grounded = true;
-    world.defence.controlled = null; world.colony.buildOpen = false; world.depotOpen = false;
-    notify(world, `RECOVERED AT HOME · CARGO LOST · HULL ${RECOVERY.hull} · E USES SUPPLIES TO SERVICE`); return;
+    if (!printPlan(world)) { notify(world, 'Your pilot and lander are fine.'); return; }
+    const lander = world.ship.state === 'crashed';
+    const before = cargoMass(world.ship);
+    if (!printPilot(world)) return;
+    if (lander) {
+      c.lostCargo += before; c.recoveries++;
+      releaseTow(world, true);
+      c.escaped += c.enemies.length; c.enemies = []; c.projectiles = []; c.flashes = [];
+    }
+    return;
   }
   if (world.playerMode !== 'ship' || s.state !== 'flying' || telemetry(s, WORLD.shipRadius, world.system).altitude < 200) { notify(world, 'LAUNCH ABOVE 200 m BEFORE STARTING A PATROL · SAVE WITH K FIRST'); return; }
   if (c.enemies.length || c.projectiles.length) { notify(world, 'FINISH OR DISENGAGE THE CURRENT PATROL FIRST'); return; }
@@ -50,7 +50,7 @@ export function applyCombatAction(world: WorldState, action: CombatAction): void
     const n = heading(s.angle + (i === 0 ? 0 : i === 1 ? 0.55 : -0.55));
     let position = { x: s.position.x + n.x * (320 + i * 100), y: s.position.y + n.y * (320 + i * 100) };
     const planet = nearestPlanet(position, world.system);
-    if (length(relative(position, planet)) < planet.radius + 120) position = surfacePosition(planet, localAngle(relative(position, planet)), 120);
+    if (length(relative(position, planet)) < planet.radius + 120) position = surfacePosition(planet, surfaceAngle(planet, position), 120);
     c.enemies.push({ id: world.nextId++, position, velocity: { ...s.velocity }, angle: localAngle({ x: s.position.x - position.x, y: s.position.y - position.y }),
       hull: 48, fuel: 120, ammo: 24, energy: 50, cooldown: 0, windup: 0, retreatTime: 0, state: 'approach' });
   }

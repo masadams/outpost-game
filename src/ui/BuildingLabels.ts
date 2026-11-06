@@ -6,6 +6,10 @@ import type {WorldState} from '../sim/world';
 import {worldToScreen,type PointerView} from '../render/pointer';
 import {patchMarkup} from './dom';
 import {isolateControlKeys} from './controlKeys';
+/** Zoom at which labels are full size, the smallest they shrink to, and the zoom below which they hide. */
+export const LABEL_FULL_ZOOM=0.7,LABEL_MIN_SCALE=0.6,LABEL_HIDE_ZOOM=0.2;
+/** How big labels are at a zoom: 1 up close, shrinking to a minimum, and 0 (hidden) once buildings are only dots. */
+export const labelScale=(zoom:number):number=>zoom<LABEL_HIDE_ZOOM?0:Math.max(LABEL_MIN_SCALE,Math.min(1,zoom/LABEL_FULL_ZOOM));
 export class BuildingLabels {
  readonly root=document.createElement('div');
  constructor(select:(body:BodyId,id:number)=>void){
@@ -13,7 +17,9 @@ export class BuildingLabels {
   this.root.addEventListener('click',event=>{const b=(event.target as HTMLElement).closest<HTMLButtonElement>('button[data-building-label]');if(b){select(b.dataset.body as BodyId,Number(b.dataset.buildingLabel));if(event.detail>0)b.blur();}});
  }
  update(w:WorldState,view:PointerView,enabled:boolean,selected:number|null,textScale=1):void{
-  this.root.hidden=!enabled;if(!enabled)return;
+  // Labels shrink as you zoom out and disappear when buildings are only dots, so they never crowd the view.
+  const fit=labelScale(view.zoom),far=fit===0;this.root.hidden=!enabled||far;if(!enabled||far)return;
+  this.root.style.setProperty('--label-scale',fit.toFixed(3));textScale*=fit;
   const escape=(s:string)=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
   const occupied:Array<{x:number;y:number;width:number}>=[],labels:string[]=[];
   const entries=allColonies(w).flatMap(site=>site.colony.buildings.map(b=>({site,b}))).sort((a,b)=>Number(b.b.id===selected)-Number(a.b.id===selected)||a.b.id-b.b.id);

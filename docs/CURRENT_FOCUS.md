@@ -1,6 +1,6 @@
 # Current Focus
 
-**Updated:** 2026-11-05 · **Milestone:** UX rebuild + first mining sortie
+**Updated:** 2026-11-05 · **Milestone:** first mining sortie, then the first storm (Phase 1)
 
 ## Why
 The alpha has a strong simulation core (fixed-step physics, landing, resource accounting, 538 passing unit tests) but grew wide before it got good. Seventeen task specs added research, 25 ship parts, combat, drones, shields, towing, autopilot tiers, facility upgrades, freight, scheduling and colony policy. Meanwhile the first minute of play is unclear and the interface reads like a web dashboard. The bible's own rule is depth before breadth, so we are returning to it.
@@ -73,5 +73,24 @@ New UI lives in `src/ui/flight/` (Preact, `.tsx`), styled from the tokens in `sr
 - ~~About 15 text buttons at launch~~ Fixed in 4.1: five screen buttons, four small icons, view tools by the radar.
 - ~~Help and panel text uses internal jargon~~ Fixed in 4.5 for everything a new player sees; the legacy console behind `?features=all` still has the old wording.
 
-## Out of scope this milestone
-New mechanics, parts, research, buildings or worlds. Storm, expedition and the S0–S6 systems slices wait until this milestone's playtest passes.
+## Phase 1 progress (the first storm)
+Spec and slice list: [docs/tasks/phase1-first-storm.md](tasks/phase1-first-storm.md). All five slices are merged: storm simulation, Observatory, warning (card, radar, Map), laser turret and turret controls in the focus set, and the aftermath (pieces to collect, analysis, hardened buildings).
+
+Also merged alongside it: right-click building menus with a confirmed Demolish ([UI conventions](UI_CONVENTIONS.md)), building animations and the Observatory power-on signal, and the sun and day cycle ([spec](tasks/sun-and-day.md)).
+
+## Next
+| Item | What | Status |
+|---|---|---|
+| Playtest the storm and the first night | Balance: day length, storm timing against night, how hard the storm is with one turret | Needs hands-on play |
+| Sun S3 | Power forecast in Base: done. The moon already has its own day; eclipses still to do | Partly done |
+| Real planet rotation | Selene turns once a day, Nacre keeps one face to Selene, Helia stays fixed; ground speed, co-rotating air, ground-relative paths | Done |
+| Observatory and storm sounds | A rising scan when the Observatory starts, a two-note sighting, a calm chime when the storm is over | Done |
+
+## Power for storms and nights (roadmap 1F, first part)
+Base shows a **Keep for turrets** reserve (steps of 50 kJ). The Observatory, refinery and other machines stop before they use it ("Power held back"), so turrets still have power in a storm or at night. Base also says how many shots the stored power covers, and the storm warning suggests setting a reserve when you have turrets and none is set.
+
+## Printed pilots and wrecks
+Losing the lander no longer means losing everything: print a new pilot and lander, then go and salvage the old one while its transponder lasts. See [docs/tasks/clones-and-wrecks.md](tasks/clones-and-wrecks.md).
+
+## Out of scope for now
+New worlds, new ship parts, the broad research tree, and the S0–S6 systems slices wait until the storm and the first night have been played and tuned.

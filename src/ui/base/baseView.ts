@@ -8,6 +8,9 @@ import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity } from '../../sim/shipStats';
 import { ANALYSIS_ENERGY } from '../../sim/stormConfig';
+import { policyFor } from '../../sim/colonyPolicy';
+import { SUN, sunClock } from '../../sim/sun';
+import { duration } from '../flight/stormView';
 import type { WorldState } from '../../sim/world';
 
 /** Everything the Base window shows, derived from the simulation. Pure: no DOM, no Phaser. */
@@ -49,6 +52,12 @@ export interface PowerView {
   /** Plain summary, e.g. "Using 6.0 of 8.0 kW". */
   summary: string;
   level: 'good' | 'warn' | 'bad' | 'none';
+  /** Only with the day and night cycle on: when the light changes and whether storage covers the dark. */
+  forecast: string | null;
+  /** Power kept back for the turrets: other machines stop before they eat into it. */
+  reserve: number;
+  /** Shown once there is a turret: how many shots the stored power covers. */
+  defence: string | null;
 }
 
 export type Chip = 'running' | 'idle' | 'stopped' | 'off' | 'wrecked';
@@ -97,6 +106,7 @@ const STATUS: Record<string, { chip: Chip; label: string }> = {
   'research staffed': { chip: 'running', label: 'Running' },
   idle: { chip: 'idle', label: 'Idle' },
   'target met': { chip: 'idle', label: 'Target met' },
+  starting: { chip: 'running', label: 'Starting up' },
   'no power': { chip: 'stopped', label: 'No power' },
   'no feedstock': { chip: 'stopped', label: 'No input' },
   'output full': { chip: 'stopped', label: 'Storage full' },
@@ -122,7 +132,11 @@ function inputNeed(b: Building): string {
 export function whyStopped(b: Building): string | null {
   switch (b.status) {
     case 'no power':
-      return 'Not enough power. Build another solar array, or a battery for the dark.';
+      return isTurret(b.kind)
+        ? 'Out of power: it cannot fire. Turn off the Observatory or refinery, or set Keep for turrets in Base.'
+        : 'Not enough power. Build another solar array, or a battery for the dark.';
+    case 'starting':
+      return 'Starting up. It needs steady power for a few seconds before it runs.';
     case 'power limited':
       return 'Running slowly because power is short.';
     case 'no feedstock':
@@ -136,7 +150,7 @@ export function whyStopped(b: Building): string | null {
     case 'no deposit':
       return 'It is not on a surface deposit.';
     case 'power reserved':
-      return 'Power is being held back for essential systems.';
+      return 'Waiting: power is being kept for the turrets (Keep for turrets in Base).';
     case 'delivery reserved':
       return 'Storage room is being held back for deliveries.';
     default:
@@ -195,6 +209,25 @@ function powerSummary(w: WorldState): string {
   return `Using ${c.demand.toFixed(1)} of ${c.generation.toFixed(1)} kW`;
 }
 
+function powerForecast(w: WorldState): string | null {
+  if (!w.system.sun || !w.colony.buildings.some(b => b.kind === 'solar')) return null;
+  const clock = sunClock(w.system, w.colony.buildings.find(b => b.kind === 'solar')!.angle);
+  const when = duration(clock.secondsToChange);
+  if (!clock.day) return `Light returns in ${when}.`;
+  const night = Math.round(SUN.dayLength * 0.4);
+  const need = w.colony.demand * night;
+  const covers = need <= 0 || w.colony.energy >= need;
+  return covers ? `Dusk in ${when}. Your stored power covers a typical night.` : `Dusk in ${when}. A typical night needs about ${Math.ceil(need)} kJ; you have ${Math.floor(w.colony.energy)}.`;
+}
+
+function defenceLine(w: WorldState): string | null {
+  const turrets = w.colony.buildings.filter(b => isTurret(b.kind) && b.enabled && buildingHealth(b) > 0);
+  if (turrets.length === 0) return null;
+  const perShot = Math.min(...turrets.map(b => WEAPONS[b.kind as keyof typeof WEAPONS].energy));
+  const shots = Math.floor(w.colony.energy / perShot);
+  return `Turrets: stored power covers about ${shots} shots.`;
+}
+
 function powerView(w: WorldState): PowerView {
   const c = w.colony;
   const capacity = energyCapacity(c);
@@ -205,6 +238,9 @@ function powerView(w: WorldState): PowerView {
     stored: c.energy,
     capacity,
     summary: powerSummary(w),
+    forecast: powerForecast(w),
+    reserve: policyFor(w.colony).energyReserve,
+    defence: defenceLine(w),
     level,
   };
 }

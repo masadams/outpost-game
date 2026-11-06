@@ -5,6 +5,7 @@ import type { ObjectiveCardView, RegionView } from './chromeView';
 import type { PickupLine } from './pickupFeed';
 import type { StormView } from './stormView';
 import type { DayView } from './dayView';
+import type { WreckCard } from './wreckView';
 
 export type ScreenPanel = 'cargo' | 'colony' | 'command' | 'navigation';
 export type ViewAction = 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
@@ -32,6 +33,7 @@ export interface ChromeState {
   pickups: PickupLine[];
   storm: StormView | null;
   day: DayView | null;
+  wreck: WreckCard | null;
   trajectory: boolean;
   predictionPoints: number;
   keys: ChromeKeys;
@@ -144,6 +146,12 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
             <i aria-hidden="true" />
             {state.day.label} · {state.day.detail}
           </span>
+        )}
+        {state.wreck && (
+          <section class="storm-card" data-tone="watching" role="status" aria-live="polite" data-wreck>
+            <span class="storm-title">{state.wreck.title}</span>
+            <span class="storm-detail">{state.wreck.detail}</span>
+          </section>
         )}
         {state.storm && (
           <section class="storm-card" data-tone={state.storm.tone} role="status" aria-live="polite">

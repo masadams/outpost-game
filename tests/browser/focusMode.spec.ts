@@ -19,8 +19,8 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await page.getByRole('button', { name: 'Build', exact: true }).click();
   const bar = page.getByRole('region', { name: 'Build', exact: true });
   const cards = bar.locator('[data-select]');
-  await expect(cards).toHaveCount(7);
-  for (const name of ['Solar array', 'Battery', 'Storage', 'Refinery', 'Fuel processor']) {
+  await expect(cards).toHaveCount(8);
+  for (const name of ['Solar array', 'Battery', 'Storage', 'Refinery', 'Fuel processor', 'Mining rig']) {
     await expect(cards.filter({ hasText: name })).toHaveCount(1);
   }
   await expect(bar.getByRole('navigation', { name: 'Building groups' })).toHaveCount(0);
@@ -42,7 +42,8 @@ test('new players see only the first-sortie systems', async ({ page }) => {
   await page.keyboard.press('h');
   const help = page.getByRole('dialog', { name: 'Outpost quick-start and controls', exact: true });
   await expect(help).toContainText('Your first sortie');
-  await expect(help).not.toContainText('turret');
+  // The laser turret is part of the focus set now (the first storm); the hidden systems still are not mentioned.
+  await expect(help).not.toContainText('missile');
 });
 
 test('the all-features switch restores hidden systems', async ({ page }) => {
