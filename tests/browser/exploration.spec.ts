@@ -7,7 +7,7 @@ import { WORLD } from '../../src/sim/config';
 test('charts a finite neighborhood, selects targets while paused and keeps flight guidance readable', async ({ page }) => {
   test.setTimeout(60000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/'); const hud = page.locator('#hud'), panel = page.locator('#navigation-panel'), guidance = page.locator('#navigation-guidance');
-  await expect(hud).toHaveAttribute('data-state', 'landed'); await expect(hud).toHaveAttribute('data-asteroids', '27'); await page.keyboard.press('p');
+  await expect(hud).toHaveAttribute('data-state', 'landed'); await expect(hud).toHaveAttribute('data-asteroids', '31'); await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Map', exact: true }).click(); await expect(panel).toBeVisible();
   await expect(panel.getByRole('img')).toBeVisible(); await expect(panel).toContainText('Frost arc');
   await page.getByRole('button', { name: 'Frost arc', exact: true }).click(); await expect(panel).toContainText('Not surveyed'); await expect(panel).toContainText('Unknown until surveyed');

@@ -189,14 +189,16 @@ export function mapView(w: WorldState): MapView {
   const bodies = planets(w.system)
     .filter(b => shown(b.id))
     .map(b => ({ id: b.id, label: b.label, at: b.position, radius: b.radius, atmosphere: b.atmosphere }));
-  const belts = BELT_IDS.map(id => ({
+  // A belt around a body you have not found yet is not on the chart either.
+  const shownBelts = BELT_IDS.filter(id => shown(BELTS[id].around));
+  const belts = shownBelts.map(id => ({
     id,
     label: BELTS[id].label,
     color: hex(BELTS[id].color),
     rocks: [...w.asteroids, ...w.pickups].filter(r => r.belt === id).map(r => ({ at: r.position, ore: r.mass > 0 })),
   }));
   const sites = w.exploration.sites.map(s => ({ id: s.key, label: SITE_INFO[s.key].label, at: s.position, intact: s.health > 0 }));
-  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...BODY_IDS.filter(id => id !== 'home' && w.system.binary && shown(id)), ...BELT_IDS, ...SITE_IDS];
+  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...BODY_IDS.filter(id => id !== 'home' && w.system.binary && shown(id)), ...shownBelts, ...SITE_IDS];
   const places = ids.map(id => ({
     id,
     label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : (BODY_IDS as readonly string[]).includes(id) ? BODIES[id as BodyId].label : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,

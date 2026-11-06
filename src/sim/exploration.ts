@@ -12,9 +12,14 @@ import { launchProbe } from './probes';
 import { notify } from './messages';
 import type { ExplorationAction } from './explorationConfig';
 import type { WorldState } from './world';
-export function orbitalState(altitude: number, angle: number) {
-  const n = heading(angle), radius = WORLD.radius + altitude, speed = Math.sqrt(WORLD.mu / radius);
-  return { position: { x: n.x * radius, y: n.y * radius }, velocity: { x: -n.y * speed, y: n.x * speed } };
+/** A circular orbit around a body at the start of the game, at a height above its surface and an angle around it. */
+export function orbitalState(altitude: number, angle: number, around: BodyId = 'home') {
+  const planet = planetAt(around, { time: 0, binary: true });
+  const n = heading(angle), radius = planet.radius + altitude, speed = Math.sqrt(planet.mu / radius);
+  return {
+    position: { x: planet.position.x + n.x * radius, y: planet.position.y + n.y * radius },
+    velocity: { x: planet.velocity.x - n.y * speed, y: planet.velocity.y + n.x * speed },
+  };
 }
 /** Only new worlds / legacy migration call this; runtime and v11 loads never reseed. */
 export function seedNeighborhood(w: WorldState): void {
@@ -22,14 +27,14 @@ export function seedNeighborhood(w: WorldState): void {
   for (const belt of w.asteroids.length + 12 <= 256 ? BELT_IDS : []) {
     const spec = BELTS[belt];
     for (let i = 0; i < EXPLORATION.rocksPerBelt; i++) {
-      const state = orbitalState(spec.altitude + (i % 2 ? 40 : -40), spec.angle + (i - 1.5) * .08);
+      const state = orbitalState(spec.altitude + (i % 2 ? 40 : -40), spec.angle + (i - 1.5) * spec.step, spec.around);
       w.asteroids.push({ ...state, id: w.nextId++, belt, resource: spec.resources[i], radius: 14 + i * 2, mass: 36 + i * 8, stage: 0, health: 1, maxHealth: 1 });
     }
   }
   for (const key of SITE_IDS) {
     const spec = BELTS[SITE_INFO[key].belt], stock = emptyInventory(), fuel = key === 'tender' ? 18 : 0;
     if (key === 'cache') { stock.copper = 12; stock.rareMetals = 6; }
-    w.exploration.sites.push({ ...orbitalState(spec.altitude, spec.angle), id: w.nextId++, key, stock, fuel, radius: EXPLORATION.siteRadius, mass: EXPLORATION.dryMass + inventoryMass(stock) + fuel, resource: 'iron', stage: 0, health: 1, maxHealth: 1 });
+    w.exploration.sites.push({ ...orbitalState(spec.altitude, spec.angle, spec.around), id: w.nextId++, key, stock, fuel, radius: EXPLORATION.siteRadius, mass: EXPLORATION.dryMass + inventoryMass(stock) + fuel, resource: 'iron', stage: 0, health: 1, maxHealth: 1 });
   }
 }
 /** How far from the home planet's centre a point can be marked (m). */
@@ -50,7 +55,7 @@ export function destination(w: WorldState, key = w.exploration.selected): { labe
     if (!mass && beacon) return { label: BELTS[belt].label, position: beacon.position, velocity: beacon.velocity };
     const mean = (field: 'position' | 'velocity') => ({ x: bodies.reduce((sum, b) => sum + b[field].x * b.mass, 0) / mass, y: bodies.reduce((sum, b) => sum + b[field].y * b.mass, 0) / mass });
     if (mass) return { label: BELTS[belt].label, position: mean('position'), velocity: mean('velocity') };
-    return { label: BELTS[belt].label, ...orbitalState(BELTS[belt].altitude, BELTS[belt].angle) };
+    return { label: BELTS[belt].label, ...orbitalState(BELTS[belt].altitude, BELTS[belt].angle, BELTS[belt].around) };
   }
   return destination(w, 'home');
 }

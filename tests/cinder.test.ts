@@ -43,3 +43,41 @@ describe('Cinder in play', () => {
     expect(loaded.outposts.cinder.colony.products.alloy).toBe(7);
   });
 });
+
+describe('belts as data', () => {
+  it('the Cinder debris circles Cinder, close to it, and moves with it', () => {
+    const w = createWorld();
+    const rocks = w.asteroids.filter(r => r.belt === 'cinderDebris');
+    expect(rocks).toHaveLength(4);
+    for (const rock of rocks) {
+      const c = planetAt('cinder', w.system);
+      const d = Math.hypot(rock.position.x - c.position.x, rock.position.y - c.position.y);
+      expect(d).toBeGreaterThan(c.radius);
+      expect(d).toBeLessThan(c.radius + 300);
+    }
+    for (let i = 0; i < 1200; i++) stepWorld(w, { thrust: false, turn: 0 }, 0.25);
+    const c = planetAt('cinder', w.system);
+    for (const rock of w.asteroids.filter(r => r.belt === 'cinderDebris')) {
+      expect(Math.hypot(rock.position.x - c.position.x, rock.position.y - c.position.y)).toBeLessThan(2500);
+    }
+  });
+
+  it('stays off the chart until Cinder is found', () => {
+    setFeatureMode('focus');
+    const w = createWorld();
+    expect(mapView(w).places.map(p => p.id)).not.toContain('cinderDebris');
+    w.exploration.known.push('cinder');
+    expect(mapView(w).places.map(p => p.id)).toContain('cinderDebris');
+    setFeatureMode(null);
+  });
+
+  it('is out of a probe\'s reach', async () => {
+    const { probeError } = await import('../src/sim/probes');
+    const w = createWorld();
+    w.exploration.selected = 'cinderDebris';
+    w.colony.products.alloy = 9;
+    w.colony.products.wire = 9;
+    w.colony.products.components = 9;
+    expect(probeError(w)).toBe('Too far for a probe. Fly there.');
+  });
+});
