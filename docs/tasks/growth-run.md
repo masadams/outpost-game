@@ -4,7 +4,7 @@ Direction from the playtest review: grow the universe on solid physics before sh
 
 | # | Slice | Why | Status |
 |---|---|---|---|
-| G1 | **Belts and sites as data** (bodies-are-data stage 4). Each belt names the body it circles, its altitude, phase, rocks and resources; sites hang off a belt. Prove it with a new belt around Cinder. | A new place becomes one table row, not code. | Planned |
+| G1 | **Belts and sites as data** (bodies-are-data stage 4). Each belt names the body it circles, its altitude, phase, rocks and resources; sites hang off a belt. Prove it with a new belt around Cinder. | A new place becomes one table row, not code. | Done: belts name the body they circle, their spacing and resources; Cinder debris added (hidden until Cinder is found, out of probe reach). Sites still tied to the three original belts. |
 | G2 | **Atmospheres by body** (stage 5). Air density, drag, engine voice and landing rules read each body's own atmosphere. | A future air world needs no special cases. | Planned |
 | G3 | **Orbit prediction and intercept marks.** `bodyAt(id, t)` for catalogue bodies, circular prediction for belts; the Map offers Intercept (pick arrival time) and probes lead their target. | Moving targets work the way real missions do. | Planned |
 | G4 | **Reaching and finding Cinder.** A hint once Nacre is surveyed that more is out there; probes reach any known body; first reason to go (a rare seam only on Cinder). | Gives the third body a purpose. | Planned |

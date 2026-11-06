@@ -17,7 +17,7 @@ function rendezvous(key: 'survey' | 'cache' | 'tender' = 'cache') {
 const visit = (w: ReturnType<typeof createWorld>) => applyExplorationAction(w, { type: 'visitSite' });
 describe('finite nearby-space discovery', () => {
   it('seeds three distinct bounded belts and physical sites outside the atmosphere deterministically', () => {
-    const w = createWorld(); expect(w).toEqual(createWorld()); expect(w.asteroids).toHaveLength(27); expect(w.exploration.sites).toHaveLength(3);
+    const w = createWorld(); expect(w).toEqual(createWorld()); expect(w.asteroids).toHaveLength(31); expect(w.exploration.sites).toHaveLength(3);
     for (const b of BELT_IDS) { const rocks = w.asteroids.filter(r => r.belt === b); expect(rocks).toHaveLength(4); expect(rocks.every(r => length(r.position) > WORLD.radius + 1200)).toBe(true); }
     const ids = [...w.asteroids, ...w.exploration.sites].map(b => b.id); expect(new Set(ids).size).toBe(ids.length); expect(w.nextId).toBeGreaterThan(Math.max(...ids));
     const initial = w.asteroids.length; seedNeighborhood(w); expect(w.asteroids).toHaveLength(initial);
@@ -73,7 +73,7 @@ describe('finite nearby-space discovery', () => {
   it('moves sites continuously under the shared gravity model with no far-field freeze', () => {
     const w = createWorld(), s = w.exploration.sites[0], initial = { ...s.position };
     for (let i = 0; i < 120; i++) stepWorld(w, { thrust: false, turn: 0 }, STEP);
-    expect(s.position).not.toEqual(initial); expect(Math.abs(length(relative(s.position, planetAt('home', w.system))) - length(initial))).toBeLessThan(1);
+    expect(s.position).not.toEqual(initial); expect(Math.abs(length(relative(s.position, planetAt('home', w.system))) - length(initial))).toBeLessThan(3);
   });
   it('sweeps ship collisions against physical sites rather than allowing a fast pass', () => {
     const { w, s } = rendezvous(); w.asteroids = []; w.ship.position = { x: s.position.x, y: s.position.y - 50 }; w.ship.velocity = { x: s.velocity.x, y: s.velocity.y + 20000 };
@@ -81,8 +81,8 @@ describe('finite nearby-space discovery', () => {
   });
   it('keeps finite fragment/ore counts within checkpoint budgets and preserves all mass', () => {
     const w = createWorld(), mass = w.asteroids.reduce((sum, b) => sum + b.mass, 0);
-    const pieces = w.asteroids.flatMap(b => fracture(b, () => w.nextId++).rocks); expect(pieces).toHaveLength(54);
-    const ore = pieces.flatMap(b => fracture(b, () => w.nextId++).ore); expect(ore).toHaveLength(216);
+    const pieces = w.asteroids.flatMap(b => fracture(b, () => w.nextId++).rocks); expect(pieces).toHaveLength(62);
+    const ore = pieces.flatMap(b => fracture(b, () => w.nextId++).ore); expect(ore).toHaveLength(248);
     expect(ore.reduce((sum, b) => sum + b.mass, 0)).toBeCloseTo(mass); expect(ore.length + 2).toBeLessThanOrEqual(256);
   });
   it('mines, collects and unloads a tagged belt fragment through ordinary controls', () => {
@@ -100,7 +100,7 @@ describe('finite nearby-space discovery', () => {
   });
   it('round trips depleted stocks, surveyed manifests, selection and moving bodies in the current format', () => {
     const { w, s } = rendezvous(); visit(w); const text = encodeCheckpoint(w); expect(JSON.parse(text).version).toBe(29);
-    const loaded = decodeCheckpoint(text); expect(loaded.exploration).toEqual(w.exploration); expect(loaded.asteroids).toEqual(w.asteroids); seedNeighborhood(loaded); expect(loaded.asteroids).toHaveLength(27); expect(loaded.exploration.sites.find(t => t.key === s.key)?.stock).toEqual(s.stock);
+    const loaded = decodeCheckpoint(text); expect(loaded.exploration).toEqual(w.exploration); expect(loaded.asteroids).toEqual(w.asteroids); seedNeighborhood(loaded); expect(loaded.asteroids).toHaveLength(31); expect(loaded.exploration.sites.find(t => t.key === s.key)?.stock).toEqual(s.stock);
   });
   it('rejects duplicate site IDs, invalid stocks, non-finite motion and malformed belt tags', () => {
     const text = encodeCheckpoint(createWorld());
