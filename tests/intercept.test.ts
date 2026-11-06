@@ -37,3 +37,20 @@ describe('aiming ahead', () => {
     expect(mapView(w).intercept?.seconds).toBeGreaterThan(0);
   });
 });
+
+describe('course to a belt', () => {
+  it('gives a bearing relative to the nose, a range and a time, and the Map says so', async () => {
+    const { courseToBelt } = await import('../src/sim/intercept');
+    const w = createWorld();
+    w.ship.state = 'flying';
+    w.ship.angle = 0;
+    const course = courseToBelt(w, 'copper');
+    expect(course.range).toBeGreaterThan(100);
+    expect(Math.abs(course.bearing)).toBeLessThanOrEqual(Math.PI);
+    expect(course.seconds).toBeGreaterThan(0);
+    w.exploration.selected = 'copper';
+    expect(mapView(w).selected.facts.map(f => f[0])).toContain('Aim ahead');
+    w.exploration.selected = 'home';
+    expect(mapView(w).selected.facts.map(f => f[0])).not.toContain('Aim ahead');
+  });
+});

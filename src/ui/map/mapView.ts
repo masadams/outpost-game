@@ -1,4 +1,4 @@
-import { interceptBelt } from '../../sim/intercept';
+import { courseToBelt, interceptBelt } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
 import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
@@ -141,6 +141,12 @@ function selectedView(w: WorldState): SelectedView {
     ['Bearing', `${Math.round((n.bearing * 180) / Math.PI)}° ${w.playerMode === 'ship' ? 'from your nose' : 'from up'}`],
   ];
   const belt = BELT_IDS.find(b => b === id);
+  if (belt) {
+    // Belts move, so say where to point to arrive where it will be, not where it is.
+    const course = courseToBelt(w, belt);
+    const deg = Math.round((course.bearing * 180) / Math.PI);
+    facts.push(['Aim ahead', `${Math.abs(deg)}° ${deg < 0 ? 'left' : 'right'} of ${w.playerMode === 'ship' ? 'your nose' : 'up'} · about ${Math.round(course.seconds)} s at 110 m/s`]);
+  }
   const site = SITE_IDS.find(s => s === id);
   const surveyed = belt ? w.exploration.surveyed.includes(belt) : true;
   let body = '';

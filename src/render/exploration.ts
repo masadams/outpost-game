@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { SITE_INFO, BELTS } from '../sim/explorationConfig';
+import { SITE_INFO, BELTS, BELT_IDS, type BeltId } from '../sim/explorationConfig';
+import { courseToBelt } from '../sim/intercept';
 import { navigation, destination } from '../sim/exploration';
 import type { WorldState } from '../sim/world';
 export function drawExploration(g: Phaser.GameObjects.Graphics, w: WorldState, zoom: number): void {
@@ -13,6 +14,14 @@ export function drawExploration(g: Phaser.GameObjects.Graphics, w: WorldState, z
   }
   const n = navigation(w), p = n.position;
   if (w.exploration.selected !== 'home') { g.lineStyle(1 / zoom, 0xf3d779, .9); g.strokeCircle(p.x, p.y, 16 / zoom); }
+  // Belts move on: ring where the one you picked will be when you get there.
+  const selected = w.exploration.selected;
+  if ((BELT_IDS as readonly string[]).includes(selected)) {
+    const aim = courseToBelt(w, selected as BeltId).aim;
+    g.lineStyle(1 / zoom, 0x9fe4ff, .8);
+    g.strokeCircle(aim.x, aim.y, 24 / zoom);
+    g.strokeCircle(aim.x, aim.y, 3 / zoom);
+  }
   // A local arrow remains in view even when the destination and its chart position are far away.
   if (n.range > 100) {
     const viewer = w.playerMode === 'ship' ? w.ship.position : w.astronaut.position, dx = (p.x - viewer.x) / n.range, dy = (p.y - viewer.y) / n.range;
