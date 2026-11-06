@@ -32,7 +32,7 @@ export type Feature =
   | 'catalogue';
 
 /** Buildings a new player can place. The first five match number keys 1–5; the rest are mouse-only. */
-export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'observatory', 'laser'];
+export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'observatory', 'laser'];
 
 export const FEATURE_STORAGE_KEY = 'outpost.features';
 

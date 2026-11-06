@@ -21,7 +21,7 @@ export class Objectives {
   this.content.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('button[data-objective-link]');const link=button?.dataset.objectiveLink as ObjectiveLink|undefined;if(link&&Object.hasOwn(LINKS,link)){navigate(link,e.detail===0);if(e.detail>0)button?.blur();}});
  }
  update(w:WorldState,p:PresentationPreferences):void {
-  const shown=shownObjectives(), done=w.objectives.completed.filter(id=>shown.some(o=>o.id===id));
+  const shown=shownObjectives(w), done=w.objectives.completed.filter(id=>shown.some(o=>o.id===id));
   const next=this.tracked==='auto'?shown.find(o=>!done.includes(o.id)):shown.find(o=>o.id===this.tracked);
   if(this.content.closest('[hidden]'))return;
   const progress=next?objectiveProgress(w,next.id):null, recorded=!!next&&done.includes(next.id);

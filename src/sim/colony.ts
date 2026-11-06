@@ -72,11 +72,21 @@ export const productCapacity = (colony: Colony): number => 100 + colony.building
 export const BATTERY_CAPACITY = 1200;
 export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b)).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
 export const previewAngle = (world: WorldState): number => wrap(localAngleAt(world, world.astronaut.position) + world.colony.offset / colonyPlanet(world).radius);
+/** Why a blueprint cannot be used yet, or null. The Observatory is earned from the Frost survey buoy (day-cycle games only). */
+export function blueprintLock(world: WorldState, kind: BuildType): string | null {
+  if (kind === 'observatory' && world.system.sun && !world.exploration.surveyed.includes('frost')) {
+    return 'Recover the survey buoy data first';
+  }
+  return null;
+}
+
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
   if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
   if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= 48) return 'Colony limit: 48 facilities';
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
   if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
+  const lock = blueprintLock(world, kind);
+  if (lock) return lock;
   if (isShield(kind) && !world.colony.research.completed.includes('combat')) return 'Requires Combat engineering research';
   const width = BLUEPRINTS[kind].halfWidth;
   const sites = foundationSites(kind, angle, colonyPlanet(world).radius);
@@ -85,8 +95,8 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   if (sites.some(site => [...world.colony.buildings, ...(options.reservations ?? world.colony.command.queue)].some(b => foundationSites(b.kind, b.angle, colonyPlanet(world).radius).some(other => Math.abs(wrap(site.angle - other.angle)) * colonyPlanet(world).radius < site.halfWidth + other.halfWidth + 4 - 1e-7)))) return 'Facilities overlap';
   if (kind === 'miningRig') {
     const d = depositAt(world.surfaceDeposits, angle, width, colonyPlanet(world).radius);
-    if (!d) return 'Place the whole rig footprint on a marked surface deposit';
-    if (d.remaining <= 1e-9) return 'Deposit exhausted · prospect another seam';
+    if (!d) return 'Place the rig on a marked ore deposit';
+    if (d.remaining <= 1e-9) return 'This deposit is exhausted';
   }
   if (!options.paid && PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Insufficient fabrication materials';
   if (!options.paid && PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Build';

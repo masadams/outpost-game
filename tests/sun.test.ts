@@ -113,3 +113,26 @@ describe('sky clock on the moon', () => {
     }
   });
 });
+
+describe('old impacts', () => {
+  it('a day-cycle game starts with loose ore near the pad', async () => {
+    const { oldImpactOre } = await import('../src/sim/rockFall');
+    const world = createWorld();
+    const ore = oldImpactOre(() => world.nextId++, world.system);
+    expect(ore.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(ore.map(o => o.resource))).toEqual(new Set(['iron', 'copper', 'ice']));
+  });
+});
+
+describe('earning the observatory', () => {
+  it('is locked until the Frost buoy is surveyed, in day-cycle games', async () => {
+    const { blueprintLock } = await import('../src/sim/colony');
+    const world = createWorld();
+    expect(blueprintLock(world, 'observatory')).toBeNull();
+    world.system.sun = true;
+    expect(blueprintLock(world, 'observatory')).toMatch(/survey buoy/);
+    expect(blueprintLock(world, 'solar')).toBeNull();
+    world.exploration.surveyed.push('frost');
+    expect(blueprintLock(world, 'observatory')).toBeNull();
+  });
+});

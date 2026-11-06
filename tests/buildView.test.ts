@@ -22,7 +22,7 @@ describe('build view', () => {
     const view = buildView(createWorld());
     expect(view.groups).toBeNull();
     expect(view.cards.map(c => c.kind)).toEqual(BUILD_TYPES.filter(k => FOCUS_BLUEPRINTS.includes(k)));
-    expect(view.cards.map(c => c.hotkey)).toEqual(['1', '2', '3', '4', '5', '7', null]);
+    expect(view.cards.map(c => c.hotkey)).toEqual(['1', '2', '3', '4', '5', '7', null, null]);
     expect(view.cards[0]).toMatchObject({ label: 'Solar array', purpose: 'Makes power in sunlight', selected: true });
   });
 

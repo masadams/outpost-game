@@ -9,10 +9,12 @@ import { coach, DEFAULT_COACH_KEYS, type CoachKeys } from './coach';
 type Objective = typeof OBJECTIVES[number];
 
 /** Milestones shown to the player; the focus set keeps the first sortie only. */
-const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'sky', 'storm', 'analysis'];
+const FOCUS_OBJECTIVES: readonly ObjectiveId[] = ['delivery', 'industry', 'buoy', 'sky', 'storm', 'analysis'];
 
-export function shownObjectives(): ReadonlyArray<Objective> {
-  return featureVisible('catalogue') ? OBJECTIVES : OBJECTIVES.filter(o => FOCUS_OBJECTIVES.includes(o.id));
+export function shownObjectives(w?: WorldState): ReadonlyArray<Objective> {
+  const all = featureVisible('catalogue') ? OBJECTIVES : OBJECTIVES.filter(o => FOCUS_OBJECTIVES.includes(o.id));
+  const sunOn = (w?.rootWorld ?? w)?.system.sun ?? true;
+  return sunOn ? all : all.filter(o => o.id !== 'buoy');
 }
 
 export interface ObjectiveCardView {
@@ -43,9 +45,12 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
     if (missing.length) return `Build ${missing.join(' and ')}.`;
     return 'Give the refinery ore and power to start it.';
   }
+  if (id === 'buoy') {
+    return 'Open the Map, pick the Frost survey buoy, fly there and survey it.';
+  }
   if (id === 'sky') {
     const lab = w.colony.buildings.find(b => b.kind === 'observatory');
-    if (!lab) return 'Build an Observatory, then give it power.';
+    if (!lab) return 'Build an Observatory (the buoy data unlocked it), then give it power.';
     if (lab.status === 'running') return 'Scanning. Leave it powered.';
     return 'The Observatory needs power. Build a solar array.';
   }
@@ -73,7 +78,7 @@ export function objectiveCard(
   keys: CoachKeys = DEFAULT_COACH_KEYS,
 ): ObjectiveCardView {
   const root = w.rootWorld ?? w;
-  const shown = shownObjectives();
+  const shown = shownObjectives(root);
   const done = root.objectives.completed.filter(id => shown.some(o => o.id === id));
   const next = tracked === 'auto' ? shown.find(o => !done.includes(o.id)) : shown.find(o => o.id === tracked);
   const count = `${done.length}/${shown.length}`;
