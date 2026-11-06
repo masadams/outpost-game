@@ -6,6 +6,7 @@ export interface NacreSurvey {
   gravity: string;
   day: string;
   deposits: string;
+  night: string;
 }
 
 /** Round to a coarse step so the survey reads as an estimate, not a readout. */
@@ -23,6 +24,7 @@ export function nacreSurvey(w: WorldState): NacreSurvey | null {
   return {
     gravity: `about ${gravity.toFixed(1)} m/s² (Selene: ${(CELESTIAL.home.mu / CELESTIAL.home.radius ** 2).toFixed(1)})`,
     day: `about ${Math.round(dayMinutes)} min, one turn per orbit`,
+    night: `dark for about ${Math.round(dayMinutes / 2)} min of each day. Solar stops; bring a battery`,
     deposits: `${seams.length} seams, roughly ${roughly(total, 50)} kg: ${kinds.join(', ')}`,
   };
 }

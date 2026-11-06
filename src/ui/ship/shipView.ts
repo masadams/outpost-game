@@ -132,14 +132,14 @@ function kit(w: WorldState): KitView | null {
     return { text: `Rig kit aboard. ${where}`, load: null };
   }
   if (onMoon) return null;
-  const plan = manifestPlan(w, 'expedition');
+  const plan = manifestPlan(w, 'nacreKit');
   const short = PRODUCTS.flatMap(p => (plan.missing[p] > 0 && availableProduct(w.colony, p) + 1e-9 < plan.missing[p]
     ? [`${Math.ceil(plan.missing[p] - availableProduct(w.colony, p))} more ${PRODUCT_NAME[p as keyof typeof PRODUCT_NAME] ?? p}`]
     : []));
   const reason = plan.error === null ? 'Ready to load.'
     : short.length ? `Needs ${short.join(', ')}`
       : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
-  return { text: 'A rig and a solar array for Nacre: 15 alloy, 5 wire, 5 components.', load: { enabled: plan.error === null, reason } };
+  return { text: 'A rig, a solar array and a battery for Nacre: 16 alloy, 7 wire, 5 components. Nacre has long nights; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
 }
 
 export function shipPanelView(w: WorldState): ShipPanelView {

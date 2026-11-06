@@ -98,7 +98,7 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   if (current === 'all') return true;
   // The one reserve a new player sees: power kept back for the turrets, set from Base.
   if (action.type === 'adjustPolicy' && action.field === 'energyReserve') return true;
-  if (action.type === 'loadManifest' && nacreOpen && action.manifest === 'expedition') return true;
+  if (action.type === 'loadManifest' && nacreOpen && action.manifest === 'nacreKit') return true;
   // Research projects and fabrication are limited by what the player has found (checked in the simulation).
   if (action.type === 'researchStart') return FINDS.some(f => f.tech === action.tech);
   if (action.type === 'equipment') return FINDS.some(f => f.upgrade === action.upgrade);

@@ -137,7 +137,7 @@ function selectedView(w: WorldState): SelectedView {
   else if (id === 'moon') {
     const survey = nacreSurvey(w);
     body = survey
-      ? `Nacre, surveyed. Gravity ${survey.gravity}. Day ${survey.day}. Deposits: ${survey.deposits}. Airless; bring supplies.`
+      ? `Nacre, surveyed. Gravity ${survey.gravity}. Day ${survey.day}, ${survey.night}. Deposits: ${survey.deposits}. Airless; bring supplies.`
       : 'Nacre: airless, low gravity. Bring supplies; nothing is waiting there.';
   }
   else if (belt) body = surveyed ? beltStock(w, belt) : 'Unknown until surveyed. Survey the buoy in this arc to see what is here.';
