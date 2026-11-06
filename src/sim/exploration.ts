@@ -1,4 +1,4 @@
-import { groundVelocity, planetAt, surfacePosition, clearTerrain, nearestPlanet, relative as bodyRelative } from './celestial';
+import { BODY_IDS, type BodyId, groundVelocity, planetAt, surfacePosition, clearTerrain, nearestPlanet, relative as bodyRelative } from './celestial';
 import { cargoMass } from './shipMass';
 import { fuelCapacity, cargoCapacity } from './shipStats';
 import { moveBody, separateBodies, collideShip } from './bodies';
@@ -36,7 +36,7 @@ export function seedNeighborhood(w: WorldState): void {
 export const MARK_LIMIT = 30000;
 
 export function destination(w: WorldState, key = w.exploration.selected): { label: string; position: Vec; velocity: Vec; site?: Site } {
-  if (key === 'home' || key === 'moon') { const p = planetAt(key, w.system); return { label: key === 'home' ? 'Home pad' : 'Nacre moon pad · airless', position: surfacePosition(p, 0, WORLD.shipRadius), velocity: groundVelocity(p, surfacePosition(p, 0, WORLD.shipRadius)) }; }
+  if ((BODY_IDS as readonly string[]).includes(key)) { const p = planetAt(key as BodyId, w.system); return { label: key === 'home' ? 'Home pad' : key === 'moon' ? 'Nacre moon pad · airless' : `${p.label} pad · airless`, position: surfacePosition(p, 0, WORLD.shipRadius), velocity: groundVelocity(p, surfacePosition(p, 0, WORLD.shipRadius)) }; }
   if (key === 'mark') {
     const at = w.exploration.mark ?? { x: 0, y: 0 };
     return { label: 'Marked point', position: at, velocity: { x: 0, y: 0 } };

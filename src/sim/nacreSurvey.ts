@@ -1,3 +1,4 @@
+import { bodyKnown } from './explorationConfig';
 import { CELESTIAL, ORBIT_RATE } from './celestial';
 import { RESOURCE_INFO } from './resources';
 import type { WorldState } from './world';
@@ -14,7 +15,7 @@ const roughly = (n: number, step: number): number => Math.max(step, Math.round(n
 
 /** What the Observatory has worked out about Nacre, or null until it has watched long enough. */
 export function nacreSurvey(w: WorldState): NacreSurvey | null {
-  if (!w.exploration.nacreSurveyed) return null;
+  if (!bodyKnown(w.exploration, 'moon')) return null;
   const moon = CELESTIAL.moon;
   const gravity = moon.mu / moon.radius ** 2;
   const dayMinutes = (2 * Math.PI / ORBIT_RATE) / 60;

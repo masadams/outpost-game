@@ -1,3 +1,4 @@
+import { BODY_IDS } from '../sim/celestial';
 import { FINDS } from '../sim/finds';
 import type { BuildType } from '../sim/colonyConfig';
 import type { ColonyAction } from '../sim/colony';
@@ -94,11 +95,11 @@ const ACTION_FEATURES: Partial<Record<string, Feature>> = {
 };
 
 /** Whether an action from the keyboard or interface may reach the simulation. */
-export function actionAllowed(action: ColonyAction, current: FeatureMode = featureMode(), nacreOpen = false): boolean {
+export function actionAllowed(action: ColonyAction, current: FeatureMode = featureMode(), known: readonly string[] = []): boolean {
   if (current === 'all') return true;
   // The one reserve a new player sees: power kept back for the turrets, set from Base.
   if (action.type === 'adjustPolicy' && action.field === 'energyReserve') return true;
-  if (action.type === 'loadManifest' && nacreOpen && action.manifest === 'nacreKit') return true;
+  if (action.type === 'loadManifest' && known.includes('moon') && action.manifest === 'nacreKit') return true;
   // Research projects and fabrication are limited by what the player has found (checked in the simulation).
   // Buildings can be upgraded in place once, to tier 2; the research behind it is checked in the simulation.
   if (action.type === 'upgradeBuilding') return action.level === 2;
@@ -107,13 +108,13 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   const feature = ACTION_FEATURES[action.type];
   if (feature) return featureVisible(feature, current);
   if (action.type === 'select' || action.type === 'queueBuild') return blueprintVisible(action.kind, current);
-  if (action.type === 'navigate') return action.target !== 'moon' || nacreOpen;
+  if (action.type === 'navigate') return !(BODY_IDS as readonly string[]).includes(action.target) || action.target === 'home' || known.includes(action.target);
   if (action.type === 'remote') return action.operation !== 'auto';
   return true;
 }
 
-export function filterActions(actions: ColonyAction[], current: FeatureMode = featureMode(), nacreOpen = false): ColonyAction[] {
-  return actions.filter(action => actionAllowed(action, current, nacreOpen));
+export function filterActions(actions: ColonyAction[], current: FeatureMode = featureMode(), known: readonly string[] = []): ColonyAction[] {
+  return actions.filter(action => actionAllowed(action, current, known));
 }
 
 /** Key bindings for hidden systems are left out of the Settings table in the focus set. */

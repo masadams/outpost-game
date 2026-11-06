@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld } from '../src/sim/world';
 import { nacreSurvey } from '../src/sim/nacreSurvey';
-import { NACRE_SURVEY_SECONDS } from '../src/sim/observatory';
+import { BODIES } from '../src/sim/celestial';
+const NACRE_SURVEY_SECONDS = BODIES.moon.surveySeconds;
 import { mapView } from '../src/ui/map/mapView';
 import { actionAllowed } from '../src/preferences/features';
 
@@ -20,7 +21,7 @@ describe('surveying Nacre', () => {
     expect(nacreSurvey(watch(NACRE_SURVEY_SECONDS + 10, false))).toBeNull();
     expect(nacreSurvey(watch(NACRE_SURVEY_SECONDS / 2, true))).toBeNull();
     const w = watch(NACRE_SURVEY_SECONDS + 10, true);
-    expect(w.exploration.nacreSurveyed).toBe(true);
+    expect(w.exploration.known).toContain('moon');
     const survey = nacreSurvey(w)!;
     expect(survey.deposits).toMatch(/seams/);
   });
@@ -28,9 +29,9 @@ describe('surveying Nacre', () => {
   it('opens Nacre on the Map and for navigation only once surveyed', () => {
     const fresh = createWorld();
     expect(mapView(fresh).places.some(p => p.id === 'moon')).toBe(false);
-    expect(actionAllowed({ type: 'navigate', target: 'moon' }, 'focus', false)).toBe(false);
-    expect(actionAllowed({ type: 'navigate', target: 'moon' }, 'focus', true)).toBe(true);
-    fresh.exploration.nacreSurveyed = true;
+    expect(actionAllowed({ type: 'navigate', target: 'moon' }, 'focus', [])).toBe(false);
+    expect(actionAllowed({ type: 'navigate', target: 'moon' }, 'focus', ['moon'])).toBe(true);
+    fresh.exploration.known.push('moon');
     expect(mapView(fresh).places.some(p => p.id === 'moon')).toBe(true);
   });
 });
@@ -41,7 +42,7 @@ describe('the Nacre kit', () => {
     const { unloadFreight } = await import('../src/sim/freight');
     const w = createWorld();
     expect(shipPanelView(w).kit).toBeNull();
-    w.exploration.nacreSurveyed = true;
+    w.exploration.known.push('moon');
     w.colony.products.alloy = 0;
     w.colony.products.wire = 0;
     w.colony.products.components = 0;

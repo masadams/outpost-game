@@ -17,7 +17,7 @@
 ## Stages (each keeps the game playing exactly as now until the last)
 1. **Catalogue (done).** One `BODIES` table: id, label, radius, mu, atmosphere (height, surface density, scale height), spin, and an orbit (around the star, or around a parent body). `planetAt`, `planets`, `airDensity` read it. Still two bodies. Tests unchanged.
 2. **Colonies by body (done).** Replace `world.moon` with `world.colonies[bodyId]`; the local-world view and checkpoint follow. Bumps the save version.
-3. **A third body.** Add one far body (an airless dwarf planet with its own orbit and day) to prove the catalogue: it appears on the Map, in light and eclipse, can be landed on, scanned by a probe, and has its own gravity.
+3. **A third body (done: Cinder).** Add one far body (an airless dwarf planet with its own orbit and day) to prove the catalogue: it appears on the Map, in light and eclipse, can be landed on, scanned by a probe, and has its own gravity.
 4. **Belts and sites as data.** Belts become entries (orbit, rocks, resources); sites hang off them. Probes and scans work on any of them.
 5. **Atmospheres by body.** Drag, engine sound and landing rules read the body's own atmosphere.
 
@@ -34,3 +34,7 @@ Orbits are predictable, so aiming should be too. Real missions aim at where the 
 
 ## Stage 2 notes (done)
 `world.moon` is now `world.outposts[bodyId]` (colony, depot, ground deposits) for every body except the home planet, built from the catalogue. `colonyWorld(world, id)` gives a per-body view of the world, `allColonies` walks the catalogue, research is shared across all colonies (`shareResearch`), and building ids start at a different thousand on each body. Save version 28.
+
+## Stage 3 notes (done)
+Cinder is the third body: radius 260 m, gravity 0.9 m/s², airless, circling the shared centre of Selene and Nacre at 22 km (a slow orbit of its own), tidally locked. It has its own colony slot, can be landed on, casts eclipses and is lit like the rest, all from the catalogue with no special cases. It is not given: the Observatory must watch for 420 s (Nacre takes 90 s) before it shows on the Map. Discovery state is `exploration.known` (bodies surveyed), replacing the Nacre-only flag; each body states its own `surveySeconds`. Save version 29.
+Not yet: a way to tell the player to look for it (a hint after Nacre is surveyed), content on Cinder, and probes that reach it (probes reach 6 km; Cinder is 22 km out).
