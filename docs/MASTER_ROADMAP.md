@@ -400,3 +400,10 @@ Not scheduled yet; each needs its own small spec before work starts.
 4. **Phase 3 ship engineering** (scout, miner, interceptor roles).
 5. **The star as a place.** Helia stays physical and technically reachable, but very far (hours of flight with little to do). Close in, heat and gravity kill: the ship cooks and is pulled in. It exists to give a sense of scale and to ground the seeded-system phase. Build it only after the foundation above is solid; no content at the star itself.
 Rule: do not grow faster than the foundation. Each step is checked against the design bible and this plan before it starts.
+
+## Direction update (playtest review)
+Do **not** start the big ship-engineering phase yet. Order instead:
+1. **Grow the universe on solid physics:** more planets and moons, asteroid belts, far-off worlds, each with proper gravity, atmosphere, light and orbits; probes and scans that work for any location rather than scripted targets (marking and scanning any point is in, P2.11).
+2. **Facility upgrades in place:** improve a building where it stands (multi-stream refinery, bigger battery, faster rig) instead of building more.
+3. **Later, end-game:** shields, living domes, terraforming.
+Ship engineering (Phase 3) follows once the world is wide enough to need it.

@@ -4,8 +4,8 @@ export const BELT_IDS = ['frost', 'copper', 'rim'] as const;
 export type BeltId = typeof BELT_IDS[number];
 export const SITE_IDS = ['survey', 'cache', 'tender'] as const;
 export type SiteId = typeof SITE_IDS[number];
-export type Destination = 'home' | 'moon' | BeltId | SiteId;
-export const DESTINATIONS: Destination[] = ['home', 'moon', ...BELT_IDS, ...SITE_IDS];
+export type Destination = 'home' | 'moon' | 'mark' | BeltId | SiteId;
+export const DESTINATIONS: Destination[] = ['home', 'moon', 'mark', ...BELT_IDS, ...SITE_IDS];
 export const BELTS: Record<BeltId, { label: string; angle: number; altitude: number; resources: readonly Resource[]; color: number }> = {
   frost: { label: 'Frost arc', angle: .32, altitude: 1450, resources: ['ice', 'ice', 'ice', 'iron'], color: 0x86e0ff },
   copper: { label: 'Copper shoal', angle: -.85, altitude: 1900, resources: ['copper', 'copper', 'iron', 'copper'], color: 0xf5ab79 },
@@ -18,8 +18,9 @@ export const SITE_INFO: Record<SiteId, { label: string; belt: BeltId; color: num
 };
 export const EXPLORATION = { range: 120, relativeSpeed: 8, dryMass: 80, rocksPerBelt: 4, siteRadius: 8 } as const;
 export interface Site extends Asteroid { key: SiteId; stock: Inventory; fuel: number }
+import type { Vec } from './math';
 import type { Probe } from './probes';
-export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; nacreWatch: number; nacreSurveyed: boolean; crystal: 'lying' | 'carried' | 'studied'; probes: Probe[] }
-export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, nacreWatch: 0, nacreSurveyed: false, crystal: 'lying', probes: [] });
-export type ExplorationAction = { type: 'navigate'; target: Destination } | { type: 'visitSite' };
-export const isExplorationAction = (a: { type: string }): a is ExplorationAction => a.type === 'navigate' || a.type === 'visitSite';
+export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; nacreWatch: number; nacreSurveyed: boolean; crystal: 'lying' | 'carried' | 'studied'; probes: Probe[]; mark: Vec | null }
+export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, nacreWatch: 0, nacreSurveyed: false, crystal: 'lying', probes: [], mark: null });
+export type ExplorationAction = { type: 'navigate'; target: Destination } | { type: 'visitSite' } | { type: 'mark'; point: Vec };
+export const isExplorationAction = (a: { type: string }): a is ExplorationAction => a.type === 'navigate' || a.type === 'visitSite' || a.type === 'mark';

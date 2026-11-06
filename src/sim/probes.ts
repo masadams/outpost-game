@@ -1,6 +1,6 @@
 import { moveBody, type Body } from './bodies';
 import type { BeltId } from './explorationConfig';
-import { BELT_IDS, BELTS } from './explorationConfig';
+import { BELT_IDS, BELTS, SITE_INFO } from './explorationConfig';
 import { destination } from './exploration';
 import { freightError } from './freight';
 import { gravity } from './environment';
@@ -14,7 +14,10 @@ import type { WorldState } from './world';
 
 /** A finite survey probe: a small rocket that homes on a belt, reads it and sends the data home. */
 export interface Probe extends Body {
-  target: BeltId;
+  /** A belt, or 'mark' for a point you marked on the Map. */
+  target: BeltId | 'mark';
+  /** Where a marked-point probe is headed. */
+  point?: Vec;
   /** Seconds since launch. */
   age: number;
   /** Speed change left in its tank, m/s. */
@@ -33,6 +36,10 @@ export const PROBE = {
   range: 450,
   /** Seconds before an unfinished probe is given up as lost. */
   life: 600,
+  /** How far from the home planet's centre a probe can be sent (m). */
+  reach: 6000,
+  /** Radius (m) a probe scans around where it arrives at a marked point. */
+  scan: 700,
   /** Probes in flight at once. */
   max: 2,
 } as const;
@@ -40,9 +47,15 @@ export const PROBE = {
 /** Why a probe cannot be launched now, or null. */
 export function probeError(w: WorldState): string | null {
   const target = w.exploration.selected;
-  if (!(BELT_IDS as readonly string[]).includes(target)) return 'Pick a belt on the Map to survey.';
-  if (w.exploration.surveyed.includes(target as BeltId)) return 'Already surveyed.';
-  if (!PROBE_BELTS.includes(target as BeltId)) return 'Too far for a probe. Fly there.';
+  if (target === 'mark') {
+    const at = w.exploration.mark;
+    if (!at) return 'Click the chart to mark a point.';
+    if (Math.hypot(at.x, at.y) > PROBE.reach) return 'Too far for a probe. Fly there.';
+  } else {
+    if (!(BELT_IDS as readonly string[]).includes(target)) return 'Pick a belt or mark a point on the Map.';
+    if (w.exploration.surveyed.includes(target as BeltId)) return 'Already surveyed.';
+    if (!PROBE_BELTS.includes(target as BeltId)) return 'Too far for a probe. Fly there.';
+  }
   if (w.exploration.probes.length >= PROBE.max) return 'Both probes are still out.';
   const pad = freightError(w);
   if (pad) return 'Launch from the landed ship on the home pad.';
@@ -60,13 +73,30 @@ export function launchProbe(w: WorldState): void {
     notify(w, error);
     return;
   }
-  const belt = w.exploration.selected as BeltId;
+  const belt = w.exploration.selected as BeltId | 'mark';
+  const point = belt === 'mark' && w.exploration.mark ? { ...w.exploration.mark } : undefined;
   for (const p of PRODUCTS) w.colony.products[p] -= PROBE.cost[p as keyof typeof PROBE.cost] ?? 0;
   w.exploration.probes.push({
     id: w.nextId++, position: { ...w.ship.position }, velocity: { ...w.ship.velocity },
-    mass: 30, radius: 1.5, resource: 'iron', target: belt, age: 0, dv: PROBE.dv,
+    mass: 30, radius: 1.5, resource: 'iron', target: belt, ...(point ? { point } : {}), age: 0, dv: PROBE.dv,
   });
-  notify(w, `PROBE LAUNCHED · ${BELTS[belt].label.toUpperCase()}`);
+  notify(w, `PROBE LAUNCHED · ${belt === 'mark' ? 'MARKED POINT' : BELTS[belt].label.toUpperCase()}`);
+}
+
+/** What a probe reads where it stops: any belt, site or moon within its sensor radius becomes known. */
+export function scanAround(w: WorldState, at: Vec): string[] {
+  const found: string[] = [];
+  const near = (p: Vec, extra = 0): boolean => Math.hypot(p.x - at.x, p.y - at.y) <= PROBE.scan + extra;
+  for (const belt of BELT_IDS) {
+    const rocks = [...w.asteroids, ...w.pickups].filter(r => r.belt === belt && near(r.position, r.radius));
+    const site = w.exploration.sites.find(s => SITE_INFO[s.key].belt === belt && near(s.position));
+    if (rocks.length === 0 && !site) continue;
+    if (!w.exploration.surveyed.includes(belt)) w.exploration.surveyed.push(belt);
+    found.push(BELTS[belt].label);
+  }
+  if (found.length) notify(w, `PROBE SCAN · FOUND ${found.join(', ').toUpperCase()}`);
+  else notify(w, 'PROBE SCAN · NOTHING HERE BUT EMPTY SPACE');
+  return found;
 }
 
 /** Flies every probe one step: homing push while it has propellant, gravity and drag always. */
@@ -76,12 +106,17 @@ export function stepProbes(w: WorldState, dt: number): void {
   const keep: Probe[] = [];
   for (const probe of ex.probes) {
     probe.age += dt;
-    const target = destination(w, probe.target).position;
+    const aim = probe.target === 'mark' && probe.point ? { position: probe.point, velocity: { x: 0, y: 0 } } : destination(w, probe.target);
+    const target = aim.position;
     const to = { x: target.x - probe.position.x, y: target.y - probe.position.y };
     const distance = length(to);
-    if (distance <= PROBE.range) {
-      if (!ex.surveyed.includes(probe.target)) ex.surveyed.push(probe.target);
-      notify(w, `PROBE DATA · ${BELTS[probe.target].label.toUpperCase()} SURVEYED`);
+    if (distance <= (probe.target === 'mark' ? 150 : PROBE.range)) {
+      if (probe.target === 'mark') {
+        scanAround(w, probe.position);
+      } else {
+        if (!ex.surveyed.includes(probe.target)) ex.surveyed.push(probe.target);
+        notify(w, `PROBE DATA · ${BELTS[probe.target].label.toUpperCase()} SURVEYED`);
+      }
       continue;
     }
     if (probe.dv > 0 && distance > 1e-6) {
@@ -90,7 +125,7 @@ export function stepProbes(w: WorldState, dt: number): void {
       const gl = length(g) || 1;
       const up = { x: -g.x / gl, y: -g.y / gl };
       const low = Math.max(0, 1 - (probe.age / 25));
-      const frame = destination(w, probe.target).velocity;
+      const frame = aim.velocity;
       const closing = Math.min(80, Math.max(12, distance * 0.12));
       // If the planet is in the way, climb and swing around it instead of aiming straight through.
       const dir = { x: to.x / distance, y: to.y / distance };
@@ -115,8 +150,8 @@ export function stepProbes(w: WorldState, dt: number): void {
       probe.dv -= Math.hypot(ax, ay) * dt;
     }
     const hit = moveBody(probe, dt, w.system);
-    if (hit > 0 || probe.age > PROBE.life) {
-      notify(w, 'A probe was lost.');
+    if (hit > 0 || probe.age > PROBE.life || (probe.dv <= 0 && length(probe.velocity) < 3)) {
+      notify(w, probe.dv <= 0 ? 'A probe ran out of propellant.' : 'A probe was lost.');
       continue;
     }
     keep.push(probe);

@@ -72,6 +72,7 @@ const fmt = (n: number) => n.toFixed(1);
 function kindOf(id: Destination): string {
   if (id === 'home') return 'Your outpost';
   if (id === 'moon') return 'Moon';
+  if (id === 'mark') return 'Marked point';
   if ((BELT_IDS as readonly string[]).includes(id)) return 'Ore cluster';
   return 'Site';
 }
@@ -141,6 +142,7 @@ function selectedView(w: WorldState): SelectedView {
   const surveyed = belt ? w.exploration.surveyed.includes(belt) : true;
   let body = '';
   if (id === 'home') body = 'Your outpost and landing pad.';
+  else if (id === 'mark') body = 'A point you marked on the chart. It stays fixed in space while belts and moons move on. Send a probe to scan it, or fly there. Click the chart to move the mark.';
   else if (id === 'moon') {
     const survey = nacreSurvey(w);
     body = survey
@@ -153,10 +155,10 @@ function selectedView(w: WorldState): SelectedView {
     id,
     label: n.label,
     kind: kindOf(id),
-    state: belt ? (surveyed ? 'Surveyed' : 'Not surveyed') : id === 'home' ? 'Explored' : site ? (w.exploration.sites.find(x => x.key === site)?.health ? 'Intact' : 'Wrecked') : 'Detected',
+    state: belt ? (surveyed ? 'Surveyed' : 'Not surveyed') : id === 'mark' ? 'Marked' : id === 'home' ? 'Explored' : site ? (w.exploration.sites.find(x => x.key === site)?.health ? 'Intact' : 'Wrecked') : 'Detected',
     facts,
     body,
-    action: site ? siteAction(w, site) : belt ? probeAction(w) : null,
+    action: site ? siteAction(w, site) : belt || id === 'mark' ? probeAction(w) : null,
     blocked: n.occluded,
   };
 }
@@ -194,10 +196,10 @@ export function mapView(w: WorldState): MapView {
     rocks: [...w.asteroids, ...w.pickups].filter(r => r.belt === id).map(r => ({ at: r.position, ore: r.mass > 0 })),
   }));
   const sites = w.exploration.sites.map(s => ({ id: s.key, label: SITE_INFO[s.key].label, at: s.position, intact: s.health > 0 }));
-  const ids: Destination[] = ['home', ...(moonVisible && w.system.binary ? (['moon'] as const) : []), ...BELT_IDS, ...SITE_IDS];
+  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...(moonVisible && w.system.binary ? (['moon'] as const) : []), ...BELT_IDS, ...SITE_IDS];
   const places = ids.map(id => ({
     id,
-    label: id === 'home' ? 'Home pad' : id === 'moon' ? 'Nacre moon' : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
+    label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : id === 'moon' ? 'Nacre moon' : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
     at: destination(w, id).position,
     kind: kindOf(id),
     selected: w.exploration.selected === id,
@@ -209,6 +211,7 @@ export function mapView(w: WorldState): MapView {
     ...wreckMarks(w).map(x => x.at),
     ...sites.map(s => s.at),
     ...w.exploration.probes.map(p => p.position),
+    ...(w.exploration.mark ? [w.exploration.mark] : []),
     ...belts.flatMap(b => b.rocks.map(r => r.at)),
     ...bodies.flatMap(b => [
       { x: b.at.x - b.radius - b.atmosphere, y: b.at.y - b.radius - b.atmosphere },

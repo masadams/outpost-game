@@ -27,7 +27,7 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   const reserve = await page.locator('.ground-survey').getAttribute('data-remaining'), ore = await hud.getAttribute('data-depot');
   await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
-  expect(saved.version).toBe(26); expect(saved.world.surfaceDeposits[0].remaining).toBeLessThan(180);
+  expect(saved.version).toBe(27); expect(saved.world.surfaceDeposits[0].remaining).toBeLessThan(180);
   expect(saved.world.colony.buildings[1].depositId).toBe(1);
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/planetary-mining.png' });

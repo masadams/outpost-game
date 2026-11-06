@@ -32,8 +32,15 @@ export function seedNeighborhood(w: WorldState): void {
     w.exploration.sites.push({ ...orbitalState(spec.altitude, spec.angle), id: w.nextId++, key, stock, fuel, radius: EXPLORATION.siteRadius, mass: EXPLORATION.dryMass + inventoryMass(stock) + fuel, resource: 'iron', stage: 0, health: 1, maxHealth: 1 });
   }
 }
+/** How far from the home planet's centre a point can be marked (m). */
+export const MARK_LIMIT = 30000;
+
 export function destination(w: WorldState, key = w.exploration.selected): { label: string; position: Vec; velocity: Vec; site?: Site } {
   if (key === 'home' || key === 'moon') { const p = planetAt(key, w.system); return { label: key === 'home' ? 'Home pad' : 'Nacre moon pad · airless', position: surfacePosition(p, 0, WORLD.shipRadius), velocity: groundVelocity(p, surfacePosition(p, 0, WORLD.shipRadius)) }; }
+  if (key === 'mark') {
+    const at = w.exploration.mark ?? { x: 0, y: 0 };
+    return { label: 'Marked point', position: at, velocity: { x: 0, y: 0 } };
+  }
   const site = w.exploration.sites.find(s => s.key === key);
   if (site) return { label: SITE_INFO[site.key].label, position: site.position, velocity: site.velocity, site };
   const belt = BELT_IDS.find(b => b === key);
@@ -65,10 +72,17 @@ export function siteError(w: WorldState, site: Site): string | null {
   return null;
 }
 export function applyExplorationAction(w: WorldState, a: ExplorationAction): void {
+  if (a.type === 'mark') {
+    const { x, y } = a.point;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || Math.hypot(x, y) > MARK_LIMIT) return;
+    w.exploration.mark = { x, y };
+    w.exploration.selected = 'mark';
+    return;
+  }
   if (a.type === 'navigate') { if (DESTINATIONS.includes(a.target)) w.exploration.selected = a.target; return; }
   const site = destination(w).site;
   if (!site) {
-    if ((BELT_IDS as readonly string[]).includes(w.exploration.selected)) launchProbe(w);
+    if ((BELT_IDS as readonly string[]).includes(w.exploration.selected) || w.exploration.selected === 'mark') launchProbe(w);
     else notify(w, 'SELECT A SURVEY, SALVAGE OR FUEL SITE IN NAVIGATION');
     return;
   }

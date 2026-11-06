@@ -77,3 +77,4 @@
 .map-chart .map-wreck-label { fill: #ff9a8c; }
 
 .map-chart .map-probe { fill: #9fe4ff; stroke: #dff6ff; stroke-width: 1; }
+.map-chart .map-mark path { stroke: #ffd98a; stroke-width: 2; fill: none; }
