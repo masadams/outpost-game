@@ -1,3 +1,4 @@
+import { researchView, type ResearchRow } from './researchView';
 import { crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
@@ -26,6 +27,7 @@ export interface BaseView {
   /** Present once a storm has been seen: pieces to collect and what analysing them gives. */
   storm: StormLabView | null;
   crystal: CrystalLabView | null;
+  research: ResearchRow[] | null;
 }
 
 export interface CrystalLabView {
@@ -308,6 +310,7 @@ export function baseView(w: WorldState): BaseView {
     ship: shipView(w),
     storm: stormLab(w),
     crystal: crystalLab(w),
+    research: researchView(w),
   };
 }
 

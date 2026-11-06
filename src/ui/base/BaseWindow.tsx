@@ -12,6 +12,8 @@ export interface BaseHandlers {
   recipe: (id: number) => void;
   analyse: () => void;
   study: () => void;
+  research: (tech: string) => void;
+  fit: (upgrade: string) => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -48,7 +50,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, study, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, research, fit, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -104,6 +106,32 @@ function Overview({ view, open, analyse, study, reserve, paused }: { view: BaseV
         <p class="base-note">Other machines stop before they use this, so turrets still have power in a storm or at night.</p>
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
       </div>
+      {view.research && (
+        <section class="base-storm" aria-label="Research">
+          <h3>Research</h3>
+          {view.research.map(row => (
+            <div key={row.id} data-find={row.id}>
+              <strong>{row.find}</strong>
+              <p class="base-note">{row.line}</p>
+              {row.progress !== null && <span class="ship-meter" aria-hidden="true"><i style={{ width: `${(row.progress * 100).toFixed(0)}%` }} /></span>}
+              {row.action && (
+                <>
+                  <button
+                    type="button"
+                    class="base-analyse"
+                    data-research={row.action.kind}
+                    disabled={row.action.reason !== null}
+                    onClick={click(() => (row.action!.kind === 'research' ? research(row.action!.tech) : fit(row.action!.upgrade)))}
+                  >
+                    {row.action.label}
+                  </button>
+                  {row.action.reason && <p class="base-why">{row.action.reason}</p>}
+                </>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
       {view.crystal && (
         <section class="base-storm" aria-label="Nacre crystal" data-studied={String(view.crystal.studied)}>
           <h3>Nacre crystal</h3>
@@ -281,7 +309,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} research={on.research} fit={on.fit} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}

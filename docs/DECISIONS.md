@@ -298,3 +298,6 @@ Pilots are printed bodies. Losing the lander prints a new pilot and a basic land
 The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s, drift 4 m/s, tilt 15°); open ground needs a gentler touchdown (3.5 m/s, 2 m/s, 10°) and the instruments and touchdown limits switch to those numbers off the pad, with "ROUGH GROUND" in the approach message. Ore still only unloads, and service and refuelling still only happen, on the pad. Pad upgrades (catch arms) and AI helpers are queued in the roadmap.
 
 - **Earned build menu.** The new-player build menu lists only what has been earned (solar and refinery first; storage, battery, fuel processor and mining rig after industry; Observatory after the survey buoy; laser after the Observatory), to steer early play. Nacre opens on the Map once the Observatory has surveyed it.
+
+- **Soundscapes by area.** Music root, chord and loudness, background ambience and the engine voice change with where you are: home ground, home sky, open space, Nacre ground and Nacre sky. Engines roar in air and thrum quietly in vacuum. All procedural; no sound files. (`src/audio/soundscape.ts`)
+- **Research comes from finds.** In day-cycle games research projects open only when a find is studied; each find also names the part it lets you fabricate.

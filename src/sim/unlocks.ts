@@ -1,3 +1,4 @@
+import { studiedFinds } from './finds';
 import type { BuildType } from './colonyConfig';
 import type { WorldState } from './world';
 
@@ -18,6 +19,7 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   if (kind === 'observatory') {
     return industry && (!w.system.sun || w.exploration.surveyed.includes('frost'));
   }
+  if (kind === 'researchLab') return studiedFinds(w).length > 0;
   if (kind === 'laser') {
     return w.colony.buildings.some(b => b.kind === 'observatory') || w.objectives.completed.includes('sky');
   }

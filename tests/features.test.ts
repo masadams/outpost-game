@@ -51,7 +51,7 @@ describe('focus feature set', () => {
       { type: 'toggleTow' },
       { type: 'autopilot', operation: 'cancel' },
       { type: 'upgradeBuilding', id: 1, level: 2 },
-      { type: 'researchStart', tech: 'materials' },
+      { type: 'researchStart', tech: 'combat' },
       { type: 'toggleSchedule' },
       { type: 'select', kind: 'flak' },
       { type: 'queueBuild', kind: 'shieldSmall', angle: 0 },
