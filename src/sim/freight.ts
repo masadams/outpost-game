@@ -43,3 +43,32 @@ export function loadDepotOre(w: WorldState, resource: Resource): void {
   w.depot[resource] -= amount; w.ship.cargo[resource] += amount;
   notify(w, amount ? `${resource.toUpperCase()} ORE LOADED · ${amount.toFixed(1)} kg` : 'NO ORE OR CARGO ROOM');
 }
+
+/** Why ore cannot be loaded from this depot right now, or null. Only away from home: at home the ore is for the refinery. */
+export function haulError(w: WorldState): string | null {
+  if ((w.siteBody ?? 'home') === 'home') return 'Haul ore from other worlds. At home it feeds your refinery.';
+  const pad = freightError(w);
+  if (pad) return 'Land on the pad here first.';
+  if (RESOURCES.every(r => w.depot[r] <= 1e-6)) return 'No ore in the depot here.';
+  if (cargoMass(w.ship) >= cargoCapacity(w.ship) - 1e-6) return 'Your hold is full.';
+  return null;
+}
+
+/** Load as much of the local depot's ore as the hold takes. Returns kg moved. */
+export function loadAllDepotOre(w: WorldState): number {
+  const error = haulError(w);
+  if (error) {
+    notify(w, error);
+    return 0;
+  }
+  let moved = 0;
+  for (const r of RESOURCES) {
+    const room = cargoCapacity(w.ship) - cargoMass(w.ship);
+    const amount = Math.max(0, Math.min(w.depot[r], room));
+    w.depot[r] -= amount;
+    w.ship.cargo[r] += amount;
+    moved += amount;
+  }
+  notify(w, `ORE LOADED · ${moved.toFixed(0)} kg. Fly home and press E on the pad.`);
+  return moved;
+}

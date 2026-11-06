@@ -32,3 +32,30 @@ describe('other worlds in Base', () => {
     expect(fromMoon.map(o => o.id)).toEqual(['home']);
   });
 });
+
+describe('hauling ore home', () => {
+  it('loads a remote depot into the hold on its pad, and says why not elsewhere', async () => {
+    const { haulError, loadAllDepotOre } = await import('../src/sim/freight');
+    const { shipPanelView } = await import('../src/ui/ship/shipView');
+    const { planetAt, surfacePosition, groundVelocity } = await import('../src/sim/celestial');
+    const w = createWorld();
+    expect(haulError(w)).toMatch(/other worlds/);
+    const moon = colonyWorld(w, 'moon');
+    moon.depot.iron = 60;
+    moon.depot.ice = 20;
+    expect(shipPanelView(w).haul).toBeNull();
+    const body = planetAt('moon', w.system);
+    w.ship.position = surfacePosition(body, 0, 7);
+    w.ship.velocity = { ...groundVelocity(body, w.ship.position) };
+    w.ship.state = 'landed';
+    w.ship.ground = 'moon';
+    expect(haulError(moon)).toBeNull();
+    const panel = shipPanelView(moon).haul!;
+    expect(panel.enabled).toBe(true);
+    expect(panel.text).toContain('80 kg');
+    expect(loadAllDepotOre(moon)).toBeCloseTo(80, 6);
+    expect(w.ship.cargo.iron).toBe(60);
+    expect(moon.depot.iron).toBe(0);
+    expect(haulError(moon)).toMatch(/No ore/);
+  });
+});

@@ -102,6 +102,8 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   if (action.type === 'loadManifest' && known.length > 0 && action.manifest === 'nacreKit') return true;
   // Research projects and fabrication are limited by what the player has found (checked in the simulation).
   // Buildings can be upgraded in place once, to tier 2; the research behind it is checked in the simulation.
+  // Carrying ore home from another world is part of the loop, not a hidden system.
+  if (action.type === 'loadAllOre') return true;
   if (action.type === 'upgradeBuilding') return action.level === 2;
   if (action.type === 'researchStart') return FINDS.some(f => f.tech === action.tech);
   if (action.type === 'equipment') return FINDS.some(f => f.upgrade === action.upgrade);
