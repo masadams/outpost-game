@@ -24,7 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=21;
+export const SAVE_VERSION=22;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -54,7 +54,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (remote && (!object(world.moon) || JSON.stringify(world.moon.colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, 'moon'), false))) return false;
   if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world) || !validAutopilot(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;
-  if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100)) return false;
+  if (!number(world.ship.fuel, 0, fuelCapacity(world.ship)) || !number(world.ship.hull, 0, 100) || !number(world.astronaut.oxygen, 0, SUIT.oxygen + 1e-6) || !number(world.astronaut.health, 0, 100) || !RESOURCES.every(r => number(world.astronaut.bag[r], 0, SUIT.bagCapacity + 1e-6)) || inventoryMass(world.astronaut.bag) > SUIT.bagCapacity + 1e-6) return false;
   if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > cargoCapacity(world.ship) + 1e-6) return false;
   const colony = world.colony;
   if (colony.policy !== undefined && !validPolicy(colony.policy)) return false;

@@ -23,13 +23,14 @@ import { createDefence, type DefenceState } from './defenceConfig';
 import { createStorm, type StormState } from './stormConfig';
 import { stepStorm, isStormAction, applyStormAction } from './storm';
 import { salvageWreck, stepWrecks, type Wreck } from './wrecks';
+import { bagToHold, collectOnFoot } from './bag';
 import { controlledTurret, stepDefence, applyDefenceAction, isDefenceAction, resolveDefenceHits } from './defence';
 import { moveBody, separateBodies, collideShip, type Asteroid, type Pickup } from './bodies';
 import { ATMOSPHERE, WORLD } from './config';
 import { heading, wrap } from './math';
 import { fireLaser, fracture, tractor, powerTractor, type Beam } from './mining';
 import { createShip, stepShip, type Controls, type Ship } from './physics';
-import { emptyInventory, RESOURCES, type Inventory } from './resources';
+import { emptyInventory, inventoryMass, RESOURCES, type Inventory } from './resources';
 import { unloadCargo as unloadDepot } from './cargo';
 import { createAstronaut, stepAstronaut, SUIT, type Astronaut } from './astronaut';
 import { boardOrExit, interactSurface, nearbyStation } from './surface';
@@ -111,7 +112,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     stepAstronaut(world.astronaut, { move: controlling ? 0 : input.turn || automatic, jump: !controlling && !!input.jump }, dt, paidHabitatSeconds, world.system);
     if (nearbyStation(local)?.kind !== 'depot') world.depotOpen = false;
     if (interact) interactSurface(local);
+    collectOnFoot(world);
   } else {
+    // Whatever the pilot carried in goes into the hold.
+    if (world.astronaut.bag && inventoryMass(world.astronaut.bag) > 0) { const moved = bagToHold(world); if (moved > 0) notify(world, `Moved ${moved.toFixed(1)} kg of ore from your bag to the hold.`); }
     world.astronaut.position = { ...world.ship.position }; world.astronaut.velocity = { ...world.ship.velocity };
     world.astronaut.oxygen = SUIT.oxygen;
   }

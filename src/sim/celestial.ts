@@ -68,7 +68,9 @@ export function terrainHit(start: Vec, end: Vec, radius: number, system = STATIC
     if (t === null || best && t >= best.t) continue;
     const world = localAngle({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
     // `angle` is on the ground (it turns with the planet); the normal is in the world.
-    best = { t, planet: next, normal: heading(world), angle: wrap(world - next.spin) };
+    // The ground turns during the step: use where it was at the moment of contact, not at the end.
+    const spinAtContact = planet.spin + (next.spin - planet.spin) * t;
+    best = { t, planet: next, normal: heading(world), angle: wrap(world - spinAtContact) };
   }
   return best;
 }

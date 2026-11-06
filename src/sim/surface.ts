@@ -1,5 +1,6 @@
 import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
 import { groundVelocity } from './celestial';
+import { bagToDepot } from './bag';
 import { resupplyArmament } from './combatSupply';
 import { applyDefenceAction } from './defence';
 import { isTurret } from './defenceConfig';
@@ -48,7 +49,8 @@ export function interactSurface(world: WorldState): void {
   if (station.kind === 'depot') {
     world.depotOpen = !world.depotOpen;
     if (!world.depotOpen) { notify(world, 'DEPOT CLOSED'); return; }
-    const mass = world.ship.state === 'landed' && distance(world.ship.position, sitePosition(world, station.angle)) < 80 ? unloadCargo(world) : 0;
+    const bag = bagToDepot(world);
+    const mass = bag + (world.ship.state === 'landed' && distance(world.ship.position, sitePosition(world, station.angle)) < 80 ? unloadCargo(world) : 0);
     notify(world, mass > 0 ? `DEPOT RECEIVED ${mass.toFixed(1)} kg` : `DEPOT OPEN · ${inventoryMass(world.depot).toFixed(1)} kg STORED`);
   } else {
     world.astronaut.oxygen = SUIT.oxygen; world.astronaut.health = 100;

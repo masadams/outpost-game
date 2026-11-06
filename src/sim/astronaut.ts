@@ -1,17 +1,22 @@
+import { emptyInventory, type Inventory } from './resources';
 import { STATIC_SYSTEM, nearestPlanet, planetAt, relative, relativeVelocity, surfaceAngle, groundVelocity, surfacePosition, terrainHit, type SystemFrame } from './celestial';
 import { ATMOSPHERE, WORLD } from './config';
 import { clamp, dot, heading, length, localAngle, type Vec } from './math';
 import { integrateVelocity } from './environment';
 
 export const SUIT = { radius: 2.5, walkSpeed: 12, acceleration: 30, jumpSpeed: 12, oxygen: 180,
-  boardingRange: 20, exitOffset: 14, safeImpact: 14 } as const;
+  boardingRange: 20, exitOffset: 14, safeImpact: 14,
+  /** Kilograms of loose ore the pilot can carry in a sample bag, and how close (metres) a piece must be to pick it up. */
+  bagCapacity: 20, pickupReach: 3.5 } as const;
 export interface Astronaut {
   position: Vec; velocity: Vec; grounded: boolean; oxygen: number; health: number; jumpHeld: boolean;
+  /** Loose ore picked up on foot. It goes into the lander on boarding, or to the depot at the terminal. */
+  bag: Inventory;
 }
 export interface SuitControls { move: number; jump: boolean }
 export function createAstronaut(): Astronaut {
   return { position: { x: 0, y: -WORLD.radius - SUIT.radius }, velocity: { x: 0, y: 0 },
-    grounded: true, oxygen: SUIT.oxygen, health: 100, jumpHeld: false };
+    grounded: true, oxygen: SUIT.oxygen, health: 100, jumpHeld: false, bag: emptyInventory() };
 }
 export function stepAstronaut(suit: Astronaut, input: SuitControls, dt: number, environmentalAirSeconds = 0, system: SystemFrame = STATIC_SYSTEM): void {
   if (suit.health <= 0) {
