@@ -1,15 +1,32 @@
 import { ATMOSPHERE, DAY_LENGTH, WORLD } from './config';
 import { heading, length, localAngle, wrap, type Vec } from './math';
-export type BodyId = 'home' | 'moon';
+export const BODY_IDS = ['home', 'moon'] as const;
+export type BodyId = typeof BODY_IDS[number];
 /** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
 export interface SystemFrame { time: number; binary: boolean; sun?: boolean }
 export const STATIC_SYSTEM: SystemFrame = { time: 0, binary: false };
-export const CELESTIAL = {
-  home: { label: 'Selene', radius: WORLD.radius, mu: WORLD.mu, atmosphere: ATMOSPHERE.height },
-  moon: { label: 'Nacre', radius: 450, mu: 1.6 * 450 ** 2, atmosphere: 0 },
-} as const;
+/**
+ * How a body moves. `pair` bodies circle a shared centre with a partner (Selene and Nacre do): `role` says which end.
+ * `spin`: 'day' turns once per day; 'tidal' turns once per orbit so the same face looks at its partner.
+ * `requiresBinary` bodies only exist when the two-body system is switched on.
+ */
+export interface BodySpec {
+  label: string; radius: number; mu: number; atmosphere: number;
+  orbit: { kind: 'pair'; partner: BodyId; role: 'primary' | 'secondary' };
+  spin: 'day' | 'tidal';
+  requiresBinary: boolean;
+}
+/** Every body in the system, as data. Add a body here and the rest of the physics (gravity, landing, light) follows. */
+export const BODIES: Record<BodyId, BodySpec> = {
+  home: { label: 'Selene', radius: WORLD.radius, mu: WORLD.mu, atmosphere: ATMOSPHERE.height,
+    orbit: { kind: 'pair', partner: 'moon', role: 'primary' }, spin: 'day', requiresBinary: false },
+  moon: { label: 'Nacre', radius: 450, mu: 1.6 * 450 ** 2, atmosphere: 0,
+    orbit: { kind: 'pair', partner: 'home', role: 'secondary' }, spin: 'tidal', requiresBinary: true },
+};
+/** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
+export const CELESTIAL = BODIES;
 export const SEPARATION = 9500;
-export const ORBIT_RATE = Math.sqrt((CELESTIAL.home.mu + CELESTIAL.moon.mu) / SEPARATION ** 3);
+export const ORBIT_RATE = Math.sqrt((BODIES.home.mu + BODIES.moon.mu) / SEPARATION ** 3);
 /**
  * `spin` is how far the planet has turned (radians, added to surface angles to get world angles) and `spinRate` how fast it turns.
  * Planets turn only when the day cycle is on: Selene once per day, Nacre once per orbit so the same face looks at Selene.
@@ -19,18 +36,28 @@ export interface Planet { id: BodyId; label: string; radius: number; mu: number;
 export const HOME_SPIN_RATE = -2 * Math.PI / DAY_LENGTH;
 function spinOf(id: BodyId, system: SystemFrame): { spin: number; spinRate: number } {
   if (!system.sun) return { spin: 0, spinRate: 0 };
-  const rate = id === 'home' ? HOME_SPIN_RATE : system.binary ? ORBIT_RATE : 0;
+  const rate = BODIES[id].spin === 'day' ? HOME_SPIN_RATE : system.binary ? ORBIT_RATE : 0;
   return { spin: rate * system.time, spinRate: rate };
 }
 export function planetAt(id: BodyId, system = STATIC_SYSTEM): Planet {
-  const spec = CELESTIAL[id];
+  const body = BODIES[id];
+  const { label, radius, mu, atmosphere } = body;
+  const spec = { label, radius, mu, atmosphere };
   const turn = spinOf(id, system);
-  if (!system.binary) return { ...spec, id, ...turn, position: { x: id === 'home' ? 0 : SEPARATION, y: 0 }, velocity: { x: 0, y: 0 } };
-  const offset = SEPARATION * CELESTIAL.moon.mu / (CELESTIAL.home.mu + CELESTIAL.moon.mu);
-  const arm = id === 'home' ? -offset : SEPARATION - offset, phase = system.time * ORBIT_RATE;
-  return { ...spec, id, ...turn, position: { x: offset + arm * Math.cos(phase), y: arm * Math.sin(phase) }, velocity: { x: -arm * ORBIT_RATE * Math.sin(phase), y: arm * ORBIT_RATE * Math.cos(phase) } };
+  const orbit = body.orbit;
+  const partner = BODIES[orbit.partner];
+  const primary = orbit.role === 'primary';
+  if (!system.binary) return { ...spec, id, ...turn, position: { x: primary ? 0 : SEPARATION, y: 0 }, velocity: { x: 0, y: 0 } };
+  const offset = SEPARATION * (primary ? partner.mu : body.mu) / (BODIES.home.mu + BODIES.moon.mu);
+  const arm = primary ? -offset : SEPARATION - offset;
+  const phase = system.time * ORBIT_RATE;
+  return {
+    ...spec, id, ...turn,
+    position: { x: offset + arm * Math.cos(phase), y: arm * Math.sin(phase) },
+    velocity: { x: -arm * ORBIT_RATE * Math.sin(phase), y: arm * ORBIT_RATE * Math.cos(phase) },
+  };
 }
-export const planets = (system = STATIC_SYSTEM): Planet[] => (system.binary ? ['home', 'moon'] as const : ['home'] as const).map(id => planetAt(id, system));
+export const planets = (system = STATIC_SYSTEM): Planet[] => BODY_IDS.filter(id => system.binary || !BODIES[id].requiresBinary).map(id => planetAt(id, system));
 export const relative = (position: Vec, planet: Planet): Vec => ({ x: position.x - planet.position.x, y: position.y - planet.position.y });
 /** The velocity of the ground (and the air, which turns with it) at a point, from the planet's motion and its turning. */
 export function groundVelocity(planet: Planet, position: Vec): Vec {

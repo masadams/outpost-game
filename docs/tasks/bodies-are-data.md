@@ -15,7 +15,7 @@
 - Sound, light, rendering and the Map list Selene and Nacre by name in a few places.
 
 ## Stages (each keeps the game playing exactly as now until the last)
-1. **Catalogue.** One `BODIES` table: id, label, radius, mu, atmosphere (height, surface density, scale height), spin, and an orbit (around the star, or around a parent body). `planetAt`, `planets`, `airDensity` read it. Still two bodies. Tests unchanged.
+1. **Catalogue (done).** One `BODIES` table: id, label, radius, mu, atmosphere (height, surface density, scale height), spin, and an orbit (around the star, or around a parent body). `planetAt`, `planets`, `airDensity` read it. Still two bodies. Tests unchanged.
 2. **Colonies by body.** Replace `world.moon` with `world.colonies[bodyId]`; the local-world view and checkpoint follow. Bumps the save version.
 3. **A third body.** Add one far body (an airless dwarf planet with its own orbit and day) to prove the catalogue: it appears on the Map, in light and eclipse, can be landed on, scanned by a probe, and has its own gravity.
 4. **Belts and sites as data.** Belts become entries (orbit, rocks, resources); sites hang off them. Probes and scans work on any of them.

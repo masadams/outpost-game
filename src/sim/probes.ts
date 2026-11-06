@@ -46,6 +46,10 @@ export const PROBE = {
 
 /** Why a probe cannot be launched now, or null. */
 export function probeError(w: WorldState): string | null {
+  // A probe sends its data to a ground station: without a working Observatory there is nobody to listen.
+  if (w.system.sun && !w.colony.buildings.some(b => b.kind === 'observatory' && b.health !== 0 && b.linked !== false)) {
+    return 'Needs a working Observatory to receive its data.';
+  }
   const target = w.exploration.selected;
   if (target === 'mark') {
     const at = w.exploration.mark;

@@ -98,3 +98,17 @@ describe('probes to any point', () => {
     expect(probeError(w)).toBe('Too far for a probe. Fly there.');
   });
 });
+
+describe('probes are earned', () => {
+  it('need a working, connected Observatory in a day-cycle game', async () => {
+    const { completedBuilding } = await import('../src/sim/construction');
+    const w = ready();
+    w.system.sun = true;
+    w.exploration.selected = 'copper';
+    expect(probeError(w)).toBe('Needs a working Observatory to receive its data.');
+    w.colony.buildings.push(completedBuilding(9, 'observatory', 0.01, w));
+    expect(probeError(w)).toBeNull();
+    w.colony.buildings[0].linked = false;
+    expect(probeError(w)).toBe('Needs a working Observatory to receive its data.');
+  });
+});
