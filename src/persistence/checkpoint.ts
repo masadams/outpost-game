@@ -24,7 +24,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=30;
+export const SAVE_VERSION=31;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -51,6 +51,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
     const p = planetAt(world.ship.ground, world.system), r = relative(world.ship.position, p), v = relativeVelocity(world.ship.velocity, p, world.ship.position);
     if (Math.abs(Math.hypot(r.x, r.y) - p.radius - WORLD.shipRadius) > .2 || Math.hypot(v.x, v.y) > .5) return false;
   }
+  if (remote && (!Number.isInteger(world.seed) || world.seed < 0 || world.seed > 4294967295)) return false;
   if (remote && (!object(world.outposts) || BODY_IDS.some(id => id !== 'home' && (!object(world.outposts[id as OutpostId]) || JSON.stringify(world.outposts[id as OutpostId].colony.research) !== JSON.stringify(world.colony.research) || !validWorld(colonyWorld(world, id), false))))) return false;
   if (!validCrewOrder(world) || !validObjectives(world.objectives) || !validProgression(world) || !validAutopilot(world)) return false;
   if (!['ship', 'astronaut'].includes(world.playerMode) || !['landed', 'flying', 'crashed'].includes(world.ship.state)) return false;

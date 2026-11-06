@@ -1,6 +1,7 @@
 import { nearestPlanet, groundVelocity, surfaceAngle, surfacePosition, type SystemFrame } from './celestial';
 import { WORLD } from './config';
 import type { Resource } from './resources';
+import { around, streamFor } from './seed';
 import type { Asteroid, Pickup } from './bodies';
 
 /** A rock touching the ground at more than this (m/s) breaks up. Thick air slows a falling rock to a few m/s, so almost any touchdown does it. */
@@ -24,10 +25,12 @@ const OLD_IMPACTS: ReadonlyArray<readonly [number, Resource, number]> = [
 ];
 
 /** A few lumps lying near the pad from long-ago impacts, so first fuel and metal need no mining. */
-export function oldImpactOre(nextId: () => number, system: SystemFrame): Pickup[] {
+export function oldImpactOre(nextId: () => number, system: SystemFrame, seed = 0): Pickup[] {
+  const rand = streamFor(seed, 'impacts');
   const planet = nearestPlanet({ x: 0, y: -1 }, system);
   return OLD_IMPACTS.map(([metres, resource, mass]) => {
     const position = surfacePosition(planet, WORLD.padAngle + metres / planet.radius, 2.1);
-    return { id: nextId(), resource, mass, radius: 2, position, velocity: groundVelocity(planet, position) };
+    const scale = seed === 0 ? 1 : Math.max(0.8, around(rand, 0.25));
+    return { id: nextId(), resource, mass: Math.round(mass * scale), radius: 2, position, velocity: groundVelocity(planet, position) };
   });
 }

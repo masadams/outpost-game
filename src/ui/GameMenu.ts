@@ -1,5 +1,5 @@
 export type MenuAction = 'new' | 'continue' | 'resume' | 'save' | 'title' | 'settings' | 'controls';
-export interface MenuInfo { hasSave: boolean; saveStatus: string; hasRun: boolean }
+export interface MenuInfo { hasSave: boolean; saveStatus: string; hasRun: boolean; seed?: number }
 
 interface MenuItem { action: MenuAction; label: string; disabled?: boolean; primary?: boolean }
 
@@ -85,7 +85,8 @@ export class GameMenu {
     this.dialog.innerHTML = `<div class="menu-brand"><span class="menu-eyebrow">Alpha 0.21</span><h1>${title}</h1><p>${tagline}</p></div>
       <nav aria-label="Game menu">${buttons}</nav>
       <p class="menu-status" role="status">${escapeHtml(this.status || info.saveStatus)}</p>
-      <small>${escapeHtml(note)}</small>`;
+      <small>${escapeHtml(note)}</small>
+      ${this.mode === 'pause' && info.seed ? `<small class="menu-seed">World seed ${info.seed}</small>` : ''}`;
     if (focused) this.dialog.querySelector<HTMLButtonElement>(`button[data-menu="${focused}"]:not(:disabled)`)?.focus({ preventScroll: true });
   }
 

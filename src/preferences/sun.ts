@@ -21,9 +21,21 @@ export function sunEnabled(): boolean {
 }
 
 /** A new game world, with the sun switched on or off as the player's setup says. */
-export function newWorld(): WorldState {
-  const world = createWorld();
+/** The world seed: `?seed=N` fixes it; otherwise each new game gets its own. 0 is the standard layout. */
+export function worldSeed(): number {
+  try {
+    const query = new URLSearchParams(globalThis.location?.search ?? '').get('seed');
+    if (query !== null && /^\d{1,10}$/.test(query)) return Number(query) % 4294967296;
+  } catch {
+    // No location: pick one.
+  }
+  // The regression suite and developer runs (day cycle off) always get the standard layout.
+  return sunEnabled() ? 1 + Math.floor(Math.random() * 4294967294) : 0;
+}
+
+export function newWorld(seed = worldSeed()): WorldState {
+  const world = createWorld(seed);
   world.system.sun = sunEnabled();
-  if (world.system.sun) world.pickups.push(...oldImpactOre(() => world.nextId++, world.system));
+  if (world.system.sun) world.pickups.push(...oldImpactOre(() => world.nextId++, world.system, world.seed));
   return world;
 }
