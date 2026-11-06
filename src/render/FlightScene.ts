@@ -506,6 +506,12 @@ export class FlightScene extends Phaser.Scene {
     drawGround(g, this.simulation, view, this.follow.zoom);
     drawStormSamples(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawCrystal(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
+    for (const probe of this.simulation.exploration.probes) {
+      g.fillStyle(0x9fe4ff, 0.25);
+      g.fillCircle(probe.position.x, probe.position.y, Math.max(6, 10 / this.follow.zoom));
+      g.fillStyle(0xdff6ff, 1);
+      g.fillCircle(probe.position.x, probe.position.y, Math.max(2, 3 / this.follow.zoom));
+    }
     drawTowing(g, this.simulation, this.follow.zoom);
     drawCrewOrder(g,this.simulation,this.follow.zoom);
     for (const site of allColonies(this.simulation)) {

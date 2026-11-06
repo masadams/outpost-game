@@ -1,3 +1,4 @@
+import { probeError } from '../../sim/probes';
 import { nacreSurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
 import { planetAt, planets, surfacePosition } from '../../sim/celestial';
@@ -16,6 +17,7 @@ export interface MapView {
   bodies: BodyMark[];
   belts: BeltMark[];
   sites: SiteMark[];
+  probes: Array<{ at: Vec }>;
   ship: Vec;
   pad: Vec;
   places: PlaceView[];
@@ -92,6 +94,11 @@ function siteLine(w: WorldState, id: SiteId): string {
   return `${hull} · survey data for the ${BELTS[SITE_INFO[id].belt].label}`;
 }
 
+function probeAction(w: WorldState): SelectedView['action'] {
+  const error = probeError(w);
+  return { label: 'Launch survey probe', enabled: !error, reason: error ?? 'Costs 4 alloy, 3 wire, 3 components. It flies there and reads the belt.' };
+}
+
 function siteAction(w: WorldState, id: SiteId): SelectedView['action'] {
   const site = w.exploration.sites.find(s => s.key === id);
   if (!site) return null;
@@ -149,7 +156,7 @@ function selectedView(w: WorldState): SelectedView {
     state: belt ? (surveyed ? 'Surveyed' : 'Not surveyed') : id === 'home' ? 'Explored' : site ? (w.exploration.sites.find(x => x.key === site)?.health ? 'Intact' : 'Wrecked') : 'Detected',
     facts,
     body,
-    action: site ? siteAction(w, site) : null,
+    action: site ? siteAction(w, site) : belt ? probeAction(w) : null,
     blocked: n.occluded,
   };
 }
@@ -201,6 +208,7 @@ export function mapView(w: WorldState): MapView {
     ...(storm ? storm.rocks.map(r => r.at) : []),
     ...wreckMarks(w).map(x => x.at),
     ...sites.map(s => s.at),
+    ...w.exploration.probes.map(p => p.position),
     ...belts.flatMap(b => b.rocks.map(r => r.at)),
     ...bodies.flatMap(b => [
       { x: b.at.x - b.radius - b.atmosphere, y: b.at.y - b.radius - b.atmosphere },
@@ -211,6 +219,7 @@ export function mapView(w: WorldState): MapView {
     bodies,
     belts,
     sites,
+    probes: w.exploration.probes.map(p => ({ at: p.position })),
     ship: w.ship.position,
     pad: destination(w, 'home').position,
     places,

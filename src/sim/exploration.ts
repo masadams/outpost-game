@@ -8,6 +8,7 @@ import { emptyInventory, inventoryMass, RESOURCES } from './resources';
 import { heading, length, dot, wrap, localAngle, type Vec } from './math';
 import { rayCircle } from './mining';
 import { shipMass } from './shipMass';
+import { launchProbe } from './probes';
 import { notify } from './messages';
 import type { ExplorationAction } from './explorationConfig';
 import type { WorldState } from './world';
@@ -66,7 +67,11 @@ export function siteError(w: WorldState, site: Site): string | null {
 export function applyExplorationAction(w: WorldState, a: ExplorationAction): void {
   if (a.type === 'navigate') { if (DESTINATIONS.includes(a.target)) w.exploration.selected = a.target; return; }
   const site = destination(w).site;
-  if (!site) { notify(w, 'SELECT A SURVEY, SALVAGE OR FUEL SITE IN NAVIGATION'); return; }
+  if (!site) {
+    if ((BELT_IDS as readonly string[]).includes(w.exploration.selected)) launchProbe(w);
+    else notify(w, 'SELECT A SURVEY, SALVAGE OR FUEL SITE IN NAVIGATION');
+    return;
+  }
   const error = siteError(w, site); if (error) { notify(w, error); return; }
   const belt = SITE_INFO[site.key].belt;
   if (!w.exploration.surveyed.includes(belt)) w.exploration.surveyed.push(belt);

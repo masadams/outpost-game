@@ -25,6 +25,8 @@ Builds on what is already in the code but hidden in the focus set: surface depos
 
 | P2.9 | **Power across distance.** In day-cycle games a building only draws from, or feeds, the grid when it is wired to the base: within 150 m of the pad, or of a wired building. A power relay (cheap pylon, 600 m reach) carries the link farther. Out-of-reach solar makes nothing, out-of-reach machines stop ("Not connected to the base") and wear an amber diamond. The Nacre kit now includes a relay (18 alloy, 10 wire, 5 components). Line losses and relay capacity limits are later. (`src/sim/grid.ts`.) | Built |
 
+| P2.10 | **Survey probes** (roadmap 2D). Pick the Frost or Copper belt on the Map and launch a probe from the landed ship on the home pad (4 alloy, 3 wire, 3 components). It climbs, steers to the belt on a limited tank, reads it and returns the survey; it is lost if it hits the ground or runs 10 minutes. Two at a time. The far rim is out of reach of a probe. Save version 26. (`src/sim/probes.ts`.) | Built |
+
 ## Research and upgrades (from the bible, section 8.2)
 A technology may need a discovery or sample, lab time, material or energy inputs, and fabrication equipment to turn the knowledge into a part. Knowledge is not manufacturing: you can record a discovery long before you can exploit it. The existing research tree and ship parts stay; the focus set brings them back a little at a time, each unlocked by something the player actually found.
 
