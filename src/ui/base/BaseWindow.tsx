@@ -107,6 +107,7 @@ function Overview({ view, open, analyse, study, research, fit, reserve, paused }
         </div>
         <p class="base-note">Other machines stop before they use this, so turrets still have power in a storm or at night.</p>
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
+        {p.islands && <p class="base-power-summary" data-islands>{p.islands}</p>}
       </div>
       {view.elsewhere.length > 0 && (
         <section class="base-storm base-elsewhere" aria-label="Other worlds">

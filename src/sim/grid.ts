@@ -89,3 +89,79 @@ export function deliverPower(world: WorldState, raw: Map<number, number>): Map<n
   for (const b of world.colony.buildings) if (b.kind === 'relay') b.gridPower = carried.get(b.id) ?? 0;
   return delivered;
 }
+
+/**
+ * How much of its full power each machine past a relay can get. A relay's capacity is shared by what flows through it:
+ * power made beyond it coming in and power used beyond it going out cancel, and only the difference has to be carried.
+ * Each relay hop also loses a little, so a far machine works a little slower for the same draw. 1 means no limit.
+ */
+export function feedLimits(world: WorldState, rated: (b: Building) => number, generated: Map<number, number>): Map<number, number> {
+  const tree = linkTree(world);
+  const limits = new Map<number, number>();
+  if (tree === null) return limits;
+  const byId = new Map(world.colony.buildings.map(b => [b.id, b]));
+  const relaysOn = (id: number): number[] => {
+    const relays: number[] = [];
+    for (let at = tree.get(id); at !== undefined && at !== 0; at = tree.get(at)) {
+      if (byId.get(at)?.kind === 'relay') relays.push(at);
+    }
+    return relays;
+  };
+  const out = new Map<number, number>();
+  const consumers: Array<{ id: number; path: number[] }> = [];
+  for (const b of world.colony.buildings) {
+    if (!tree.has(b.id)) continue;
+    const path = relaysOn(b.id);
+    if (path.length === 0) continue;
+    if (generated.has(b.id)) {
+      for (const relay of path) out.set(relay, (out.get(relay) ?? 0) - (generated.get(b.id) ?? 0));
+      continue;
+    }
+    const need = rated(b);
+    if (need <= 0) continue;
+    consumers.push({ id: b.id, path });
+    for (const relay of path) out.set(relay, (out.get(relay) ?? 0) + need);
+  }
+  for (const { id, path } of consumers) {
+    let share = 1;
+    for (const relay of path) {
+      const carried = out.get(relay) ?? 0;
+      const limit = RELAY_CAPACITY * capacityFactor(byId.get(relay)!);
+      if (carried > limit) share = Math.min(share, limit / carried);
+    }
+    limits.set(id, share * LINE_KEPT ** path.length);
+  }
+  return limits;
+}
+
+/**
+ * Groups of buildings that are out of reach of the pad but close enough to each other to share power, and that have
+ * their own solar array or battery. Each runs as its own small grid. Only with the day cycle on.
+ */
+export function islandGroups(world: WorldState): Building[][] {
+  const tree = linkTree(world);
+  if (tree === null) return [];
+  const planet = colonyPlanet(world);
+  const metres = (a: number, b: number): number => Math.abs(wrap(a - b)) * planet.radius;
+  const loose = world.colony.buildings.filter(b => !tree.has(b.id) && (b.health === undefined || b.health > 0));
+  const seen = new Set<number>();
+  const groups: Building[][] = [];
+  for (const start of loose) {
+    if (seen.has(start.id)) continue;
+    const group: Building[] = [];
+    const stack = [start];
+    seen.add(start.id);
+    while (stack.length > 0) {
+      const node = stack.pop()!;
+      group.push(node);
+      for (const b of loose) {
+        if (seen.has(b.id)) continue;
+        if (metres(node.angle, b.angle) > Math.max(reach(node), reach(b)) + 1e-6) continue;
+        seen.add(b.id);
+        stack.push(b);
+      }
+    }
+    if (group.some(b => b.kind === 'solar' || b.kind === 'battery')) groups.push(group);
+  }
+  return groups;
+}
