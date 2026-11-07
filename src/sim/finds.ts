@@ -31,7 +31,7 @@ export function findStudied(w: WorldState, id: FindId): boolean {
   if (id === 'buoy') return root.exploration.surveyed.includes('frost');
   // Not a thing you pick up: it opens once the two research steps behind it are done.
   // Surviving the bigger storm teaches how to turn blasts aside: the shield research opens.
-  if (id === 'bulwark') return root.storm.wave === 2 && root.storm.phase === 'over';
+  if (id === 'bulwark') return root.storm.wave > 2 || (root.storm.wave === 2 && root.storm.phase === 'over');
   if (id === 'retrofit') return root.colony.research.completed.includes('materials') && root.colony.research.completed.includes('logistics');
   if (id === 'derelict') return root.exploration.surveyed.includes('copper');
   if (id === 'core') return root.exploration.core === 'studied';

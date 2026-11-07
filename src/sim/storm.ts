@@ -6,12 +6,12 @@ import { notify } from './messages';
 import { seeded } from './random';
 import { around, streamFor } from './seed';
 import { operational } from './buildingHealth';
-import { ANALYSIS_ENERGY, PICKUP_REACH, SECOND_STORM_DELAY, stormFor, type FarBody } from './stormConfig';
+import { ANALYSIS_ENERGY, PICKUP_REACH, quietAfter, stormFor, type FarBody } from './stormConfig';
 import type { Meteor } from './defenceConfig';
 import type { WorldState } from './world';
 
 /** The state a body has when it is handed to the detailed meteor physics. */
-function entryMeteor(id: number, angle: number, tangential: number, system: SystemFrame, radius: number, mass: number, wave: 1 | 2): Meteor {
+function entryMeteor(id: number, angle: number, tangential: number, system: SystemFrame, radius: number, mass: number, wave: number): Meteor {
   const STORM = stormFor(wave);
   const planet = planetAt('home', system);
   const up = heading(angle + planet.spin);
@@ -43,7 +43,7 @@ function landing(meteor: Meteor, system: SystemFrame): { angle: number; time: nu
 }
 
 /** Adjust the sideways speed until the body comes down where it is meant to. */
-function aimTangential(angle: number, system: SystemFrame, radius: number, mass: number, wave: 1 | 2): number {
+function aimTangential(angle: number, system: SystemFrame, radius: number, mass: number, wave: number): number {
   const error = (tangential: number): number | null => {
     const landed = landingAngle(entryMeteor(0, angle, tangential, system, radius, mass, wave), system);
     return landed === null ? null : wrap(landed - angle);
@@ -79,7 +79,7 @@ export function planStorm(world: WorldState): void {
  * and make bodies a little bigger or smaller, within fair bounds: the zone never closes on the pad, the first storm
  * arrives in the same part of the day, and no body of the first storm is tougher than standard.
  */
-export function stormShape(seed: number, wave: 1 | 2): { offset: number; arrival: number; size: (i: number) => number; tough: (i: number) => number } {
+export function stormShape(seed: number, wave: number): { offset: number; arrival: number; size: (i: number) => number; tough: (i: number) => number } {
   const STORM = stormFor(wave);
   if (seed === 0) return { offset: STORM.targetOffset, arrival: 0, size: () => 1, tough: () => 1 };
   const rand = streamFor(seed, `storm/${wave}`);
@@ -177,7 +177,7 @@ export function stepStorm(world: WorldState): void {
     else notify(world, 'The sky is clear.');
   }
   if (storm.phase === 'over') collectSamples(world);
-  if (storm.phase === 'over' && storm.wave === 1 && time >= storm.endedAt + SECOND_STORM_DELAY) startSecondStorm(world);
+  if (storm.phase === 'over' && time >= storm.endedAt + quietAfter(storm.wave)) startNextStorm(world);
 }
 
 /** Walking over a piece picks it up. */
@@ -226,9 +226,9 @@ export function applyStormAction(world: WorldState, action: StormAction): void {
 }
 
 /** After a quiet spell the sky fills again. The first storm's pieces stay where they are. */
-function startSecondStorm(world: WorldState): void {
+function startNextStorm(world: WorldState): void {
   const storm = world.storm;
-  storm.wave = 2;
+  storm.wave += 1;
   storm.phase = 'quiet';
   storm.far = [];
   storm.ids = [];
@@ -237,5 +237,5 @@ function startSecondStorm(world: WorldState): void {
   storm.arrival = 0;
   storm.observed = 0;
   storm.endedAt = 0;
-  notify(world, 'The sky is changing. Another storm is forming.');
+  notify(world, storm.wave === 2 ? 'The sky is changing. Another storm is forming.' : 'The Observatory sees another storm forming.');
 }

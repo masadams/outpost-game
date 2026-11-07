@@ -39,10 +39,42 @@ export const STORM_2 = {
   health: [5, 3.6, 3.6, 4.2, 3, 3.8, 2.6, 3.4, 3],
 } as const;
 
-/** Seconds of quiet after the first storm before the second is on its way. */
+/** Seconds of quiet after a storm before the next is on its way: a long spell at first, never shorter than this. */
 export const SECOND_STORM_DELAY = 500;
+export const quietAfter = (wave: number): number => SECOND_STORM_DELAY + 120 * Math.min(wave, LATER_STORM_LIMIT);
 
-export const stormFor = (wave: 1 | 2): typeof STORM | typeof STORM_2 => (wave === 2 ? STORM_2 : STORM);
+/** The numbers one storm runs on. */
+export interface StormConfig {
+  readonly seed: number; readonly arrivalTime: number; readonly lead: number; readonly entryRadius: number; readonly entrySpeed: number;
+  readonly spacing: number; readonly targetOffset: number; readonly aim: readonly number[]; readonly radii: readonly number[];
+  readonly masses: readonly number[]; readonly health: readonly number[];
+}
+
+/** Storms past the second keep the second's pattern, with more bodies and a little more of everything, up to a limit. */
+export const LATER_STORM_LIMIT = 6;
+
+export function stormFor(wave: number): StormConfig {
+  if (wave <= 1) return STORM;
+  if (wave === 2) return STORM_2;
+  const grow = Math.min(wave, LATER_STORM_LIMIT) - 2;
+  const extra = Math.min(grow * 2, 6);
+  const aim: number[] = [...STORM_2.aim];
+  const radii: number[] = [...STORM_2.radii];
+  const masses: number[] = [...STORM_2.masses];
+  const health: number[] = [...STORM_2.health];
+  for (let i = 0; i < extra; i++) {
+    const from = i % STORM_2.aim.length;
+    aim.push(STORM_2.aim[from] * (i % 2 ? -0.8 : 1.2) + (i + 1) * 15);
+    radii.push(STORM_2.radii[from]);
+    masses.push(STORM_2.masses[from]);
+    health.push(STORM_2.health[from]);
+  }
+  const scale = 1 + 0.08 * grow;
+  return {
+    ...STORM_2, seed: STORM_2.seed + wave * 7, aim, radii: radii.map(r => r * Math.min(1.3, scale)),
+    masses: masses.map(m => m * scale ** 3), health: health.map(h => h * scale),
+  };
+}
 
 /** A body still travelling in the far field. Straight line at constant velocity. */
 export interface FarBody {
@@ -83,7 +115,7 @@ export interface StormState {
   /** Once a sample has been analysed, buildings take less blast damage. */
   analysed: boolean;
   /** 1 for the first storm, 2 for the second. */
-  wave: 1 | 2;
+  wave: number;
   /** When the current storm ended (world seconds), for timing the next. */
   endedAt: number;
 }

@@ -21,7 +21,7 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   }
   if (kind === 'relay') return industry;
   // Shields come after the second storm has been survived; domes once there is a base on another world.
-  if (kind === 'shieldSmall') return w.storm.wave === 2 && w.storm.phase === 'over';
+  if (kind === 'shieldSmall') return w.storm.wave > 2 || (w.storm.wave === 2 && w.storm.phase === 'over');
   if (kind === 'shieldLarge') return w.colony.buildings.some(b => b.kind === 'shieldSmall');
   if (kind === 'habitatSmall') return Object.values(w.outposts).some(o => o.colony.buildings.length > 0);
   if (kind === 'habitatLarge') return [w.colony, ...Object.values(w.outposts).map(o => o.colony)].some(c => c.buildings.some(b => b.kind === 'habitatSmall'));

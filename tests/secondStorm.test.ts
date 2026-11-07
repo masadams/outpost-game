@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld } from '../src/sim/world';
 import { stepStorm } from '../src/sim/storm';
-import { SECOND_STORM_DELAY, STORM_2 } from '../src/sim/stormConfig';
+import { quietAfter, stormFor, LATER_STORM_LIMIT, STORM_2 } from '../src/sim/stormConfig';
 import { blueprintRevealed } from '../src/sim/unlocks';
 import { findStudied } from '../src/sim/finds';
 import { researchView } from '../src/ui/base/researchView';
@@ -19,10 +19,10 @@ function afterFirstStorm() {
 describe('the second storm', () => {
   it('waits out the quiet spell, then plans a bigger storm with a full warning window', () => {
     const w = afterFirstStorm();
-    w.system.time = 1000 + SECOND_STORM_DELAY - 1;
+    w.system.time = 1000 + quietAfter(1) - 1;
     stepStorm(w);
     expect(w.storm.wave).toBe(1);
-    w.system.time = 1000 + SECOND_STORM_DELAY + 1;
+    w.system.time = 1000 + quietAfter(1) + 1;
     stepStorm(w);
     expect(w.storm.wave).toBe(2);
     expect(w.storm.phase).toBe('quiet');
@@ -65,5 +65,33 @@ describe('refinery auto recipe', () => {
     w.colony.products = { ...w.colony.products, alloy: 25, wire: 0, components: 5, water: 10, oxygen: 5 };
     expect(selectScheduledRecipe(w, b, 400)).toBe(true);
     expect(b.recipe).toBe(1);
+  });
+});
+
+describe('storms that keep coming', () => {
+  it('later storms grow a little, to a limit, and always leave a quiet spell', () => {
+    const third = stormFor(3);
+    const sixth = stormFor(LATER_STORM_LIMIT);
+    const tenth = stormFor(10);
+    expect(third.aim.length).toBeGreaterThan(STORM_2.aim.length);
+    expect(sixth.aim.length).toBeGreaterThan(third.aim.length);
+    expect(tenth.aim.length).toBe(sixth.aim.length);
+    expect(Math.max(...sixth.masses)).toBeGreaterThan(Math.max(...third.masses));
+    expect(sixth.aim.length).toBeLessThanOrEqual(16);
+    expect(quietAfter(5)).toBeGreaterThan(quietAfter(1));
+    expect(quietAfter(1)).toBeGreaterThanOrEqual(500);
+  });
+
+  it('after the second storm the next one forms, and what the second unlocked stays unlocked', () => {
+    const w = afterFirstStorm();
+    w.storm.wave = 2;
+    w.storm.endedAt = 5000;
+    w.system.time = 5000 + quietAfter(2) + 1;
+    stepStorm(w);
+    expect(w.storm.wave).toBe(3);
+    expect(w.storm.phase).toBe('quiet');
+    expect(blueprintRevealed(w, 'shieldSmall')).toBe(true);
+    expect(blueprintRevealed(w, 'missile')).toBe(true);
+    expect(w.objectives.completed).toEqual([]);
   });
 });
