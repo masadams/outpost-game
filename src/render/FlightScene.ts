@@ -12,7 +12,7 @@ import { drawShip } from './ship';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
-import { nearestPlanet, onGroundNow, planetAt, planets, relative, surfaceAngle } from '../sim/celestial';
+import { bodyExists, nearestPlanet, onGroundNow, planetAt, planets, relative, surfaceAngle } from '../sim/celestial';
 import { localAngle } from '../sim/math';
 import { flightSafety } from '../sim/flightSafety';
 import { drawShields } from './shields';
@@ -85,6 +85,7 @@ export class FlightScene extends Phaser.Scene {
   private atmosphere!: Phaser.GameObjects.Image;
   private moon!: Phaser.GameObjects.Image;
   private cinder!: Phaser.GameObjects.Image;
+  private ember!: Phaser.GameObjects.Image;
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
   private map!: Phaser.GameObjects.Graphics;
@@ -149,7 +150,8 @@ export class FlightScene extends Phaser.Scene {
     this.planet = createPlanet(this);
     this.moon = createPlanet(this, 'moon');
     this.cinder = createPlanet(this, 'cinder').setTint(0xcdb3a2);
-    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.cinder, this.art]);
+    this.ember = createPlanet(this, 'ember').setTint(0xe0a487);
+    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.cinder, this.ember, this.art]);
     this.map = this.add.graphics();
     this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
       if(this.menu?.isOpen||this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
@@ -479,6 +481,9 @@ export class FlightScene extends Phaser.Scene {
     this.planet.setPosition(home.position.x - this.follow.x, home.position.y - this.follow.y);
     const cinder = planetAt('cinder', this.simulation.system);
     this.cinder.setVisible(this.simulation.system.binary).setPosition(cinder.position.x - this.follow.x, cinder.position.y - this.follow.y);
+    const ember = planetAt('ember', this.simulation.system);
+    const emberHere = bodyExists('ember', this.simulation.system) && this.simulation.system.binary;
+    this.ember.setVisible(emberHere).setPosition(ember.position.x - this.follow.x, ember.position.y - this.follow.y);
     const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
     const padLevel = padSafety.approach ? padSafety.level : 'neutral';
     const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;

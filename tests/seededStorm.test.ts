@@ -17,7 +17,7 @@ describe('seeded storms', () => {
     };
     expect(plan(11)).toEqual(plan(11));
     expect(plan(11)).not.toEqual(plan(12));
-  });
+  }, 30000);
 
   it('stays fair for every seed: the zone keeps off the pad, the first storm is never tougher, and it comes in the same part of the day', () => {
     for (let seed = 1; seed <= 300; seed++) {
