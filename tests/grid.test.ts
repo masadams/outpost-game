@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld } from '../src/sim/world';
-import { linkedBuildings, LINK_RANGE, RELAY_RANGE } from '../src/sim/grid';
+import { linkedBuildings, linkPreview, LINK_RANGE, RELAY_RANGE } from '../src/sim/grid';
 import { completedBuilding } from '../src/sim/construction';
 import { WORLD } from '../src/sim/config';
 
@@ -184,5 +184,35 @@ describe('islands', () => {
     const w = base();
     w.colony.buildings.push(completedBuilding(1, 'observatory', metres(900), w));
     expect(islandGroups(w)).toEqual([]);
+  });
+});
+
+describe('placement preview', () => {
+  it('is off when the day cycle is off', () => {
+    expect(linkPreview(createWorld(), 'relay', metres(300))).toBeNull();
+  });
+
+  it('a relay links to the pad out to its full reach, and not beyond', () => {
+    const w = base();
+    const ok = linkPreview(w, 'relay', metres(RELAY_RANGE - 5))!;
+    expect(ok).toMatchObject({ from: 'the pad', connected: true, reach: RELAY_RANGE });
+    const far = linkPreview(w, 'relay', metres(RELAY_RANGE + 20))!;
+    expect(far.connected).toBe(false);
+  });
+
+  it('a plain building reaches only as far as the pad does, but a relay in the chain extends it', () => {
+    const w = base();
+    expect(linkPreview(w, 'solar', metres(LINK_RANGE + 30))!.connected).toBe(false);
+    w.colony.buildings.push(completedBuilding(1, 'relay', metres(500), w));
+    const after = linkPreview(w, 'solar', metres(1000))!;
+    expect(after).toMatchObject({ from: 'a relay', connected: true });
+  });
+
+  it('a relay chain can be extended from the last relay', () => {
+    const w = base();
+    w.colony.buildings.push(completedBuilding(1, 'relay', metres(590), w));
+    const next = linkPreview(w, 'relay', metres(1150))!;
+    expect(next).toMatchObject({ from: 'a relay', connected: true });
+    expect(Math.round(next.metres)).toBe(560);
   });
 });

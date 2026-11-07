@@ -1,6 +1,7 @@
 import { featureVisible, blueprintVisible } from '../../preferences/features';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
 import { blueprintRevealed } from '../../sim/unlocks';
+import { linkPreview } from '../../sim/grid';
 import { blueprintLock } from '../../sim/colony';
 import { availableProduct } from '../../sim/colonyPolicy';
 import { CONSTRUCTION_SECONDS } from '../../sim/commandConfig';
@@ -190,8 +191,14 @@ export function buildView(w: WorldState, group: BuildGroup = 'power'): BuildView
 }
 
 /** Plain-language tip at the cursor for the current placement attempt. */
-export function placementTip(w: WorldState, kind: BuildType, error: string | null): { text: string; ok: boolean } {
+export function placementTip(w: WorldState, kind: BuildType, error: string | null, angle?: number): { text: string; ok: boolean } {
   const label = BLUEPRINTS[kind].label;
+  const link = angle === undefined ? null : linkPreview(w, kind, angle);
+  if (!error && link) {
+    const metres = Math.round(link.metres);
+    if (!link.connected) return { text: `${label} · ${metres} m from ${link.from}, too far (max ${link.reach} m). It would sit unwired.`, ok: false };
+    return { text: `${label} · wired to ${link.from}, ${metres} of ${link.reach} m`, ok: true };
+  }
   if (!error) return { text: `${label} · click to place`, ok: true };
   if (error === 'Insufficient fabrication materials') return { text: missingLine(w, kind) ?? 'Not enough materials', ok: false };
   return { text: error, ok: false };

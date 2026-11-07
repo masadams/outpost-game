@@ -88,7 +88,7 @@ export class Hud {
   showBuildTip(x:number,y:number):void{
     const d=this.pointerDraft,w=this.latestWorld;
     if(!d||!w||!this.pointerBuilding){this.buildBar.tip(null);return;}
-    this.buildBar.tip({...placementTip(w,d.kind,d.error),x,y});
+    this.buildBar.tip({...placementTip(w,d.kind,d.error,d.angle),x,y});
   }
   hideBuildTip():void{this.buildBar.tip(null);}
   clearBuildPointer():void{this.pointerDraft=null;this.hideBuildTip();}
