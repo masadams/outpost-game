@@ -200,6 +200,7 @@ export function whyStopped(b: Building): string | null {
     case 'power limited':
       return 'Running slowly because power is short.';
     case 'no feedstock':
+      if (b.kind === 'condenser') return 'There is no air here to draw from. It works on Selene and on thin-air worlds.';
       return `Needs ${inputNeed(b)}. Mine some and unload it at the pad.`;
     case 'output full':
       return 'Storage is full. Build Storage, or use some materials.';

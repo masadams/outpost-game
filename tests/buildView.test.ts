@@ -29,7 +29,7 @@ describe('build view', () => {
     expect(kinds()).toEqual(['solar', 'refinery']);
     expect(buildView(w).cards[0]).toMatchObject({ label: 'Solar array', purpose: 'Makes power in sunlight', selected: true });
     w.objectives.completed.push('industry');
-    expect(kinds()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'observatory', 'relay']);
+    expect(kinds()).toEqual(['solar', 'battery', 'storage', 'relay', 'miningRig', 'condenser', 'refinery', 'fuelProcessor', 'observatory']);
     w.system.sun = true;
     expect(kinds()).not.toContain('observatory');
     w.exploration.surveyed.push('frost');

@@ -29,6 +29,8 @@ export function tierEffect(b: Building): string {
     case 'fuelProcessor':
     case 'miningRig':
     case 'droneBay':
+    case 'condenser':
+    case 'antenna':
     case 'researchLab':
     case 'observatory':
       return `Works ${speed}× as fast`;

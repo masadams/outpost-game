@@ -21,7 +21,7 @@ describe('the earned sequence', () => {
     expect(menu()).toEqual(['solar', 'refinery']);
 
     w.objectives.completed.push('industry');
-    expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'relay']);
+    expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'relay', 'condenser']);
 
     w.exploration.surveyed.push('frost');
     expect(menu()).toContain('observatory');

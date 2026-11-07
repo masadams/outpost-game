@@ -25,6 +25,7 @@ import { stepHabitats, chargeHabitats, ventHabitat } from './habitats';
 import type { TowAction } from './towingConfig';
 import { stepMiningRig } from './surfaceExtraction';
 import { stepMinerDrone } from './minerDrone';
+import { stepAntenna, stepCondenser } from './airMachines';
 import { availableProduct, createPolicy, industrialPowerBlock, MAX_RESERVE, POLICY_FIELDS, POLICY_INFO, type ColonyPolicy, type PolicyAction } from './colonyPolicy';
 import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selectScheduledRecipe, SCHEDULE_PRODUCTS, type RefinerySchedule, type SchedulingAction } from './scheduling';
 import type { CombatAction } from './combatConfig';
@@ -216,6 +217,8 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (building.kind === 'researchLab') { return stepResearch(world, building, dt, researchStaffed) || researchStaffed; }
   if (needsBoot(building.kind) && !bootStep(world, building, dt)) return researchStaffed;
   if (building.kind === 'observatory') { stepObservatory(world, building, dt); return researchStaffed; }
+  if (building.kind === 'condenser') { stepCondenser(world, building, dt); return researchStaffed; }
+  if (building.kind === 'antenna') { stepAntenna(world, building, dt); return researchStaffed; }
   if (building.kind === 'droneBay') { stepMinerDrone(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) return researchStaffed;
