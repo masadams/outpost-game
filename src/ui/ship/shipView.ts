@@ -5,7 +5,7 @@ import { habitatSource } from '../../sim/habitats';
 import { localAngle, wrap } from '../../sim/math';
 import { RESOURCES, RESOURCE_INFO, inventoryMass, type Resource } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
-import { cargoCapacity, miningStats, tractorStats } from '../../sim/shipStats';
+import { cargoCapacity, fuelCapacity, miningStats, tractorStats } from '../../sim/shipStats';
 import { STATIONS, distance, nearbyStation } from '../../sim/surface';
 import { colonyPlanet, sitePosition } from '../../sim/localWorld';
 import { nearbyBuilding } from '../../sim/colony';
@@ -68,6 +68,10 @@ function nearestDeposit(w: WorldState) {
 }
 
 function nextStep(w: WorldState, cargo: number, stored: number): string {
+  const away = (w.siteBody ?? 'home') !== 'home';
+  if (away && w.ship.state === 'landed' && w.colony.products.fuel >= 1 && w.ship.fuel < fuelCapacity(w.ship) - 1) {
+    return `Press E to refuel from the ${Math.floor(w.colony.products.fuel)} kg of fuel made here.`;
+  }
   if (cargo > 0) {
     return w.ship.state === 'landed' ? 'Press E to unload your ore.' : 'Ore on board. Land on the green pad.';
   }
