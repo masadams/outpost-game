@@ -1,5 +1,7 @@
 import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
+import { featureVisible } from '../../preferences/features';
+import { createSchedule, SCHEDULE_PRODUCTS, type ScheduleProduct } from '../../sim/scheduling';
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
 import { researchView, type ResearchRow } from './researchView';
@@ -119,8 +121,10 @@ export interface BuildingView {
   canCycleRecipe: boolean;
   /** Refineries only: whether the machine picks its own recipe. */
   autoRecipe: boolean | null;
+  /** Refineries with automatic recipes: the stock each product is kept topped up to (kg). */
+  targets: Array<{ product: ScheduleProduct; value: number }> | null;
   /** Present for turrets: whether they fire on their own. */
-  turret: { auto: boolean } | null;
+  turret: { auto: boolean; aim: number } | null;
   /** The first in-place upgrade, or null once done. */
   upgrade: UpgradeView | null;
   /** What demolishing gives back, in words, e.g. "3 alloy, 1 wire". */
@@ -257,7 +261,8 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     enabled: b.enabled,
     canCycleRecipe: b.kind === 'refinery' && health > 0,
     autoRecipe: b.kind === 'refinery' ? b.schedule?.enabled === true : null,
-    turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic } : null,
+    targets: b.kind === 'refinery' && featureVisible('scheduling') ? SCHEDULE_PRODUCTS.map(product => ({ product, value: (b.schedule ?? createSchedule()).targets[product] })) : null,
+    turret: isTurret(b.kind) ? { auto: !!b.turret?.automatic, aim: b.turret?.aim ?? 0 } : null,
     upgrade: w && health > 0 ? upgradeView(w, b) : null,
     salvage: salvageText(b),
     demolishBlocked: w ? demolishError(w, b) : null,

@@ -8,7 +8,7 @@ import { RESOURCES, RESOURCE_INFO, inventoryMass, type Resource } from '../../si
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity, miningStats, tractorStats } from '../../sim/shipStats';
 import { STATIONS, distance, nearbyStation } from '../../sim/surface';
-import { colonyPlanet, sitePosition } from '../../sim/localWorld';
+import { colonyPlanet, localAngleAt, sitePosition } from '../../sim/localWorld';
 import { nearbyBuilding } from '../../sim/colony';
 import { BLUEPRINTS } from '../../sim/colonyConfig';
 import { haulError } from '../../sim/freight';
@@ -53,6 +53,8 @@ export interface DepositView {
 }
 
 export interface FootView {
+  /** The ore seam nearest to you, with how much is left. */
+  seam: { id: number; resource: string; label: string; distance: string; side: string; left: string; remaining: string } | null;
   status: string;
   places: Array<{ label: string; distance: string }>;
   action: string;
@@ -102,6 +104,23 @@ function toolsLine(w: WorldState, cargo: number): string {
   return 'C pulls fragments in. Space fires the laser.';
 }
 
+function nearestSeam(w: WorldState): FootView['seam'] {
+  const at = localAngleAt(w, w.astronaut.position);
+  const radius = colonyPlanet(w).radius;
+  const found = [...w.surfaceDeposits].sort((a, b) => Math.abs(wrap(a.angle - at)) - Math.abs(wrap(b.angle - at)))[0];
+  if (!found) return null;
+  const offset = wrap(found.angle - at);
+  return {
+    id: found.id,
+    resource: found.resource,
+    label: RESOURCE_INFO[found.resource].label,
+    distance: `${Math.round(Math.abs(offset) * radius)} m`,
+    side: offset < 0 ? 'left' : 'right',
+    left: `${found.remaining.toFixed(0)} of ${found.initial} kg left`,
+    remaining: found.remaining.toFixed(2),
+  };
+}
+
 function foot(w: WorldState): FootView {
   const suit = w.astronaut;
   const canBoard = distance(suit.position, w.ship.position) <= SUIT.boardingRange;
@@ -131,7 +150,7 @@ function foot(w: WorldState): FootView {
   const note = moon
     ? 'Nacre has no air and no free suit service. Bring supplies and build a powered service station.'
     : 'Depot is right of the pad, service is left. Service restores air and suit health; hull repair uses 1 kg of stored iron per 10%.';
-  return { status, places, action, note };
+  return { seam: nearestSeam(w), status, places, action, note };
 }
 
 const PRODUCT_NAME = { alloy: 'alloy', wire: 'wire', components: 'components', fuel: 'fuel', oxygen: 'oxygen' } as const;

@@ -79,6 +79,13 @@ export function ShipPanelContent({ view }: { view: ShipPanelView }) {
         <section class="surface-panel" aria-label="On foot">
           <h3>On foot</h3>
           <p class="ship-next">{view.foot.status}</p>
+          {view.foot.seam && (
+            <div class="ground-survey" data-deposit={view.foot.seam.id} data-resource={view.foot.seam.resource} data-remaining={view.foot.seam.remaining}>
+              <small>Nearest ore seam</small>
+              <p>{view.foot.seam.label} · {view.foot.seam.distance} {view.foot.seam.side}</p>
+              <small>{view.foot.seam.left}</small>
+            </div>
+          )}
           <ul class="ship-places">
             {view.foot.places.map(p => (
               <li key={p.label}>

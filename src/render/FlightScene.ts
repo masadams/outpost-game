@@ -340,7 +340,7 @@ export class FlightScene extends Phaser.Scene {
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen) {
-      for(const a of this.keys.planningActions()){const local=activeWorld(this.simulation);applyColonyAction(local,a);if(a.type==='toggleBuild'&&local.colony.buildOpen)this.hud.openBuild();}
+      for(const a of this.keys.planningActions()){const local=activeWorld(this.simulation);applyColonyAction(local,a);if(a.type==='toggleBuild'&&local.colony.buildOpen)this.hud.closeDock();}
       if (this.keys.inventory()) this.hud.toggleDock('cargo');
       if (this.keys.trajectory()) this.viewAction('trajectory');
       if (this.keys.zoomIn()) this.viewAction('zoomIn');

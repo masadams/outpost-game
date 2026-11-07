@@ -1,6 +1,6 @@
 import { featureVisible } from '../preferences/features';
 import type { WorldState } from '../sim/world';
-export type DockView = 'cargo' | 'colony' | 'combat' | 'defence' | 'command' | 'navigation' | 'objectives' | 'autopilot';
+export type DockView = 'cargo' | 'combat' | 'defence' | 'command' | 'navigation' | 'objectives' | 'autopilot';
 export interface HudContext { key: string; label: string; view: DockView | null; hint: string }
 /** Presentation decisions only; changing panels never changes the simulation. */
 export function hudContext(w: WorldState): HudContext {
@@ -10,6 +10,6 @@ export function hudContext(w: WorldState): HudContext {
   if (w.playerMode === 'ship' && w.combat.enemies.length) return { key: 'combat', label: 'Combat', view: 'combat', hint: 'Shift fire · Z weapon · A/D turn · W thrust · P pause · H help' };
   if (w.defence.meteors.length) return { key: 'defence', label: 'Defence', view: 'defence', hint: 'N next drill when clear · I cargo · P pause · H help' };
   if (w.playerMode === 'astronaut' && w.depotOpen) return { key: 'depot', label: 'Depot', view: 'cargo', hint: 'E close depot · A/D walk · F board · B build · P pause' };
-  if (w.playerMode === 'astronaut') return { key: 'surface', label: 'Surface', view: featureVisible('catalogue') ? 'colony' : null, hint: 'A/D walk · Space jump · E interact · F board · B build · H help' };
+  if (w.playerMode === 'astronaut') return { key: 'surface', label: 'Surface', view: null, hint: 'A/D walk · Space jump · E interact · F board · B build · H help' };
   return { key: 'flight', label: w.ship.state === 'landed' ? 'On pad' : 'Flight', view: null, hint: featureVisible('combat') ? 'W thrust · A/D turn · Space mine · Shift fire · F exit · I cargo · P pause' : 'W thrust · A/D turn · Space mine · C pull ore · F exit · I cargo · P pause' };
 }

@@ -12,6 +12,7 @@ export interface BaseHandlers {
   recipe: (id: number) => void;
   upgrade: (id: number) => void;
   auto: (id: number) => void;
+  target: (id: number, product: string, delta: -5 | 5) => void;
   analyse: () => void;
   study: () => void;
   studyCore: () => void;
@@ -267,6 +268,19 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
           <button type="button" disabled={paused} data-auto={String(b.autoRecipe)} onClick={click(() => on.auto(b.id))}>
             Auto recipe: {b.autoRecipe ? 'on' : 'off'}
           </button>
+        )}
+        {b.targets && (
+          <div class="base-targets" aria-label="Stock targets">
+            <p class="base-note">Keeps these in stock, in kg. It makes whichever is short.</p>
+            {b.targets.map(t => (
+              <div class="base-target" key={t.product} data-target={t.product}>
+                <span>{t.product}</span>
+                <button type="button" disabled={paused || t.value <= 0} aria-label={`Lower ${t.product} target`} onClick={click(() => on.target(b.id, t.product, -5))}>−</button>
+                <b data-target-value={t.product}>{t.value}</b>
+                <button type="button" disabled={paused} aria-label={`Raise ${t.product} target`} onClick={click(() => on.target(b.id, t.product, 5))}>+</button>
+              </div>
+            ))}
+          </div>
         )}
         {b.canCycleRecipe && (
           <button type="button" disabled={paused} onClick={click(() => on.recipe(b.id))}>
