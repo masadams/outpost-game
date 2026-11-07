@@ -10,6 +10,7 @@ import { applyResearch } from './research';
 import { applyEquipment } from './equipment';
 import { createExploration, isExplorationAction, type ExplorationState } from './explorationConfig';
 import { stepProbes } from './probes';
+import { isPodAction, sendPod, stepPods } from './pods';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
 import { applyCommandAction } from './command';
@@ -117,6 +118,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isStormAction(action)){applyStormAction(world,action);continue;}
     if(isCrystalAction(action)){applyCrystalAction(world);continue;}
     if(isCoreAction(action)){applyCoreAction(world);continue;}
+    if(isPodAction(action)){sendPod(world,action.from,action.to);continue;}
     if(action.type==='salvageWreck'){salvageWreck(world);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
@@ -162,6 +164,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   }
   stepSites(world, dt, startShip);
   stepProbes(world, dt);
+  stepPods(world);
   stepStarHeat(world, dt);
   world.beam = piloting && input.mine ? fireLaser(world.ship, [...world.asteroids, ...world.defence.meteors, ...world.exploration.sites], dt, world.system) : null;
   resolveMinedRocks(world);

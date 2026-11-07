@@ -20,6 +20,8 @@ export interface MapView {
   belts: BeltMark[];
   sites: SiteMark[];
   probes: Array<{ at: Vec }>;
+  /** Cargo pods on their way, placed along the line between the two worlds. */
+  pods: Array<{ at: Vec; label: string }>;
   /** Where a belt you picked will be when you get there, aiming from your ship. */
   intercept: { at: Vec; seconds: number } | null;
   ship: Vec;
@@ -246,6 +248,12 @@ export function mapView(w: WorldState): MapView {
     belts,
     sites,
     probes: w.exploration.probes.map(p => ({ at: p.position })),
+    pods: w.exploration.pods.map(p => {
+      const t = Math.max(0, Math.min(1, (w.system.time - p.launched) / Math.max(1, p.arrives - p.launched)));
+      const a = planetAt(p.from, { ...w.system, time: p.launched }).position;
+      const b = planetAt(p.to, { ...w.system, time: p.arrives }).position;
+      return { at: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, label: `Cargo pod, ${Math.round(Math.max(0, p.arrives - w.system.time))} s` };
+    }),
     intercept: interceptMark(w),
     ship: w.ship.position,
     pad: destination(w, 'home').position,

@@ -17,6 +17,7 @@ export interface BaseHandlers {
   studyCore: () => void;
   research: (tech: string) => void;
   fit: (upgrade: string) => void;
+  send: (to: string) => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -53,7 +54,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, studyCore, research, fit, send, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -110,6 +111,20 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, reserv
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
         {p.islands && <p class="base-power-summary" data-islands>{p.islands}</p>}
       </div>
+      {view.pods && (
+        <section class="base-storm" aria-label="Cargo pods">
+          <h3>Cargo pods</h3>
+          {view.pods.sends.map(s => (
+            <div key={s.to}>
+              <button type="button" class="base-analyse" data-pod={s.to} disabled={s.reason !== null} onClick={click(() => send(s.to))}>
+                {s.label}
+              </button>
+              {s.reason && <p class="base-why">{s.reason}</p>}
+            </div>
+          ))}
+          {view.pods.flying.map(line => <p key={line} class="base-note">On its way: {line}</p>)}
+        </section>
+      )}
       {view.elsewhere.length > 0 && (
         <section class="base-storm base-elsewhere" aria-label="Other worlds">
           <h3>Other worlds</h3>
@@ -350,7 +365,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}

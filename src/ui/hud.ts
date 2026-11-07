@@ -198,6 +198,7 @@ export class Hud {
       analyse: () => onColonyAction({ type: 'analyseSample' }),
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
+      send: to => onColonyAction({ type: 'sendPod', from: (this.latestWorld?.siteBody ?? 'home') as never, to: to as never }),
       research: tech => onColonyAction({ type: 'researchStart', tech: tech as never }),
       fit: upgrade => onColonyAction({ type: 'equipment', upgrade: upgrade as never, operation: 'install' }),
       reserve: direction => onColonyAction({ type: 'adjustPolicy', field: 'energyReserve', direction, step: 50, body: body() }),
