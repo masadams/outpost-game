@@ -14,3 +14,5 @@ Not in this run: new star systems, terraforming.
 - Slots: nine constrained slots, 25 parts, paid fabrication, salvage and saved state already exist (3A decided: constrained slots, not a free editor).
 - First cut of 3B: `src/sim/shipProfile.ts` works out lift, loaded lift, delta-v, hold, mining, cannon and armour from the fit, and names the job the ship is best at (Scout, Miner, Interceptor, Hybrid, or Standard lander). The fitting screen says what a selected part would turn the ship into.
 - Next: pre-flight check that compares a trip's fuel to the ship's delta-v; role-specific gaps found in play (miner ascent with a full hold, scout fuel range).
+
+- Liftoff check: the Ship panel warns while landed when thrust against weight at that world is under 1.5 (and says too heavy under 1), so a heavy build with a full hold is told to unload before launching.

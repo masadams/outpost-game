@@ -1,4 +1,5 @@
 import { BODY_IDS } from '../../sim/celestial';
+import { liftoffWarning } from '../../sim/preflight';
 import { bodyKnown } from '../../sim/explorationConfig';
 import { SUIT } from '../../sim/astronaut';
 import { habitatSource } from '../../sim/habitats';
@@ -94,6 +95,8 @@ function deposit(w: WorldState): DepositView | null {
 }
 
 function toolsLine(w: WorldState, cargo: number): string {
+  const heavy = w.ship.state === 'landed' ? liftoffWarning(w) : null;
+  if (heavy) return heavy;
   if (cargo >= cargoCapacity(w.ship) - 1e-6) return 'Hold full. Return and unload.';
   if (w.tractorActive) return `Tractor on, reaches ${tractorStats(w.ship).range} m.`;
   return 'C pulls fragments in. Space fires the laser.';
