@@ -2,11 +2,11 @@ import { nearestPlanet, planetAt, relative, relativeVelocity, surfacePosition, g
 import { WORLD } from './config';
 import { createShip, IDLE, stepShip, type Ship } from './physics';
 import { PRODUCTS, type ProductInventory } from './colonyConfig';
-import { availableProduct } from './colonyPolicy';
 import { cargoMass } from './shipMass';
 import { grantHold } from './crystal';
 import { cargoCapacity, fuelCapacity } from './shipStats';
 import { RESOURCES } from './resources';
+import { PROGRESSION, UPGRADES } from './progressionConfig';
 import { length } from './math';
 import { notify } from './messages';
 import type { WorldState } from './world';
@@ -68,7 +68,8 @@ function scale<T extends object>(stock: T, k: number): T {
 function canPay(world: WorldState, cost: Partial<ProductInventory>): string | null {
   for (const p of PRODUCTS) {
     const need = cost[p] ?? 0;
-    if (need > 0 && availableProduct(world.colony, p) < need) return `Needs ${need} ${p} (you have ${Math.floor(availableProduct(world.colony, p))})`;
+    // A lost pilot comes first: stores held back for the turrets can be spent on this.
+    if (need > 0 && world.colony.products[p] < need) return `Needs ${need} ${p} (you have ${Math.floor(world.colony.products[p])})`;
   }
   return null;
 }
@@ -189,8 +190,18 @@ export function salvageWreck(world: WorldState): boolean {
     if (near?.reason) notify(world, `Wreck: ${near.reason}.`);
     return !!near;
   }
-  const from = near.wreck.ship;
+  const wreck = near.wreck;
+  const from = wreck.ship;
   const to = world.ship;
+  // Parts first, so a bigger hold or tank on the wreck counts for what is loaded next.
+  let fitted = 0;
+  for (const id of [...from.equipment]) {
+    if (to.equipment.some(held => UPGRADES[held].slot === UPGRADES[id].slot)) continue;
+    to.equipment.push(id);
+    from.equipment = from.equipment.filter(part => part !== id);
+    fitted++;
+  }
+  if (from.towRig && !to.towRig) { to.towRig = true; from.towRig = false; fitted++; }
   let room = cargoCapacity(to) - cargoMass(to);
   let moved = 0;
   for (const r of RESOURCES) {
@@ -201,19 +212,31 @@ export function salvageWreck(world: WorldState): boolean {
     const take = Math.max(0, Math.min(from.freight[p], room));
     from.freight[p] -= take; to.freight[p] += take; room -= take; moved += take;
   }
-  // Fitted modules come off whole and go back on the new lander, if it has none of its own yet.
-  let modules = 0;
-  if (from.equipment.length > 0 && to.equipment.length === 0) { to.equipment = [...from.equipment]; modules = from.equipment.length; from.equipment = []; }
-  if (from.towRig && !to.towRig) { to.towRig = true; from.towRig = false; modules++; }
+  // A part for a slot the new lander already fills is broken down for materials, as far as the hold has room.
+  let scrapped = 0;
+  for (const id of [...from.equipment]) {
+    const cost = UPGRADES[id].cost;
+    const total = PRODUCTS.reduce((n, p) => n + (cost[p] ?? 0), 0) * PROGRESSION.salvageFraction * wreck.condition;
+    if (total > room + 1e-9) continue;
+    for (const p of PRODUCTS) to.freight[p] += (cost[p] ?? 0) * PROGRESSION.salvageFraction * wreck.condition;
+    room -= total; moved += total; scrapped++;
+    from.equipment = from.equipment.filter(part => part !== id);
+  }
   const fuel = Math.max(0, Math.min(from.fuel, fuelCapacity(to) - to.fuel));
   from.fuel -= fuel; to.fuel += fuel;
-  if (empty(near.wreck)) {
-    world.wrecks = world.wrecks.filter(w => w !== near.wreck);
-    notify(world, `Salvaged ${Math.round(moved)} kg and ${Math.round(fuel)} kg of fuel. Nothing left on the wreck.`);
-  } else if (moved + fuel <= 1e-6 && modules === 0) {
-    notify(world, 'Your hold is full. Unload at the pad and come back for the rest.');
+  const parts = fitted > 0 ? ` ${fitted} part${fitted === 1 ? '' : 's'} refitted.` : '';
+  const broken = scrapped > 0 ? ` ${scrapped} spare part${scrapped === 1 ? '' : 's'} broken down for materials.` : '';
+  const took = `Salvaged ${Math.round(moved)} kg and ${Math.round(fuel)} kg of fuel.${parts}${broken}`;
+  const loose = RESOURCES.some(r => from.cargo[r] > 1e-6) || PRODUCTS.some(p => from.freight[p] > 1e-6);
+  if (empty(wreck)) {
+    world.wrecks = world.wrecks.filter(w => w !== wreck);
+    notify(world, `${took} Nothing left on the wreck.`);
+  } else if (loose && room <= 1e-6) {
+    notify(world, moved + fuel + fitted <= 1e-6 ? 'Your hold is full. Unload at the pad and come back for the rest.' : `${took} More is left; your hold is full.`);
+  } else if (from.equipment.length > 0 || from.towRig) {
+    notify(world, `${took} Some parts are left: your lander already has parts in those slots, and they are too big to break down until you free some room.`);
   } else {
-    notify(world, `Salvaged ${Math.round(moved)} kg and ${Math.round(fuel)} kg of fuel. More is left; your hold is full.`);
+    notify(world, `${took} Some fuel is left: your tank is full.`);
   }
   return true;
 }

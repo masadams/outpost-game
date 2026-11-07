@@ -310,3 +310,5 @@ The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s,
 - **World seed.** Seed 0 is the standard layout (tests and developer runs); a new day-cycle game gets its own seed, saved with the game. Variation never makes the first three home seams smaller than standard.
 
 - **Optional worlds and earned automation.** A catalogue body can be optional: Ember (thin air, farther than Cinder) is in about 60% of non-standard seeds and never in seed 0. The mining drone bay is earned by Precision extraction (from the Cinder core), mines a seam within 300 m without sitting on it, is slower than a rig, and costs fuel and wear, so automation is a trade, not a free upgrade.
+
+- **A lost pilot comes first.** Printing a new pilot and lander may spend stores held back for the turrets. Salvage refits the wreck's parts before loading cargo (so a bigger hold counts), fits a part wherever the new lander has a free slot, and breaks down a part whose slot is taken for materials. Messages say which of the two limits (hold full, parts left, tank full) actually applies.

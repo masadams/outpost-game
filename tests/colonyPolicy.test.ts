@@ -94,12 +94,11 @@ describe('turret material protection', () => {
     expect(w.ship.hull).toBe(100); expect(w.ship.armament.cannon).toBeGreaterThan(0);
     expect(w.colony.products.alloy).toBeGreaterThanOrEqual(20 - 1e-9); expect(w.colony.products.components).toBeGreaterThanOrEqual(7 - 1e-9);
   });
-  it('protects repair/recovery supplies and permits releasing a reserve from a wrecked ship', () => {
+  it('protects repair supplies, but printing a new pilot may spend the turret reserve', () => {
     const { w, building, policy } = fixture(); building.health = 50; policy.alloyReserve = 28;
     repairBuilding(w); expect(building.health).toBe(50); policy.alloyReserve = 27; repairBuilding(w); expect(building.health).toBe(60);
-    policy.componentsReserve = 8; w.ship.state = 'crashed'; w.ship.hull = 0; applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.state).toBe('crashed');
-    w.playerMode = 'ship'; applyColonyAction(w, { type: 'adjustPolicy', field: 'alloyReserve', direction: -1 });
-    policy.alloyReserve = 0; policy.componentsReserve = 0; applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.state).toBe('landed');
+    // A lost pilot comes first: printing may spend what is held back for the turrets.
+    policy.componentsReserve = 8; w.ship.state = 'crashed'; w.ship.hull = 0; applyCombatAction(w, { type: 'recoverShip' }); expect(w.ship.state).toBe('landed');
     expect(w.colony.products.alloy).toBe(19); expect(w.colony.products.components).toBe(6);
   });
   it('preserves actual paid progress through impact wrecking and supplied repair', () => {
