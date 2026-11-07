@@ -308,3 +308,5 @@ The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s,
 - **Power has distance.** In day-cycle games a building must be wired to the pad; relays extend reach (600 m), carry 10 kW and keep 96% per hop; upgrades scale both.
 - **Sequence over menus.** Buildings, research and systems reach a new player in a fixed, explained order (see CURRENT_FOCUS). Each building defines what an upgrade tier changes.
 - **World seed.** Seed 0 is the standard layout (tests and developer runs); a new day-cycle game gets its own seed, saved with the game. Variation never makes the first three home seams smaller than standard.
+
+- **Optional worlds and earned automation.** A catalogue body can be optional: Ember (thin air, farther than Cinder) is in about 60% of non-standard seeds and never in seed 0. The mining drone bay is earned by Precision extraction (from the Cinder core), mines a seam within 300 m without sitting on it, is slower than a rig, and costs fuel and wear, so automation is a trade, not a free upgrade.
