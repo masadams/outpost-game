@@ -80,3 +80,13 @@
 .map-chart .map-mark path { stroke: #ffd98a; stroke-width: 2; fill: none; }
 .map-chart .map-intercept circle { fill: none; stroke: #9fe4ff; stroke-width: 1.5; stroke-dasharray: 3 3; }
 .map-chart .map-pod { fill: #ffd98a; stroke: #fff0c8; stroke-width: 1; }
+
+.map-chart .map-pod-lane { stroke: #ffd98a; stroke-opacity: .45; stroke-width: 1; stroke-dasharray: 4 5; }
+.map-chart .map-pod-target { fill: none; stroke: #ffd98a; stroke-opacity: .7; stroke-width: 1; }
+.map-chart .map-pod-label { fill: #ffe7ab; }
+.map-chart .map-beacon circle { fill: #7fe6d3; stroke: #d9fff6; stroke-width: 1; }
+.map-chart .map-beacon .map-beacon-ring { fill: none; stroke: #7fe6d3; stroke-opacity: .6; animation: map-beacon-pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.map-chart .map-beacon[data-kind=lost] circle { fill: #ff8f75; stroke: #ffd0c4; }
+.map-chart .map-beacon[data-kind=lost] .map-beacon-ring { stroke: #ff8f75; }
+@keyframes map-beacon-pulse { from { transform: scale(0.6); opacity: .9; } to { transform: scale(1.8); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .map-chart .map-beacon .map-beacon-ring { animation: none; } }
