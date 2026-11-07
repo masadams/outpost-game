@@ -3,6 +3,7 @@ import { PRODUCTS } from '../../sim/colonyConfig';
 import { BATTERY_CAPACITY } from '../../sim/colony';
 import type { Building } from '../../sim/colony';
 import { RELAY_RANGE } from '../../sim/grid';
+import { MASS_DRIVER } from '../../sim/airMachines';
 import { capacityFactor, facilityLevel, upgradeCost, workFactor } from '../../sim/facilityStats';
 import type { WorldState } from '../../sim/world';
 
@@ -23,7 +24,10 @@ export function tierEffect(b: Building, tier: 2 | 3 = 2): string {
   const power = capacityFactor(next);
   const speed = workFactor(next);
   switch (b.kind) {
-    case 'solar': return `Makes ${power}× the power`;
+    case 'solar':
+    case 'geothermal':
+    case 'windTurbine': return `Makes ${power}× the power`;
+    case 'massDriver': return `Pods carry ${MASS_DRIVER.capacity * power} kg instead of ${MASS_DRIVER.capacity}`;
     case 'battery': return `Stores ${BATTERY_CAPACITY * power} kJ instead of ${BATTERY_CAPACITY}`;
     case 'storage': return `Holds ${power}× as much`;
     case 'relay': return `Reaches ${RELAY_RANGE * power} m instead of ${RELAY_RANGE} m`;
