@@ -8,6 +8,7 @@ import Phaser from 'phaser';
 import { BLUEPRINTS, type BuildType } from '../sim/colonyConfig';
 import { placementError, previewAngle } from '../sim/colony';
 import { heading } from '../sim/math';
+import { linkPreview } from '../sim/grid';
 import { daylightAt } from '../sim/sun';
 import type { WorldState } from '../sim/world';
 
@@ -19,6 +20,29 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
   const entries = colony.buildings.map(b => ({ kind: b.kind, angle: b.angle, ghost: false, active: b.enabled && operational(b) && (!isHabitat(b.kind) || !!b.habitat?.powered), working: b.enabled && operational(b) && (b.kind === 'solar' || b.kind === 'battery' || b.status === 'running') }));
   if (draft) entries.push({ kind: draft.kind, angle: draft.angle, ghost: true, active: draft.valid, working: false });
   if (!draft && colony.buildOpen && world.playerMode === 'astronaut') entries.push({ kind: colony.selected, angle: previewAngle(world), ghost: true, active: !placementError(world), working: false });
+  // While placing, a line runs to the wired node it would hang from, with ticks where its reach ends.
+  for (const entry of entries) {
+    if (!entry.ghost) continue;
+    const link = linkPreview(world, entry.kind, entry.angle);
+    if (!link) continue;
+    const radius = colonyPlanet(world).radius;
+    const tint = link.connected ? 0x73f3cf : 0xffc247;
+    const lift = radius + 3;
+    const steps = 12;
+    const span = Math.min(Math.PI, Math.abs(entry.angle - link.fromAngle) > Math.PI ? 2 * Math.PI - Math.abs(entry.angle - link.fromAngle) : Math.abs(entry.angle - link.fromAngle));
+    const sign = Math.sin(entry.angle - link.fromAngle) >= 0 ? 1 : -1;
+    g.lineStyle(1.5, tint, 0.85);
+    for (let i = 0; i < steps; i += 2) {
+      const a = heading(link.fromAngle + sign * span * i / steps);
+      const b = heading(link.fromAngle + sign * span * (i + 1) / steps);
+      g.lineBetween(a.x * lift, a.y * lift, b.x * lift, b.y * lift);
+    }
+    // Where the reach ends, on the same side: move the building to this tick for the longest link.
+    const tickAngle = link.fromAngle + sign * link.reach / radius;
+    const t = heading(tickAngle);
+    g.lineStyle(2, 0x73f3cf, 0.9);
+    g.lineBetween(t.x * (radius + 1), t.y * (radius + 1), t.x * (radius + 14), t.y * (radius + 14));
+  }
   // A building out of reach of the base's power wears an amber diamond.
   for (const b of colony.buildings) {
     if (b.linked !== false) continue;

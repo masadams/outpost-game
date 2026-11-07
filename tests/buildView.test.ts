@@ -104,3 +104,18 @@ describe('queue card', () => {
     expect(queueView(w)?.start).toBe(true);
   });
 });
+
+describe('placement tip for power links', () => {
+  it('says how far the link stretches while placing in a day-cycle game', async () => {
+    const { createWorld } = await import('../src/sim/world');
+    const { placementTip } = await import('../src/ui/build/buildView');
+    const w = createWorld();
+    w.system.sun = true;
+    const near = placementTip(w, 'relay', null, 400 / 1800);
+    expect(near.text).toMatch(/wired to the pad, \d+ of 600 m/);
+    expect(near.ok).toBe(true);
+    const far = placementTip(w, 'relay', null, 900 / 1800);
+    expect(far.text).toMatch(/too far/);
+    expect(far.ok).toBe(false);
+  });
+});

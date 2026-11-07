@@ -165,3 +165,44 @@ export function islandGroups(world: WorldState): Building[][] {
   }
   return groups;
 }
+
+/** Where a new building would plug into the base's power, for showing while placing it. */
+export interface LinkPreview {
+  /** Ground angle of the base or building it would link to. */
+  fromAngle: number;
+  /** Ground angle of the base or building it would link to, as a name for the player. */
+  from: 'the pad' | 'a relay' | 'a building';
+  /** Metres along the ground to it. */
+  metres: number;
+  /** The farthest the link can stretch for this placement. */
+  reach: number;
+  connected: boolean;
+}
+
+/**
+ * The link a new building would make: to whichever wired node it has the most slack to (a relay far off beats a
+ * plain building near). Null in games without the day cycle, where everything is one grid.
+ */
+export function linkPreview(world: WorldState, kind: Building['kind'], angle: number): LinkPreview | null {
+  const tree = linkTree(world);
+  if (tree === null) return null;
+  const radius = colonyPlanet(world).radius;
+  const own = kind === 'relay' ? RELAY_RANGE : LINK_RANGE;
+  const nodes: Array<{ angle: number; range: number; from: LinkPreview['from'] }> = [{ angle: 0, range: LINK_RANGE, from: 'the pad' }];
+  for (const b of world.colony.buildings) {
+    if (!tree.has(b.id)) continue;
+    nodes.push({ angle: b.angle, range: reach(b), from: b.kind === 'relay' ? 'a relay' : 'a building' });
+  }
+  let best: LinkPreview | null = null;
+  let bestSlack = -Infinity;
+  for (const n of nodes) {
+    const metres = Math.abs(wrap(angle - n.angle)) * radius;
+    const allowed = Math.max(n.range, own);
+    const slack = allowed - metres;
+    if (slack > bestSlack) {
+      bestSlack = slack;
+      best = { fromAngle: n.angle, from: n.from, metres, reach: allowed, connected: slack >= -1e-6 };
+    }
+  }
+  return best;
+}
