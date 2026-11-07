@@ -2,7 +2,7 @@ import { courseTo, interceptBelt } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
 import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
-import { BODIES, BODY_IDS, nearestPlanet, planetAt, planets, surfacePosition, type BodyId } from '../../sim/celestial';
+import { BODIES, BODY_IDS, bodyExists, nearestPlanet, planetAt, planets, surfacePosition, type BodyId } from '../../sim/celestial';
 import { tripFuel } from '../../sim/tripFuel';
 import { WORLD } from '../../sim/config';
 import { farPosition } from '../../sim/storm';
@@ -221,7 +221,7 @@ export function mapView(w: WorldState): MapView {
     rocks: [...w.asteroids, ...w.pickups].filter(r => r.belt === id).map(r => ({ at: r.position, ore: r.mass > 0 })),
   }));
   const sites = w.exploration.sites.map(s => ({ id: s.key, label: SITE_INFO[s.key].label, at: s.position, intact: s.health > 0 }));
-  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...BODY_IDS.filter(id => id !== 'home' && w.system.binary && shown(id)), ...shownBelts, ...SITE_IDS];
+  const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...BODY_IDS.filter(id => id !== 'home' && w.system.binary && bodyExists(id, w.system) && shown(id)), ...shownBelts, ...SITE_IDS];
   const places = ids.map(id => ({
     id,
     label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : id === 'moon' ? 'Nacre moon' : (BODY_IDS as readonly string[]).includes(id) ? BODIES[id as BodyId].label : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
