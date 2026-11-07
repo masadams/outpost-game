@@ -4,7 +4,7 @@ import { gravity } from '../src/sim/environment';
 
 describe('the body catalogue', () => {
   it('describes every body, and only the paired ones need the two-body system', () => {
-    expect(BODY_IDS).toEqual(['home', 'moon', 'cinder']);
+    expect(BODY_IDS).toEqual(['home', 'moon', 'cinder', 'ember']);
     for (const id of BODY_IDS) expect(BODIES[id].radius).toBeGreaterThan(0);
     expect(planets({ time: 0, binary: false }).map(p => p.id)).toEqual(['home']);
     expect(planets({ time: 0, binary: true }).map(p => p.id)).toEqual(['home', 'moon', 'cinder']);

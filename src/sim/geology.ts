@@ -15,12 +15,15 @@ const SEAMS: readonly [Resource, number, number, number][] = [
 /** Cinder: small, and rich where Selene is poor. Rare metals and silicon, nothing else. */
 const CINDER_SEAMS: typeof SEAMS = [['rareMetals', 100, 30, 220], ['rareMetals', -250, 30, 180], ['silicon', 380, 36, 200]];
 
+/** Ember: thin air, ice and iron and a little copper. */
+const EMBER_SEAMS: typeof SEAMS = [['ice', 90, 34, 200], ['iron', -200, 32, 170], ['copper', 330, 30, 120], ['rareMetals', 560, 26, 70]];
+
 /** The first seams near the pad are never made smaller than the standard game: a fair start for every seed. */
 const FAIR_SEAMS = 3;
 
 export function createSurfaceDeposits(radius: number = WORLD.radius, body?: BodyId, seed = 0): SurfaceDeposit[] {
-  if (body === 'cinder') radius = CELESTIAL.cinder.radius;
-  const seams: typeof SEAMS = body === 'cinder' ? CINDER_SEAMS : radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
+  if (body === 'cinder' || body === 'ember') radius = CELESTIAL[body].radius;
+  const seams: typeof SEAMS = body === 'cinder' ? CINDER_SEAMS : body === 'ember' ? EMBER_SEAMS : radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
   // Seed 0 is the standard game. Any other seed varies each seam's size a little, the same way every time.
   const rand = streamFor(seed, `ground/${body ?? 'home'}`);
   return seams.map(([resource, arc, halfWidth, initial], i) => {

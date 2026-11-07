@@ -1,7 +1,7 @@
 import { ATMOSPHERE, DAY_LENGTH, WORLD } from './config';
 import { streamFor } from './seed';
 import { heading, length, localAngle, wrap, type Vec } from './math';
-export const BODY_IDS = ['home', 'moon', 'cinder'] as const;
+export const BODY_IDS = ['home', 'moon', 'cinder', 'ember'] as const;
 export type BodyId = typeof BODY_IDS[number];
 /** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
 export interface SystemFrame { time: number; binary: boolean; sun?: boolean; /** The world seed: seed 0 (or none) is the standard layout. */ seed?: number }
@@ -25,6 +25,8 @@ export interface BodySpec {
   surveySeconds: number;
   /** A line the Observatory raises once it has watched this long (seconds), if the body is still unfound. */
   hint?: { at: number; text: string };
+  /** Only some seeds have this body at all (never the standard layout). */
+  optional?: boolean;
 }
 /** Every body in the system, as data. Add a body here and the rest of the physics (gravity, landing, light) follows. */
 export const BODIES: Record<BodyId, BodySpec> = {
@@ -37,7 +39,20 @@ export const BODIES: Record<BodyId, BodySpec> = {
   cinder: { label: 'Cinder', radius: 260, mu: 0.9 * 260 ** 2, atmosphere: 0, air: null,
     orbit: { kind: 'circle', radius: 22000, phase: 2.2 }, spin: 'tidal', requiresBinary: true, surveySeconds: 420,
     hint: { at: 200, text: 'The Observatory keeps catching a faint point of light, far out. Keep watching.' } },
+  // A thin-aired world farther out than Cinder. Only some seeds have it.
+  ember: { label: 'Ember', radius: 340, mu: 1.1 * 340 ** 2, atmosphere: 300,
+    air: { scaleHeight: 110, surfaceDensity: 0.012 },
+    orbit: { kind: 'circle', radius: 36000, phase: 0.6 }, spin: 'tidal', requiresBinary: true, surveySeconds: 700,
+    optional: true,
+    hint: { at: 480, text: 'There is another faint point out there, farther than the last. Keep watching.' } },
 };
+/** Whether a body is in this system. Optional bodies are never in the standard layout and only in some seeds. */
+export function bodyExists(id: BodyId, system: SystemFrame = STATIC_SYSTEM): boolean {
+  if (!BODIES[id].optional) return true;
+  const seed = system.seed ?? 0;
+  if (seed === 0) return false;
+  return streamFor(seed, 'extra/' + id)() < 0.6;
+}
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;
 export const SEPARATION = 9500;
@@ -111,7 +126,7 @@ export function planetAt(id: BodyId, system = STATIC_SYSTEM): Planet {
     velocity: { x: -arm * ORBIT_RATE * Math.sin(phase), y: arm * ORBIT_RATE * Math.cos(phase) },
   };
 }
-export const planets = (system = STATIC_SYSTEM): Planet[] => BODY_IDS.filter(id => system.binary || !BODIES[id].requiresBinary).map(id => planetAt(id, system));
+export const planets = (system = STATIC_SYSTEM): Planet[] => BODY_IDS.filter(id => bodyExists(id, system) && (system.binary || !BODIES[id].requiresBinary)).map(id => planetAt(id, system));
 export const relative = (position: Vec, planet: Planet): Vec => ({ x: position.x - planet.position.x, y: position.y - planet.position.y });
 /** The velocity of the ground (and the air, which turns with it) at a point, from the planet's motion and its turning. */
 export function groundVelocity(planet: Planet, position: Vec): Vec {
