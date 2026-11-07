@@ -16,22 +16,76 @@ const reach = (b: Building): number => (b.kind === 'relay' ? RELAY_RANGE * capac
  * reach of one that has already joined (the longer of the two reaches counts). Only in games with the day cycle:
  * without it the whole colony is one grid, as before. Returns null when everything is connected.
  */
-export function linkedBuildings(world: WorldState): Set<number> | null {
+/** Which building each linked building hangs from (0 is the pad). Null when the whole colony is one grid. */
+export function linkTree(world: WorldState): Map<number, number> | null {
   if (!world.system.sun) return null;
   const planet = colonyPlanet(world);
   const metres = (a: number, b: number): number => Math.abs(wrap(a - b)) * planet.radius;
-  const buildings = world.colony.buildings;
-  const linked = new Set<number>();
-  const frontier: Array<{ angle: number; range: number }> = [{ angle: 0, range: LINK_RANGE }];
-  const rest = buildings.filter(b => b.health === undefined || b.health > 0);
+  const tree = new Map<number, number>();
+  const frontier: Array<{ id: number; angle: number; range: number }> = [{ id: 0, angle: 0, range: LINK_RANGE }];
+  const rest = world.colony.buildings.filter(b => b.health === undefined || b.health > 0);
   while (frontier.length > 0) {
     const node = frontier.pop()!;
     for (const b of rest) {
-      if (linked.has(b.id)) continue;
+      if (tree.has(b.id)) continue;
       if (metres(node.angle, b.angle) > Math.max(node.range, reach(b)) + 1e-6) continue;
-      linked.add(b.id);
-      frontier.push({ angle: b.angle, range: reach(b) });
+      tree.set(b.id, node.id);
+      frontier.push({ id: b.id, angle: b.angle, range: reach(b) });
     }
   }
-  return linked;
+  return tree;
+}
+
+/**
+ * Which buildings are wired to the base. The base starts at the landing pad; a building joins when it is within
+ * reach of one that has already joined (the longer of the two reaches counts). Only in games with the day cycle:
+ * without it the whole colony is one grid, as before. Returns null when everything is connected.
+ */
+export function linkedBuildings(world: WorldState): Set<number> | null {
+  const tree = linkTree(world);
+  return tree === null ? null : new Set(tree.keys());
+}
+
+/** Power one relay can carry, and the share each relay hop keeps. */
+export const RELAY_CAPACITY = 10;
+export const LINE_KEPT = 0.96;
+
+/**
+ * What reaches the base from each generator. Every relay on the way takes a small share, and a relay can only carry so
+ * much: past that, everything passing through it is held back evenly. Relays record what they carry in `gridPower`.
+ * Nothing here makes power: the delivered total is never more than the raw total.
+ */
+export function deliverPower(world: WorldState, raw: Map<number, number>): Map<number, number> {
+  const tree = linkTree(world);
+  if (tree === null) return raw;
+  const byId = new Map(world.colony.buildings.map(b => [b.id, b]));
+  const relaysOn = (id: number): number[] => {
+    const relays: number[] = [];
+    for (let at = tree.get(id); at !== undefined && at !== 0; at = tree.get(at)) {
+      if (byId.get(at)?.kind === 'relay') relays.push(at);
+    }
+    return relays;
+  };
+  const load = new Map<number, number>();
+  const paths = new Map<number, number[]>();
+  for (const [id, power] of raw) {
+    const path = relaysOn(id);
+    paths.set(id, path);
+    for (const relay of path) load.set(relay, (load.get(relay) ?? 0) + power);
+  }
+  const share = (relay: number): number => {
+    const limit = RELAY_CAPACITY * capacityFactor(byId.get(relay)!);
+    return Math.min(1, limit / Math.max(1e-9, load.get(relay) ?? 0));
+  };
+  const delivered = new Map<number, number>();
+  const carried = new Map<number, number>();
+  for (const [id, power] of raw) {
+    const path = paths.get(id)!;
+    const held = path.reduce((least, relay) => Math.min(least, share(relay)), 1);
+    const out = power * held * LINE_KEPT ** path.length;
+    delivered.set(id, out);
+    for (const relay of path) carried.set(relay, (carried.get(relay) ?? 0) + power * held);
+  }
+  for (const b of world.colony.buildings) if (b.kind === 'relay') b.gridPower = carried.get(b.id) ?? 0;
+  return delivered;
 }

@@ -38,3 +38,15 @@ export function interceptBelt(w: WorldState, belt: BeltId, from: Vec, speed: num
   }
   return { position, seconds };
 }
+
+/** Course to a belt for the player: where to point to reach it, how far, and how long at a given speed. */
+export function courseToBelt(w: WorldState, belt: BeltId, speed = 110): { aim: Vec; range: number; seconds: number; bearing: number } {
+  const viewer = w.playerMode === 'ship' ? w.ship : w.astronaut;
+  const { position, seconds } = interceptBelt(w, belt, viewer.position, speed);
+  const dx = position.x - viewer.position.x;
+  const dy = position.y - viewer.position.y;
+  const heading = Math.atan2(dx, -dy);
+  const facing = w.playerMode === 'ship' ? w.ship.angle : 0;
+  const bearing = Math.atan2(Math.sin(heading - facing), Math.cos(heading - facing));
+  return { aim: position, range: Math.hypot(dx, dy), seconds, bearing };
+}

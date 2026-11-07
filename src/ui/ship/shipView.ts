@@ -10,6 +10,7 @@ import { STATIONS, distance, nearbyStation } from '../../sim/surface';
 import { colonyPlanet, sitePosition } from '../../sim/localWorld';
 import { nearbyBuilding } from '../../sim/colony';
 import { BLUEPRINTS } from '../../sim/colonyConfig';
+import { haulError } from '../../sim/freight';
 import { manifestPlan } from '../../sim/manifests';
 import { availableProduct } from '../../sim/colonyPolicy';
 import { PRODUCTS } from '../../sim/colonyConfig';
@@ -26,6 +27,8 @@ export interface ShipPanelView {
   depot: boolean;
   foot: FootView | null;
   kit: KitView | null;
+  /** Ore waiting in the depot of another world, ready to haul home. */
+  haul: { text: string; enabled: boolean; reason: string } | null;
 }
 
 export interface KitView {
@@ -144,6 +147,20 @@ function kit(w: WorldState): KitView | null {
   return { text: 'A rig, a solar array, a battery and a power relay for another world: 18 alloy, 10 wire, 5 components. Nights there are long; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
 }
 
+/** Carrying a remote depot's ore home. Shown on another world's pad when the depot has ore. */
+function haul(w: WorldState): ShipPanelView['haul'] {
+  if ((w.siteBody ?? 'home') === 'home' || w.playerMode !== 'ship') return null;
+  const stored = inventoryMass(w.depot);
+  if (stored < 0.5) return null;
+  const room = Math.max(0, cargoCapacity(w.ship) - cargoMass(w.ship));
+  const error = haulError(w);
+  return {
+    text: `${stored.toFixed(0)} kg of ore waits in the depot here. Your hold takes ${room.toFixed(0)} kg. Refining it here first means carrying less.`,
+    enabled: error === null,
+    reason: error ?? 'Load it, fly home and press E on the pad.',
+  };
+}
+
 export function shipPanelView(w: WorldState): ShipPanelView {
   const cargo = cargoMass(w.ship);
   const stored = inventoryMass(w.depot);
@@ -167,5 +184,6 @@ export function shipPanelView(w: WorldState): ShipPanelView {
     depot: w.depotOpen,
     foot: w.playerMode === 'astronaut' ? foot(w) : null,
     kit: kit(w),
+    haul: haul(w),
   };
 }

@@ -232,8 +232,11 @@ export class Hud {
     this.mining = this.dock.cargo; this.colony = this.dock.colony;
     this.shipHost.className = 'ship-host';
     this.shipHost.addEventListener('click', event => {
-      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-kit="load"]');
+      const target = event.target as HTMLElement;
+      const button = target.closest<HTMLButtonElement>('button[data-kit="load"]');
       if (button && !button.disabled) this.onAction({ type: 'loadManifest', manifest: 'nacreKit' });
+      const haul = target.closest<HTMLButtonElement>('button[data-haul="load"]');
+      if (haul && !haul.disabled) this.onAction({ type: 'loadAllOre' });
     });
     this.shipExtras.className = 'ship-extras';
     this.mining.append(this.shipHost, this.shipExtras);

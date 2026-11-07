@@ -1,4 +1,4 @@
-import { linkedBuildings } from './grid';
+import { deliverPower, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
 import { bootStep, needsBoot } from './boot';
 import { solarFactor } from './sun';
@@ -8,7 +8,7 @@ import type {AutopilotAction} from './autopilotConfig';
 import type { CrewAction } from './crewOrders';
 import { loadManifest, type ManifestId } from './manifests';
 import { nearestPlanet, type BodyId } from './celestial';
-import { transferFreight, loadDepotOre } from './freight';
+import { transferFreight, loadDepotOre, loadAllDepotOre } from './freight';
 import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
 import { createShielding, isShield, type ShieldState, type ShieldLedger } from './shieldConfig';
 import { maintainShields, chargeShields, drainShield } from './shields';
@@ -62,7 +62,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -113,6 +113,7 @@ export function nearbyBuilding(world: WorldState): Building | undefined {
 }
 export function applyColonyAction(world: WorldState, action: ColonyAction): void {
   if (action.type === 'loadManifest') { loadManifest(world, action.manifest); return; }
+  if (action.type === 'loadAllOre') { loadAllDepotOre(world); return; }
   if (action.type === 'loadOre') { loadDepotOre(world, action.resource); return; }
   if (action.type === 'freight') { transferFreight(world, action.product, action.delta); return; }
   if (action.type === 'adjustPolicy') {
@@ -205,8 +206,14 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   for (const b of colony.buildings) b.linked = wired === null || wired.has(b.id) ? undefined : false;
   // Panels follow the sun: full power in daylight, none at night.
   const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * solarFactor(world.system, b.angle, colonyPlanet(world).id);
-  colony.generation = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false).reduce((sum, b) => sum + panel(b), 0);
-  for (const b of colony.buildings) if (b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false) b.gridPower = b.requestedPower = panel(b);
+  const sources = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false);
+  const raw = new Map(sources.map(b => [b.id, panel(b)]));
+  const delivered = deliverPower(world, raw);
+  colony.generation = sources.reduce((sum, b) => sum + (delivered.get(b.id) ?? 0), 0);
+  for (const b of sources) {
+    b.requestedPower = raw.get(b.id) ?? 0;
+    b.gridPower = delivered.get(b.id) ?? 0;
+  }
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
   stepHabitats(world, dt, true);

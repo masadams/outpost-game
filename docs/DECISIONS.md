@@ -303,3 +303,8 @@ The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s,
 - **Research comes from finds.** In day-cycle games research projects open only when a find is studied; each find also names the part it lets you fabricate.
 
 - **Upgrade in place is the default way to grow.** Tier 1→2 is available to new players once Infrastructure retrofits is researched; each building defines what a tier does, including buildings added later.
+
+- **Bodies, belts, air and discovery are data.** Adding a world is a catalogue row; a body's air, orbit, spin and survey time are fields. Discovery is by Observatory watching, hinted once, with probes able to reveal things earlier by scanning.
+- **Power has distance.** In day-cycle games a building must be wired to the pad; relays extend reach (600 m), carry 10 kW and keep 96% per hop; upgrades scale both.
+- **Sequence over menus.** Buildings, research and systems reach a new player in a fixed, explained order (see CURRENT_FOCUS). Each building defines what an upgrade tier changes.
+- **World seed.** Seed 0 is the standard layout (tests and developer runs); a new day-cycle game gets its own seed, saved with the game. Variation never makes the first three home seams smaller than standard.

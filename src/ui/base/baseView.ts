@@ -1,3 +1,4 @@
+import { RELAY_CAPACITY } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
@@ -8,7 +9,9 @@ import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/co
 import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
 import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
-import { colonyPlanet } from '../../sim/localWorld';
+import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
+import { BODIES, BODY_IDS } from '../../sim/celestial';
+import { bodyKnown } from '../../sim/explorationConfig';
 import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
 import { cargoCapacity, fuelCapacity } from '../../sim/shipStats';
@@ -31,6 +34,19 @@ export interface BaseView {
   storm: StormLabView | null;
   crystal: CrystalLabView | null;
   research: ResearchRow[] | null;
+  /** The other worlds with a base, so a mine far away can be checked without going there. */
+  elsewhere: OutpostView[];
+}
+
+export interface OutpostView {
+  id: string;
+  label: string;
+  power: string;
+  level: 'good' | 'warn' | 'bad' | 'none';
+  stores: string;
+  machines: Array<{ label: string; chip: Chip; line: string }>;
+  /** Things that need attention there, in plain words. */
+  short: string[];
 }
 
 export interface CrystalLabView {
@@ -193,6 +209,10 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     const weapon = WEAPONS[b.kind];
     facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
   }
+  if (b.kind === 'relay') facts.push(['Carrying', `${(b.gridPower ?? 0).toFixed(1)} of ${RELAY_CAPACITY * capacityFactor(b)} kW`]);
+  if (b.kind === 'solar' && (b.requestedPower ?? 0) - (b.gridPower ?? 0) > 0.05) {
+    facts.push(['Lost on the way', `${((b.requestedPower ?? 0) - (b.gridPower ?? 0)).toFixed(1)} kW (relay lines and limits)`]);
+  }
   if (b.kind === 'battery') facts.push(['Stores', `${BATTERY_CAPACITY * capacityFactor(b)} kJ`]);
   if (b.kind === 'storage') facts.push(['Holds', `+${200 * capacityFactor(b)} kg ore, +${100 * capacityFactor(b)} each product`]);
   if (facilityLevel(b) > 1) facts.push(['Tier', `${facilityLevel(b)}`]);
@@ -247,6 +267,32 @@ function defenceLine(w: WorldState): string | null {
   const perShot = Math.min(...turrets.map(b => WEAPONS[b.kind as keyof typeof WEAPONS].energy));
   const shots = Math.floor(w.colony.energy / perShot);
   return `Turrets: stored power covers about ${shots} shots.`;
+}
+
+function elsewhereView(w: WorldState): OutpostView[] {
+  const root = w.rootWorld ?? w;
+  const here = w.siteBody ?? 'home';
+  const out: OutpostView[] = [];
+  for (const id of BODY_IDS) {
+    if (id === here || !bodyKnown(root.exploration, id)) continue;
+    const site = colonyWorld(root, id);
+    if (site.colony.buildings.length === 0) continue;
+    const buildings = site.colony.buildings.map(b => buildingView(b, site));
+    const stock = [...PRODUCTS.map(p => [PRODUCT_LABEL[p], site.colony.products[p]] as const), ...RESOURCES.map(r => [RESOURCE_INFO[r].label, site.depot[r]] as const)]
+      .filter(([, n]) => n >= 0.5)
+      .map(([label, n]) => `${label} ${n.toFixed(0)}`);
+    const power = powerView(site);
+    out.push({
+      id,
+      label: BODIES[id].label,
+      power: power.summary,
+      level: power.level,
+      stores: stock.length ? stock.join(' · ') : 'Nothing stored',
+      machines: buildings.map(v => ({ label: v.label, chip: v.chip, line: v.line })),
+      short: buildings.filter(v => v.why).map(v => `${v.label}: ${v.why}`),
+    });
+  }
+  return out;
 }
 
 function powerView(w: WorldState): PowerView {
@@ -322,6 +368,7 @@ export function baseView(w: WorldState): BaseView {
     storm: stormLab(w),
     crystal: crystalLab(w),
     research: researchView(w),
+    elsewhere: elsewhereView(w),
   };
 }
 

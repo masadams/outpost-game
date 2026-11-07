@@ -1,6 +1,6 @@
 # Current Focus
 
-**Updated:** 2026-11-05 · **Milestone:** first mining sortie, then the first storm (Phase 1)
+**Updated:** 2026-11-06 · **Milestone:** Phase 2 (nearby worlds) built; growth runs 1 and 2 under way (see [growth-run.md](tasks/growth-run.md), [growth-run-2.md](tasks/growth-run-2.md))
 
 ## Why
 The alpha has a strong simulation core (fixed-step physics, landing, resource accounting, 538 passing unit tests) but grew wide before it got good. Seventeen task specs added research, 25 ship parts, combat, drones, shields, towing, autopilot tiers, facility upgrades, freight, scheduling and colony policy. Meanwhile the first minute of play is unclear and the interface reads like a web dashboard. The bible's own rule is depth before breadth, so we are returning to it.
@@ -78,6 +78,11 @@ Spec and slice list: [docs/tasks/phase1-first-storm.md](tasks/phase1-first-storm
 
 Also merged alongside it: right-click building menus with a confirmed Demolish ([UI conventions](UI_CONVENTIONS.md)), building animations and the Observatory power-on signal, and the sun and day cycle ([spec](tasks/sun-and-day.md)).
 
+## Where the game is now (the earned sequence)
+A new player starts with Solar array and Refinery. Industry running opens Battery, Storage, Fuel processor, Mining rig and Power relay; surveying the Frost buoy opens the Observatory; the Observatory opens the laser turret and, by watching, finds Nacre (90 s), then Cinder (420 s). Studying finds opens research (storm pieces, buoy data, derelict data, the Nacre crystal), then the Research lab, fabricated parts and **upgrade in place**. The second storm opens the missile turret and shield research; a base on another world opens domes. Probes (needing a working Observatory) survey belts and any marked point; they aim ahead of moving belts. Buildings must be wired to the base (relays carry limited power with small losses). Other worlds' bases are visible in Base, and their ore is hauled home from the Ship window. Bodies, belts, atmospheres and discovery are data (`src/sim/celestial.ts`, `explorationConfig.ts`); a world seed varies the layout fairly.
+
+Not played through in a browser by a person yet: the Nacre trip, research, the second storm, probes, relays, Cinder. A hands-on pass comes before more content.
+
 ## Next
 | Item | What | Status |
 |---|---|---|
@@ -93,4 +98,4 @@ Base shows a **Keep for turrets** reserve (steps of 50 kJ). The Observatory, ref
 Losing the lander no longer means losing everything: print a new pilot and lander, then go and salvage the old one while its transponder lasts. See [docs/tasks/clones-and-wrecks.md](tasks/clones-and-wrecks.md).
 
 ## Out of scope for now
-New worlds, new ship parts, the broad research tree, and the S0–S6 systems slices wait until the storm and the first night have been played and tuned.
+Ship engineering (Phase 3), new star systems (Phase 6), terraforming and large habitats (end-game), the broad research tree beyond what finds open, and demand-side power through relays. See the roadmap's "Direction update" and the growth run plans.

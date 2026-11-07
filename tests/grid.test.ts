@@ -55,3 +55,48 @@ describe('power links', () => {
     expect(lab.linked).toBeUndefined();
   });
 });
+
+describe('relay capacity and loss', () => {
+  async function field(panels: number, relays: number) {
+    const { deliverPower, RELAY_CAPACITY, LINE_KEPT } = await import('../src/sim/grid');
+    const w = base();
+    const list = [];
+    for (let i = 0; i < relays; i++) list.push(completedBuilding(10 + i, 'relay', metres(500 + i * 560), w));
+    const farAt = 500 + (relays - 1) * 560 + 60;
+    for (let i = 0; i < panels; i++) list.push(completedBuilding(100 + i, 'solar', metres(farAt + i * 5), w));
+    w.colony.buildings.push(...list);
+    const raw = new Map(list.filter(b => b.kind === 'solar').map(b => [b.id, 8]));
+    return { w, out: deliverPower(w, raw), raw, RELAY_CAPACITY, LINE_KEPT };
+  }
+
+  it('each relay hop keeps a little less, and never more than was made', async () => {
+    const { out, raw, LINE_KEPT } = await field(1, 2);
+    const delivered = [...out.values()][0];
+    expect(delivered).toBeCloseTo(8 * LINE_KEPT ** 2, 6);
+    expect(delivered).toBeLessThan([...raw.values()][0]);
+  });
+
+  it('a relay carries only so much: more panels behind it than it can carry are held back evenly', async () => {
+    const { w, out, RELAY_CAPACITY } = await field(4, 1);
+    const total = [...out.values()].reduce((a, b) => a + b, 0);
+    expect(total).toBeLessThanOrEqual(RELAY_CAPACITY + 1e-6);
+    const relay = w.colony.buildings.find(b => b.kind === 'relay')!;
+    expect(relay.gridPower).toBeCloseTo(RELAY_CAPACITY, 6);
+    const each = [...out.values()];
+    expect(Math.max(...each) - Math.min(...each)).toBeLessThan(1e-9);
+  });
+
+  it('panels near the pad pay nothing, and an upgraded relay carries more', async () => {
+    const { deliverPower } = await import('../src/sim/grid');
+    const w = base();
+    const near = completedBuilding(1, 'solar', metres(60), w);
+    w.colony.buildings.push(near);
+    expect(deliverPower(w, new Map([[1, 8]])).get(1)).toBe(8);
+    const heavy = await field(4, 1);
+    const relay = heavy.w.colony.buildings.find(b => b.kind === 'relay')!;
+    relay.level = 2;
+    const raw = new Map(heavy.w.colony.buildings.filter(b => b.kind === 'solar').map(b => [b.id, 8]));
+    const total = [...deliverPower(heavy.w, raw).values()].reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThan(heavy.RELAY_CAPACITY);
+  });
+});
