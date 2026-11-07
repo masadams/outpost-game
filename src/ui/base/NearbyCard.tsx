@@ -30,7 +30,7 @@ function click(action: () => void) {
 export function NearbyCardView({ state, on }: { state: NearbyState; on: NearbyHandlers }) {
   const b = state.building;
   return (
-    <section class="nearby-card" aria-label={`Nearby: ${b.label}`} data-building={b.id} data-chip={b.chip}>
+    <section class="nearby-card" aria-label={`Nearby: ${b.label}`} data-building={b.id} data-chip={b.chip} data-aim={b.turret ? b.turret.aim.toFixed(3) : undefined}>
       <header>
         <span class="nearby-label">Nearby</span>
         <strong>{b.label}</strong>

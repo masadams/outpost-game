@@ -1,41 +1,11 @@
-import { colonyPlanet } from '../sim/localWorld';
 import { MANIFESTS, type ManifestId } from '../sim/manifests';
 import { RESOURCES, type Resource } from '../sim/resources';
 import type { Product } from '../sim/colonyConfig';
-import { habitatDetails } from './habitats';
-import { geologyPanel, rigDetails } from './geology';
-import { schedulingPanel } from './scheduling';
-import { policyPanel } from './colonyPolicy';
 import { POLICY_FIELDS, type PolicyField } from '../sim/colonyPolicy';
 import { SCHEDULE_PRODUCTS, type ScheduleProduct } from '../sim/scheduling';
-import { buildingHealth } from '../sim/buildingHealth';
-import { isTurret, WEAPONS } from '../sim/defenceConfig';
-import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType } from '../sim/colonyConfig';
-import { energyCapacity, oreCapacity, nearbyBuilding, recipeFor, type ColonyAction } from '../sim/colony';
-import { inventoryMass } from '../sim/resources';
-import type { WorldState } from '../sim/world';
+import { BUILD_TYPES, PRODUCTS, type BuildType } from '../sim/colonyConfig';
+import type { ColonyAction } from '../sim/colony';
 
-/** Nearby facility controls and local stocks. Building itself lives in the build bar. */
-export function colonyPanel(world: WorldState, paused: boolean): string {
-  const colony = world.colony, disabled = paused || world.playerMode !== 'astronaut' ? 'disabled' : '';
-  const near = nearbyBuilding(world);
-  return `<label>${colonyPlanet(world).label.toUpperCase()} · ${colony.buildings.length} BUILDINGS</label>
-    ${near ? `<div class="machine" data-hull="${buildingHealth(near).toFixed(1)}" data-aim="${(near.turret?.aim ?? 0).toFixed(3)}"><label>${BLUEPRINTS[near.kind].label}</label><p>Hull ${buildingHealth(near).toFixed(0)}% · ${near.status}${recipeFor(near) ? ` · ${recipeFor(near)!.label} · ${near.progress.toFixed(1)} s` : ''}</p>
-      ${near.kind === 'storage' || near.kind === 'battery' ? `<p>${buildingHealth(near) > 0 ? 'Passive capacity · available' : 'Capacity lost · repair to restore'}</p>` : `<button ${disabled} data-colony="toggleMachine">${near.enabled ? 'Disable' : 'Enable'} nearby${near.kind === 'service' || isTurret(near.kind) ? '' : ' [E]'}</button>`}
-      ${isTurret(near.kind) ? `<p>${WEAPONS[near.kind].range} m · ${WEAPONS[near.kind].energy} kJ/shot${WEAPONS[near.kind].alloy ? ` · ${WEAPONS[near.kind].alloy} alloy${WEAPONS[near.kind].components ? ` + ${WEAPONS[near.kind].components} components` : ''}` : ''}</p><button ${disabled} data-colony="controlTurret">${world.defence.controlled === near.id ? 'Release turret' : 'Control turret'} [E]</button><button ${disabled} data-colony="toggleAuto">Auto defence [G]: ${near.turret?.automatic ? 'on' : 'off'}</button>` : ''}
-      <button ${disabled || buildingHealth(near) >= 100 ? 'disabled' : ''} data-colony="repairBuilding">Repair nearby [U] · 1 alloy / 10 hull</button>
-      ${near.kind === 'service' ? '<p>E: suit service / repair / refuel</p>' : ''}
-      ${rigDetails(world, near)}${habitatDetails(near)}
-      ${near.kind === 'refinery' ? `<button ${disabled} data-colony="cycleRecipe">Next refinery recipe [V]</button>` : ''}
-      ${schedulingPanel(near, disabled || buildingHealth(near) <= 0 ? 'disabled' : '')}</div>` : ''}
-    ${policyPanel(world, paused)}
-    ${geologyPanel(world)}
-    <details data-preserve-open><summary>Local power and stocks</summary>    <div class="resource"><span>Supply / demand</span><span>${colony.generation.toFixed(0)} / ${colony.demand.toFixed(0)} kW</span></div>
-    <div class="resource"><span>Stored energy</span><span>${colony.energy.toFixed(1)} / ${energyCapacity(colony)} kJ</span></div>
-    <div class="resource"><span>Ore storage</span><span>${inventoryMass(world.depot).toFixed(0)} / ${oreCapacity(colony)} kg</span></div>
-    <div class="product-grid">${PRODUCTS.map(p => `<span>${p}<b>${colony.products[p].toFixed(1)}</b></span>`).join('')}</div></details>
-    <p class="checkpoint">K: save checkpoint · L: load<br><small>Manual local save</small></p>`;
-}
 export function actionFromButton(button: HTMLElement): ColonyAction | null {
   const body=button.dataset.body==='home'||button.dataset.body==='moon'?button.dataset.body:undefined;
   if(button.dataset.crew&&['walk','build','stop'].includes(button.dataset.crew))return {type:'crewOrder',operation:button.dataset.crew as 'build'|'stop',body};

@@ -205,3 +205,8 @@
 #hud .base-reserve strong { min-width: 5em; text-align: center; font-family: var(--ui-mono); }
 #hud .base-reserve button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--ui-line); background: var(--ui-raised); color: var(--ui-text); font-size: 18px; cursor: pointer; }
 #hud .base-reserve button:disabled { opacity: .4; cursor: default; }
+
+#hud .base-targets { display: grid; gap: 6px; margin: 6px 0; }
+#hud .base-target { display: flex; align-items: center; gap: 8px; }
+#hud .base-target span { min-width: 6.5em; text-transform: capitalize; }
+#hud .base-target b { min-width: 3em; text-align: center; font-variant-numeric: tabular-nums; }

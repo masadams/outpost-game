@@ -21,12 +21,12 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
   // The return from the build site can exceed 12 seconds at the crew's 12 m/s walking speed.
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 18000, intervals: [100] }).toBeLessThan(12);
   await page.keyboard.up('a'); await page.waitForTimeout(450);
-  await expect(oxygen).toContainText(/habitat air/i); await expect(page.locator('.machine')).toContainText('Large habitat');
+  await expect(oxygen).toContainText(/habitat air/i); await expect(page.locator('.nearby-card')).toContainText('Large habitat');
   const held = await hud.getAttribute('data-oxygen'); await page.waitForTimeout(1200); expect(await hud.getAttribute('data-oxygen')).toBe(held);
   await page.screenshot({ path: 'docs/screenshots/oxygen-habitat.png' });
-  await page.getByRole('button', { name: 'Disable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText(/suit air/i);
+  await page.locator('.nearby-card').getByRole('button', { name: /Turn off/ }).click(); await expect(oxygen).toContainText(/suit air/i);
   await expect.poll(async () => Number(await hud.getAttribute('data-oxygen'))).toBeLessThan(Number(held) - .3);
-  await page.getByRole('button', { name: 'Enable nearby [E]', exact: true }).click(); await expect(oxygen).toContainText(/habitat air/i);
+  await page.locator('.nearby-card').getByRole('button', { name: /Turn on/ }).click(); await expect(oxygen).toContainText(/habitat air/i);
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.version).toBe(34); expect(saved.world.colony.buildings[1].habitat.oxygen).toBeGreaterThan(.6);

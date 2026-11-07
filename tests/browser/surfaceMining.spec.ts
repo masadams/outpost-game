@@ -17,8 +17,8 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   await page.keyboard.press('b'); await page.keyboard.down('d');
   await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 8000, intervals: [100] }).toBeGreaterThan(145);
   await page.keyboard.up('d'); await page.waitForTimeout(450);
-  await expect(page.locator('.machine')).toContainText('Mining rig');
-  await page.keyboard.press('e'); await expect(page.locator('.machine')).toContainText('disabled');
+  await expect(page.locator('.nearby-card')).toContainText('Mining rig');
+  await page.keyboard.press('e'); await expect(page.locator('.nearby-card')).toContainText('Off');
   const stopped = await hud.getAttribute('data-depot'); await page.waitForTimeout(2200);
   expect(await hud.getAttribute('data-depot')).toBe(stopped);
   await page.keyboard.press('e');

@@ -40,7 +40,7 @@ test('uses contextual panels with pause-safe mouse/keyboard navigation and reada
   await page.keyboard.press('h'); await expect(page.getByRole('dialog')).toBeVisible(); await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden(); await expect(dock).toHaveAttribute('data-panel', 'combat');
   await page.keyboard.press('Escape'); await expect(dock).toBeHidden(); await page.keyboard.press('p'); await page.keyboard.press('f');
-  await expect(hud).toHaveAttribute('data-context', 'surface'); await expect(dock).toHaveAttribute('data-panel', 'colony');
+  await expect(hud).toHaveAttribute('data-context', 'surface'); await expect(dock).toBeHidden();
   await page.getByRole('button', { name:'Ship', exact: true }).focus(); await page.keyboard.press('Space');
   await expect(dock).toHaveAttribute('data-panel', 'cargo'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-context', 'construction');

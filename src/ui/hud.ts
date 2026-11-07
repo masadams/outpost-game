@@ -45,7 +45,7 @@ import { telemetry, type Ship } from '../sim/physics';
 import { inventoryMass } from '../sim/resources';
 import type { WorldState } from '../sim/world';
 import { SUIT } from '../sim/astronaut';
-import { colonyPanel, actionFromButton } from './colony';
+import { actionFromButton } from './colony';
 import type { ColonyAction } from '../sim/colony';
 import { setText, patchMarkup } from './dom';
 export class Hud {
@@ -53,8 +53,6 @@ export class Hud {
   private instruments: InstrumentPanel;
   private status: HTMLElement;
   private mining: HTMLElement;
-  private colony: HTMLElement;
-  private colonyMarkup = '';
   private combatMarkup = '';
   private defenceMarkup = '';
   private nav: NavigationPanel;
@@ -98,7 +96,7 @@ export class Hud {
   destroy(): void { this.root.remove(); }
   toggleDock(view: DockView): void { this.dock.toggle(view); }
   /** Screen buttons in the flight chrome. Build toggles build mode; the others open their panel. */
-  chooseScreen(view: DockView): void {
+  chooseScreen(view: DockView | 'colony'): void {
     if (view !== 'colony') { this.dock.choose(view); return; }
     const open = !this.latestWorld?.colony.buildOpen;
     if (open) this.dock.close();
@@ -116,7 +114,7 @@ export class Hud {
   }
   /** Focus set: the building you stand next to gets a small card instead of the old facility panel. */
   private renderNearby(world: WorldState, paused: boolean): void {
-    const near = featureVisible('catalogue') || world.playerMode !== 'astronaut' || world.colony.buildOpen ? undefined : nearbyBuilding(world);
+    const near = world.playerMode !== 'astronaut' || world.colony.buildOpen ? undefined : nearbyBuilding(world);
     this.nearby.update(near ? { building: buildingView(near, world), damaged: buildingHealth(near) < 100, paused } : null);
   }
   private renderBuild(world: WorldState): void {
@@ -127,7 +125,7 @@ export class Hud {
     if (!open) this.buildBar.tip(null);
   }
   openObjectives(): void { this.dock.toggle('objectives'); }
-  get currentPanel(): DockView | null {
+  get currentPanel(): DockView | 'colony' | null {
     if (this.latestWorld?.colony.buildOpen) return 'colony';
     return this.dock.root.hidden ? null : this.dock.current;
   }
@@ -168,7 +166,6 @@ export class Hud {
     this.baseSelected=id;
     this.dock.open('command');
   }
-  openBuild():void{this.dock.open('colony');}
   get dockOpen():boolean{return !this.dock.root.hidden;}
   closeDock(): void { this.dock.close(); }
   constructor(onColonyAction: (action: ColonyAction) => void, private preferences: PresentationPreferences) {
@@ -181,8 +178,6 @@ export class Hud {
       start: () => onColonyAction({ type: 'crewOrder', operation: 'build' }),
       close: () => onColonyAction({ type: 'buildMode', open: false }),
     });
-    this.dock.colony.addEventListener('change',e=>{const el=e.target as HTMLSelectElement;if(el.id==='build-site'&&this.latestWorld){const w=this.latestWorld,p=colonyPlanet(w),angle=Number(el.value)/p.radius;const valid=Number.isFinite(angle)&&Math.abs(angle)<=Math.PI,error=valid?orderError(w,w.colony.selected,angle):'Site must be finite and within this world’s surface range';this.pointerDraft={kind:w.colony.selected,angle:valid?angle:0,body:p.id,error,valid:!error,inputError:valid?null:error};this.update(w,this.root.dataset.state==='paused');}
-});
     this.dock.cargo.addEventListener('change',e=>{const input=e.target as HTMLInputElement;if(input.id==='fuel-plan-amount'){this.fuelPlanAmount=input.value===''?NaN:Number(input.value);}});
     this.dock.objectives.append(this.objectives.content);
     this.nav = new NavigationPanel(onColonyAction); this.dock.navigation.append(this.nav.root);
@@ -195,6 +190,7 @@ export class Hud {
       recipe: id => onColonyAction({ type: 'remote', id, operation: 'recipe', body: body() }),
       upgrade: id => onColonyAction({ type: 'upgradeBuilding', id, level: 2, body: body() }),
       auto: id => onColonyAction({ type: 'remote', id, operation: 'schedule', body: body() }),
+      target: (id, product, delta) => onColonyAction({ type: 'remoteTarget', id, product, delta, body: body() }),
       analyse: () => onColonyAction({ type: 'analyseSample' }),
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
@@ -231,7 +227,7 @@ export class Hud {
     const crewStatus=this.root.querySelector<HTMLElement>('#crew-order-status')!;isolateControlKeys(crewStatus);crewStatus.querySelector('button')!.addEventListener('click',()=>{onColonyAction({type:'crewOrder',operation:'stop'});(document.activeElement as HTMLElement)?.blur();});
     this.instruments=new InstrumentPanel(this.root.querySelector('.instruments')!,()=>onColonyAction({type:'autopilot',operation:'cancel'}));
     this.status = this.root.querySelector('.status')!;
-    this.mining = this.dock.cargo; this.colony = this.dock.colony;
+    this.mining = this.dock.cargo;
     this.shipHost.className = 'ship-host';
     this.shipHost.addEventListener('click', event => {
       const target = event.target as HTMLElement;
@@ -320,8 +316,6 @@ export class Hud {
     this.nav.update(world, paused, !this.dock.navigation.hidden);
     if(!this.dock.autopilot.hidden)patchMarkup(this.dock.autopilot,autopilotPanel(world,paused));
     if (!this.dock.command.hidden) this.renderBase(paused);
-    const panel = colonyPanel(world, paused);
-    if (this.colonyMarkup !== panel) { patchMarkup(this.colony, panel); this.colonyMarkup = panel; }
     const combat = combatPanel(world, paused), defence = defencePanel(world, paused, threats);
     if (combat !== this.combatMarkup) { patchMarkup(this.dock.combat, combat); this.combatMarkup = combat; }
     if (defence !== this.defenceMarkup) { patchMarkup(this.dock.defence, defence); this.defenceMarkup = defence; }

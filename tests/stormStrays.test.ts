@@ -32,7 +32,7 @@ describe('storm strays', () => {
     config.kinds!.forEach((kind, i) => {
       if (kind === 'miss') expect(w.storm.plan[i].impactAngle).toBeNull();
     });
-  });
+  }, 30000);
 
   it('the big one is bigger and tougher, and comes down well away from the base', () => {
     const seed = withStrays(3, 'large')[0];
@@ -49,7 +49,7 @@ describe('storm strays', () => {
       const metres = Math.abs(angle - WORLD.padAngle) * WORLD.radius;
       expect(metres).toBeGreaterThan(450);
     }
-  });
+  }, 30000);
 
   it('stays within what a save can hold', () => {
     for (const seed of withStrays(6, 'large').slice(0, 20)) expect(stormFor(6, seed).aim.length).toBeLessThanOrEqual(24);

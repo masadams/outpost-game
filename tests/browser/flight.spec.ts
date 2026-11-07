@@ -107,7 +107,6 @@ test('constructs a powered production line and preserves its world checkpoint ac
   await page.keyboard.press('t'); await page.keyboard.press('5'); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '3');
   await expect.poll(async () => Number(await hud.getAttribute('data-fuel-stock')), { timeout: 8000, intervals: [100] }).toBeGreaterThan(1);
-  await page.locator('.colony-panel').evaluate(element => { element.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/colony-production.png' });
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
   const fuel = await hud.getAttribute('data-fuel-stock');
