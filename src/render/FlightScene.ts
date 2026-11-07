@@ -46,6 +46,7 @@ import { stormView } from '../ui/flight/stormView';
 import { dayView } from '../ui/flight/dayView';
 import { wreckCard, wreckMarks } from '../ui/flight/wreckView';
 import { daylightAt } from '../sim/sun';
+import { buildSky, drawSky } from './skyBackdrop';
 import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
@@ -453,8 +454,9 @@ export class FlightScene extends Phaser.Scene {
   private draw(): void {
     const { width, height } = this.scale;
     const g = this.art; g.clear(); this.map.clear();
-    const starKey=`${width}/${height}/${this.preferences.quality}`;
+    const starKey=`${width}/${height}/${this.preferences.quality}/${this.simulation.seed}`;
     if(starKey!==this.starKey){this.stars.clear();this.starKey=starKey;
+    drawSky(this.stars,buildSky(this.simulation.seed,this.preferences.quality==='low'?'low':'high'),width,height);
     for (const star of this.starPoints.slice(0,this.preferences.quality==='low'?80:240)) {
       this.stars.fillStyle(star.bright ? 0xa9c9dc : 0x456079, star.bright ? 0.85 : 0.5);
       this.stars.fillRect(star.x * width, star.y * height, star.bright ? 2 : 1, star.bright ? 2 : 1);
