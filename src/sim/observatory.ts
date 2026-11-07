@@ -2,7 +2,7 @@ import { workFactor } from './facilityStats';
 import { industrialPowerBlock } from './colonyPolicy';
 import type { Building } from './colony';
 import { powerFraction } from './power';
-import { BODIES, BODY_IDS } from './celestial';
+import { BODIES, BODY_IDS, surveyTime } from './celestial';
 import { notify } from './messages';
 import { SIGHTING_SECONDS } from './stormKnowledge';
 import type { WorldState } from './world';
@@ -38,7 +38,8 @@ export function stepObservatory(w: WorldState, b: Building, dt: number): void {
       ex.hinted.push(id);
       notify(w, spec.hint.text);
     }
-    if (spec.surveySeconds <= 0 || ex.known.includes(id) || ex.watch < spec.surveySeconds) continue;
+    const needed = surveyTime(id, w.seed);
+    if (needed <= 0 || ex.known.includes(id) || ex.watch < needed) continue;
     ex.known.push(id);
     notify(w, `${spec.label.toUpperCase()} SURVEYED · ROUTE OPEN ON THE MAP`);
   }

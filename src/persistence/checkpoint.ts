@@ -115,6 +115,7 @@ export function decodeCheckpoint(text: string): WorldState {
   if (!validWorld(envelope.world)) throw new Error('Checkpoint is invalid');
   const world = envelope.world;
   shareResearch(world);
+  if (world.seed !== 0) world.system.seed = world.seed;
   if(world.autopilot.program){world.autopilot.program=null;world.autopilot.status='Checkpoint loaded · automation disarmed';}
   world.combat.flashes = [];
   world.defence.controlled = null; world.defence.beams = [];
