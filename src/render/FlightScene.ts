@@ -87,6 +87,7 @@ export class FlightScene extends Phaser.Scene {
   private moon!: Phaser.GameObjects.Image;
   private cinder!: Phaser.GameObjects.Image;
   private ember!: Phaser.GameObjects.Image;
+  private glint!: Phaser.GameObjects.Image;
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
   private skyImage!: Phaser.GameObjects.Image;
@@ -155,7 +156,8 @@ export class FlightScene extends Phaser.Scene {
     this.moon = createPlanet(this, 'moon');
     this.cinder = createPlanet(this, 'cinder').setTint(0xcdb3a2);
     this.ember = createPlanet(this, 'ember').setTint(0xe0a487);
-    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.cinder, this.ember, this.art]);
+    this.glint = createPlanet(this, 'glint').setTint(0xa9d6ee);
+    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.cinder, this.ember, this.glint, this.art]);
     this.map = this.add.graphics();
     this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
       if(this.menu?.isOpen||this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
@@ -503,6 +505,9 @@ export class FlightScene extends Phaser.Scene {
     const ember = planetAt('ember', this.simulation.system);
     const emberHere = bodyExists('ember', this.simulation.system) && this.simulation.system.binary;
     this.ember.setVisible(emberHere).setPosition(ember.position.x - this.follow.x, ember.position.y - this.follow.y);
+    const glint = planetAt('glint', this.simulation.system);
+    const glintHere = bodyExists('glint', this.simulation.system) && this.simulation.system.binary;
+    this.glint.setVisible(glintHere).setPosition(glint.position.x - this.follow.x, glint.position.y - this.follow.y);
     const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
     const padLevel = padSafety.approach ? padSafety.level : 'neutral';
     const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;

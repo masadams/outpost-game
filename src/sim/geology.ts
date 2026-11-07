@@ -18,12 +18,15 @@ const CINDER_SEAMS: typeof SEAMS = [['rareMetals', 100, 30, 220], ['rareMetals',
 /** Ember: thin air, ice and iron and a little copper. */
 const EMBER_SEAMS: typeof SEAMS = [['ice', 90, 34, 200], ['iron', -200, 32, 170], ['copper', 330, 30, 120], ['rareMetals', 560, 26, 70]];
 
+/** Glint: a small ice dwarf, with water on top and a little metal under it. */
+const GLINT_SEAMS: typeof SEAMS = [['ice', 60, 34, 260], ['ice', -190, 30, 200], ['iron', 250, 26, 90], ['rareMetals', -320, 20, 50]];
+
 /** The first seams near the pad are never made smaller than the standard game: a fair start for every seed. */
 const FAIR_SEAMS = 3;
 
 export function createSurfaceDeposits(radius: number = WORLD.radius, body?: BodyId, seed = 0): SurfaceDeposit[] {
-  if (body === 'cinder' || body === 'ember') radius = CELESTIAL[body].radius;
-  const seams: typeof SEAMS = body === 'cinder' ? CINDER_SEAMS : body === 'ember' ? EMBER_SEAMS : radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
+  if (body === 'cinder' || body === 'ember' || body === 'glint') radius = CELESTIAL[body].radius;
+  const seams: typeof SEAMS = body === 'cinder' ? CINDER_SEAMS : body === 'ember' ? EMBER_SEAMS : body === 'glint' ? GLINT_SEAMS : radius === WORLD.radius ? SEAMS : [['ice', 160, 40, 180], ['iron', -180, 34, 160], ['rareMetals', 420, 32, 90], ['silicon', 760, 36, 120], ['copper', -600, 36, 160]];
   // Seed 0 is the standard game. Any other seed varies each seam's size a little, the same way every time.
   const rand = streamFor(seed, `ground/${body ?? 'home'}`);
   return seams.map(([resource, arc, halfWidth, initial], i) => {
