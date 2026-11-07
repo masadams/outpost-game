@@ -58,7 +58,11 @@
 }
 
 /* One row of cards so the bar never climbs into the flight corridor; scrolls sideways only if it must. */
-#hud .build-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(190px * var(--scale)), 1fr)); gap: 8px; max-height: calc(205px * var(--scale)); overflow-y: auto; overscroll-behavior: contain; }
+#hud .build-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(190px * var(--scale)), 1fr)); gap: 8px; max-height: min(calc(205px * var(--scale)), 19vh); overflow-y: auto; overscroll-behavior: contain; }
+@media (max-height: 700px) {
+  /* A short window keeps the bar low: one row, scrolling sideways (tabs keep each group small). */
+  #hud .build-cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(calc(150px * var(--scale)), 1fr); max-height: none; overflow: auto hidden; }
+}
 #hud .build-card {
   display: grid; gap: 7px; align-content: start; text-align: left; padding: 11px 12px; min-width: 0;
   background: var(--ui-raised); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); color: var(--ui-text);

@@ -4,6 +4,7 @@ import { localAngle, heading, wrap, type Vec } from './math';
 import { predictMeteor } from './meteor';
 import { notify } from './messages';
 import { seeded } from './random';
+import { around, streamFor } from './seed';
 import { operational } from './buildingHealth';
 import { ANALYSIS_ENERGY, PICKUP_REACH, SECOND_STORM_DELAY, stormFor, type FarBody } from './stormConfig';
 import type { Meteor } from './defenceConfig';
@@ -73,6 +74,23 @@ export function planStorm(world: WorldState): void {
  * Plans one more body. Aiming a body means simulating its fall a few times, which takes a moment, so the game plans
  * one body per step instead of all at once (the bodies appear at least 30 s later). Same result as planning together.
  */
+/**
+ * How this world's seed shapes a storm. Seed 0 is the standard storm. Others move where it comes down and when a little,
+ * and make bodies a little bigger or smaller, within fair bounds: the zone never closes on the pad, the first storm
+ * arrives in the same part of the day, and no body of the first storm is tougher than standard.
+ */
+export function stormShape(seed: number, wave: 1 | 2): { offset: number; arrival: number; size: (i: number) => number; tough: (i: number) => number } {
+  const STORM = stormFor(wave);
+  if (seed === 0) return { offset: STORM.targetOffset, arrival: 0, size: () => 1, tough: () => 1 };
+  const rand = streamFor(seed, `storm/${wave}`);
+  const side = STORM.targetOffset >= 0 ? 1 : -1;
+  const offset = side * Math.max(100, Math.abs(STORM.targetOffset) * around(rand, 0.35));
+  const arrival = Math.round((rand() * 2 - 1) * (wave === 1 ? 40 : 90));
+  const sizes = STORM.aim.map(() => around(rand, 0.15));
+  const toughs = STORM.aim.map(() => (wave === 1 ? Math.min(1, around(rand, 0.15)) : around(rand, 0.15)));
+  return { offset, arrival, size: i => sizes[i] ?? 1, tough: i => toughs[i] ?? 1 };
+}
+
 export function planNextBody(world: WorldState): void {
   const storm = world.storm;
   const STORM = stormFor(storm.wave);
@@ -84,9 +102,12 @@ export function planNextBody(world: WorldState): void {
   const home = planetAt('home', world.system);
   const entryTime = storm.arrival + i * STORM.spacing;
   const system = { ...world.system, time: entryTime };
-  const target = WORLD.padAngle + (STORM.targetOffset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
-  const tangential = aimTangential(target, system, STORM.radii[i], STORM.masses[i], storm.wave);
-  const meteor = entryMeteor(world.nextId++, target, tangential, system, STORM.radii[i], STORM.masses[i], storm.wave);
+  const shape = stormShape(world.seed, storm.wave);
+  const target = WORLD.padAngle + (shape.offset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
+  const radius = STORM.radii[i] * shape.size(i);
+  const mass = STORM.masses[i] * shape.size(i) ** 3;
+  const tangential = aimTangential(target, system, radius, mass, storm.wave);
+  const meteor = entryMeteor(world.nextId++, target, tangential, system, radius, mass, storm.wave);
   const fall = landing(meteor, system);
   storm.ids.push(meteor.id);
   storm.plan.push({ id: meteor.id, impactAngle: fall?.angle ?? null, impactTime: fall?.time ?? null });
@@ -97,7 +118,7 @@ export function planNextBody(world: WorldState): void {
     entryTime,
     radius: meteor.radius,
     mass: meteor.mass,
-    health: STORM.health[i],
+    health: STORM.health[i] * shape.tough(i),
     impactAngle: fall?.angle ?? null,
     impactTime: fall?.time ?? null,
   });
@@ -122,7 +143,7 @@ export function stepStorm(world: WorldState): void {
   }
   if (!storm.planned) {
     // Never sooner than the fixed first-storm time, and always with the full warning window ahead.
-    if (storm.plan.length === 0) storm.arrival = Math.max(STORM.arrivalTime, time + STORM.lead + 30);
+    if (storm.plan.length === 0) storm.arrival = Math.max(STORM.arrivalTime + stormShape(world.seed, storm.wave).arrival, time + STORM.lead + 30);
     planNextBody(world);
     if (!storm.planned) return;
   }

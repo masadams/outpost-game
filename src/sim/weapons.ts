@@ -1,3 +1,4 @@
+import { workFactor } from './facilityStats';
 import { pursuitAcceleration } from './guidance';
 import { groundVelocity, relative } from './celestial';
 import { allColonies, sitePosition, colonyPlanet } from './localWorld';
@@ -60,7 +61,8 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     // A turret left on automatic draws a little power just to stay ready, whether or not it is firing.
     if (state.automatic && !manual) { b.requestedPower = Math.max(b.requestedPower ?? 0, AUTO_STANDBY_KW); site.colony.demand += AUTO_STANDBY_KW; site.colony.energy = Math.max(0, site.colony.energy - AUTO_STANDBY_KW * dt); }
     if (!(manual ? fire : state.automatic && target)) continue;
-    b.requestedPower = spec.energy / spec.cooldown; site.colony.demand += b.requestedPower;
+    const cooldown = spec.cooldown / workFactor(b);
+    b.requestedPower = spec.energy / cooldown; site.colony.demand += b.requestedPower;
     if (state.cooldown > 1e-9) continue;
     if (site.colony.energy + 1e-9 < spec.energy) { b.status = 'no power'; continue; }
     if (site.colony.products.alloy + 1e-9 < spec.alloy || site.colony.products.components + 1e-9 < spec.components) { b.status = 'no feedstock'; continue; }
@@ -71,7 +73,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     site.colony.energy = Math.max(0, site.colony.energy - spec.energy);
     site.colony.products.alloy = Math.max(0, site.colony.products.alloy - spec.alloy);
     site.colony.products.components = Math.max(0, site.colony.products.components - spec.components);
-    b.gridPower = spec.energy / dt; state.cooldown = spec.cooldown; b.status = 'running'; defence.shots++;
+    b.gridPower = spec.energy / dt; state.cooldown = cooldown; b.status = 'running'; defence.shots++;
     if (b.kind === 'laser') {
       let distance: number = spec.range, victim;
       for (const m of [...defence.meteors, ...site.asteroids]) {

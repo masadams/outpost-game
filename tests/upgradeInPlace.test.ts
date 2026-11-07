@@ -61,3 +61,14 @@ describe('upgrading in place', () => {
     expect(actionAllowed({ type: 'upgradeBuilding', id: 1, level: 3 }, 'focus')).toBe(false);
   });
 });
+
+describe('tier effects for the rest', () => {
+  it('every building names what a tier changes, and turrets really fire faster', async () => {
+    const { BUILD_TYPES } = await import('../src/sim/colonyConfig');
+    const { completedBuilding } = await import('../src/sim/construction');
+    const w = createWorld();
+    for (const kind of BUILD_TYPES) expect(tierEffect(completedBuilding(1, kind, kind === 'miningRig' ? 160 / 1800 : 0.3, w)).length).toBeGreaterThan(5);
+    expect(tierEffect(completedBuilding(1, 'laser', 0.3, w))).toBe('Fires 1.25× as often');
+    expect(tierEffect(completedBuilding(1, 'shieldSmall', 0.3, w))).toBe('Recharges 1.25× as fast');
+  });
+});
