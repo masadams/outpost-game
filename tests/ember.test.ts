@@ -56,3 +56,27 @@ describe('Ember is far but possible', () => {
     }
   });
 });
+
+import { mapView } from '../src/ui/map/mapView';
+
+describe('Ember on the Map', () => {
+  const find = (has: boolean) => Array.from({ length: 200 }, (_, i) => i + 1).find(s => bodyExists('ember', day(s)) === has)!;
+
+  it('is listed as a route once surveyed, in a seed that has it', () => {
+    const w = createWorld(find(true));
+    w.system.sun = true;
+    w.system.binary = true;
+    w.exploration.known.push('moon', 'cinder', 'ember');
+    const ids = mapView(w).places.map(p => p.id);
+    expect(ids).toContain('ember');
+    expect(mapView(w).places.find(p => p.id === 'ember')?.label).toBe('Ember');
+  });
+
+  it('never appears in a seed without it, even if marked known', () => {
+    const w = createWorld(find(false));
+    w.system.sun = true;
+    w.system.binary = true;
+    w.exploration.known.push('moon', 'cinder', 'ember');
+    expect(mapView(w).places.map(p => p.id)).not.toContain('ember');
+  });
+});
