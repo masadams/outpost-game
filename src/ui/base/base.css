@@ -210,3 +210,58 @@
 #hud .base-target { display: flex; align-items: center; gap: 8px; }
 #hud .base-target span { min-width: 6.5em; text-transform: capitalize; }
 #hud .base-target b { min-width: 3em; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* ---------- Research tree and ship parts ---------- */
+#hud .research-window { display: grid; gap: 12px; }
+#hud .research-tabs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#hud .research-tabs button { width: auto; flex: none; padding: 8px 14px; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid var(--ui-line); color: var(--ui-text); }
+#hud .research-tabs button[aria-selected=true] { border-color: var(--ui-mint); color: var(--ui-mint); }
+#hud .tree-legend { margin-left: auto; color: var(--ui-muted); font-size: calc(13px * var(--text-scale, 1)); }
+#hud .tree-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+#hud .tree-scroll { overflow: auto; max-height: min(560px, 62vh); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: #0a1623; }
+#hud .tree-canvas { position: relative; }
+#hud .tree-edges { position: absolute; inset: 0; pointer-events: none; }
+#hud .tree-edges path { fill: none; stroke: #36506a; stroke-width: 2; }
+#hud .tree-edges path[data-done=true] { stroke: var(--ui-mint); }
+#hud .tree-node {
+  position: absolute; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 8px; padding: 8px 10px; text-align: left;
+  background: var(--ui-panel); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); color: var(--ui-text);
+}
+#hud .tree-node strong { font-size: calc(14px * var(--text-scale, 1)); line-height: 1.15; }
+#hud .tree-node small { grid-column: 2; color: var(--ui-muted); }
+#hud .tree-node .tree-mark { grid-row: span 2; font-size: 20px; }
+#hud .tree-node[data-state=done] { border-color: #3d9b83; }
+#hud .tree-node[data-state=done] .tree-mark { color: var(--ui-green); }
+#hud .tree-node[data-state=ready] { border-color: var(--ui-mint); }
+#hud .tree-node[data-state=ready] .tree-mark { color: var(--ui-mint); }
+#hud .tree-node[data-state=active] { border-color: var(--ui-amber); }
+#hud .tree-node[data-state=active] .tree-mark { color: var(--ui-amber); }
+#hud .tree-node[data-state=locked] { opacity: 0.62; }
+#hud .tree-node[aria-pressed=true] { outline: 2px solid var(--ui-mint); outline-offset: 1px; opacity: 1; }
+#hud .tree-detail { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-panel); }
+#hud .tree-detail h3 { margin: 0; }
+#hud .tree-state { margin: 0; font-size: calc(12px * var(--text-scale, 1)); letter-spacing: .12em; text-transform: uppercase; color: var(--ui-muted); }
+#hud .tree-state[data-state=ready] { color: var(--ui-mint); }
+#hud .tree-state[data-state=done] { color: var(--ui-green); }
+#hud .tree-state[data-state=active] { color: var(--ui-amber); }
+#hud .tree-progress { height: 8px; border-radius: 4px; background: var(--ui-raised); overflow: hidden; }
+#hud .tree-progress i { display: block; height: 100%; background: var(--ui-amber); }
+#hud .tree-needs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#hud .tree-needs button { padding: 4px 8px; border-radius: 999px; background: var(--ui-raised); border: 1px solid var(--ui-line); color: var(--ui-text); }
+#hud .tree-needs button[data-done=true] { border-color: #3d9b83; }
+#hud .tree-unlocks ul { margin: 4px 0 0; padding-left: 18px; }
+#hud .parts-grid { display: grid; gap: 14px; }
+#hud .part-slot header { display: flex; gap: 10px; align-items: baseline; }
+#hud .part-slot h4 { margin: 0; }
+#hud .part-slot header small { color: var(--ui-muted); }
+#hud .part-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+#hud .part-card { display: grid; gap: 4px; width: 230px; padding: 10px 12px; background: var(--ui-panel); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); }
+#hud .part-card[data-state=locked] { opacity: 0.62; }
+#hud .part-card[data-state=fitted] { border-color: var(--ui-green); }
+#hud .part-card p { margin: 0; }
+#hud .part-card small { color: var(--ui-muted); }
+#hud .part-fitted { color: var(--ui-green); font-weight: 600; }
+@media (max-width: 900px) { #hud .tree-layout { grid-template-columns: minmax(0, 1fr); } }
+#hud .part-card strong { font: 600 calc(15px * var(--text-scale, 1)) / 1.2 var(--ui-body); letter-spacing: 0; }
+#hud .part-card button { width: auto; justify-self: start; padding: 6px 14px; }
+#hud .part-card .base-why { padding: 4px 8px; font-size: calc(12px * var(--text-scale, 1)); }

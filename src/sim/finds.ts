@@ -44,3 +44,6 @@ export const studiedFinds = (w: WorldState): Find[] => FINDS.filter(f => findStu
 export function openTechs(w: WorldState): TechId[] {
   return studiedFinds(w).map(f => f.tech);
 }
+
+/** Whether a technology is the one a find opens (the others open once their prerequisites are done). */
+export const isFindTech = (tech: TechId): boolean => FINDS.some(f => f.tech === tech);
