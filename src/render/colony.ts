@@ -7,7 +7,9 @@ import { operational } from '../sim/buildingHealth';
 import Phaser from 'phaser';
 import { BLUEPRINTS, type BuildType } from '../sim/colonyConfig';
 import { placementError, previewAngle } from '../sim/colony';
-import { heading } from '../sim/math';
+import { heading, wrap } from '../sim/math';
+import { DRONE } from '../sim/droneConfig';
+import { droneSeam } from '../sim/minerDrone';
 import { linkPreview } from '../sim/grid';
 import { daylightAt } from '../sim/sun';
 import type { WorldState } from '../sim/world';
@@ -42,6 +44,21 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     const t = heading(tickAngle);
     g.lineStyle(2, 0x73f3cf, 0.9);
     g.lineBetween(t.x * (radius + 1), t.y * (radius + 1), t.x * (radius + 14), t.y * (radius + 14));
+  }
+  // A working drone bay sends a small drone out to its seam and back, over one trip.
+  for (const b of colony.buildings) {
+    if (b.kind !== 'droneBay' || b.status !== 'running') continue;
+    const seam = droneSeam(world, b);
+    if (!seam) continue;
+    const trip = Math.min(1, b.progress / DRONE.seconds);
+    const out = trip < 0.5 ? trip * 2 : (1 - trip) * 2;
+    const arc = Math.abs(wrap(seam.angle - b.angle)) < 1e-9 ? 0 : wrap(seam.angle - b.angle);
+    const at = heading(b.angle + arc * out);
+    const height = colonyPlanet(world).radius + 8 + 14 * Math.sin(Math.PI * out);
+    g.fillStyle(0x9be8a8, 0.95);
+    g.fillCircle(at.x * height, at.y * height, 2);
+    g.lineStyle(1, 0x9be8a8, 0.35);
+    g.strokeCircle(at.x * height, at.y * height, 4);
   }
   // A building out of reach of the base's power wears an amber diamond.
   for (const b of colony.buildings) {

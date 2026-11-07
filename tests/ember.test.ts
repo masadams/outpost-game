@@ -23,3 +23,36 @@ describe('optional world Ember', () => {
     for (const id of BODY_IDS.filter(i => i !== 'ember')) expect(bodyExists(id, day(7))).toBe(true);
   });
 });
+
+import { createWorld } from '../src/sim/world';
+import { tripFuel } from '../src/sim/tripFuel';
+import { WORLD } from '../src/sim/config';
+import { planetAt } from '../src/sim/celestial';
+import { POD } from '../src/sim/pods';
+
+describe('Ember is far but possible', () => {
+  const seeds = Array.from({ length: 200 }, (_, i) => i + 1).filter(s => bodyExists('ember', day(s)));
+
+  it('costs the ship little more fuel than Cinder, and fits in the tank', () => {
+    for (const seed of seeds.slice(0, 12)) {
+      const w = createWorld(seed);
+      w.system.sun = true;
+      w.system.binary = true;
+      const ember = tripFuel(w, 'ember').kg;
+      const cinder = tripFuel(w, 'cinder').kg;
+      expect(ember).toBeLessThan(cinder * 1.6);
+      expect(ember).toBeLessThan(WORLD.fuelCapacity ?? Infinity);
+    }
+  });
+
+  it('a pod crosses to it in well under half an hour, even at the farthest', () => {
+    for (const seed of seeds.slice(0, 12)) {
+      const sys = { ...day(seed) };
+      for (const t of [0, 400, 900, 1800, 3600]) {
+        const a = planetAt('home', { ...sys, time: t }).position;
+        const b = planetAt('ember', { ...sys, time: t }).position;
+        expect(Math.hypot(b.x - a.x, b.y - a.y) / POD.speed).toBeLessThan(1800);
+      }
+    }
+  });
+});

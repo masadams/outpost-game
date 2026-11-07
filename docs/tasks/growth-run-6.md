@@ -4,8 +4,8 @@ Follows `growth-run-5.md`. Run 5 added seeded orbits, the optional world Ember a
 
 | # | Slice | Link | Status |
 |---|---|---|---|
-| H1 | **Ember is reachable.** Check fuel and flight time from Selene and Nacre to Ember at the largest seeded distance, for a ship, a supply pod and a probe (probe reach is 25000 m, Ember orbits at 36000 m). Adjust Ember's distance or the probe reach so it is far but possible. | 4A generation; fair start. | Planned |
-| H2 | **The drone can be seen.** The bay draws a small drone flying out to its seam and back, so the trips read in the world. | World-space feedback. | Planned |
+| H1 | **Ember is reachable.** Checked in tests: a trip to Ember costs under 1.6× the fuel of a trip to Cinder, and a pod crosses at any point of its orbit in under 30 minutes. | 4A generation; fair start. | Done |
+| H2 | **The drone can be seen.** A working bay draws a small drone flying out to its seam and back over one trip. | World-space feedback. | Done |
 | H3 | **Ember on the Map and in Base.** Hands-on check of the survey hint, the Map row, the outpost card and the pod route for a seed that has Ember. | Hands-on pass. | Planned |
 | H4 | **Drone balance.** Play a long run with and without drones: fuel use, wear and repair should make them a choice, not a default. | Earned automation. | Planned |
 | H5 | **Hands-on pass five and suite.** Browser pass of H1 to H4, full suite, docs. | Documentation discipline. | Planned |
