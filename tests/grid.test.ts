@@ -100,3 +100,89 @@ describe('relay capacity and loss', () => {
     expect(total).toBeGreaterThan(heavy.RELAY_CAPACITY);
   });
 });
+
+describe('demand through relays', () => {
+  it('a machine past a relay works a little slower for each hop, and a busy relay shares what it can carry', async () => {
+    const { feedLimits, LINE_KEPT, RELAY_CAPACITY } = await import('../src/sim/grid');
+    const w = base();
+    const relay = completedBuilding(1, 'relay', metres(500), w);
+    const lab = completedBuilding(2, 'observatory', metres(560), w);
+    w.colony.buildings.push(relay, lab);
+    const light = feedLimits(w, b => (b.kind === 'observatory' ? 3 : 0), new Map());
+    expect(light.get(2)).toBeCloseTo(LINE_KEPT, 9);
+    const heavy = feedLimits(w, b => (b.kind === 'observatory' ? RELAY_CAPACITY * 2 : 0), new Map());
+    expect(heavy.get(2)).toBeCloseTo(0.5 * LINE_KEPT, 9);
+  });
+
+  it('power made out past the relay cancels power used there: only the difference is carried', async () => {
+    const { feedLimits, LINE_KEPT, RELAY_CAPACITY } = await import('../src/sim/grid');
+    const w = base();
+    w.colony.buildings.push(completedBuilding(1, 'relay', metres(500), w), completedBuilding(2, 'observatory', metres(560), w), completedBuilding(3, 'solar', metres(600), w));
+    const out = feedLimits(w, b => (b.kind === 'observatory' ? RELAY_CAPACITY * 2 : 0), new Map([[3, RELAY_CAPACITY]]));
+    expect(out.get(2)).toBeCloseTo(LINE_KEPT, 9);
+  });
+
+  it('a machine near the pad is not limited', async () => {
+    const { feedLimits } = await import('../src/sim/grid');
+    const w = base();
+    w.colony.buildings.push(completedBuilding(1, 'observatory', metres(80), w));
+    expect(feedLimits(w, () => 3, new Map()).has(1)).toBe(false);
+  });
+});
+
+describe('islands', () => {
+  function farCluster() {
+    const w = base();
+    w.colony.buildings.push(completedBuilding(1, 'battery', metres(60), w));
+    const relay = completedBuilding(2, 'relay', metres(500), w);
+    const solar = completedBuilding(3, 'solar', metres(1000), w);
+    const battery = completedBuilding(4, 'battery', metres(1030), w);
+    const lab = completedBuilding(5, 'observatory', metres(1060), w);
+    w.colony.buildings.push(relay, solar, battery, lab);
+    w.colony.nextId = 10;
+    return { w, relay, solar, battery, lab };
+  }
+  const total = (w: ReturnType<typeof base>) => w.colony.energy + w.colony.buildings.reduce((s, b) => s + (b.charge ?? 0), 0);
+
+  it('a cut-off cluster with its own power keeps running, and takes its battery\'s share with it', () => {
+    const { w, relay, battery, lab } = farCluster();
+    w.colony.energy = 1000;
+    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(battery.linked).toBeUndefined();
+    const before = total(w);
+    w.colony.buildings = w.colony.buildings.filter(b => b !== relay);
+    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(battery.linked).toBe(false);
+    expect(battery.charge).toBeGreaterThan(0);
+    // Only sunlight on the panels adds anything in one step.
+    expect(total(w)).toBeLessThanOrEqual(before + 1);
+    expect(total(w)).toBeGreaterThan(before - 50);
+    for (let i = 0; i < 60 * 20; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(lab.island).toBe(true);
+    expect(['running', 'starting']).toContain(lab.status);
+  });
+
+  it('reconnecting brings the island\'s charge back into the base without making any', () => {
+    const { w, relay, battery } = farCluster();
+    w.colony.energy = 600;
+    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    w.colony.buildings = w.colony.buildings.filter(b => b !== relay);
+    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    const split = total(w);
+    w.colony.buildings.push(relay);
+    // Night so nothing generates during the check.
+    for (const b of w.colony.buildings) if (b.kind === 'solar') b.enabled = false;
+    for (const b of w.colony.buildings) if (b.kind === 'observatory') b.enabled = false;
+    stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(battery.linked).toBeUndefined();
+    expect(battery.charge).toBeUndefined();
+    expect(total(w)).toBeCloseTo(split, 3);
+  });
+
+  it('a lone machine with no power of its own is not an island: it says it is not connected', async () => {
+    const { islandGroups } = await import('../src/sim/grid');
+    const w = base();
+    w.colony.buildings.push(completedBuilding(1, 'observatory', metres(900), w));
+    expect(islandGroups(w)).toEqual([]);
+  });
+});

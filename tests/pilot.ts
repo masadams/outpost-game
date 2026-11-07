@@ -52,7 +52,7 @@ export function firstSortie(w: WorldState): { ok: boolean; delivered: number; se
   if (!target) return { ok: false, delivered: 0, seconds, why: 'no rock near the pad' };
   const height = () => {
     const r = rock();
-    return r ? Math.max(40, telemetry(r, r.radius, w.system).altitude - 60) : 120;
+    return r ? Math.max(40, telemetry({ ...r, angle: 0 }, r.radius, w.system).altitude - 60) : 120;
   };
   // Climb under the rock and keep cutting and pulling until the hold has ore and nothing is left close by.
   seconds += fly(w, 240, () => {

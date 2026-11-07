@@ -1,4 +1,4 @@
-import { deliverPower, linkedBuildings } from './grid';
+import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
 import { bootStep, needsBoot } from './boot';
 import { solarFactor } from './sun';
@@ -17,7 +17,7 @@ import { stepResearch } from './research';
 import type { ExplorationAction } from './explorationConfig';
 import { createCommand, type CommandState, type CommandAction } from './commandConfig';
 import { completedBuilding, stepConstruction } from './construction';
-import { orderedBuildings, powerFraction } from './power';
+import { orderedBuildings, powerFraction, ratedPower } from './power';
 import { depositAt } from './geology';
 import { foundationSites } from './colonyPlacement';
 import { isHabitat, type HabitatState } from './habitatConfig';
@@ -44,6 +44,12 @@ export interface Building {
   boot?: number;
   /** False when out of reach of the base's power. Set every step; missing means connected. */
   linked?: boolean;
+  /** Share of full power that reaches it through relays (less than 1 past a busy or long relay line). Set every step. */
+  feed?: number;
+  /** Charge (kJ) a battery holds while it is part of a separate island grid. */
+  charge?: number;
+  /** True while it runs on an island grid away from the pad. Set every step. */
+  island?: boolean;
   /** Seconds without power while online. */
   dark?: number;
   habitat?: HabitatState;
@@ -198,12 +204,89 @@ export function applyFacilityAction(world: WorldState, building: Building, actio
 export function recipeFor(building: Building): Recipe | null {
   return building.kind === 'refinery' ? REFINERY_RECIPES[building.recipe] : building.kind === 'fuelProcessor' ? FUEL_RECIPE : null;
 }
+/** One machine's step on whatever grid `world.colony.energy` currently is. Returns whether research was staffed. */
+function runMachine(world: WorldState, building: Building, dt: number, researchStaffed: boolean): boolean {
+  const colony = world.colony;
+  if (isHabitat(building.kind) || isShield(building.kind)) return researchStaffed;
+  building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
+  if (!operational(building)) return researchStaffed;
+  if (!building.enabled) return researchStaffed;
+  if (building.kind === 'researchLab') { return stepResearch(world, building, dt, researchStaffed) || researchStaffed; }
+  if (needsBoot(building.kind) && !bootStep(world, building, dt)) return researchStaffed;
+  if (building.kind === 'observatory') { stepObservatory(world, building, dt); return researchStaffed; }
+  if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); return researchStaffed; }
+  if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) return researchStaffed;
+  const recipe = recipeFor(building); if (!recipe) return researchStaffed;
+  if (!hasRecipeInputs(world, recipe)) { building.status = 'no feedstock'; return researchStaffed; }
+  if (!hasRecipeRoom(colony.products, recipe, productCapacity(colony))) { building.status = 'output full'; return researchStaffed; }
+  const work = dt * powerFraction(building) * workFactor(building); building.requestedPower = recipe.power * powerFraction(building) * workFactor(building);
+  if (!work) { building.status = 'power limited'; return researchStaffed; }
+  colony.demand += building.requestedPower;
+  const block = industrialPowerBlock(colony, recipe.power * work);
+  if (block) { building.status = block; return researchStaffed; }
+  colony.energy = Math.max(0, colony.energy - recipe.power * work); building.gridPower = recipe.power * powerFraction(building) * workFactor(building); building.progress += work; building.status = 'running';
+  if (building.progress + 1e-9 < recipe.seconds) return researchStaffed;
+  building.progress = 0;
+  for (const [r, quantity] of Object.entries(recipe.raw)) world.depot[r as keyof typeof world.depot] = Math.max(0, world.depot[r as keyof typeof world.depot] - quantity);
+  for (const [p, quantity] of Object.entries(recipe.input)) colony.products[p as keyof ProductInventory] = Math.max(0, colony.products[p as keyof ProductInventory] - quantity);
+  for (const [p, quantity] of Object.entries(recipe.output)) colony.products[p as keyof ProductInventory] += quantity;
+  if (building.kind === 'refinery' && building.schedule?.enabled) building.schedule.cursor = (building.recipe + 1) % REFINERY_RECIPES.length;
+  return researchStaffed;
+}
+
+/**
+ * A group of buildings out of reach of the pad but with its own solar or battery runs as a small separate grid: its
+ * batteries hold its own charge, its panels feed it, and its machines draw from it. The base's store is untouched.
+ */
+function runIsland(world: WorldState, island: Building[], dt: number, panel: (b: Building) => number, researchStaffed: boolean): boolean {
+  const colony = world.colony;
+  const batteries = island.filter(b => b.kind === 'battery' && operational(b));
+  const capacity = batteries.reduce((sum, b) => sum + BATTERY_CAPACITY * capacityFactor(b), 0);
+  const solars = island.filter(b => b.kind === 'solar' && b.enabled && operational(b));
+  const generation = solars.reduce((sum, b) => sum + panel(b), 0);
+  for (const b of solars) b.gridPower = b.requestedPower = panel(b);
+  let pool = batteries.reduce((sum, b) => sum + (b.charge ?? 0), 0);
+  pool = Math.min(capacity, pool + generation * dt);
+  const saved = { energy: colony.energy, demand: colony.demand, generation: colony.generation };
+  colony.energy = pool;
+  colony.demand = 0;
+  colony.generation = generation;
+  for (const building of orderedBuildings({ ...colony, buildings: island })) {
+    building.island = true;
+    researchStaffed = runMachine(world, building, dt, researchStaffed);
+  }
+  pool = colony.energy;
+  colony.energy = saved.energy;
+  colony.demand = saved.demand;
+  colony.generation = saved.generation;
+  for (const b of batteries) b.charge = capacity > 0 ? (pool * BATTERY_CAPACITY * capacityFactor(b)) / capacity : 0;
+  return researchStaffed;
+}
+
 export function stepColony(world: WorldState, dt: number, researchStaffed = false): boolean {
   stepConstruction(world, dt);
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
   const wired = linkedBuildings(world);
-  for (const b of colony.buildings) b.linked = wired === null || wired.has(b.id) ? undefined : false;
+  // A battery cut off from the base takes its share of the stored power with it; one that rejoins brings its charge back.
+  const capBefore = energyCapacity(colony);
+  for (const b of colony.buildings) {
+    const now = wired === null || wired.has(b.id) ? undefined : false;
+    if (b.kind === 'battery' && operational(b) && b.linked !== false && now === false && capBefore > 0) {
+      const share = colony.energy * (BATTERY_CAPACITY * capacityFactor(b)) / capBefore;
+      colony.energy -= share;
+      b.charge = share;
+    }
+    b.linked = now;
+    b.island = undefined;
+  }
+  for (const b of colony.buildings) {
+    if (b.kind !== 'battery' || b.linked === false || !b.charge) continue;
+    const room = Math.max(0, energyCapacity(colony) - colony.energy);
+    const back = Math.min(room, b.charge);
+    colony.energy += back;
+    b.charge = b.charge - back > 1e-9 ? b.charge - back : undefined;
+  }
   // Panels follow the sun: full power in daylight, none at night.
   const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * solarFactor(world.system, b.angle, colonyPlanet(world).id);
   const sources = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false);
@@ -216,36 +299,23 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   }
   colony.energy = Math.min(energyCapacity(colony), colony.energy + colony.generation * dt);
   colony.demand = 0;
+  // Machines past a relay get only what the relay can carry, a little less for each hop.
+  const feeds = feedLimits(world, b => (b.enabled && operational(b) && b.linked !== false ? ratedPower(b) : 0), delivered);
+  for (const b of colony.buildings) b.feed = feeds.has(b.id) ? feeds.get(b.id) : undefined;
   stepHabitats(world, dt, true);
   maintainShields(world, dt);
   chargeHabitats(world, dt);
   chargeShields(world, dt);
+  const islands = islandGroups(world);
+  const onIsland = new Set(islands.flat().map(b => b.id));
   for (const building of orderedBuildings(colony)) {
-    if (isHabitat(building.kind) || isShield(building.kind)) continue;
-    building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
-    if (!operational(building)) continue;
-    if (!building.enabled) continue;
-    if (building.linked === false) { building.status = 'no power'; continue; }
-    if (building.kind === 'researchLab') { researchStaffed = stepResearch(world, building, dt, researchStaffed) || researchStaffed; continue; }
-    if (needsBoot(building.kind) && !bootStep(world, building, dt)) continue;
-    if (building.kind === 'observatory') { stepObservatory(world, building, dt); continue; }
-    if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); continue; }
-    if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) continue;
-    const recipe = recipeFor(building); if (!recipe) continue;
-    if (!hasRecipeInputs(world, recipe)) { building.status = 'no feedstock'; continue; }
-    if (!hasRecipeRoom(colony.products, recipe, productCapacity(colony))) { building.status = 'output full'; continue; }
-    const work = dt * powerFraction(building) * workFactor(building); building.requestedPower = recipe.power * powerFraction(building) * workFactor(building);
-    if (!work) { building.status = 'power limited'; continue; }
-    colony.demand += building.requestedPower;
-    const block = industrialPowerBlock(colony, recipe.power * work);
-    if (block) { building.status = block; continue; }
-    colony.energy = Math.max(0, colony.energy - recipe.power * work); building.gridPower = recipe.power * powerFraction(building) * workFactor(building); building.progress += work; building.status = 'running';
-    if (building.progress + 1e-9 < recipe.seconds) continue;
-    building.progress = 0;
-    for (const [r, quantity] of Object.entries(recipe.raw)) world.depot[r as keyof typeof world.depot] = Math.max(0, world.depot[r as keyof typeof world.depot] - quantity);
-    for (const [p, quantity] of Object.entries(recipe.input)) colony.products[p as keyof ProductInventory] = Math.max(0, colony.products[p as keyof ProductInventory] - quantity);
-    for (const [p, quantity] of Object.entries(recipe.output)) colony.products[p as keyof ProductInventory] += quantity;
-    if (building.kind === 'refinery' && building.schedule?.enabled) building.schedule.cursor = (building.recipe + 1) % REFINERY_RECIPES.length;
+    if (onIsland.has(building.id)) continue;
+    if (building.linked === false && operational(building) && building.enabled && !isHabitat(building.kind) && !isShield(building.kind)) {
+      building.status = 'no power';
+      continue;
+    }
+    researchStaffed = runMachine(world, building, dt, researchStaffed);
   }
+  for (const island of islands) researchStaffed = runIsland(world, island, dt, panel, researchStaffed);
   return researchStaffed;
 }

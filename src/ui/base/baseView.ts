@@ -1,4 +1,4 @@
-import { RELAY_CAPACITY } from '../../sim/grid';
+import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
@@ -85,6 +85,8 @@ export interface PowerView {
   forecast: string | null;
   /** Power kept back for the turrets: other machines stop before they eat into it. */
   reserve: number;
+  /** Groups of buildings running on their own grid, away from the pad. */
+  islands: string | null;
   /** Shown once there is a turret: how many shots the stored power covers. */
   defence: string | null;
 }
@@ -163,6 +165,11 @@ function inputNeed(b: Building): string {
 
 /** Why a building is not doing its job, in plain words, or null when nothing is wrong. */
 export function whyStopped(b: Building): string | null {
+  if (b.linked === false && b.island) {
+    return b.status === 'no power' || b.status === 'power limited'
+      ? 'Its own small grid is out of power. Add solar or a battery there, or a relay to the base.'
+      : null;
+  }
   if (b.linked === false) return 'Not connected to the base. Build a power relay between it and the pad.';
   switch (b.status) {
     case 'no power':
@@ -209,6 +216,9 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     const weapon = WEAPONS[b.kind];
     facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
   }
+  if (b.island) facts.push(['Grid', 'Its own small grid, away from the pad']);
+  if (b.feed !== undefined && b.feed < 0.995) facts.push(['Power reaching it', `${Math.round(b.feed * 100)}% (relay line)`]);
+  if (b.kind === 'battery' && b.charge !== undefined) facts.push(['Holding', `${Math.round(b.charge)} kJ of its own`]);
   if (b.kind === 'relay') facts.push(['Carrying', `${(b.gridPower ?? 0).toFixed(1)} of ${RELAY_CAPACITY * capacityFactor(b)} kW`]);
   if (b.kind === 'solar' && (b.requestedPower ?? 0) - (b.gridPower ?? 0) > 0.05) {
     facts.push(['Lost on the way', `${((b.requestedPower ?? 0) - (b.gridPower ?? 0)).toFixed(1)} kW (relay lines and limits)`]);
@@ -262,6 +272,14 @@ function powerForecast(w: WorldState): string | null {
   return covers ? `Dusk in ${when}. Your stored power covers a typical night.` : `Dusk in ${when}. A typical night needs about ${Math.ceil(need)} kJ; you have ${Math.floor(w.colony.energy)}.`;
 }
 
+function islandLine(w: WorldState): string | null {
+  const groups = islandGroups(w);
+  if (groups.length === 0) return null;
+  const stored = groups.flat().reduce((sum, b) => sum + (b.charge ?? 0), 0);
+  const many = groups.length === 1 ? 'One group of buildings runs' : `${groups.length} groups of buildings run`;
+  return `${many} on its own grid away from the pad, with ${Math.round(stored)} kJ stored there. A relay to the base joins it back.`;
+}
+
 function defenceLine(w: WorldState): string | null {
   const turrets = w.colony.buildings.filter(b => isTurret(b.kind) && b.enabled && buildingHealth(b) > 0);
   if (turrets.length === 0) return null;
@@ -309,6 +327,7 @@ function powerView(w: WorldState): PowerView {
     forecast: powerForecast(w),
     reserve: policyFor(w.colony).energyReserve,
     defence: defenceLine(w),
+    islands: islandLine(w),
     level,
   };
 }
