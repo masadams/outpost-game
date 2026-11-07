@@ -95,25 +95,32 @@ export function stepAntenna(world: WorldState, b: Building, dt: number): void {
 /** Workshop: lets the ship be fitted and refitted on a world that is not home, while it is powered. */
 export const WORKSHOP = { power: 3 } as const;
 
-export function stepWorkshop(world: WorldState, b: Building, dt: number): void {
+/** A building that only draws a steady amount of power and is "running" while it gets it. */
+function stepDraw(world: WorldState, b: Building, dt: number, power: number): void {
   const colony = world.colony;
   const fraction = powerFraction(b);
-  b.requestedPower = WORKSHOP.power * fraction;
+  b.requestedPower = power * fraction;
   const work = dt * fraction;
   if (!work) {
     b.status = 'power limited';
     return;
   }
   colony.demand += b.requestedPower;
-  const block = industrialPowerBlock(colony, WORKSHOP.power * work);
+  const block = industrialPowerBlock(colony, power * work);
   if (block) {
     b.status = block;
     return;
   }
-  colony.energy = Math.max(0, colony.energy - WORKSHOP.power * work);
+  colony.energy = Math.max(0, colony.energy - power * work);
   b.gridPower = b.requestedPower;
   b.status = 'running';
 }
+
+export const stepWorkshop = (world: WorldState, b: Building, dt: number): void => stepDraw(world, b, dt, WORKSHOP.power);
+
+/** Mass driver: flings cargo pods off the ground, so they leave on far less fuel and can carry more. */
+export const MASS_DRIVER = { power: 4, fuelShare: 0.4, capacity: 80 } as const;
+export const stepMassDriver = (world: WorldState, b: Building, dt: number): void => stepDraw(world, b, dt, MASS_DRIVER.power);
 
 /** Whether this colony has a powered workshop. */
 export const workshopReady = (world: WorldState): boolean => world.colony.buildings.some(b => b.kind === 'workshop' && b.status === 'running');
@@ -124,5 +131,12 @@ export function watchBoost(world: WorldState): number {
     .filter(b => b.kind === 'antenna' && b.status === 'running')
     .sort((a, b) => workFactor(b) - workFactor(a))
     .slice(0, ANTENNA.limit);
-  return 1 + running.reduce((sum, b) => sum + ANTENNA.boost * workFactor(b), 0);
+  const optics = world.colony.research.completed.includes('surveyOptics') ? 0.25 : 0;
+  return 1 + optics + running.reduce((sum, b) => sum + ANTENNA.boost * workFactor(b), 0);
+}
+
+/** The mass driver on a colony that is running, strongest first, or null. */
+export function activeMassDriver(world: WorldState): Building | null {
+  const ready = world.colony.buildings.filter(b => b.kind === 'massDriver' && b.status === 'running');
+  return ready.sort((a, b) => workFactor(b) - workFactor(a))[0] ?? null;
 }

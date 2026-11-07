@@ -44,7 +44,7 @@ test('uses contextual panels with pause-safe mouse/keyboard navigation and reada
   await page.getByRole('button', { name:'Ship', exact: true }).focus(); await page.keyboard.press('Space');
   await expect(dock).toHaveAttribute('data-panel', 'cargo'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   await page.keyboard.press('b'); await expect(hud).toHaveAttribute('data-context', 'construction');
-  await expect(page.locator('.build-bar [data-select]')).toHaveCount(4);
+  await expect(page.locator('.build-bar [data-select]')).toHaveCount(6);
   await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Defence',exact:true}).click();
   const last = page.locator('[data-select="shieldLarge"]'); await last.click(); await expect(last).toHaveAttribute('aria-pressed', 'true');
   const bar = page.getByRole('region', { name: 'Build', exact: true });

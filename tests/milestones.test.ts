@@ -93,11 +93,11 @@ it('rounds fractional material shortfalls up to real whole refinery cycles',()=>
  const w=createWorld();w.colony.products.alloy=25.5;const plan=starterPlan(w);expect(plan.rows.find(r=>r.product==='alloy')!.shortfall).toBe(.5);expect(plan.raw.find(r=>r.resource==='iron')!.need).toBe(1);
 });
 
-it('records the research milestone only after all nineteen paid powered projects actually finish',()=>{
- const w=worker();w.colony.buildings=[completedBuilding(1,'storage',480/1800,w),completedBuilding(2,'storage',540/1800,w)];w.colony.nextId=3;w.colony.products.alloy=300;w.colony.products.wire=300;w.colony.products.components=300;
+it('records the research milestone only after every paid powered project actually finish',()=>{
+ const w=worker();w.colony.buildings=[completedBuilding(1,'storage',480/1800,w),completedBuilding(2,'storage',540/1800,w)];w.colony.nextId=3;w.colony.products.alloy=700;w.colony.products.wire=700;w.colony.products.components=700;
  applyCommandAction(w,{type:'queueBuild',kind:'solar',angle:200/1800});applyCommandAction(w,{type:'queueBuild',kind:'researchLab',angle:120/1800});tick(w,17);applyCrewOrder(w,{type:'crewOrder',operation:'walk',angle:0});tick(w,15);stepWorld(w,{thrust:false,turn:0,board:true},1/60);expect(w.playerMode).toBe('ship');
  for(const tech of TECH_IDS){
   applyResearch(w,{type:'researchStart',tech});expect(w.objectives.completed).not.toContain('research');tick(w,TECHNOLOGIES[tech].seconds+1);
  }
- expect(w.objectives.completed).toContain('research');expect(w.colony.research.energyUsed).toBeCloseTo(2920);expect(w.colony.products).toMatchObject({alloy:82,wire:181,components:233});expect(w.defence.wave).toBe(0);
+ expect(w.objectives.completed).toContain('research');const added=TECH_IDS.slice(19).map(id=>TECHNOLOGIES[id]);const sum=(f:(t:typeof added[number])=>number)=>added.reduce((n,t)=>n+f(t),0);expect(w.colony.research.energyUsed).toBeCloseTo(2920+sum(t=>t.seconds)*4);expect(w.colony.products).toMatchObject({alloy:82+400-sum(t=>t.cost.alloy??0),wire:181+400-sum(t=>t.cost.wire??0),components:233+400-sum(t=>t.cost.components??0)});expect(w.defence.wave).toBe(0);
 });

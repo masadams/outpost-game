@@ -40,7 +40,7 @@ export function applyResearch(w: WorldState, a: Extract<ProgressionAction, { typ
 export function stepResearch(w: WorldState, b: Building, dt: number, staffed: boolean): boolean {
   const r = w.colony.research, p = r.queue.find(p => !p.paused); if (!p) return false;
   if (staffed) { b.status = 'research staffed'; return false; }
-  const spec = TECHNOLOGIES[p.tech], work = Math.min(dt * powerFraction(b) * workFactor(b), spec.seconds - p.progress);
+  const spec = TECHNOLOGIES[p.tech], work = Math.min(dt * powerFraction(b) * workFactor(b) * (r.completed.includes('labAutomation') ? 1.5 : 1), spec.seconds - p.progress);
   b.requestedPower = PROGRESSION.labPower * powerFraction(b) * workFactor(b); w.colony.demand += b.requestedPower;
   if (work <= 0) { b.status = 'power limited'; return false; }
   const cost = work * PROGRESSION.labPower, block = industrialPowerBlock(w.colony, cost);

@@ -1,4 +1,5 @@
 import { wrap } from './math';
+import { isGenerator } from './generators';
 import { colonyPlanet } from './localWorld';
 import { capacityFactor } from './facilityStats';
 import type { Building } from './colony';
@@ -161,7 +162,7 @@ export function islandGroups(world: WorldState): Building[][] {
         stack.push(b);
       }
     }
-    if (group.some(b => b.kind === 'solar' || b.kind === 'battery')) groups.push(group);
+    if (group.some(b => isGenerator(b.kind) || b.kind === 'battery')) groups.push(group);
   }
   return groups;
 }

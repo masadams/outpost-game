@@ -4,6 +4,8 @@ import { colonyWorld } from './localWorld';
 import { notify } from './messages';
 import { inventoryMass, RESOURCES, emptyInventory, type Inventory } from './resources';
 import { streamFor } from './seed';
+import { activeMassDriver, MASS_DRIVER } from './airMachines';
+import { capacityFactor } from './facilityStats';
 import type { WorldState } from './world';
 
 /** A cargo pod on its slow way from one world's depot to another's. Ore leaves the source when it launches. */
@@ -36,6 +38,17 @@ export const POD = {
 export type PodAction = { type: 'sendPod'; from: BodyId; to: BodyId };
 export const isPodAction = (a: { type: string }): a is PodAction => a.type === 'sendPod';
 
+/** What a pod from this base can carry and costs to launch: better with a running mass driver. */
+export function podTerms(source: WorldState): { capacity: number; fuel: number; fuelPerKg: number } {
+  const driver = activeMassDriver(source);
+  if (!driver) return { capacity: POD.capacity, fuel: POD.fuel, fuelPerKg: POD.fuelPerKg };
+  return {
+    capacity: MASS_DRIVER.capacity * capacityFactor(driver),
+    fuel: POD.fuel * MASS_DRIVER.fuelShare,
+    fuelPerKg: POD.fuelPerKg * MASS_DRIVER.fuelShare,
+  };
+}
+
 /** Why a pod cannot be sent from one world to another now, or null. */
 export function podError(w: WorldState, from: BodyId, to: BodyId): string | null {
   const root = w.rootWorld ?? w;
@@ -47,7 +60,8 @@ export function podError(w: WorldState, from: BodyId, to: BodyId): string | null
   if (!working) return 'Needs a mining rig or refinery at the sending base.';
   if (root.exploration.pods.length >= POD.max) return 'All pods are still out.';
   if (inventoryMass(source.depot) < 1) return 'No ore in the depot there.';
-  const fuel = POD.fuel + POD.fuelPerKg * Math.min(POD.capacity, inventoryMass(source.depot));
+  const terms = podTerms(source);
+  const fuel = terms.fuel + terms.fuelPerKg * Math.min(terms.capacity, inventoryMass(source.depot));
   if (source.colony.products.fuel + 1e-9 < fuel) return `Needs ${Math.ceil(fuel - source.colony.products.fuel)} more fuel at the sending base.`;
   return null;
 }
@@ -62,7 +76,8 @@ export function sendPod(w: WorldState, from: BodyId, to: BodyId): void {
   }
   const source = colonyWorld(root, from);
   const cargo = emptyInventory();
-  let room = POD.capacity;
+  const terms = podTerms(source);
+  let room = terms.capacity;
   for (const r of RESOURCES) {
     const take = Math.min(source.depot[r], room);
     cargo[r] = take;
@@ -70,11 +85,11 @@ export function sendPod(w: WorldState, from: BodyId, to: BodyId): void {
     room -= take;
   }
   const mass = inventoryMass(cargo);
-  source.colony.products.fuel -= POD.fuel + POD.fuelPerKg * mass;
+  source.colony.products.fuel -= terms.fuel + terms.fuelPerKg * mass;
   const a = planetAt(from, root.system).position;
   const b = planetAt(to, root.system).position;
   const seconds = Math.max(20, Math.hypot(b.x - a.x, b.y - a.y) / POD.speed);
-  const doomed = root.seed !== 0 && streamFor(root.seed, `pod/${root.nextId}`)() < POD.lossChance;
+  const doomed = root.seed !== 0 && streamFor(root.seed, `pod/${root.nextId}`)() < POD.lossChance * (root.colony.research.completed.includes('podLogistics') ? 0.5 : 1);
   root.exploration.pods.push({ id: root.nextId++, from, to, cargo, launched: root.system.time, arrives: root.system.time + seconds, doomed });
   notify(root, `POD SENT · ${mass.toFixed(0)} KG · ARRIVES IN ${Math.round(seconds)} S`);
 }

@@ -25,7 +25,8 @@ import { stepHabitats, chargeHabitats, ventHabitat } from './habitats';
 import type { TowAction } from './towingConfig';
 import { stepMiningRig } from './surfaceExtraction';
 import { stepMinerDrone } from './minerDrone';
-import { stepAntenna, stepCondenser, stepWorkshop } from './airMachines';
+import { generatorOutput, isGenerator } from './generators';
+import { stepAntenna, stepMassDriver, stepCondenser, stepWorkshop } from './airMachines';
 import { availableProduct, createPolicy, industrialPowerBlock, MAX_RESERVE, POLICY_FIELDS, POLICY_INFO, type ColonyPolicy, type PolicyAction } from './colonyPolicy';
 import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selectScheduledRecipe, SCHEDULE_PRODUCTS, type RefinerySchedule, type SchedulingAction } from './scheduling';
 import type { CombatAction } from './combatConfig';
@@ -77,8 +78,9 @@ export function createColony(): Colony {
   return { shielding: createShielding(), research: createResearch(), command: createCommand(), oxygenUsed: 0, buildings: [], products: { alloy: 28, wire: 14, components: 8, water: 4, oxygen: 2, fuel: 0 },
     energy: 0, generation: 0, demand: 0, buildOpen: false, selected: 'solar', offset: 24, nextId: 1 };
 }
-export const oreCapacity = (colony: Colony): number => 400 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
-export const productCapacity = (colony: Colony): number => 100 + colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
+const deepStore = (colony: Colony): number => colony.research.completed.includes('deepStorage') ? 1.25 : 1;
+export const oreCapacity = (colony: Colony): number => 400 + deepStore(colony) * colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
+export const productCapacity = (colony: Colony): number => 100 + deepStore(colony) * colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
 /** A battery holds enough to carry a small base through much of a night. */
 export const BATTERY_CAPACITY = 1200;
 export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b) && b.linked !== false).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
@@ -218,6 +220,7 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (needsBoot(building.kind) && !bootStep(world, building, dt)) return researchStaffed;
   if (building.kind === 'observatory') { stepObservatory(world, building, dt); return researchStaffed; }
   if (building.kind === 'condenser') { stepCondenser(world, building, dt); return researchStaffed; }
+  if (building.kind === 'massDriver') { stepMassDriver(world, building, dt); return researchStaffed; }
   if (building.kind === 'workshop') { stepWorkshop(world, building, dt); return researchStaffed; }
   if (building.kind === 'antenna') { stepAntenna(world, building, dt); return researchStaffed; }
   if (building.kind === 'droneBay') { stepMinerDrone(world, building, dt, oreCapacity(colony)); return researchStaffed; }
@@ -249,7 +252,7 @@ function runIsland(world: WorldState, island: Building[], dt: number, panel: (b:
   const colony = world.colony;
   const batteries = island.filter(b => b.kind === 'battery' && operational(b));
   const capacity = batteries.reduce((sum, b) => sum + BATTERY_CAPACITY * capacityFactor(b), 0);
-  const solars = island.filter(b => b.kind === 'solar' && b.enabled && operational(b));
+  const solars = island.filter(b => isGenerator(b.kind) && b.enabled && operational(b));
   const generation = solars.reduce((sum, b) => sum + panel(b), 0);
   for (const b of solars) b.gridPower = b.requestedPower = panel(b);
   let pool = batteries.reduce((sum, b) => sum + (b.charge ?? 0), 0);
@@ -295,8 +298,8 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     b.charge = b.charge - back > 1e-9 ? b.charge - back : undefined;
   }
   // Panels follow the sun: full power in daylight, none at night.
-  const panel = (b: Building): number => 8 * capacityFactor(b) * powerFraction(b) * solarFactor(world.system, b.angle, colonyPlanet(world).id);
-  const sources = colony.buildings.filter(b => b.kind === 'solar' && b.enabled && operational(b) && b.linked !== false);
+  const panel = (b: Building): number => generatorOutput(world, b);
+  const sources = colony.buildings.filter(b => isGenerator(b.kind) && b.enabled && operational(b) && b.linked !== false);
   const raw = new Map(sources.map(b => [b.id, panel(b)]));
   const delivered = deliverPower(world, raw);
   colony.generation = sources.reduce((sum, b) => sum + (delivered.get(b.id) ?? 0), 0);

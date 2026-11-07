@@ -1,6 +1,6 @@
 import type { BodyId } from './celestial';
 import type { ProductInventory } from './colonyConfig';
-export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems'] as const;
+export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems', 'photovoltaics', 'deepStorage', 'labAutomation', 'fieldRepair', 'surveyOptics', 'geoscience', 'aeronautics', 'massDrivers', 'podLogistics'] as const;
 export type TechId = typeof TECH_IDS[number];
 export interface Technology { facilityTier?: 2|3; label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
 export const TECHNOLOGIES: Record<TechId, Technology> = {
@@ -22,6 +22,15 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   navigation:{label:'Return guidance',seconds:40,requires:['flightControl','orbital'],cost:{alloy:12,wire:8,components:4}},
   autonomy:{label:'Autonomous navigation',seconds:60,requires:['navigation','precision'],cost:{alloy:18,wire:12,components:6}},
   infrastructure:{facilityTier:2,label:'Infrastructure retrofits',seconds:35,requires:['materials','logistics'],cost:{alloy:10,wire:6,components:3}},
+  photovoltaics:{label:'Photovoltaics',seconds:45,requires:['reactor'],cost:{alloy:12,wire:8,components:4}},
+  deepStorage:{label:'Deep storage',seconds:40,requires:['lightweight'],cost:{alloy:12,wire:5,components:3}},
+  labAutomation:{label:'Lab automation',seconds:50,requires:['autonomy'],cost:{alloy:14,wire:8,components:5}},
+  fieldRepair:{label:'Field repair',seconds:35,requires:['ballistics'],cost:{alloy:10,wire:5,components:3}},
+  podLogistics:{label:'Pod logistics',seconds:45,requires:['massDrivers','navigation'],cost:{alloy:14,wire:7,components:4}},
+  surveyOptics:{label:'Survey optics',seconds:40,requires:['ionics'],cost:{alloy:12,wire:6,components:4}},
+  geoscience:{label:'Geoscience',seconds:45,requires:['industrial','thermal'],cost:{alloy:14,wire:7,components:4}},
+  aeronautics:{label:'Aeronautics',seconds:35,requires:['flightControl','materials'],cost:{alloy:10,wire:6,components:3}},
+  massDrivers:{label:'Mass drivers',seconds:50,requires:['logistics','orbital'],cost:{alloy:14,wire:8,components:5}},
   industrialSystems:{facilityTier:3,label:'Advanced facility systems',seconds:45,requires:['infrastructure','thermal'],cost:{alloy:14,wire:8,components:4}},
 };
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
