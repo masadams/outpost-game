@@ -40,7 +40,7 @@ export function tierEffect(b: Building): string {
       return `Recharges ${speed}× as fast`;
     case 'habitatSmall':
     case 'habitatLarge':
-      return 'Takes less damage from impacts';
+      return `Holds ${power}× the air`;
     default: return 'Tougher against damage';
   }
 }

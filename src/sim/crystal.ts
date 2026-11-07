@@ -59,3 +59,44 @@ export function grantHold(world: WorldState): void {
   const held = world.ship.equipment;
   if (!held.some(id => id === 'cargo' || id === 'lightHold' || id === 'bulkHold')) held.push('cargo');
 }
+
+/** The core sample on Cinder: a dense lump from its deepest seam, metres east of the Cinder pad. */
+export const CORE_METRES = 150;
+export const coreAngle = (): number => CORE_METRES / CELESTIAL.cinder.radius;
+export type CoreAction = { type: 'studyCore' };
+export const isCoreAction = (a: { type: string }): a is CoreAction => a.type === 'studyCore';
+
+/** Walking over the core sample on Cinder picks it up. */
+export function stepCore(world: WorldState): void {
+  const ex = world.exploration;
+  if (ex.core !== 'lying' || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0) return;
+  const body = planetAt('cinder', world.system);
+  const here = relative(world.astronaut.position, body);
+  if (Math.hypot(here.x, here.y) > body.radius + 40) return;
+  const angle = surfaceAngle(body, world.astronaut.position);
+  if (Math.abs(wrap(angle - coreAngle())) * body.radius > PICKUP_REACH) return;
+  ex.core = 'carried';
+  notify(world, 'Picked up a core sample from Cinder. Take it home and study it in Base.');
+}
+
+/** Why the core sample cannot be studied right now, or null. */
+export function coreBlock(world: WorldState): string | null {
+  const ex = world.exploration;
+  if (ex.core === 'studied') return 'Already studied.';
+  if (ex.core === 'lying') return 'Find the core sample on Cinder first.';
+  if (!world.colony.buildings.some(b => b.kind === 'observatory' && operational(b))) return 'Needs a working Observatory.';
+  if (world.colony.energy < ANALYSIS_ENERGY) return `Needs ${ANALYSIS_ENERGY} kJ stored (you have ${Math.floor(world.colony.energy)}).`;
+  return null;
+}
+
+/** Studying the core opens deeper mining research. No free part: the research and the fabrication are paid for. */
+export function applyCoreAction(world: WorldState): void {
+  const block = coreBlock(world);
+  if (block) {
+    notify(world, block);
+    return;
+  }
+  world.colony.energy -= ANALYSIS_ENERGY;
+  world.exploration.core = 'studied';
+  notify(world, 'Study done. Deeper mining is open to research.');
+}

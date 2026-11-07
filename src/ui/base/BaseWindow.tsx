@@ -14,6 +14,7 @@ export interface BaseHandlers {
   auto: (id: number) => void;
   analyse: () => void;
   study: () => void;
+  studyCore: () => void;
   research: (tech: string) => void;
   fit: (upgrade: string) => void;
   reserve: (direction: -1 | 1) => void;
@@ -52,7 +53,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, study, research, fit, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, studyCore, research, fit, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -146,6 +147,16 @@ function Overview({ view, open, analyse, study, research, fit, reserve, paused }
               )}
             </div>
           ))}
+        </section>
+      )}
+      {view.core && (
+        <section class="base-storm" aria-label="Cinder core sample" data-studied={String(view.core.studied)}>
+          <h3>Cinder core sample</h3>
+          <p class="base-note">{view.core.line}</p>
+          <button type="button" class="base-analyse" data-study-core="true" disabled={view.core.blocked !== null} onClick={click(studyCore)}>
+            Study the core sample
+          </button>
+          {view.core.blocked && <p class="base-why">{view.core.blocked}</p>}
         </section>
       )}
       {view.crystal && (
@@ -339,7 +350,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} research={on.research} fit={on.fit} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}

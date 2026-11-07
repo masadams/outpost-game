@@ -17,6 +17,7 @@ import { validSchedule } from '../sim/scheduling';
 import { validPolicy } from '../sim/colonyPolicy';
 import { validCombat } from './validateCombat';
 import { validDefence } from './validateDefence';
+import { airCapacity } from '../sim/habitats';
 import { createWorld, shareResearch, type OutpostId, type WorldState } from '../sim/world';
 import { BUILD_TYPES, PRODUCTS, REFINERY_RECIPES } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity } from '../sim/colony';
@@ -24,7 +25,7 @@ import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { SUIT } from '../sim/astronaut';
 
-export const SAVE_VERSION=32;
+export const SAVE_VERSION=33;
 export const SAVE_KEY = 'outpost.checkpoint.v1'; // Stable slot key; the envelope version rejects incompatible development saves.
 export const PREVIOUS_SAVE_KEY = 'outpost.checkpoint.previous';
 type RecordValue = Record<string, unknown>;
@@ -65,7 +66,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
     number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached'].includes(b.status))) return false;
   if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
   if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)) && (b.linked === undefined || b.linked === false) && (b.feed === undefined || number(b.feed, 0, 1)) && (b.charge === undefined || number(b.charge, 0, 1e6)) && (b.island === undefined || typeof b.island === 'boolean'))) return false;
-  if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, HABITATS[b.kind].capacity) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
+  if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, airCapacity(b)) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
   if (new Set(colony.buildings.map(b => b.id)).size !== colony.buildings.length || !Number.isInteger(colony.nextId) || colony.nextId <= Math.max(0, ...colony.buildings.map(b => b.id))) return false;
   if (!PRODUCTS.every(p => number(colony.products[p], 0, productCapacity(colony))) || !number(colony.energy, 0, energyCapacity(colony)) || inventoryMass(world.depot) > oreCapacity(colony) + 1e-6) return false;
@@ -92,7 +93,7 @@ function validWrecks(world: WorldState): boolean {
 function validStorm(world: WorldState): boolean {
   const s = world.storm;
   if (!['quiet', 'approaching', 'over'].includes(s.phase) || typeof s.planned !== 'boolean' || typeof s.armed !== 'boolean' || !number(s.arrival, 0, 1e9) || !number(s.observed, 0, 1e9) || !Array.isArray(s.plan) || s.plan.length > 16) return false;
-  if (!Array.isArray(s.samples) || s.samples.length > 16 || !Number.isInteger(s.held) || s.held < 0 || s.held > 16 || typeof s.analysed !== 'boolean' || ![1, 2].includes(s.wave) || !number(s.endedAt, 0, 1e9)) return false;
+  if (!Array.isArray(s.samples) || s.samples.length > 16 || !Number.isInteger(s.held) || s.held < 0 || s.held > 16 || typeof s.analysed !== 'boolean' || !Number.isInteger(s.wave) || s.wave < 1 || s.wave > 99 || !number(s.endedAt, 0, 1e9)) return false;
   if (!s.samples.every(p => object(p) && Number.isInteger(p.id) && number(p.angle, -Math.PI - 1e-6, Math.PI + 1e-6))) return false;
   if (!s.plan.every(p => object(p) && Number.isInteger(p.id) && (p.impactAngle === null || number(p.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (p.impactTime === null || number(p.impactTime, 0, 1e9)))) return false;
   if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 16 || s.ids.length > 16) return false;

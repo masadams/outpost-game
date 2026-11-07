@@ -121,3 +121,47 @@ describe('a reason to go to Cinder', () => {
     expect(shipPanelView(w).kit).not.toBeNull();
   });
 });
+
+describe('the Cinder core sample', () => {
+  it('is picked up on foot, studied at home with an Observatory, and opens deeper mining research', async () => {
+    const { stepCore, coreAngle, coreBlock, applyCoreAction } = await import('../src/sim/crystal');
+    const { openTechs, findStudied } = await import('../src/sim/finds');
+    const { researchError } = await import('../src/sim/research');
+    const w = createWorld();
+    w.system.sun = true;
+    const body = planetAt('cinder', w.system);
+    w.playerMode = 'astronaut';
+    w.astronaut.grounded = true;
+    w.astronaut.position = surfacePosition(body, coreAngle() + 0.1, 1);
+    stepCore(w);
+    expect(w.exploration.core).toBe('lying');
+    w.astronaut.position = surfacePosition(body, coreAngle(), 1);
+    stepCore(w);
+    expect(w.exploration.core).toBe('carried');
+    expect(coreBlock(w)).toMatch(/Observatory/);
+    w.colony.buildings.push(completedBuilding(1, 'observatory', 0.1, w));
+    w.colony.energy = 100;
+    expect(openTechs(w)).not.toContain('precision');
+    applyCoreAction(w);
+    expect(findStudied(w, 'core')).toBe(true);
+    expect(openTechs(w)).toContain('precision');
+    w.colony.research.completed.push('materials', 'extraction');
+    w.colony.products.alloy = 20;
+    w.colony.products.wire = 20;
+    w.colony.products.components = 20;
+    expect(researchError(w, 'precision')).toBeNull();
+  });
+
+  it('shows on Cinder, and the survey says where to look', async () => {
+    const { bodySurvey } = await import('../src/sim/nacreSurvey');
+    const w = createWorld();
+    w.exploration.known.push('cinder', 'moon');
+    expect(bodySurvey(w, 'cinder')!.note).toMatch(/core sample/);
+    expect(bodySurvey(w, 'moon')!.note).toMatch(/crystal/);
+    const { guideTarget } = await import('../src/ui/flight/guide');
+    w.unloaded = 5;
+    const body = planetAt('cinder', w.system);
+    w.ship.position = surfacePosition(body, 0, 200);
+    expect(guideTarget(w)).not.toBeNull();
+  });
+});

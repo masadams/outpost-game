@@ -3,7 +3,7 @@ import { BATTERY_CAPACITY } from '../../sim/colony';
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
 import { researchView, type ResearchRow } from './researchView';
-import { crystalBlock } from '../../sim/crystal';
+import { coreBlock, crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
 import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
@@ -33,6 +33,7 @@ export interface BaseView {
   /** Present once a storm has been seen: pieces to collect and what analysing them gives. */
   storm: StormLabView | null;
   crystal: CrystalLabView | null;
+  core: CrystalLabView | null;
   research: ResearchRow[] | null;
   /** The other worlds with a base, so a mine far away can be checked without going there. */
   elsewhere: OutpostView[];
@@ -387,9 +388,19 @@ export function baseView(w: WorldState): BaseView {
     ship: shipView(w),
     storm: stormLab(w),
     crystal: crystalLab(w),
+    core: coreLab(w),
     research: researchView(w),
     elsewhere: elsewhereView(w),
   };
+}
+
+function coreLab(w: WorldState): CrystalLabView | null {
+  const ex = (w.rootWorld ?? w).exploration;
+  if (ex.core === 'lying') return null;
+  const line = ex.core === 'studied'
+    ? 'Deeper mining is open to research.'
+    : 'A dense core sample from Cinder. Studying it opens deeper mining research.';
+  return { studied: ex.core === 'studied', line, blocked: coreBlock(w.rootWorld ?? w) };
 }
 
 function crystalLab(w: WorldState): CrystalLabView | null {

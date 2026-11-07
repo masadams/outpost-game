@@ -1,5 +1,5 @@
 import { nearestPlanet, planetAt, surfacePosition } from '../../sim/celestial';
-import { crystalAngle } from '../../sim/crystal';
+import { coreAngle, crystalAngle } from '../../sim/crystal';
 import type { Vec } from '../../sim/math';
 import type { WorldState } from '../../sim/world';
 
@@ -14,6 +14,9 @@ export function guideTarget(w: WorldState): Vec | null {
   const onNacre = nearestPlanet(viewer, w.system).id === 'moon';
   if (onNacre && root.exploration.crystal === 'lying') {
     return surfacePosition(planetAt('moon', w.system), crystalAngle(), 0);
+  }
+  if (nearestPlanet(viewer, w.system).id === 'cinder' && root.exploration.core === 'lying') {
+    return surfacePosition(planetAt('cinder', w.system), coreAngle(), 0);
   }
   return null;
 }
