@@ -33,7 +33,9 @@ describe('upgrading in place', () => {
     expect(upgradeView(w, battery)!.blocked).toBeNull();
     stepWorld(w, { thrust: false, turn: 0, colonyActions: [{ type: 'upgradeBuilding', id: 5, level: 2 }] }, 1 / 60);
     expect(battery.level).toBe(2);
-    expect(upgradeView(w, battery)).toBeNull();
+    // The next step (tier III) is offered, but needs more research.
+    expect(upgradeView(w, battery)).toMatchObject({ tier: 3 });
+    expect(upgradeView(w, battery)!.blocked).toMatch(/Research/);
   });
 
   it('a relay reaches farther when upgraded', () => {

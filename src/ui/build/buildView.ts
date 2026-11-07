@@ -60,7 +60,7 @@ export interface OrderView {
   paused: boolean;
 }
 
-const PURPOSE: Record<BuildType, string> = {
+export const PURPOSE: Record<BuildType, string> = {
   solar: 'Makes power in sunlight',
   battery: 'Stores power for later',
   storage: 'Holds more materials',

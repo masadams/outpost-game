@@ -13,11 +13,13 @@ export interface UpgradeView {
   cost: string;
   /** Why it cannot be done right now, or null. */
   blocked: string | null;
+  /** The tier it would reach. */
+  tier: 2 | 3;
 }
 
 /** Every building says what a tier does. New buildings add a line here when they are added. */
-export function tierEffect(b: Building): string {
-  const next = { ...b, level: 2 as const };
+export function tierEffect(b: Building, tier: 2 | 3 = 2): string {
+  const next = { ...b, level: tier };
   const power = capacityFactor(next);
   const speed = workFactor(next);
   switch (b.kind) {
@@ -50,23 +52,25 @@ export function tierEffect(b: Building): string {
 }
 
 const REASON: Record<string, string> = {
-  'Research Infrastructure retrofits': 'Research Infrastructure retrofits first.',
   'Repair facility fully before upgrading': 'Repair it first.',
   'Recover before issuing upgrade orders': 'Get your pilot back first.',
 };
 
-/** The first upgrade step. Null once a building is past it. */
+/** The next upgrade step. Null once a building is at its top tier. */
 export function upgradeView(w: WorldState, b: Building): UpgradeView | null {
-  if (facilityLevel(b) !== 1) return null;
-  const cost = upgradeCost(b, 2);
+  const level = facilityLevel(b);
+  if (level === 3) return null;
+  const tier = level === 1 ? 2 : 3;
+  const cost = upgradeCost(b, tier);
   const words = PRODUCTS.filter(p => (cost[p] ?? 0) > 0).map(p => `${cost[p]} ${p}`).join(', ');
   const error = buildingUpgradeError(w, b);
   let blocked: string | null = null;
   if (error) {
     if (REASON[error]) blocked = REASON[error];
+    else if (error.startsWith('Research ')) blocked = `${error} first.`;
     else if (error.startsWith('Needs unreserved')) blocked = `Needs ${words}.`;
     else if (error.startsWith('Needs')) blocked = error.replace(' unreserved local grid charge', ' stored') + '.';
     else blocked = error + '.';
   }
-  return { effect: tierEffect(b), cost: words, blocked };
+  return { effect: tierEffect(b, tier), cost: words, blocked, tier };
 }

@@ -11,7 +11,7 @@ export interface BaseHandlers {
   select: (id: number) => void;
   toggle: (id: number) => void;
   recipe: (id: number) => void;
-  upgrade: (id: number) => void;
+  upgrade: (id: number, level: 2 | 3) => void;
   auto: (id: number) => void;
   target: (id: number, product: string, delta: -5 | 5) => void;
   analyse: () => void;
@@ -290,8 +290,8 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
         )}
         {b.upgrade && (
           <div class="base-upgrade" data-upgrade>
-            <button type="button" disabled={paused || b.upgrade.blocked !== null} onClick={click(() => on.upgrade(b.id))}>
-              Upgrade in place
+            <button type="button" disabled={paused || b.upgrade.blocked !== null} onClick={click(() => on.upgrade(b.id, b.upgrade!.tier))}>
+              Upgrade to tier {b.upgrade.tier === 2 ? 'II' : 'III'}
             </button>
             <p class="base-note">{b.upgrade.effect}. Costs {b.upgrade.cost}.</p>
             {b.upgrade.blocked && <p class="base-why">{b.upgrade.blocked}</p>}

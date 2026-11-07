@@ -41,5 +41,7 @@ test('the research tree shows every technology, explains what is missing and lis
   await page.getByRole('tab', { name: 'Ship parts' }).click();
   await expect(page.locator('.part-card[data-part="cargo"]')).toBeVisible();
   await expect(page.locator('.part-card[data-part="bulkHold"]')).toContainText('Needs Bulk logistics');
+  await page.getByRole('tab', { name: 'Buildings' }).click();
+  await expect(page.locator('.building-card[data-kind="solar"]')).toContainText('Cell engineering');
   expect(errors).toEqual([]);
 });

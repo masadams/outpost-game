@@ -1,3 +1,11 @@
+import { BLUEPRINTS, BUILD_TYPES, type BuildType } from '../../sim/colonyConfig';
+import type { Building } from '../../sim/colony';
+import { facilityLevel } from '../../sim/facilityStats';
+import { tierTechs } from '../../sim/tiers';
+import { blueprintRevealed } from '../../sim/unlocks';
+import { featureVisible } from '../../preferences/features';
+import { PURPOSE } from '../build/buildView';
+import { tierEffect } from './upgradeView';
 import { equipmentError } from '../../sim/equipment';
 import { FINDS, isFindTech } from '../../sim/finds';
 import { PRODUCTS } from '../../sim/colonyConfig';
@@ -45,7 +53,29 @@ export interface PartRow {
   role: string;
 }
 
+export interface TierStep {
+  tier: 2 | 3;
+  /** What the tier changes, in a few words. */
+  effect: string;
+  needs: Array<{ id: TechId; label: string; done: boolean }>;
+  /** Buildings of this kind already at this tier or above. */
+  have: number;
+}
+
+export interface BuildingRow {
+  kind: BuildType;
+  label: string;
+  purpose: string;
+  /** Whether it is in the Build menu now. */
+  open: boolean;
+  /** How it is earned, in a few words. */
+  earned: string;
+  built: number;
+  tiers: TierStep[];
+}
+
 export interface ResearchTreeView {
+  buildings: BuildingRow[];
   nodes: TreeNode[];
   edges: TreeEdge[];
   columns: number;
@@ -94,6 +124,54 @@ function roleAfter(w: WorldState, slot: PartSlot, id: UpgradeId, fitted: boolean
   if (fitted) return `Makes it a ${now.toLowerCase()}.`;
   const next = shipRole({ equipment: [...w.ship.equipment.filter(p => UPGRADES[p].slot !== slot), id] }).role;
   return next === now ? `Still a ${now.toLowerCase()}.` : `Would make it a ${next.toLowerCase()}.`;
+}
+
+const EARNED: Record<BuildType, string> = {
+  solar: 'From the start',
+  refinery: 'From the start',
+  battery: 'After your first industry',
+  storage: 'After your first industry',
+  fuelProcessor: 'After your first industry',
+  miningRig: 'After your first industry',
+  relay: 'After your first industry',
+  condenser: 'After your first industry',
+  observatory: 'After the survey buoy data',
+  researchLab: 'After studying a find',
+  antenna: 'Once an Observatory stands',
+  laser: 'Once an Observatory stands',
+  missile: 'From the second storm',
+  shieldSmall: 'After the second storm',
+  shieldLarge: 'After a small shield dome',
+  habitatSmall: 'After a base on another world',
+  habitatLarge: 'After a small habitat',
+  workshop: 'After a base on another world',
+  droneBay: 'Research Precision extraction',
+  service: 'Not offered yet',
+  flak: 'Not offered yet',
+};
+
+function buildingRows(w: WorldState): BuildingRow[] {
+  const root = w.rootWorld ?? w;
+  const done = root.colony.research.completed;
+  const colonies = [root.colony, ...Object.values(root.outposts).map(o => o.colony)];
+  return BUILD_TYPES.map(kind => {
+    const mine = colonies.flatMap(c => c.buildings.filter(b => b.kind === kind));
+    const tiers: TierStep[] = ([2, 3] as const).map(tier => ({
+      tier,
+      effect: tierEffect({ kind, level: tier } as Building, tier),
+      needs: tierTechs(kind, tier).map(id => ({ id, label: TECHNOLOGIES[id].label, done: done.includes(id) })),
+      have: mine.filter(b => facilityLevel(b) >= tier).length,
+    }));
+    return {
+      kind,
+      label: BLUEPRINTS[kind].label,
+      purpose: PURPOSE[kind],
+      open: blueprintRevealed(root, kind) || featureVisible('catalogue'),
+      earned: EARNED[kind],
+      built: mine.length,
+      tiers,
+    };
+  });
 }
 
 export function researchTreeView(w: WorldState): ResearchTreeView {
@@ -146,7 +224,7 @@ export function researchTreeView(w: WorldState): ResearchTreeView {
   });
   const cols = Math.max(...nodes.map(n => n.col)) + 1;
   const rows = Math.max(...nodes.map(n => n.row)) + 1;
-  return { nodes, edges, columns: cols, rows, hasLab, slots };
+  return { buildings: buildingRows(w), nodes, edges, columns: cols, rows, hasLab, slots };
 }
 
 export { isFindTech };
