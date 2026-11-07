@@ -53,6 +53,7 @@ import { drawStormSamples, drawCrystal } from './storm';
 import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
+import { drawStreak } from './ambient';
 import { coach } from '../ui/flight/coach';
 import { guideTarget } from '../ui/flight/guide';
 import { drawCoachPointer } from './coachPointer';
@@ -97,6 +98,7 @@ export class FlightScene extends Phaser.Scene {
   private chrome!: FlightChrome;
   private pickupFeed = new PickupFeed();
   private sky!: Phaser.GameObjects.Graphics;
+  private starVisibility = 1;
   private soundEnabling = false;
   private help!: Help;
   private pausedBeforeHelp = false;
@@ -363,6 +365,9 @@ export class FlightScene extends Phaser.Scene {
     this.updateChrome();
     this.pickupFeed.update(this.simulation,this.halted?0:Math.min(delta/1000,.1));
     this.effects.update(this.simulation,Math.min(delta/1000,.1),this.halted,this.preferences.reducedMotion?0:this.preferences.quality==='low'?4:12,{centre:{x:this.follow.x,y:this.follow.y},radius:Math.hypot(this.scale.width,this.scale.height)/2/this.follow.zoom+128/this.follow.zoom});
+    if (!this.preferences.reducedMotion) {
+      for (const k of this.effects.takeKicks()) this.cameras.main.shake(Math.round(k.seconds * 1000), 0.0035 * k.strength);
+    } else this.effects.takeKicks();
     const drawKey=[this.scale.width,this.scale.height,this.follow.x.toFixed(3),this.follow.y.toFixed(3),this.follow.angle.toFixed(4),this.follow.zoom.toFixed(4),this.preferences.quality,this.preferences.reducedMotion,this.flightTools.trajectory,this.hud.selectedBuildingId,JSON.stringify(this.hud.buildPreview),this.hud.shieldAccents,this.simulation.system.time,this.simulation.colony.buildOpen,this.simulation.outposts.moon.colony.buildOpen].join(':');
     if(!this.halted || drawKey!==this.lastDrawKey){const started=performance.now();this.draw();this.budget.record('draw',performance.now()-started);this.lastDrawKey=drawKey;}
 
@@ -391,6 +396,7 @@ export class FlightScene extends Phaser.Scene {
   private drawSun(width: number, height: number, daylight: number): void {
     const sky = this.sky;
     sky.clear();
+    if (!this.preferences.reducedMotion) drawStreak(sky, width, height, this.time.now / 1000, Math.max(0, Math.min(1, 1.4 - daylight * 1.4)) * this.starVisibility);
     const system = this.simulation.system;
     if (!system.sun) return;
     const eye = this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut.position : this.simulation.ship.position;
@@ -462,6 +468,7 @@ export class FlightScene extends Phaser.Scene {
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
+    this.starVisibility = look.stars;
     this.drawSun(width, height, daylight);
     const home = planetAt('home', this.simulation.system), moon = planetAt('moon', this.simulation.system);
     this.atmosphere.setAlpha(look.atmosphere);
