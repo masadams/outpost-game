@@ -16,3 +16,6 @@ Not in this run: new star systems, terraforming.
 - Next: pre-flight check that compares a trip's fuel to the ship's delta-v; role-specific gaps found in play (miner ascent with a full hold, scout fuel range).
 
 - Liftoff check: the Ship panel warns while landed when thrust against weight at that world is under 1.5 (and says too heavy under 1), so a heavy build with a full hold is told to unload before launching.
+
+## Adding worlds is a catalogue row
+Ember and Glint (an ice dwarf at 52000 m, in about 40% of non-standard seeds) were each added as one catalogue row plus a sprite and a seam list. Survey hints, the Map, outposts, pods, kits and the pre-flight line all follow from the row. Not yet needed: per-body terrain art and per-body hazards.

@@ -20,7 +20,7 @@ describe('optional world Ember', () => {
     expect(planets(day(withIt)).map(p => p.id)).toContain('ember');
   });
   it('always keeps the three standard worlds', () => {
-    for (const id of BODY_IDS.filter(i => i !== 'ember')) expect(bodyExists(id, day(7))).toBe(true);
+    for (const id of BODY_IDS.filter(i => i !== 'ember' && i !== 'glint')) expect(bodyExists(id, day(7))).toBe(true);
   });
 });
 
@@ -78,5 +78,24 @@ describe('Ember on the Map', () => {
     w.system.binary = true;
     w.exploration.known.push('moon', 'cinder', 'ember');
     expect(mapView(w).places.map(p => p.id)).not.toContain('ember');
+  });
+});
+
+describe('optional world Glint', () => {
+  const seeds = Array.from({ length: 200 }, (_, i) => i + 1);
+  it('is never in the standard layout and is in some seeds', () => {
+    expect(bodyExists('glint', { time: 0, binary: true })).toBe(false);
+    const has = seeds.filter(s => bodyExists('glint', day(s)));
+    expect(has.length).toBeGreaterThan(40);
+    expect(has.length).toBeLessThan(120);
+  });
+
+  it('is farther than Ember and takes longer to find', async () => {
+    const { BODIES } = await import('../src/sim/celestial');
+    expect(BODIES.glint.surveySeconds).toBeGreaterThan(BODIES.ember.surveySeconds);
+    const seed = seeds.find(s => bodyExists('glint', day(s)))!;
+    const a = planetAt('home', day(seed)).position;
+    const b = planetAt('glint', day(seed)).position;
+    expect(Math.hypot(b.x - a.x, b.y - a.y) / POD.speed).toBeLessThan(2400);
   });
 });

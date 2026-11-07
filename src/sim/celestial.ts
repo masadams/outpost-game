@@ -1,7 +1,7 @@
 import { ATMOSPHERE, DAY_LENGTH, WORLD } from './config';
 import { streamFor } from './seed';
 import { heading, length, localAngle, wrap, type Vec } from './math';
-export const BODY_IDS = ['home', 'moon', 'cinder', 'ember'] as const;
+export const BODY_IDS = ['home', 'moon', 'cinder', 'ember', 'glint'] as const;
 export type BodyId = typeof BODY_IDS[number];
 /** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
 export interface SystemFrame { time: number; binary: boolean; sun?: boolean; /** The world seed: seed 0 (or none) is the standard layout. */ seed?: number }
@@ -45,13 +45,18 @@ export const BODIES: Record<BodyId, BodySpec> = {
     orbit: { kind: 'circle', radius: 36000, phase: 0.6 }, spin: 'tidal', requiresBinary: true, surveySeconds: 700,
     optional: true,
     hint: { at: 480, text: 'There is another faint point out there, farther than the last. Keep watching.' } },
+  // A small icy dwarf at the far edge, bright in ice and dim to see. Only some seeds have it.
+  glint: { label: 'Glint', radius: 210, mu: 0.8 * 210 ** 2, atmosphere: 0, air: null,
+    orbit: { kind: 'circle', radius: 52000, phase: 4.1 }, spin: 'tidal', requiresBinary: true, surveySeconds: 1000,
+    optional: true,
+    hint: { at: 700, text: 'A very faint, cold point far beyond the others. Keep watching.' } },
 };
 /** Whether a body is in this system. Optional bodies are never in the standard layout and only in some seeds. */
 export function bodyExists(id: BodyId, system: SystemFrame = STATIC_SYSTEM): boolean {
   if (!BODIES[id].optional) return true;
   const seed = system.seed ?? 0;
   if (seed === 0) return false;
-  return streamFor(seed, 'extra/' + id)() < 0.6;
+  return streamFor(seed, 'extra/' + id)() < (id === 'glint' ? 0.4 : 0.6);
 }
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;
