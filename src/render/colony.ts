@@ -67,6 +67,9 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
       const tower = [p(-8, 1), p(0, 29), p(8, 1)]; g.strokePoints(tower, false);
       for (const height of [7, 14, 21]) { const a = p(-5, height), b = p(5, height); g.lineBetween(a.x, a.y, b.x, b.y); }
       const drillTop = p(0, 19), drillBottom = p(0, -5); g.lineStyle(2, color); g.lineBetween(drillTop.x, drillTop.y, drillBottom.x, drillBottom.y);
+    } else if (entry.kind === 'droneBay') {
+      const pad = [p(-5, 13), p(0, 22), p(5, 13)]; g.strokePoints(pad, true);
+      const dot = p(0, 17); g.fillStyle(color, 0.9); g.fillCircle(dot.x, dot.y, 1.8);
     } else if (entry.kind === 'refinery') {
       const chimney = [p(-width + 2, 13), p(-width + 2, 21), p(-width + 5, 21), p(-width + 5, 13)]; g.strokePoints(chimney, true);
     } else {

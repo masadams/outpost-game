@@ -70,6 +70,7 @@ const PURPOSE: Record<BuildType, string> = {
   flak: 'Bursts against swarms of rocks',
   missile: 'Long-range rock interception',
   miningRig: 'Mines a surface deposit',
+  droneBay: 'A drone fetches ore from nearby seams',
   researchLab: 'Studies samples to unlock tech',
   observatory: 'Watches the sky for what is coming',
   relay: 'Carries power 600 m to far-off buildings',
