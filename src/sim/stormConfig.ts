@@ -1,4 +1,5 @@
 import type { Vec } from './math';
+import { streamFor } from './seed';
 
 /** Numbers for the first storm. Times are simulation seconds from the start of a game. */
 export const STORM = {
@@ -48,12 +49,49 @@ export interface StormConfig {
   readonly seed: number; readonly arrivalTime: number; readonly lead: number; readonly entryRadius: number; readonly entrySpeed: number;
   readonly spacing: number; readonly targetOffset: number; readonly aim: readonly number[]; readonly radii: readonly number[];
   readonly masses: readonly number[]; readonly health: readonly number[];
+  /** What each body is meant to do; missing means every one is aimed at the zone. 'miss' passes by, 'large' is one big body. */
+  readonly kinds?: readonly BodyKind[];
 }
+export type BodyKind = 'hit' | 'miss' | 'large';
 
 /** Storms past the second keep the second's pattern, with more bodies and a little more of everything, up to a limit. */
 export const LATER_STORM_LIMIT = 6;
 
-export function stormFor(wave: number): StormConfig {
+/**
+ * The storm for a wave. Seed 0 is the standard storm, always the same. Any other seed adds strays from the second
+ * storm on: bodies that pass by and miss, and from the third a rare big one that comes down well away from the base.
+ */
+export function stormFor(wave: number, seed = 0): StormConfig {
+  const base = baseStormFor(wave);
+  if (seed === 0 || wave < 2) return base;
+  const rand = streamFor(seed, `storm-strays/${wave}`);
+  const aim: number[] = [...base.aim];
+  const radii: number[] = [...base.radii];
+  const masses: number[] = [...base.masses];
+  const health: number[] = [...base.health];
+  const kinds: BodyKind[] = base.aim.map(() => 'hit');
+  const misses = (rand() < 0.65 ? 1 : 0) + (rand() < 0.2 ? 1 : 0);
+  for (let i = 0; i < misses; i++) {
+    aim.push(0);
+    const r = 7 + rand() * 5;
+    radii.push(r);
+    masses.push(Math.round(0.4 * r ** 3));
+    health.push(2.5 + rand());
+    kinds.push('miss');
+  }
+  if (wave >= 3 && rand() < 0.4) {
+    const side = base.targetOffset >= 0 ? 1 : -1;
+    aim.push(side * (600 + rand() * 800));
+    const r = 24 + rand() * 10;
+    radii.push(r);
+    masses.push(Math.round(0.41 * r ** 3));
+    health.push(Math.round(r * 4) / 10);
+    kinds.push('large');
+  }
+  return { ...base, aim, radii, masses, health, kinds };
+}
+
+function baseStormFor(wave: number): StormConfig {
   if (wave <= 1) return STORM;
   if (wave === 2) return STORM_2;
   const grow = Math.min(wave, LATER_STORM_LIMIT) - 2;

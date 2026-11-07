@@ -1,4 +1,4 @@
-import { groundVelocity, nearestPlanet } from './celestial';
+import { groundVelocity, nearestPlanet, planetAt, relative } from './celestial';
 import { activeWorld } from './localWorld';
 import { colonyPlanet, localAngleAt, sitePosition } from './localWorld';
 import { ATMOSPHERE } from './config';
@@ -51,6 +51,13 @@ export function applyDefenceAction(world: WorldState, action: DefenceAction): vo
   }
 }
 export const isDefenceAction = (action: { type: string }): action is DefenceAction => ['startWave', 'controlTurret', 'releaseTurret', 'toggleAuto', 'repairBuilding'].includes(action.type);
+/** A meteor that is far from Selene and still moving away has missed for good. */
+function hasPassed(m: Meteor, world: WorldState): boolean {
+  const home = planetAt('home', world.system);
+  const at = relative(m.position, home);
+  const away = at.x * (m.velocity.x - home.velocity.x) + at.y * (m.velocity.y - home.velocity.y);
+  return Math.hypot(at.x, at.y) > 16000 && away > 0;
+}
 export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: number, shipStart: Vec): void {
   resolveDefenceHits(world);
   const d = world.defence, starts = new Map(d.meteors.map(m => [m.id, { ...m.position }]));
@@ -61,6 +68,9 @@ export function stepDefence(world: WorldState, fire: boolean, turn: number, dt: 
     if (contact) {
       d.impacts++;
       damageColony(world, contact, meteorDamage(m, groundVelocity(nearestPlanet(contact, world.system), contact)), 65 + m.radius);
+    } else if (hasPassed(m, world)) {
+      // A body that missed and is heading back out to space is gone for good.
+      continue;
     } else survivors.push(m);
   }
   d.meteors = survivors;

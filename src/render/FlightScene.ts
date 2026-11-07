@@ -89,6 +89,8 @@ export class FlightScene extends Phaser.Scene {
   private ember!: Phaser.GameObjects.Image;
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
+  private skyImage!: Phaser.GameObjects.Image;
+  private skyTexture = '';
   private map!: Phaser.GameObjects.Graphics;
   private paused = false;
   private windowPaused = false;
@@ -145,6 +147,7 @@ export class FlightScene extends Phaser.Scene {
     this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.pickupFeed.reset(this.simulation);
     this.follow.viewportHeight = this.scale.height;
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
+    this.skyImage = this.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setVisible(false);
     this.stars = this.add.graphics();
     this.sky = this.add.graphics();
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
@@ -451,12 +454,25 @@ export class FlightScene extends Phaser.Scene {
       impact: p.impact ? onGroundNow('home', system, p.impact, p.seconds) : null,
     };
   }
+  /** The sky is drawn once into a texture; redrawing hundreds of soft shapes every frame would be slow. */
+  private renderSky(width:number,height:number,key:string):void{
+    const texture=`sky-${key}`;
+    if(this.skyTexture&&this.skyTexture!==texture&&this.textures.exists(this.skyTexture))this.textures.remove(this.skyTexture);
+    if(!this.textures.exists(texture)){
+      const painter=this.make.graphics({x:0,y:0},false);
+      drawSky(painter,buildSky(this.simulation.seed,this.preferences.quality==='low'?'low':'high'),width,height);
+      painter.generateTexture(texture,Math.max(1,Math.round(width)),Math.max(1,Math.round(height)));
+      painter.destroy();
+    }
+    this.skyTexture=texture;
+    this.skyImage.setTexture(texture).setOrigin(0,0).setPosition(0,0).setVisible(true);
+  }
   private draw(): void {
     const { width, height } = this.scale;
     const g = this.art; g.clear(); this.map.clear();
     const starKey=`${width}/${height}/${this.preferences.quality}/${this.simulation.seed}`;
     if(starKey!==this.starKey){this.stars.clear();this.starKey=starKey;
-    drawSky(this.stars,buildSky(this.simulation.seed,this.preferences.quality==='low'?'low':'high'),width,height);
+    this.renderSky(width,height,starKey);
     for (const star of this.starPoints.slice(0,this.preferences.quality==='low'?80:240)) {
       this.stars.fillStyle(star.bright ? 0xa9c9dc : 0x456079, star.bright ? 0.85 : 0.5);
       this.stars.fillRect(star.x * width, star.y * height, star.bright ? 2 : 1, star.bright ? 2 : 1);
@@ -472,6 +488,7 @@ export class FlightScene extends Phaser.Scene {
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
+    this.skyImage.setAlpha(look.stars);
     this.starVisibility = look.stars;
     this.drawSun(width, height, daylight);
     const home = planetAt('home', this.simulation.system), moon = planetAt('moon', this.simulation.system);
