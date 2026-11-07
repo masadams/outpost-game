@@ -9,5 +9,5 @@ export interface AutopilotState {program:FlightProgram|null;status:string;energy
 export type AutopilotAction={type:'autopilot';operation:AutopilotMode|'cancel'};
 export const createAutopilot=():AutopilotState=>({program:null,status:'Manual flight',energyUsed:0});
 export function flightComputer(ship:Pick<Ship,'equipment'>):{tier:number;power:number;label:string}{
- const id=fittedPart(ship,'avionics');return id==='navigationComputer'?{tier:3,power:3,label:'Navigation computer'}:id==='returnComputer'?{tier:2,power:2,label:'Return computer'}:id==='landingComputer'?{tier:1,power:1,label:'Landing computer'}:{tier:0,power:0,label:'No flight computer'};
+ const id=fittedPart(ship,'avionics');return id==='missionComputer'?{tier:3,power:2,label:'Mission computer'}:id==='navigationComputer'?{tier:3,power:3,label:'Navigation computer'}:id==='returnComputer'?{tier:2,power:2,label:'Return computer'}:id==='landingComputer'?{tier:1,power:1,label:'Landing computer'}:{tier:0,power:0,label:'No flight computer'};
 }

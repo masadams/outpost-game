@@ -43,3 +43,33 @@ describe('fitting screen role line', () => {
     expect(roleLine(w, 'tank', 'surveyTank', true)).toMatch(/Scout/);
   });
 });
+
+import { engineStats, fuelCapacity, cargoCapacity, damageFactor, miningStats, tractorStats, cannonStats, thermalStats } from '../src/sim/shipStats';
+import { flightComputer } from '../src/sim/autopilotConfig';
+
+describe('the second set of ship parts', () => {
+  const one = (part: UpgradeId) => ({ equipment: [part] });
+
+  it('each part does what it says against the standard ship', () => {
+    const base = engineStats({ equipment: [] });
+    expect(engineStats(one('afterburner')).thrust).toBeCloseTo(base.thrust * 1.6, 6);
+    expect(engineStats(one('afterburner')).burn).toBeGreaterThan(base.burn * 1.6);
+    expect(fuelCapacity(one('dropTank'))).toBe(fuelCapacity({ equipment: [] }) + 200);
+    expect(cargoCapacity(one('cargoBay'))).toBe(cargoCapacity({ equipment: [] }) + 140);
+    expect(miningStats(one('pulseMiner'))).toMatchObject({ rate: 2.2, range: 500 });
+    expect(tractorStats(one('wideTractor'))).toMatchObject({ range: 400 });
+    expect(cannonStats(one('railCoil')).damage).toBe(40);
+    expect(thermalStats(one('radiatorFins')).cooling).toBe(34);
+    expect(damageFactor(one('ablativePlating'))).toBe(0.5);
+    expect(flightComputer(one('missionComputer'))).toMatchObject({ tier: 3, power: 2 });
+  });
+
+  it('every part beats the one before it in some way and pays for it in another', () => {
+    const base = shipProfile({ equipment: [] });
+    expect(shipProfile(one('afterburner')).lift).toBeGreaterThan(base.lift);
+    expect(shipProfile(one('afterburner')).deltaV).toBeLessThan(base.deltaV * 1.05);
+    expect(shipProfile(one('cargoBay')).hold).toBeGreaterThan(base.hold);
+    expect(shipProfile(one('cargoBay')).loadedLift).toBeLessThan(base.loadedLift);
+    expect(shipProfile(one('dropTank')).deltaV).toBeGreaterThan(base.deltaV);
+  });
+});

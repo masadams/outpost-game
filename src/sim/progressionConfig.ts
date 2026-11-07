@@ -34,7 +34,7 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   industrialSystems:{facilityTier:3,label:'Advanced facility systems',seconds:45,requires:['infrastructure','thermal'],cost:{alloy:14,wire:8,components:4}},
 };
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
-export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler', 'landingComputer', 'returnComputer', 'navigationComputer'] as const;
+export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler', 'landingComputer', 'returnComputer', 'navigationComputer', 'afterburner', 'dropTank', 'cargoBay', 'pulseMiner', 'wideTractor', 'railCoil', 'radiatorFins', 'ablativePlating', 'missionComputer'] as const;
 export type UpgradeId = typeof UPGRADE_IDS[number];
 export const PART_SLOTS = ['drive','tank','hold','mining','tractor','weapon','cooling','armour','avionics'] as const;
 export type PartSlot = typeof PART_SLOTS[number];
@@ -65,6 +65,15 @@ export const UPGRADES: Record<UpgradeId, Upgrade> = {
   capacitorCooler: {slot:'cooling',label:'Capacitor cooling loop',tech:'reactor',cost:{alloy:10,wire:5,components:3},mass:18,benefit:'24 heat/s cooling · 16 kW cell recharge',tradeoff:'Less cooling than Cooling pump; prioritizes cell recovery over sustained heat removal'},
   landingComputer:{slot:'avionics',label:'Landing computer',tech:'flightControl',cost:{alloy:4,wire:3,components:1},mass:8,benefit:'Automatic landing from a prepared local pad approach',tradeoff:'1 kW active cell draw; manual approach required, uses real fuel'},
   returnComputer:{slot:'avionics',label:'Return computer',tech:'navigation',cost:{alloy:8,wire:5,components:2},mass:15,benefit:'Landing plus automatic return home and touchdown',tradeoff:'2 kW active cell draw; more mass, normal fuel and collision risks'},
+  afterburner:{slot:'drive',label:'Afterburner engine',tech:'aeronautics',cost:{alloy:10,wire:5,components:3},mass:18,benefit:'22.4 kN thrust · 1.36 kg/s burn',tradeoff:'Strongest lift, poorest efficiency: it drinks fuel'},
+  dropTank:{slot:'tank',label:'Drop tank',tech:'massDrivers',cost:{alloy:12,wire:6,components:4},mass:22,benefit:'440 kg fuel capacity',tradeoff:'Fuel and tank are real mass; launching full is slow'},
+  cargoBay:{slot:'hold',label:'Cargo bay',tech:'deepStorage',cost:{alloy:11,wire:5,components:4},mass:20,benefit:'260 kg shared ore/freight capacity',tradeoff:'A big hold to climb out with once it is full'},
+  pulseMiner:{slot:'mining',label:'Pulse mining head',tech:'geoscience',cost:{alloy:11,wire:5,components:4},mass:20,benefit:'500 m beam · 2.2× mining rate',tradeoff:'8 kW cell draw + 5 heat/s; between the powered and deep heads'},
+  wideTractor:{slot:'tractor',label:'Wide-field tractor',tech:'surveyOptics',cost:{alloy:10,wire:5,components:3},mass:18,benefit:'400 m field · 30 m/s² force limit',tradeoff:'5 kW + 3 heat/s while active'},
+  railCoil:{slot:'weapon',label:'Rail coil',tech:'ballistics',cost:{alloy:13,wire:6,components:5},mass:24,benefit:'40 cannon damage',tradeoff:'22 kJ + 36 heat/shot; the hardest hit, the hungriest gun'},
+  radiatorFins:{slot:'cooling',label:'Radiator fins',tech:'thermal',cost:{alloy:9,wire:4,components:3},mass:16,benefit:'34 heat/s cooling',tradeoff:'11 kW cell recharge; fins catch debris'},
+  ablativePlating:{slot:'armour',label:'Ablative plating',tech:'fieldRepair',cost:{alloy:16,wire:8,components:6},mass:30,benefit:'50% less incoming hull damage',tradeoff:'Heaviest plating; no healing or protection from catastrophic landings'},
+  missionComputer:{slot:'avionics',label:'Mission computer',tech:'autonomy',cost:{alloy:11,wire:6,components:3},mass:20,benefit:'Landing, return home and selected-destination flight',tradeoff:'2 kW active cell draw: the same flights as the Navigation computer for less power'},
   navigationComputer:{slot:'avionics',label:'Navigation computer',tech:'autonomy',cost:{alloy:14,wire:8,components:4},mass:26,benefit:'Landing, return home and selected-destination flight',tradeoff:'3 kW active cell draw; heaviest computer, no automatic mining or resource transfers'},
 };
 export const PROGRESSION = { labPower: 4, fabricationEnergy: 20, salvageFraction: .5 } as const;
