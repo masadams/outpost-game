@@ -22,3 +22,6 @@ Slices, in order (each small, tested, merged on its own; all feedback, no free r
 | F7 | **Feel check.** Hands-on pass with screenshots and a short screen-capture style sequence; tune numbers; remove anything that adds noise. | Keep what is fun, cut what is not. | Planned |
 
 Bible checks: no free resources from grades or contracts; feedback only. Arcade feel is presentation and pacing, not changed physics. Everything respects reduced motion and audio settings.
+
+## Status after the review (user direction)
+Keep it small until the ideal gameplay is settled. Done: the camera thud and hull rattle (part of F2), shooting stars and a wandering melody (atmosphere and music). Agreed in principle but not built: an early shower of small rocks, only if it can never land on the base (needs a placement guarantee), so the brainstorm continues. Everything else here (landing grade report, pilot voice, quick contracts, pacing changes) waits.
