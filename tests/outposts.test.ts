@@ -59,3 +59,32 @@ describe('hauling ore home', () => {
     expect(haulError(moon)).toMatch(/No ore/);
   });
 });
+
+describe('pass fixes', () => {
+  it('the power forecast on Nacre uses Nacre\'s own day', async () => {
+    const { baseView } = await import('../src/ui/base/baseView');
+    const w = createWorld();
+    w.system.sun = true;
+    w.system.time = 100;
+    const moon = colonyWorld(w, 'moon');
+    moon.colony.buildings.push(completedBuilding(1001, 'solar', 0.25, moon));
+    const forecast = baseView(moon).power.forecast!;
+    const home = createWorld();
+    home.system.sun = true;
+    home.system.time = 100;
+    home.colony.buildings.push(completedBuilding(1, 'solar', 0.25, home));
+    expect(forecast).not.toBe(baseView(home).power.forecast);
+    expect(forecast).not.toMatch(/covers a typical night/);
+  });
+
+  it('names other worlds as worlds, and the ship panel does not say "Delivered" on one', async () => {
+    const { mapView } = await import('../src/ui/map/mapView');
+    const { shipPanelView } = await import('../src/ui/ship/shipView');
+    const w = createWorld();
+    w.exploration.known.push('cinder');
+    expect(mapView(w).places.find(p => p.id === 'cinder')?.kind).toBe('World');
+    const moon = colonyWorld(w, 'moon');
+    moon.depot.ice = 10;
+    expect(shipPanelView(moon).next).toMatch(/waiting in the depot/);
+  });
+});

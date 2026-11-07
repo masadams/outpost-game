@@ -252,12 +252,13 @@ function powerSummary(w: WorldState): string {
 
 function powerForecast(w: WorldState): string | null {
   if (!w.system.sun || !w.colony.buildings.some(b => b.kind === 'solar')) return null;
-  const clock = sunClock(w.system, w.colony.buildings.find(b => b.kind === 'solar')!.angle);
+  const clock = sunClock(w.system, w.colony.buildings.find(b => b.kind === 'solar')!.angle, colonyPlanet(w).id);
   const when = duration(clock.secondsToChange);
   if (!clock.day) return `Light returns in ${when}.`;
   const night = Math.round(SUN.dayLength * 0.4);
   const need = w.colony.demand * night;
   const covers = need <= 0 || w.colony.energy >= need;
+  if (w.colony.demand <= 0 && w.colony.energy < 1) return `Dusk in ${when}. Nothing is stored for the dark.`;
   return covers ? `Dusk in ${when}. Your stored power covers a typical night.` : `Dusk in ${when}. A typical night needs about ${Math.ceil(need)} kJ; you have ${Math.floor(w.colony.energy)}.`;
 }
 
@@ -285,10 +286,10 @@ function elsewhereView(w: WorldState): OutpostView[] {
     out.push({
       id,
       label: BODIES[id].label,
-      power: power.summary,
+      power: power.summary.replace(/\.$/, ''),
       level: power.level,
       stores: stock.length ? stock.join(' · ') : 'Nothing stored',
-      machines: buildings.map(v => ({ label: v.label, chip: v.chip, line: v.line })),
+      machines: buildings.filter(v => !v.why).map(v => ({ label: v.label, chip: v.chip, line: v.line })),
       short: buildings.filter(v => v.why).map(v => `${v.label}: ${v.why}`),
     });
   }

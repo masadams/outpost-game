@@ -54,6 +54,7 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
     const lab = w.colony.buildings.find(b => b.kind === 'observatory');
     if (!lab) return 'Build an Observatory (the buoy data unlocked it), then give it power.';
     if (lab.status === 'running') return 'Scanning. Leave it powered.';
+    if (lab.linked === false) return 'The Observatory is out of reach of your base power. Build a power relay toward it.';
     return 'The Observatory needs power. Build a solar array.';
   }
   if (id === 'storm') {

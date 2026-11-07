@@ -12,7 +12,12 @@ describe('the earned sequence', () => {
     setFeatureMode('focus');
     const w = createWorld();
     w.system.sun = true;
-    const menu = () => buildView(w).cards.map(c => c.kind);
+    // Past eight cards the menu sorts into tabs; read them all.
+    const menu = () => {
+      const first = buildView(w);
+      if (!first.groups) return first.cards.map(c => c.kind);
+      return first.groups.flatMap(g => buildView(w, g.id as never).cards.map(c => c.kind));
+    };
     expect(menu()).toEqual(['solar', 'refinery']);
 
     w.objectives.completed.push('industry');

@@ -71,7 +71,9 @@ function nextStep(w: WorldState, cargo: number, stored: number): string {
   if (cargo > 0) {
     return w.ship.state === 'landed' ? 'Press E to unload your ore.' : 'Ore on board. Land on the green pad.';
   }
-  if (stored > 0) return 'Delivered. Launch for more.';
+  if (stored > 0) {
+    return (w.siteBody ?? 'home') === 'home' ? 'Delivered. Launch for more.' : 'Ore is waiting in the depot here. Load it and fly home.';
+  }
   return 'Point at a rock and hold Space to mine, then hold C to pull the fragments in.';
 }
 
