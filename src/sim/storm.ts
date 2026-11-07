@@ -80,7 +80,7 @@ export function planStorm(world: WorldState): void {
  * arrives in the same part of the day, and no body of the first storm is tougher than standard.
  */
 export function stormShape(seed: number, wave: number): { offset: number; arrival: number; size: (i: number) => number; tough: (i: number) => number } {
-  const STORM = stormFor(wave);
+  const STORM = stormFor(wave, seed);
   if (seed === 0) return { offset: STORM.targetOffset, arrival: 0, size: () => 1, tough: () => 1 };
   const rand = streamFor(seed, `storm/${wave}`);
   const side = STORM.targetOffset >= 0 ? 1 : -1;
@@ -91,9 +91,18 @@ export function stormShape(seed: number, wave: number): { offset: number; arriva
   return { offset, arrival, size: i => sizes[i] ?? 1, tough: i => toughs[i] ?? 1 };
 }
 
+/** A tangential speed that carries a body past the planet instead of onto it: the aimed one, pushed sideways until it clears. */
+function missTangential(angle: number, aimed: number, system: SystemFrame, radius: number, mass: number, wave: number): number {
+  for (const kick of [40, 60, 90, 130, 200, 300]) {
+    const missing = landingAngle(entryMeteor(0, angle, aimed + kick, system, radius, mass, wave), system) === null;
+    if (missing) return aimed + kick;
+  }
+  return aimed + 300;
+}
+
 export function planNextBody(world: WorldState): void {
   const storm = world.storm;
-  const STORM = stormFor(storm.wave);
+  const STORM = stormFor(storm.wave, world.seed);
   if (storm.planned) return;
   if (storm.arrival <= 0) storm.arrival = STORM.arrivalTime;
   const i = storm.plan.length;
@@ -106,7 +115,8 @@ export function planNextBody(world: WorldState): void {
   const target = WORLD.padAngle + (shape.offset + STORM.aim[i] + (rand() - 0.5) * 8) / home.radius;
   const radius = STORM.radii[i] * shape.size(i);
   const mass = STORM.masses[i] * shape.size(i) ** 3;
-  const tangential = aimTangential(target, system, radius, mass, storm.wave);
+  const aimed = aimTangential(target, system, radius, mass, storm.wave);
+  const tangential = STORM.kinds?.[i] === 'miss' ? missTangential(target, aimed, system, radius, mass, storm.wave) : aimed;
   const meteor = entryMeteor(world.nextId++, target, tangential, system, radius, mass, storm.wave);
   const fall = landing(meteor, system);
   storm.ids.push(meteor.id);
@@ -134,7 +144,7 @@ export function farPosition(body: FarBody, time: number): Vec {
 /** Advances the storm one step: plan it, hand arriving bodies to the meteor physics, notice when it is over. */
 export function stepStorm(world: WorldState): void {
   const storm = world.storm;
-  const STORM = stormFor(storm.wave);
+  const STORM = stormFor(storm.wave, world.seed);
   const time = world.system.time;
   if (!storm.armed) {
     // Building an Observatory is what starts the story.
