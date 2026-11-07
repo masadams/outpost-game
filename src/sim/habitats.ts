@@ -1,3 +1,4 @@
+import { capacityFactor } from './facilityStats';
 import { planetAt, relative, surfaceAngle, type Planet } from './celestial';
 import { colonyPlanet } from './localWorld';
 import { orderedBuildings, powerFraction } from './power';
@@ -18,7 +19,7 @@ export function habitatContains(building: Building, position: { x: number; y: nu
   return length(relative(position, planet)) - planet.radius + SUIT.radius <= ceiling + 1e-7;
 }
 export function habitatBreathable(b: Building): boolean {
-  return isHabitat(b.kind) && operational(b) && b.enabled && !!b.habitat?.powered && b.habitat.oxygen > HABITATS[b.kind].capacity * HABITAT.minimumFraction + 1e-9;
+  return isHabitat(b.kind) && operational(b) && b.enabled && !!b.habitat?.powered && b.habitat.oxygen > airCapacity(b) * HABITAT.minimumFraction + 1e-9;
 }
 export function habitatSource(w: WorldState): Building | undefined {
   if (w.playerMode !== 'astronaut' || w.astronaut.health <= 0) return undefined;
@@ -27,7 +28,7 @@ export function habitatSource(w: WorldState): Building | undefined {
 /** Sample coverage at the beginning of the fixed step and pay for only one crew's air. */
 export function consumeHabitatAir(w: WorldState, dt: number): number {
   const b = habitatSource(w); if (!b || !isHabitat(b.kind) || !b.habitat) return 0;
-  const available = Math.max(0, b.habitat.oxygen - HABITATS[b.kind].capacity * HABITAT.minimumFraction);
+  const available = Math.max(0, b.habitat.oxygen - airCapacity(b) * HABITAT.minimumFraction);
   const used = Math.min(available, HABITAT.crewRate * dt);
   b.habitat.oxygen = Math.max(0, b.habitat.oxygen - used); w.colony.oxygenUsed += used;
   return used / HABITAT.crewRate;
@@ -54,10 +55,10 @@ export function stepHabitats(w: WorldState, dt: number, deferCharging = false): 
     const grid = Math.min(c.energy, allowed), backup = required - grid;
     c.energy = Math.max(0, c.energy - grid); h.energy = Math.max(0, h.energy - backup);
     b.gridPower = grid / dt; h.powered = true; h.backup = backup > 1e-9;
-    const fill = Math.min(spec.capacity - h.oxygen, c.products.oxygen, spec.fillRate * dt);
+    const fill = Math.min(airCapacity(b) - h.oxygen, c.products.oxygen, spec.fillRate * dt);
     h.oxygen += fill; c.products.oxygen = Math.max(0, c.products.oxygen - fill);
-    b.status = h.oxygen <= spec.capacity * HABITAT.minimumFraction + 1e-9 ? c.products.oxygen <= 1e-9 ? 'no feedstock' : 'pressurizing' :
-      h.oxygen < spec.capacity * HABITAT.warningFraction ? 'air low' : 'breathable';
+    b.status = h.oxygen <= airCapacity(b) * HABITAT.minimumFraction + 1e-9 ? c.products.oxygen <= 1e-9 ? 'no feedstock' : 'pressurizing' :
+      h.oxygen < airCapacity(b) * HABITAT.warningFraction ? 'air low' : 'breathable';
   }
   if (!deferCharging) chargeHabitats(w, dt);
 }
@@ -72,3 +73,6 @@ export function chargeHabitats(w: WorldState, dt: number): void {
     b.gridPower = (b.gridPower ?? 0) + charge / dt; h.energy += charge; c.energy = Math.max(0, c.energy - charge);
   }
 }
+
+/** Air a dome can hold: its size, times the tier factor (an upgraded dome holds more). */
+export const airCapacity = (b: Pick<import('./colony').Building, 'kind' | 'level'>): number => HABITATS[b.kind as 'habitatSmall' | 'habitatLarge'].capacity * capacityFactor(b as never);
