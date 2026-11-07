@@ -1,7 +1,7 @@
-import { BELTS } from './explorationConfig';
+import { BELTS, BELT_IDS } from './explorationConfig';
 import type { BeltId } from './explorationConfig';
 import { destination } from './exploration';
-import { planetAt } from './celestial';
+import { BODY_IDS, planetAt, type BodyId } from './celestial';
 import type { Vec } from './math';
 import type { WorldState } from './world';
 
@@ -49,4 +49,28 @@ export function courseToBelt(w: WorldState, belt: BeltId, speed = 110): { aim: V
   const facing = w.playerMode === 'ship' ? w.ship.angle : 0;
   const bearing = Math.atan2(Math.sin(heading - facing), Math.cos(heading - facing));
   return { aim: position, range: Math.hypot(dx, dy), seconds, bearing };
+}
+
+/** The point to aim at to reach a catalogue body from `from` at `speed` m/s: bodies follow exact orbits, so this is exact. */
+export function interceptBody(w: WorldState, id: BodyId, from: Vec, speed: number): { position: Vec; seconds: number } {
+  let seconds = 0;
+  let position = planetAt(id, w.system).position;
+  for (let i = 0; i < 8; i++) {
+    seconds = Math.hypot(position.x - from.x, position.y - from.y) / Math.max(1, speed);
+    position = planetAt(id, { ...w.system, time: w.system.time + seconds }).position;
+  }
+  return { position, seconds };
+}
+
+/** Course to a belt or a world for the player: where to point, how far, how long. Null for other places. */
+export function courseTo(w: WorldState, key: string, speed = 110): { aim: Vec; range: number; seconds: number; bearing: number } | null {
+  if ((BELT_IDS as readonly string[]).includes(key)) return courseToBelt(w, key as BeltId, speed);
+  if (!(BODY_IDS as readonly string[]).includes(key) || key === 'home') return null;
+  const viewer = w.playerMode === 'ship' ? w.ship : w.astronaut;
+  const { position, seconds } = interceptBody(w, key as BodyId, viewer.position, speed);
+  const dx = position.x - viewer.position.x;
+  const dy = position.y - viewer.position.y;
+  const facing = w.playerMode === 'ship' ? w.ship.angle : 0;
+  const heading = Math.atan2(dx, -dy);
+  return { aim: position, range: Math.hypot(dx, dy), seconds, bearing: Math.atan2(Math.sin(heading - facing), Math.cos(heading - facing)) };
 }

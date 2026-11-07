@@ -10,7 +10,9 @@ import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor,
 import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
-import { BODIES, BODY_IDS } from '../../sim/celestial';
+import { podError } from '../../sim/pods';
+import { inventoryMass } from '../../sim/resources';
+import { BODIES, BODY_IDS, type BodyId } from '../../sim/celestial';
 import { bodyKnown } from '../../sim/explorationConfig';
 import { RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import { cargoMass } from '../../sim/shipMass';
@@ -37,6 +39,13 @@ export interface BaseView {
   research: ResearchRow[] | null;
   /** The other worlds with a base, so a mine far away can be checked without going there. */
   elsewhere: OutpostView[];
+  /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
+  pods: PodsView | null;
+}
+
+export interface PodsView {
+  sends: Array<{ to: string; label: string; reason: string | null }>;
+  flying: string[];
 }
 
 export interface OutpostView {
@@ -289,6 +298,17 @@ function defenceLine(w: WorldState): string | null {
   return `Turrets: stored power covers about ${shots} shots.`;
 }
 
+function podsView(w: WorldState): PodsView | null {
+  const root = w.rootWorld ?? w;
+  const here = (w.siteBody ?? 'home') as BodyId;
+  const others = BODY_IDS.filter(id => id !== here && bodyKnown(root.exploration, id));
+  const flying = root.exploration.pods.map(p => `${BODIES[p.from].label} to ${BODIES[p.to].label}, ${Math.max(0, Math.round(p.arrives - root.system.time))} s, ${Math.round(inventoryMass(p.cargo))} kg`);
+  if (others.length === 0 && flying.length === 0) return null;
+  const sends = others.map(to => ({ to, label: `Send ore to ${BODIES[to].label}`, reason: podError(root, here, to) }));
+  if (sends.every(s => s.reason !== null && /mining rig or refinery/.test(s.reason)) && flying.length === 0) return null;
+  return { sends, flying };
+}
+
 function elsewhereView(w: WorldState): OutpostView[] {
   const root = w.rootWorld ?? w;
   const here = w.siteBody ?? 'home';
@@ -391,6 +411,7 @@ export function baseView(w: WorldState): BaseView {
     core: coreLab(w),
     research: researchView(w),
     elsewhere: elsewhereView(w),
+    pods: podsView(w),
   };
 }
 

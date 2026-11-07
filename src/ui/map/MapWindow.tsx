@@ -106,6 +106,9 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
           <circle cx={at(view.intercept.at).x} cy={at(view.intercept.at).y} r={2} />
         </g>
       )}
+      {view.pods.map((p, i) => (
+        <rect key={`pod-${i}`} x={at(p.at).x - 3.5} y={at(p.at).y - 3.5} width={7} height={7} class="map-pod" aria-label={p.label} />
+      ))}
       {view.probes.map((p, i) => (
         <circle key={`probe-${i}`} cx={at(p.at).x} cy={at(p.at).y} r={3.5} class="map-probe" aria-label="Survey probe" />
       ))}

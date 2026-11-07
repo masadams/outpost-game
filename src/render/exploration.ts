@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { SITE_INFO, BELTS, BELT_IDS, type BeltId } from '../sim/explorationConfig';
-import { courseToBelt } from '../sim/intercept';
+import { courseTo } from '../sim/intercept';
 import { navigation, destination } from '../sim/exploration';
 import type { WorldState } from '../sim/world';
 export function drawExploration(g: Phaser.GameObjects.Graphics, w: WorldState, zoom: number): void {
@@ -16,8 +16,9 @@ export function drawExploration(g: Phaser.GameObjects.Graphics, w: WorldState, z
   if (w.exploration.selected !== 'home') { g.lineStyle(1 / zoom, 0xf3d779, .9); g.strokeCircle(p.x, p.y, 16 / zoom); }
   // Belts move on: ring where the one you picked will be when you get there.
   const selected = w.exploration.selected;
-  if ((BELT_IDS as readonly string[]).includes(selected)) {
-    const aim = courseToBelt(w, selected as BeltId).aim;
+  const course = courseTo(w, selected);
+  if (course) {
+    const aim = course.aim;
     g.lineStyle(1 / zoom, 0x9fe4ff, .8);
     g.strokeCircle(aim.x, aim.y, 24 / zoom);
     g.strokeCircle(aim.x, aim.y, 3 / zoom);

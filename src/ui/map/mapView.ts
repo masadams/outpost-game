@@ -1,4 +1,4 @@
-import { courseToBelt, interceptBelt } from '../../sim/intercept';
+import { courseTo, interceptBelt } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
 import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
@@ -20,6 +20,8 @@ export interface MapView {
   belts: BeltMark[];
   sites: SiteMark[];
   probes: Array<{ at: Vec }>;
+  /** Cargo pods on their way, placed along the line between the two worlds. */
+  pods: Array<{ at: Vec; label: string }>;
   /** Where a belt you picked will be when you get there, aiming from your ship. */
   intercept: { at: Vec; seconds: number } | null;
   ship: Vec;
@@ -148,9 +150,9 @@ function selectedView(w: WorldState): SelectedView {
     facts.push(['Fuel for the trip', `about ${Math.ceil(trip.kg / 5) * 5} kg (you have ${Math.floor(w.ship.fuel)})`]);
   }
   const belt = BELT_IDS.find(b => b === id);
-  if (belt) {
-    // Belts move, so say where to point to arrive where it will be, not where it is.
-    const course = courseToBelt(w, belt);
+  const course = courseTo(w, id);
+  if (course) {
+    // Belts and worlds move, so say where to point to arrive where it will be, not where it is.
     const deg = Math.round((course.bearing * 180) / Math.PI);
     facts.push(['Aim ahead', `${Math.abs(deg)}° ${deg < 0 ? 'left' : 'right'} of ${w.playerMode === 'ship' ? 'your nose' : 'up'} · about ${Math.round(course.seconds)} s at 110 m/s`]);
   }
@@ -201,10 +203,8 @@ function stormMark(w: WorldState): StormMark | null {
 }
 
 function interceptMark(w: WorldState): { at: Vec; seconds: number } | null {
-  const id = w.exploration.selected;
-  if (!(BELT_IDS as readonly string[]).includes(id)) return null;
-  const aim = interceptBelt(w, id as BeltId, w.ship.position, 110);
-  return { at: aim.position, seconds: aim.seconds };
+  const course = courseTo(w, w.exploration.selected);
+  return course ? { at: course.aim, seconds: course.seconds } : null;
 }
 
 export function mapView(w: WorldState): MapView {
@@ -248,6 +248,12 @@ export function mapView(w: WorldState): MapView {
     belts,
     sites,
     probes: w.exploration.probes.map(p => ({ at: p.position })),
+    pods: w.exploration.pods.map(p => {
+      const t = Math.max(0, Math.min(1, (w.system.time - p.launched) / Math.max(1, p.arrives - p.launched)));
+      const a = planetAt(p.from, { ...w.system, time: p.launched }).position;
+      const b = planetAt(p.to, { ...w.system, time: p.arrives }).position;
+      return { at: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, label: `Cargo pod, ${Math.round(Math.max(0, p.arrives - w.system.time))} s` };
+    }),
     intercept: interceptMark(w),
     ship: w.ship.position,
     pad: destination(w, 'home').position,
