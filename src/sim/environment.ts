@@ -1,4 +1,5 @@
 import { BODIES, groundVelocity, planets, relative, STATIC_SYSTEM, type Planet, type SystemFrame } from './celestial';
+import { starTide } from './starHazard';
 import { ATMOSPHERE, WORLD } from './config';
 import { clamp, length, type Vec } from './math';
 
@@ -8,6 +9,11 @@ export function gravity(position: Vec, system = STATIC_SYSTEM): Vec {
   for (const planet of planets(system)) {
     const p = relative(position, planet), denominator = Math.max(length(p), planet.radius) ** 3;
     result.x -= planet.mu * p.x / denominator; result.y -= planet.mu * p.y / denominator;
+  }
+  if (system.sun) {
+    const tide = starTide(position, system);
+    result.x += tide.x;
+    result.y += tide.y;
   }
   return result;
 }
