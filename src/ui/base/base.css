@@ -265,3 +265,17 @@
 #hud .part-card strong { font: 600 calc(15px * var(--text-scale, 1)) / 1.2 var(--ui-body); letter-spacing: 0; }
 #hud .part-card button { width: auto; justify-self: start; padding: 6px 14px; }
 #hud .part-card .base-why { padding: 4px 8px; font-size: calc(12px * var(--text-scale, 1)); }
+
+#hud .building-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+#hud .building-card { display: grid; gap: 6px; width: 290px; padding: 10px 12px; background: var(--ui-panel); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); align-content: start; }
+#hud .building-card[data-open=false] { opacity: 0.66; }
+#hud .building-card header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+#hud .building-card strong { font: 600 calc(15px * var(--text-scale, 1)) / 1.2 var(--ui-body); }
+#hud .building-card header small { color: var(--ui-muted); }
+#hud .building-card p { margin: 0; color: var(--ui-muted); }
+#hud .tier-step { display: grid; gap: 2px; padding: 6px 8px; border-radius: 6px; background: var(--ui-raised); }
+#hud .tier-step[data-ready=true] { outline: 1px solid #3d9b83; }
+#hud .tier-name { font-weight: 600; color: var(--ui-mint); }
+#hud .tier-needs { display: flex; flex-wrap: wrap; gap: 4px 8px; color: var(--ui-muted); font-size: calc(12px * var(--text-scale, 1)); }
+#hud .tier-needs em { font-style: normal; }
+#hud .tier-needs em[data-done=true] { color: var(--ui-green); }

@@ -48,3 +48,30 @@ describe('research tree view', () => {
     expect(hold.parts.find(p => p.id === 'bulkHold')!.reason).toMatch(/Needs Bulk logistics/);
   });
 });
+
+describe('building upgrade tree', () => {
+  it('lists every building with two tiers, the techs each needs, and what is already built', () => {
+    const w = day();
+    const view = researchTreeView(w);
+    expect(view.buildings.length).toBeGreaterThanOrEqual(20);
+    const solar = view.buildings.find(b => b.kind === 'solar')!;
+    expect(solar.tiers.map(t => t.tier)).toEqual([2, 3]);
+    expect(solar.tiers[0].needs.map(n => n.label)).toEqual(['Infrastructure retrofits']);
+    expect(solar.tiers[1].needs.map(n => n.label)).toEqual(['Advanced facility systems', 'Cell engineering']);
+    expect(solar.tiers[0].effect).toMatch(/power/);
+    expect(view.buildings.find(b => b.kind === 'droneBay')!.open).toBe(false);
+  });
+
+  it('tier III needs the family technology on top of Advanced facility systems', async () => {
+    const { buildingUpgradeError } = await import('../src/sim/buildingUpgrades');
+    const { completedBuilding } = await import('../src/sim/construction');
+    const w = day();
+    const b = completedBuilding(1, 'solar', 0.2, w);
+    b.level = 2;
+    w.colony.buildings.push(b);
+    w.colony.research.completed.push('infrastructure', 'industrialSystems');
+    expect(buildingUpgradeError(w, b)).toBe('Research Cell engineering');
+    w.colony.research.completed.push('reactor');
+    expect(buildingUpgradeError(w, b)).not.toMatch(/^Research/);
+  });
+});

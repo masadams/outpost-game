@@ -145,17 +145,47 @@ function Parts({ view, on, paused }: { view: ResearchTreeView; on: ResearchTreeH
   );
 }
 
+function Buildings({ view }: { view: ResearchTreeView }) {
+  return (
+    <div class="building-tree" aria-label="Buildings and their upgrades">
+      <p class="base-note">Every building has two upgrade tiers. Tier II needs Infrastructure retrofits. Tier III needs Advanced facility systems and the technology of its family.</p>
+      <div class="building-grid">
+        {view.buildings.map(b => (
+          <article class="building-card" key={b.kind} data-kind={b.kind} data-open={String(b.open)}>
+            <header>
+              <strong>{b.label}</strong>
+              <small>{b.open ? `${b.built} built` : b.earned}</small>
+            </header>
+            <p>{b.purpose}</p>
+            {b.tiers.map(t => (
+              <div class="tier-step" key={t.tier} data-tier={t.tier} data-ready={String(t.needs.every(n => n.done))}>
+                <span class="tier-name">Tier {t.tier === 2 ? 'II' : 'III'}</span>
+                <span class="tier-effect">{t.effect}</span>
+                <span class="tier-needs">
+                  {t.needs.map(n => <em key={n.id} data-done={String(n.done)}>{n.done ? '✓' : '◇'} {n.label}</em>)}
+                </span>
+                {t.have > 0 && <small>{t.have} at this tier</small>}
+              </div>
+            ))}
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Research as a tree you read left to right, with the ship parts it opens on a second tab. */
 export function ResearchView({ view, on, paused }: { view: ResearchTreeView; on: ResearchTreeHandlers; paused: boolean }) {
-  const [tab, setTab] = useState<'tree' | 'parts'>('tree');
+  const [tab, setTab] = useState<'tree' | 'parts' | 'buildings'>('tree');
   return (
     <div class="research-window" data-tab={tab}>
       <div class="research-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'tree'} onClick={click(() => setTab('tree'))}>Research tree</button>
         <button type="button" role="tab" aria-selected={tab === 'parts'} onClick={click(() => setTab('parts'))}>Ship parts</button>
+        <button type="button" role="tab" aria-selected={tab === 'buildings'} onClick={click(() => setTab('buildings'))}>Buildings</button>
         <span class="tree-legend">◇ Locked · ○ Ready · ◷ Researching · ✓ Done</span>
       </div>
-      {tab === 'tree' ? <Tree view={view} on={on} paused={paused} /> : <Parts view={view} on={on} paused={paused} />}
+      {tab === 'tree' ? <Tree view={view} on={on} paused={paused} /> : tab === 'parts' ? <Parts view={view} on={on} paused={paused} /> : <Buildings view={view} />}
     </div>
   );
 }
