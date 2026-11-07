@@ -1,0 +1,25 @@
+# Growth run 3: make the loop provable, give power real districts, and put the star in the sky
+
+Follows `growth-run-2.md` (G6 to G12, done) and the hands-on pass that fixed layout and wording. Same rules as before: small slices, a unit test for every rule, the browser specs for the area, docs, one merge per slice, depth before breadth, checked against the design bible and roadmap first.
+
+What the last pass taught: the game now has a long earned sequence, but only staged saves and unit tests prove it. The first mining sortie, the thing every player does first, is checked by hand and by a few older specs. Power also has a gap: generation is carried through relays but demand is not, and a cluster that loses its link just stops instead of becoming its own small grid (roadmap 5E).
+
+| # | Slice | Bible and roadmap link | Status |
+|---|---|---|---|
+| G13 | **The loop, proven end to end.** A scripted pilot in the simulation that lifts off, mines a rock, pulls fragments in, lands and unloads, with the day cycle on and a fresh seed; plus a browser spec that does the same through real key presses. Then a short run through build, observe, storm. | "Never claim a loop works without a test of the loop"; the signature first milestone. | Planned |
+| G14 | **Demand through relays.** Machines far from the pad draw their power through the same relays: the relay's capacity and loss apply both ways, and Base says which relay is the limit. | 5E finite link capacity and explicit losses; no loop creates energy. | Planned |
+| G15 | **Districts and islands.** A cluster cut off from the pad that has its own generation and a battery becomes an island with its own energy pool instead of stopping; rejoining merges the pools without creating or losing energy. Base lists islands. | 5E "breaking a link isolates only the affected district". | Planned |
+| G16 | **Fuel at the far pad.** A fuel processor on another world can refuel the lander on its pad, with the same reasons as at home, so a trip can be sized by what the outpost makes. Fuel needed to get home is shown on the Map for the selected place. | 5C fuel depots; predicted vs observed quantities. | Planned |
+| G17 | **Helia, the lethal far star.** The star pulls on ships and heats them. Far out you feel nothing; inside a long way from the planets the hull warms and the ship is pulled in, and past a point it is lost. It stays very far (hours of flight) and has no content. The flight readout shows heating only when it starts. | The sense of scale; star as a physical, reachable body; heat as a hazard. | Planned |
+| G18 | **Seeded storms.** The first and second storm layouts, timing windows and body sizes come from the world seed within fair bounds (the first storm must stay survivable with one turret). | 4A deterministic generation; fair start. | Planned |
+| G19 | **Tier effects for the rest.** Domes, shields, turrets, the Observatory and the research lab get real upgrade-in-place effects (dome air and size, shield charge, turret rate, scan speed) instead of the generic line. | The upgrade-in-place rule: every building defines its tiers. | Planned |
+| G20 | **Second hands-on pass and roadmap tick.** Repeat the browser pass (new game, mid-game, Nacre, Cinder, second storm), fix what it finds, run the whole suite, update CURRENT_FOCUS, MASTER_ROADMAP ticks and DECISIONS, and draft run 4. | Documentation discipline. | Planned |
+
+Order is deliberate: G13 first so everything after it is protected. G14 and G15 together finish the power model. G16 makes outposts useful. G17 and G18 widen the world without adding content. G19 closes the upgrade rule. G20 closes the run.
+
+Not in this run: ship engineering (Phase 3), new star systems (Phase 6), terraforming and large habitats, rovers and drones (Phase 5B), anything on Cinder beyond what exists.
+
+## Notes for G17 (the star)
+- Selene–Nacre sit at the origin, Helia at 3,000,000 m with radius 60,000 m (`src/sim/star.ts`). Adding its gravity changes nothing near the planets (about 0.0001 m/s² there).
+- Heating follows the same inverse-square flux the lights already use. Choose the threshold so the ship starts to warm only within a few hundred kilometres of the surface, and is lost before it can reach it.
+- Trip time at 130 m/s is hours; a warning in flight (not on the Map) is enough. No marker, no menu entry: the star stays a place you can only find by looking up and flying.
