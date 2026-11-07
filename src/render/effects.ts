@@ -19,6 +19,19 @@ interface Signal { x: number; y: number; age: number; life: number; color: numbe
 interface RockRecord { position: Vec; velocity: Vec; radius: number; stage: number; resource: Resource }
 
 const BURST_LIFE = 0.4;
+
+/** Camera shake (0 to 1) for a rock of this radius breaking this far from the ship. */
+export function kickForBreak(distance: number, radius: number): number {
+  const reach = 420;
+  if (distance >= reach) return 0;
+  return Math.min(1, (1 - distance / reach) * (0.35 + radius / 50)) * 0.5;
+}
+
+/** Camera shake for the hull losing this many percent at once. */
+export function kickForHit(lost: number): { strength: number; seconds: number } {
+  const strength = Math.min(1, 0.25 + lost / 30);
+  return { strength, seconds: 0.14 + 0.2 * strength };
+}
 const CHUNKS_PER_EVENT = 8;
 
 /** Render-only bursts and debris. Never saved, never collidable, never change simulation. */
@@ -35,6 +48,15 @@ export class VisualEffects {
   private ran = new Set<string>();
   private landings = 0;
   private dustClock = 0;
+  /** What happened this frame, for the camera: a rock broke close by, the hull took a knock. Read and cleared each frame. */
+  private kicks: Array<{ strength: number; seconds: number }> = [];
+
+  /** The camera shake asked for since the last call. Rock breaks near the ship thud; hull hits rattle harder. */
+  takeKicks(): Array<{ strength: number; seconds: number }> {
+    const out = this.kicks;
+    this.kicks = [];
+    return out;
+  }
 
   reset(w: WorldState): void {
     this.rocks = this.snapshotRocks(w);
@@ -89,9 +111,13 @@ export class VisualEffects {
     for (const [id, rock] of this.rocks) {
       if (ids.has(id)) continue;
       burst(rock.position, 0xffca8d, rock.stage === 0 ? 1.6 : 1);
+      this.kickFor(w, rock.position, rock.radius, rock.stage === 0 ? 1 : 0.55);
       if (limit > 0 && visible(view, rock.position, rock.radius * 2)) this.breakUp(id, rock, limit * 8);
     }
-    if (w.ship.hull < this.hull) burst(w.ship.position, 0xff987e);
+    if (w.ship.hull < this.hull) {
+      burst(w.ship.position, 0xff987e);
+      this.kicks.push(kickForHit(this.hull - w.ship.hull));
+    }
 
     // A flash at the ship for each kind of ore taken aboard.
     for (const r of RESOURCES) {
@@ -104,6 +130,13 @@ export class VisualEffects {
     this.rocks = this.snapshotRocks(w);
     this.cargo = this.snapshotCargo(w);
     this.hull = w.ship.hull;
+  }
+
+  /** A rock breaking near the ship thuds in the camera: more for a big rock, nothing for one far away. */
+  private kickFor(w: WorldState, at: Vec, radius: number, weight: number): void {
+    const near = Math.hypot(at.x - w.ship.position.x, at.y - w.ship.position.y);
+    const strength = kickForBreak(near, radius) * weight;
+    if (strength > 0) this.kicks.push({ strength, seconds: 0.09 + 0.05 * Math.min(1, radius / 40) });
   }
 
   /** Notices buildings that are new or have just started running, and marks them with rings of light. */
