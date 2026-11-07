@@ -1,9 +1,10 @@
+import { ResearchView } from './ResearchTree';
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import type { BaseView, BuildingView, Chip } from './baseView';
 import { Demolish } from './Demolish';
 
-export type BaseSection = 'overview' | 'buildings' | 'ship' | 'legacy';
+export type BaseSection = 'overview' | 'buildings' | 'ship' | 'research' | 'legacy';
 
 export interface BaseHandlers {
   section: (section: BaseSection) => void;
@@ -367,7 +368,8 @@ const SECTIONS: Array<[BaseSection, string]> = [
 ];
 
 export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on: BaseHandlers; legacyHost: (el: HTMLElement | null) => void }) {
-  const sections = state.legacy ? [...SECTIONS, ['legacy', 'Legacy console'] as [BaseSection, string]] : SECTIONS;
+  const withResearch: Array<[BaseSection, string]> = state.view.tree ? [...SECTIONS, ['research', 'Research tree']] : SECTIONS;
+  const sections = state.legacy ? [...withResearch, ['legacy', 'Legacy console'] as [BaseSection, string]] : withResearch;
   return (
     <div class="base-window" data-section={state.section}>
       <nav class="base-nav" aria-label="Base sections">
@@ -382,6 +384,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
+        {state.section === 'research' && state.view.tree && <ResearchView view={state.view.tree} paused={state.paused} on={{ start: on.research, fit: on.fit }} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}
         <div class="base-legacy" hidden={state.section !== 'legacy'} ref={legacyHost} />
       </div>

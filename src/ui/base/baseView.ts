@@ -5,6 +5,7 @@ import { createSchedule, SCHEDULE_PRODUCTS, type ScheduleProduct } from '../../s
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
 import { researchView, type ResearchRow } from './researchView';
+import { researchTreeView, type ResearchTreeView } from './researchTreeView';
 import { coreBlock, crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
@@ -39,6 +40,8 @@ export interface BaseView {
   crystal: CrystalLabView | null;
   core: CrystalLabView | null;
   research: ResearchRow[] | null;
+  /** The full research tree and ship parts. Null until a first find has been studied. */
+  tree: ResearchTreeView | null;
   /** The other worlds with a base, so a mine far away can be checked without going there. */
   elsewhere: OutpostView[];
   /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
@@ -421,6 +424,7 @@ export function baseView(w: WorldState): BaseView {
     crystal: crystalLab(w),
     core: coreLab(w),
     research: researchView(w),
+    tree: researchView(w) !== null || featureVisible('catalogue') ? researchTreeView(w) : null,
     elsewhere: elsewhereView(w),
     pods: podsView(w),
   };

@@ -1,0 +1,45 @@
+import { test, expect } from '@playwright/test';
+import { createWorld } from '../../src/sim/world';
+import { encodeCheckpoint } from '../../src/persistence/checkpoint';
+import { completedBuilding } from '../../src/sim/construction';
+
+test.use({ viewport: { width: 1600, height: 900 }, storageState: { cookies: [], origins: [] } });
+
+test('the research tree shows every technology, explains what is missing and lists the ship parts', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const w = createWorld(4242);
+  w.system.sun = true;
+  w.objectives.completed.push('delivery', 'industry', 'buoy');
+  w.storm.analysed = true;
+  w.exploration.surveyed.push('frost');
+  w.colony.research.completed.push('materials');
+  w.colony.products.alloy = 60;
+  w.colony.products.wire = 40;
+  w.colony.products.components = 20;
+  w.colony.energy = 10;
+  w.colony.buildings.push(completedBuilding(1, 'solar', 0.12, w), completedBuilding(2, 'researchLab', 0.2, w));
+  w.colony.nextId = 10;
+  await page.addInitScript(([t]) => { try { localStorage.setItem('outpost.sun', 'on'); localStorage.setItem('outpost.checkpoint.v1', t as string); } catch { /* blocked */ } }, [encodeCheckpoint(w)]);
+  await page.goto('/?sun=on');
+  const menu = page.getByRole('dialog', { name: 'Outpost game menu', exact: true });
+  await menu.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(menu).toBeHidden();
+  await page.keyboard.press('p');
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="research"]').click();
+  await expect(page.locator('.tree-node')).toHaveCount(19);
+  await expect(page.locator('[data-tech="materials"]')).toHaveAttribute('data-state', 'done');
+  await expect(page.locator('[data-tech="extraction"]')).toHaveAttribute('data-state', 'ready');
+  await page.locator('[data-tech="ionics"]').click();
+  await expect(page.locator('.tree-detail')).toContainText('Needs Orbital propulsion and Thermal engineering first');
+  await page.locator('[data-tech="extraction"]').click();
+  await expect(page.locator('.tree-detail')).toContainText('Powered mining head');
+  await page.getByRole('button', { name: 'Start research', exact: true }).click();
+  await expect(page.locator('[data-tech="extraction"]')).toHaveAttribute('data-state', 'active');
+  await page.getByRole('tab', { name: 'Ship parts' }).click();
+  await expect(page.locator('.part-card[data-part="cargo"]')).toBeVisible();
+  await expect(page.locator('.part-card[data-part="bulkHold"]')).toContainText('Needs Bulk logistics');
+  expect(errors).toEqual([]);
+});
