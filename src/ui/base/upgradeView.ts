@@ -30,6 +30,7 @@ export function tierEffect(b: Building): string {
     case 'miningRig':
     case 'droneBay':
     case 'condenser':
+    case 'workshop':
     case 'antenna':
     case 'researchLab':
     case 'observatory':
