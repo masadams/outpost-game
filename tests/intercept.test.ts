@@ -54,3 +54,23 @@ describe('course to a belt', () => {
     expect(mapView(w).selected.facts.map(f => f[0])).not.toContain('Aim ahead');
   });
 });
+
+describe('aiming ahead at a world', () => {
+  it('Nacre and Cinder move on exact orbits, so the aim point is where they will be, not where they are', async () => {
+    const { interceptBody, courseTo } = await import('../src/sim/intercept');
+    const w = createWorld();
+    w.system.time = 100;
+    const from = { x: 0, y: -1800 };
+    const aim = interceptBody(w, 'cinder', from, 110);
+    const now = planetAt('cinder', w.system).position;
+    const then = planetAt('cinder', { ...w.system, time: w.system.time + aim.seconds }).position;
+    expect(aim.position.x).toBeCloseTo(then.x, 6);
+    expect(Math.hypot(aim.position.x - now.x, aim.position.y - now.y)).toBeGreaterThan(100);
+    expect(courseTo(w, 'home')).toBeNull();
+    expect(courseTo(w, 'moon')?.seconds).toBeGreaterThan(10);
+    w.exploration.known.push('moon');
+    w.exploration.selected = 'moon';
+    expect(mapView(w).selected.facts.map(f => f[0])).toContain('Aim ahead');
+    expect(mapView(w).intercept).not.toBeNull();
+  });
+});
