@@ -75,6 +75,7 @@ const fmt = (n: number) => n.toFixed(1);
 function kindOf(id: Destination): string {
   if (id === 'home') return 'Your outpost';
   if (id === 'moon') return 'Moon';
+  if ((BODY_IDS as readonly string[]).includes(id)) return 'World';
   if (id === 'mark') return 'Marked point';
   if ((BELT_IDS as readonly string[]).includes(id)) return 'Ore cluster';
   return 'Site';
@@ -128,6 +129,7 @@ function routeNote(w: WorldState): string {
   if (e.returned) return 'Salvage delivered home.';
   if (e.sites.find(s => s.key === 'cache')?.health === 0 && e.salvaged === 0) return 'The derelict broke up. Pull in the drifting debris with C, or try the other sites.';
   if (e.salvaged > 0) return 'Salvage recovered: return to the green home pad and press E to unload.';
+  if (e.surveyed.includes('frost')) return 'Recover ore from the Copper derelict and bring it home, or watch the sky for more.';
   return 'Survey the Frost buoy, recover ore from the Copper derelict, then bring it home.';
 }
 

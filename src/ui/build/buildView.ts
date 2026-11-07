@@ -148,15 +148,19 @@ function hintFor(w: WorldState, blocked: string | null): string {
 export function buildView(w: WorldState, group: BuildGroup = 'power'): BuildView {
   const blocked = blockedReason(w);
   const full = featureVisible('catalogue');
-  const kinds = full
-    ? (GROUPS[GROUP_IDS.indexOf(group)]?.[1] ?? []).filter(k => blueprintVisible(k))
-    : BUILD_TYPES.filter(k => blueprintVisible(k) && blueprintRevealed(w, k));
+  const earned = BUILD_TYPES.filter(k => blueprintVisible(k) && (full || blueprintRevealed(w, k)));
+  // A short menu is one list; once there are more than eight, sort them into tabs so none are hidden off the edge.
+  const tabbed = full || earned.length > 8;
+  const inGroup = (id: BuildGroup) => (GROUPS[GROUP_IDS.indexOf(id)]?.[1] ?? []).filter(k => earned.includes(k));
+  const present = GROUP_IDS.filter(id => full || inGroup(id).length > 0);
+  const shown = present.includes(group) ? group : present[0] ?? group;
+  const kinds = tabbed ? inGroup(shown) : earned;
   const net = w.colony.generation - w.colony.demand;
   return {
     blocked,
     where: w.playerMode === 'astronaut' ? 'foot' : 'ship',
     hint: hintFor(w, blocked),
-    groups: full ? GROUP_IDS.map((id, i) => ({ id, label: GROUPS[i][0], active: id === group })) : null,
+    groups: tabbed ? present.map(id => ({ id, label: GROUPS[GROUP_IDS.indexOf(id)][0], active: id === shown })) : null,
     cards: kinds.map(kind => card(w, kind)),
     resources: [
       { key: 'ore', label: 'Ore', value: `${inventoryMass(w.depot).toFixed(0)} kg`, level: 'neutral' },

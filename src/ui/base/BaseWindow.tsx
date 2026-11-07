@@ -115,7 +115,7 @@ function Overview({ view, open, analyse, study, research, fit, reserve, paused }
             <div key={o.id} data-outpost={o.id} data-level={o.level}>
               <strong>{o.label}</strong>
               <p class="base-note">{o.power}. {o.stores}.</p>
-              <p class="base-note">{o.machines.map(m => `${m.label}: ${m.line}`).join(' · ')}</p>
+              {o.machines.length > 0 && <p class="base-note">{o.machines.map(m => `${m.label}: ${m.line}`).join(' · ')}</p>}
               {o.short.map(line => <p key={line} class="base-why">{line}</p>)}
             </div>
           ))}

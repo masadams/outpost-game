@@ -21,25 +21,6 @@ export function ShipPanelContent({ view }: { view: ShipPanelView }) {
         {view.next}
       </p>
 
-      <table class="ship-ore">
-        <thead>
-          <tr>
-            <th scope="col">Ore</th>
-            <th scope="col">In hold</th>
-            <th scope="col">At the depot</th>
-          </tr>
-        </thead>
-        <tbody>
-          {view.ore.map(r => (
-            <tr key={r.resource} data-ore={r.resource}>
-              <th scope="row">{r.label}</th>
-              <td>{r.hold} kg</td>
-              <td>{r.stored} kg</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
       {view.kit && (
         <section class="ship-kit" aria-label="Nacre kit">
           <h3>Nacre kit</h3>
@@ -64,6 +45,25 @@ export function ShipPanelContent({ view }: { view: ShipPanelView }) {
           <small>{view.haul.reason}</small>
         </section>
       )}
+      <table class="ship-ore">
+        <thead>
+          <tr>
+            <th scope="col">Ore</th>
+            <th scope="col">In hold</th>
+            <th scope="col">At the depot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {view.ore.map(r => (
+            <tr key={r.resource} data-ore={r.resource}>
+              <th scope="row">{r.label}</th>
+              <td>{r.hold} kg</td>
+              <td>{r.stored} kg</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       {view.deposit && (
         <section class="ship-target" aria-label="Nearest rock">
           <h3>Nearest rock</h3>

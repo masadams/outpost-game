@@ -20,7 +20,11 @@ describe('build view', () => {
   it('starts with only solar and a refinery, and reveals the rest as earned', () => {
     setFeatureMode('focus');
     const w = createWorld();
-    const kinds = () => buildView(w).cards.map(c => c.kind);
+    const kinds = () => {
+      const first = buildView(w);
+      if (!first.groups) return first.cards.map(c => c.kind);
+      return first.groups.flatMap(g => buildView(w, g.id as never).cards.map(c => c.kind));
+    };
     expect(buildView(w).groups).toBeNull();
     expect(kinds()).toEqual(['solar', 'refinery']);
     expect(buildView(w).cards[0]).toMatchObject({ label: 'Solar array', purpose: 'Makes power in sunlight', selected: true });
