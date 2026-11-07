@@ -36,8 +36,8 @@ export const EXPLORATION = { range: 120, relativeSpeed: 8, dryMass: 80, rocksPer
 export interface Site extends Asteroid { key: SiteId; stock: Inventory; fuel: number }
 import type { Vec } from './math';
 import type { Probe } from './probes';
-export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; watch: number; known: BodyId[]; hinted: BodyId[]; crystal: 'lying' | 'carried' | 'studied'; probes: Probe[]; mark: Vec | null }
-export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, watch: 0, known: [], hinted: [], crystal: 'lying', probes: [], mark: null });
+export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; watch: number; known: BodyId[]; hinted: BodyId[]; crystal: 'lying' | 'carried' | 'studied'; core: 'lying' | 'carried' | 'studied'; probes: Probe[]; mark: Vec | null }
+export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, watch: 0, known: [], hinted: [], crystal: 'lying', core: 'lying', probes: [], mark: null });
 export type ExplorationAction = { type: 'navigate'; target: Destination } | { type: 'visitSite' } | { type: 'mark'; point: Vec };
 export const isExplorationAction = (a: { type: string }): a is ExplorationAction => a.type === 'navigate' || a.type === 'visitSite' || a.type === 'mark';
 

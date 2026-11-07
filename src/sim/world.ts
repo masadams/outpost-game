@@ -23,7 +23,7 @@ import { applyCombatAction, isCombatAction, stepCombat } from './combat';
 import { serviceCombatAtPad } from './combatSupply';
 import { createDefence, type DefenceState } from './defenceConfig';
 import { createStorm, type StormState } from './stormConfig';
-import { isCrystalAction, applyCrystalAction, stepCrystal } from './crystal';
+import { isCrystalAction, applyCrystalAction, stepCrystal, isCoreAction, applyCoreAction, stepCore } from './crystal';
 import { stepStorm, isStormAction, applyStormAction } from './storm';
 import { salvageWreck, stepWrecks, type Wreck } from './wrecks';
 import { bagToHold, collectOnFoot } from './bag';
@@ -116,6 +116,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(action.type==='crewOrder'){applyCrewOrder(owner,action);continue;}
     if(isStormAction(action)){applyStormAction(world,action);continue;}
     if(isCrystalAction(action)){applyCrystalAction(world);continue;}
+    if(isCoreAction(action)){applyCoreAction(world);continue;}
     if(action.type==='salvageWreck'){salvageWreck(world);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }
@@ -184,6 +185,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   for (const site of allColonies(world)) researchStaffed = stepColony(site, dt, researchStaffed);
   stepStorm(world);
   stepCrystal(world);
+  stepCore(world);
   stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });

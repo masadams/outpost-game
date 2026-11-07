@@ -49,7 +49,7 @@ import { daylightAt } from '../sim/sun';
 import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
-import { drawStormSamples, drawCrystal } from './storm';
+import { drawStormSamples, drawCrystal, drawCore } from './storm';
 import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
@@ -517,6 +517,7 @@ export class FlightScene extends Phaser.Scene {
     drawGround(g, this.simulation, view, this.follow.zoom);
     drawStormSamples(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawCrystal(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
+    drawCore(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     for (const probe of this.simulation.exploration.probes) {
       g.fillStyle(0x9fe4ff, 0.25);
       g.fillCircle(probe.position.x, probe.position.y, Math.max(6, 10 / this.follow.zoom));

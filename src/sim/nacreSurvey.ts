@@ -8,6 +8,8 @@ export interface BodySurvey {
   day: string;
   deposits: string;
   night: string;
+  /** Something worth looking for there, if the survey spotted it. */
+  note: string | null;
 }
 
 /** Round to a coarse step so the survey reads as an estimate, not a readout. */
@@ -26,6 +28,7 @@ export function bodySurvey(w: WorldState, id: Exclude<BodyId, 'home'>): BodySurv
     gravity: `about ${gravity.toFixed(1)} m/s² (Selene: ${(CELESTIAL.home.mu / CELESTIAL.home.radius ** 2).toFixed(1)})`,
     day: `about ${Math.round(dayMinutes)} min, one turn per orbit`,
     night: `dark for about ${Math.round(dayMinutes / 2)} min of each day. Solar stops; bring a battery`,
+    note: id === 'moon' ? 'A blue crystal glows about 240 m east of the pad.' : id === 'cinder' ? 'A dense core sample lies about 150 m east of the pad.' : null,
     deposits: `${seams.length} seams, roughly ${roughly(total, 50)} kg: ${kinds.join(', ')}`,
   };
 }
