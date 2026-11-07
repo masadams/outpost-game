@@ -69,3 +69,17 @@ describe('mining drone bay', () => {
     expect(far.colony.buildings[1].status).toBe('no deposit');
   });
 });
+
+describe('drone balance', () => {
+  it('one repair cycle gives about 65 kg of ore for about 11 fuel and 8 alloy: worth it, not free', () => {
+    const trips = Math.floor((100 - DRONE.grounded) / DRONE.wear) + 1;
+    const ore = trips * DRONE.yield;
+    const fuel = trips * DRONE.fuel;
+    const alloy = (trips * DRONE.wear) / 10;
+    expect(ore).toBeGreaterThan(50);
+    expect(ore).toBeLessThan(90);
+    expect(fuel / ore).toBeLessThan(0.25);
+    expect(alloy / ore).toBeLessThan(0.2);
+    expect(DRONE.yield / DRONE.seconds).toBeLessThan(0.25 / 2);
+  });
+});
