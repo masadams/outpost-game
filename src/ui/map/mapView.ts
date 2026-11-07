@@ -217,7 +217,7 @@ export function mapView(w: WorldState): MapView {
   const ids: Destination[] = ['home', ...(w.exploration.mark ? (['mark'] as const) : []), ...BODY_IDS.filter(id => id !== 'home' && w.system.binary && shown(id)), ...shownBelts, ...SITE_IDS];
   const places = ids.map(id => ({
     id,
-    label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : (BODY_IDS as readonly string[]).includes(id) ? BODIES[id as BodyId].label : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
+    label: id === 'mark' ? 'Marked point' : id === 'home' ? 'Home pad' : id === 'moon' ? 'Nacre moon' : (BODY_IDS as readonly string[]).includes(id) ? BODIES[id as BodyId].label : (BELTS as Record<string, { label: string }>)[id]?.label ?? SITE_INFO[id as SiteId].label,
     at: destination(w, id).position,
     kind: kindOf(id),
     selected: w.exploration.selected === id,
