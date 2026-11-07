@@ -73,6 +73,7 @@ const PURPOSE: Record<BuildType, string> = {
   miningRig: 'Mines a surface deposit',
   droneBay: 'A drone fetches ore from nearby seams',
   condenser: 'Draws water and oxygen out of the air',
+  workshop: 'Lets you fit ship parts away from home',
   antenna: 'Makes the Observatory watch faster',
   researchLab: 'Studies samples to unlock tech',
   observatory: 'Watches the sky for what is coming',

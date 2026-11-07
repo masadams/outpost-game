@@ -92,6 +92,32 @@ export function stepAntenna(world: WorldState, b: Building, dt: number): void {
   b.status = 'running';
 }
 
+/** Workshop: lets the ship be fitted and refitted on a world that is not home, while it is powered. */
+export const WORKSHOP = { power: 3 } as const;
+
+export function stepWorkshop(world: WorldState, b: Building, dt: number): void {
+  const colony = world.colony;
+  const fraction = powerFraction(b);
+  b.requestedPower = WORKSHOP.power * fraction;
+  const work = dt * fraction;
+  if (!work) {
+    b.status = 'power limited';
+    return;
+  }
+  colony.demand += b.requestedPower;
+  const block = industrialPowerBlock(colony, WORKSHOP.power * work);
+  if (block) {
+    b.status = block;
+    return;
+  }
+  colony.energy = Math.max(0, colony.energy - WORKSHOP.power * work);
+  b.gridPower = b.requestedPower;
+  b.status = 'running';
+}
+
+/** Whether this colony has a powered workshop. */
+export const workshopReady = (world: WorldState): boolean => world.colony.buildings.some(b => b.kind === 'workshop' && b.status === 'running');
+
 /** How much faster the Observatories on this colony watch, from its running antennas. */
 export function watchBoost(world: WorldState): number {
   const running = world.colony.buildings

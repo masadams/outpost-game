@@ -8,12 +8,14 @@ import { cargoCapacity, fuelCapacity, fittedPart } from './shipStats';
 import { WORLD } from './config';
 import { wrap } from './math';
 import { notify } from './messages';
+import { workshopReady } from './airMachines';
 import type { WorldState } from './world';
 export function shopError(w: WorldState): string | null {
-  if (w.siteBody === 'moon') return 'Equipment fabrication requires the home pad';
+  const away = w.siteBody !== undefined && w.siteBody !== 'home';
+  if (away && !workshopReady(w)) return 'Fitting parts away from home needs a powered Workshop on this world';
   const s = w.ship;
-  if (s.state !== 'landed' || Math.abs(Math.hypot(localPosition(w, s.position).x, localPosition(w, s.position).y) - colonyPlanet(w).radius - WORLD.shipRadius) > .1 || Math.abs(wrap(localAngleAt(w, s.position))) * colonyPlanet(w).radius > WORLD.padHalfWidth) return 'Land on the home pad for equipment work';
-  if (w.playerMode === 'astronaut' && (!w.astronaut.grounded || w.astronaut.health <= 0 || Math.hypot(w.astronaut.position.x - s.position.x, w.astronaut.position.y - s.position.y) > 20)) return 'Board or stand within 20 m of the home-pad ship';
+  if (s.state !== 'landed' || Math.abs(Math.hypot(localPosition(w, s.position).x, localPosition(w, s.position).y) - colonyPlanet(w).radius - WORLD.shipRadius) > .1 || Math.abs(wrap(localAngleAt(w, s.position))) * colonyPlanet(w).radius > WORLD.padHalfWidth) return away ? 'Land on this world\'s pad for equipment work' : 'Land on the home pad for equipment work';
+  if (w.playerMode === 'astronaut' && (!w.astronaut.grounded || w.astronaut.health <= 0 || Math.hypot(w.astronaut.position.x - s.position.x, w.astronaut.position.y - s.position.y) > 20)) return 'Board or stand within 20 m of the ship on the pad';
   return null;
 }
 export function equipmentPlan(w: WorldState, id: UpgradeId, operation: 'install'|'remove') {

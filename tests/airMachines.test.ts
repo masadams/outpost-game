@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createWorld, type WorldState } from '../src/sim/world';
 import { stepColony } from '../src/sim/colony';
 import { completedBuilding } from '../src/sim/construction';
-import { STEP } from '../src/sim/config';
+import { STEP, WORLD } from '../src/sim/config';
 import { ANTENNA, CONDENSER, condenserSeconds, watchBoost } from '../src/sim/airMachines';
 import { colonyWorld } from '../src/sim/localWorld';
 import { blueprintRevealed } from '../src/sim/unlocks';
@@ -38,8 +38,7 @@ describe('air condenser', () => {
     nacre.colony.energy = 20;
     run(nacre, 3);
     expect(nacre.colony.buildings[0].status).toBe('no feedstock');
-    const ember = createWorld(2);
-    ember.siteBody = 'ember' as never;
+    const ember = colonyWorld(createWorld(2), 'ember');
     expect(condenserSeconds(ember)!).toBeGreaterThan(CONDENSER.seconds * 5);
   });
 });
@@ -78,5 +77,52 @@ describe('antenna and the Observatory together', () => {
     run(boosted, 20);
     expect(plain.exploration.watch).toBeGreaterThan(5);
     expect(boosted.exploration.watch).toBeGreaterThan(plain.exploration.watch * 1.3);
+  });
+});
+
+import { equipmentError, shopError } from '../src/sim/equipment';
+import { planetAt, surfacePosition, groundVelocity } from '../src/sim/celestial';
+
+describe('workshop', () => {
+  function nacre() {
+    const root = createWorld(3);
+    root.system.binary = true;
+    root.colony.research.completed.push('materials');
+    const site = colonyWorld(root, 'moon');
+    const moon = planetAt('moon', root.system);
+    root.ship.position = surfacePosition(moon, 0, WORLD.shipRadius);
+    root.ship.velocity = groundVelocity(moon, root.ship.position);
+    root.ship.state = 'landed';
+    root.playerMode = 'ship';
+    site.colony.products = { ...site.colony.products, alloy: 40, wire: 20, components: 20 };
+    site.colony.energy = 30;
+    site.colony.research.completed.push('materials');
+    return site;
+  }
+
+  it('away from home, fitting needs a powered workshop on that world', () => {
+    const site = nacre();
+    expect(shopError(site)).toMatch(/Workshop/);
+    site.colony.buildings.push(completedBuilding(1001, 'solar', 0.2, site), completedBuilding(1002, 'workshop', 0.3, site), completedBuilding(1003, 'battery', 0.4, site));
+    site.colony.energy = 40;
+    run(site, 2);
+    expect(site.colony.buildings[1].status).toBe('running');
+    expect(shopError(site)).toBeNull();
+    expect(equipmentError(site, 'cargo', 'install')).toBeNull();
+  });
+
+  it('a workshop without power does not count', () => {
+    const site = nacre();
+    site.colony.energy = 0;
+    site.colony.buildings.push(completedBuilding(1002, 'workshop', 0.3, site));
+    run(site, 2);
+    expect(shopError(site)).toMatch(/Workshop/);
+  });
+
+  it('is earned once there is a base on another world', () => {
+    const w = createWorld();
+    expect(blueprintRevealed(w, 'workshop')).toBe(false);
+    colonyWorld(w, 'moon').colony.buildings.push(completedBuilding(1001, 'solar', 0.2, colonyWorld(w, 'moon')));
+    expect(blueprintRevealed(w, 'workshop')).toBe(true);
   });
 });
