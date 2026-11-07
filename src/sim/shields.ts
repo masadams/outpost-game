@@ -1,3 +1,4 @@
+import { workFactor } from './facilityStats';
 import { groundVelocity, planetAt, surfacePosition } from './celestial';
 import { allColonies, colonyPlanet } from './localWorld';
 import { SHIELDS, SHIELD, isShield } from './shieldConfig';
@@ -40,7 +41,7 @@ export function chargeShields(w: WorldState, dt: number): void {
     if (!isShield(b.kind) || !b.shield?.powered) continue;
     const h = b.shield, spec = SHIELDS[b.kind];
     if (h.delay <= 1e-9 && h.charge < spec.capacity) {
-      const rate = Math.max(0, Math.min(spec.recharge, powerFraction(b) * (spec.upkeep + spec.recharge) - spec.upkeep));
+      const rate = Math.max(0, Math.min(spec.recharge * workFactor(b), powerFraction(b) * (spec.upkeep + spec.recharge * workFactor(b)) - spec.upkeep));
       const charge = Math.max(0, Math.min(rate * dt, spec.capacity - h.charge, c.energy - policyFor(c).energyReserve));
       c.demand += rate; b.requestedPower = spec.upkeep + rate;
       c.energy = Math.max(0, c.energy - charge); h.charge += charge; c.shielding.energyUsed += charge; b.gridPower = spec.upkeep + charge / dt;

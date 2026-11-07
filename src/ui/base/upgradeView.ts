@@ -31,6 +31,16 @@ export function tierEffect(b: Building): string {
     case 'researchLab':
     case 'observatory':
       return `Works ${speed}× as fast`;
+    case 'laser':
+    case 'flak':
+    case 'missile':
+      return `Fires ${speed}× as often`;
+    case 'shieldSmall':
+    case 'shieldLarge':
+      return `Recharges ${speed}× as fast`;
+    case 'habitatSmall':
+    case 'habitatLarge':
+      return 'Takes less damage from impacts';
     default: return 'Tougher against damage';
   }
 }
