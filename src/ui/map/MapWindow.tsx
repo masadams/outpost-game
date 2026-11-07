@@ -107,7 +107,23 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
         </g>
       )}
       {view.pods.map((p, i) => (
-        <rect key={`pod-${i}`} x={at(p.at).x - 3.5} y={at(p.at).y - 3.5} width={7} height={7} class="map-pod" aria-label={p.label} />
+        <g key={`pod-${i}`} class="map-pod-flight" aria-label={p.label}>
+          <line x1={at(p.from).x} y1={at(p.from).y} x2={at(p.to).x} y2={at(p.to).y} class="map-pod-lane" />
+          <circle cx={at(p.to).x} cy={at(p.to).y} r={5} class="map-pod-target" />
+          <path
+            d="M7 0 L-5 -4 L-3 0 L-5 4 Z"
+            class="map-pod"
+            transform={`translate(${at(p.at).x} ${at(p.at).y}) rotate(${(p.heading * 180) / Math.PI})`}
+          />
+          <text x={at(p.at).x} y={at(p.at).y - 11} class="map-label map-pod-label" text-anchor="middle">{p.eta}</text>
+        </g>
+      ))}
+      {view.beacons.map(b => (
+        <g key={`beacon-${b.id}`} class="map-beacon" data-kind={b.kind} aria-label={b.label}>
+          <circle cx={at(b.at).x} cy={at(b.at).y} r={6} />
+          <circle cx={at(b.at).x} cy={at(b.at).y} r={11} class="map-beacon-ring" />
+          <text x={at(b.at).x} y={at(b.at).y - 16} class="map-label" text-anchor="middle">{b.label}</text>
+        </g>
       ))}
       {view.probes.map((p, i) => (
         <circle key={`probe-${i}`} cx={at(p.at).x} cy={at(p.at).y} r={3.5} class="map-probe" aria-label="Survey probe" />

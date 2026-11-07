@@ -10,7 +10,7 @@ import { applyResearch } from './research';
 import { applyEquipment } from './equipment';
 import { createExploration, isExplorationAction, type ExplorationState } from './explorationConfig';
 import { stepProbes } from './probes';
-import { isPodAction, sendPod, stepPods } from './pods';
+import { isPodAction, sendPod, stepBeacons, stepPods } from './pods';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
 import { applyCommandAction } from './command';
@@ -165,6 +165,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepSites(world, dt, startShip);
   stepProbes(world, dt);
   stepPods(world);
+  stepBeacons(world);
   stepStarHeat(world, dt);
   world.beam = piloting && input.mine ? fireLaser(world.ship, [...world.asteroids, ...world.defence.meteors, ...world.exploration.sites], dt, world.system) : null;
   resolveMinedRocks(world);

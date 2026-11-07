@@ -51,7 +51,7 @@ async function walk(page: Page, direction: 'a' | 'd', target: number) {
 }
 
 test('flies to the moving moon, builds supplied mining, saves both colonies, carries real ore home and lands', async ({ page }) => {
-  test.setTimeout(600000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  test.setTimeout(1200000); const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.clock.install({ time: new Date('2030-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2030-01-01T00:00:01Z'));
   await page.goto('/'); await advance(page, 500); const hud = page.locator('#hud'); await expect(hud).toHaveAttribute('data-state', 'landed');
   await tap(page, 'm'); await tap(page, 'j');

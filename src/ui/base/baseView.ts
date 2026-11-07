@@ -2,6 +2,8 @@ import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
 import { featureVisible } from '../../preferences/features';
 import { createSchedule, SCHEDULE_PRODUCTS, type ScheduleProduct } from '../../sim/scheduling';
+import { generatorOutput, isGenerator } from '../../sim/generators';
+import { surfaceAir } from '../../sim/airMachines';
 import { upgradeView, type UpgradeView } from './upgradeView';
 import { capacityFactor, facilityLevel } from '../../sim/facilityStats';
 import { researchView, type ResearchRow } from './researchView';
@@ -226,16 +228,21 @@ export function whyStopped(b: Building): string | null {
 export function buildingView(b: Building, w?: WorldState): BuildingView {
   const health = buildingHealth(b);
   // Solar, batteries and storage have no work cycle: they either work or are switched off / wrecked.
-  const passive = b.kind === 'solar' || b.kind === 'battery' || b.kind === 'storage';
+  const generates = isGenerator(b.kind);
+  const noAir = b.kind === 'windTurbine' && w !== undefined && surfaceAir(w) === 0;
+  const passive = generates || b.kind === 'battery' || b.kind === 'storage';
   const status =
-    passive && health > 0 && (b.enabled || b.kind !== 'solar')
-      ? { chip: 'running' as const, label: b.kind === 'solar' ? 'Generating' : 'Ready' }
+    noAir && health > 0
+      ? { chip: 'stopped' as const, label: 'No air' }
+      : passive && health > 0 && (b.enabled || !generates)
+      ? { chip: 'running' as const, label: generates ? 'Generating' : 'Ready' }
       : (STATUS[b.status] ?? { chip: b.status === 'running' ? 'running' : 'idle', label: b.status });
   const recipe = recipeFor(b);
   const power = ratedPower(b);
   const facts: Array<[string, string]> = [];
   if (recipe) facts.push(['Making', recipe.label], ['Batch time', `${recipe.seconds} s`]);
   if (power) facts.push([b.kind === 'solar' ? 'Output' : 'Power', `${power.toFixed(1)} kW`]);
+  if (w && (b.kind === 'geothermal' || b.kind === 'windTurbine')) facts.push(['Output', `${generatorOutput(w, b).toFixed(1)} kW`]);
   if (isTurret(b.kind)) {
     const weapon = WEAPONS[b.kind];
     facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
@@ -251,7 +258,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
   if (b.kind === 'storage') facts.push(['Holds', `+${200 * capacityFactor(b)} kg ore, +${100 * capacityFactor(b)} each product`]);
   if (facilityLevel(b) > 1) facts.push(['Tier', `${facilityLevel(b)}`]);
   facts.push(['Condition', `${health.toFixed(0)}%`]);
-  const why = whyStopped(b);
+  const why = noAir ? 'There is no air here to turn it. Use solar or a geothermal tap on this world.' : whyStopped(b);
   return {
     id: b.id,
     kind: b.kind,

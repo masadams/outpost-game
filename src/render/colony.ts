@@ -108,6 +108,31 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
       const tower = [p(-8, 1), p(0, 29), p(8, 1)]; g.strokePoints(tower, false);
       for (const height of [7, 14, 21]) { const a = p(-5, height), b = p(5, height); g.lineBetween(a.x, a.y, b.x, b.y); }
       const drillTop = p(0, 19), drillBottom = p(0, -5); g.lineStyle(2, color); g.lineBetween(drillTop.x, drillTop.y, drillBottom.x, drillBottom.y);
+    } else if (entry.kind === 'geothermal') {
+      const vent = [p(-4, 13), p(-2, 24), p(2, 24), p(4, 13)];
+      g.strokePoints(vent, false);
+      for (const x of [-3, 0, 3]) { const a = p(x, 25), b = p(x + 2, 31); g.lineBetween(a.x, a.y, b.x, b.y); }
+    } else if (entry.kind === 'windTurbine') {
+      const hub = p(0, 26), mast = p(0, 13);
+      g.lineBetween(mast.x, mast.y, hub.x, hub.y);
+      for (const angle of [0.6, 2.7, 4.8]) { const tip = p(Math.cos(angle) * 9, 26 + Math.sin(angle) * 9); g.lineBetween(hub.x, hub.y, tip.x, tip.y); }
+    } else if (entry.kind === 'condenser') {
+      const fan = p(0, 18);
+      g.strokeCircle(fan.x, fan.y, 5);
+      const a = p(-4, 18), b = p(4, 18), c = p(0, 14), d = p(0, 22);
+      g.lineBetween(a.x, a.y, b.x, b.y); g.lineBetween(c.x, c.y, d.x, d.y);
+    } else if (entry.kind === 'antenna') {
+      const mast = p(0, 13), top = p(0, 30), left = p(-6, 27), right = p(6, 27);
+      g.lineBetween(mast.x, mast.y, top.x, top.y); g.lineBetween(left.x, left.y, top.x, top.y); g.lineBetween(top.x, top.y, right.x, right.y);
+    } else if (entry.kind === 'workshop') {
+      const roof = [p(-width + 2, 13), p(0, 22), p(width - 2, 13)];
+      g.strokePoints(roof, false);
+      const door = p(0, 8); g.strokeRect(door.x - 3, door.y - 3, 6, 6);
+    } else if (entry.kind === 'massDriver') {
+      const a = p(-width + 2, 12), b = p(width - 2, 34);
+      g.lineBetween(a.x, a.y, b.x, b.y);
+      const c = p(-width + 2, 16), d = p(width - 2, 38);
+      g.lineBetween(c.x, c.y, d.x, d.y);
     } else if (entry.kind === 'droneBay') {
       const pad = [p(-5, 13), p(0, 22), p(5, 13)]; g.strokePoints(pad, true);
       const dot = p(0, 17); g.fillStyle(color, 0.9); g.fillCircle(dot.x, dot.y, 1.8);

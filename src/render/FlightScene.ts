@@ -46,6 +46,7 @@ import { stormView } from '../ui/flight/stormView';
 import { dayView } from '../ui/flight/dayView';
 import { wreckCard, wreckMarks } from '../ui/flight/wreckView';
 import { daylightAt } from '../sim/sun';
+import { drawPods } from './pods';
 import { buildSky, drawSky } from './skyBackdrop';
 import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
@@ -535,6 +536,7 @@ export class FlightScene extends Phaser.Scene {
     }
     if (this.flightTools.trajectory && this.simulation.towing.targetId === null) drawTrajectory(g, this.prediction, this.ship, this.follow.zoom);
     drawExploration(g, this.simulation, this.follow.zoom);
+    drawPods(g, this.simulation, this.follow.zoom, this.time.now / 1000);
     drawMining(g, this.simulation, {
       zoom: this.follow.zoom,
       view,

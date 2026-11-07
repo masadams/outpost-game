@@ -3,6 +3,7 @@ import { probeError } from '../../sim/probes';
 import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
 import { BODIES, BODY_IDS, bodyExists, nearestPlanet, planetAt, planets, surfacePosition, type BodyId } from '../../sim/celestial';
+import { beaconPosition, podLane, podPosition } from '../../sim/pods';
 import { tripFuel } from '../../sim/tripFuel';
 import { preflight } from '../../sim/preflight';
 import { WORLD } from '../../sim/config';
@@ -15,6 +16,24 @@ import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import type { Vec } from '../../sim/math';
 import type { WorldState } from '../../sim/world';
 
+export interface PodMark {
+  at: Vec;
+  /** The straight lane it flies, launch point to landing point. */
+  from: Vec;
+  to: Vec;
+  /** Direction of travel, radians. */
+  heading: number;
+  label: string;
+  /** Short line for the chart: where it is going and how long it has left. */
+  eta: string;
+}
+export interface BeaconMark {
+  id: number;
+  at: Vec;
+  kind: 'landed' | 'lost';
+  label: string;
+}
+
 /** Everything the Map window shows, derived from the simulation. Pure: no DOM, no Phaser. */
 export interface MapView {
   bodies: BodyMark[];
@@ -22,7 +41,9 @@ export interface MapView {
   sites: SiteMark[];
   probes: Array<{ at: Vec }>;
   /** Cargo pods on their way, placed along the line between the two worlds. */
-  pods: Array<{ at: Vec; label: string }>;
+  pods: PodMark[];
+  /** Where pods came down lately: the ore went in, or the pod was lost. */
+  beacons: BeaconMark[];
   /** Where a belt you picked will be when you get there, aiming from your ship. */
   intercept: { at: Vec; seconds: number } | null;
   ship: Vec;
@@ -209,6 +230,35 @@ function interceptMark(w: WorldState): { at: Vec; seconds: number } | null {
   return course ? { at: course.aim, seconds: course.seconds } : null;
 }
 
+function podMarks(w: WorldState): PodMark[] {
+  return w.exploration.pods.map(p => {
+    const lane = podLane(w, p);
+    const left = Math.max(0, Math.round(p.arrives - w.system.time));
+    const to = BODIES[p.to].label;
+    return {
+      at: podPosition(w, p),
+      from: lane.from,
+      to: lane.to,
+      heading: Math.atan2(lane.to.y - lane.from.y, lane.to.x - lane.from.x),
+      label: `Cargo pod to ${to}, ${left} s`,
+      eta: `Pod → ${to} · ${left} s`,
+    };
+  });
+}
+
+function beaconMarks(w: WorldState): BeaconMark[] {
+  return (w.exploration.beacons ?? []).map(b => {
+    const place = BODIES[b.body].label;
+    const left = Math.max(0, Math.round(b.until - w.system.time));
+    return {
+      id: b.id,
+      at: beaconPosition(w, b),
+      kind: b.kind,
+      label: b.kind === 'landed' ? `Pod landed on ${place} · ${Math.round(b.kg)} kg in the depot` : `Pod crashed on ${place} · ${Math.round(b.kg)} kg lost · ${left} s`,
+    };
+  });
+}
+
 export function mapView(w: WorldState): MapView {
   const shown = (id: BodyId): boolean => id === 'home' || featureVisible('moonTravel') || bodyKnown(w.exploration, id);
   const bodies = planets(w.system)
@@ -238,6 +288,8 @@ export function mapView(w: WorldState): MapView {
     ...wreckMarks(w).map(x => x.at),
     ...sites.map(s => s.at),
     ...w.exploration.probes.map(p => p.position),
+    ...w.exploration.pods.flatMap(p => { const lane = podLane(w, p); return [lane.from, lane.to]; }),
+    ...(w.exploration.beacons ?? []).map(b => beaconPosition(w, b)),
     ...(w.exploration.mark ? [w.exploration.mark] : []),
     ...belts.flatMap(b => b.rocks.map(r => r.at)),
     ...bodies.flatMap(b => [
@@ -250,12 +302,8 @@ export function mapView(w: WorldState): MapView {
     belts,
     sites,
     probes: w.exploration.probes.map(p => ({ at: p.position })),
-    pods: w.exploration.pods.map(p => {
-      const t = Math.max(0, Math.min(1, (w.system.time - p.launched) / Math.max(1, p.arrives - p.launched)));
-      const a = planetAt(p.from, { ...w.system, time: p.launched }).position;
-      const b = planetAt(p.to, { ...w.system, time: p.arrives }).position;
-      return { at: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, label: `Cargo pod, ${Math.round(Math.max(0, p.arrives - w.system.time))} s` };
-    }),
+    pods: podMarks(w),
+    beacons: beaconMarks(w),
     intercept: interceptMark(w),
     ship: w.ship.position,
     pad: destination(w, 'home').position,
