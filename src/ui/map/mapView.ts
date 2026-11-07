@@ -4,6 +4,7 @@ import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
 import { BODIES, BODY_IDS, bodyExists, nearestPlanet, planetAt, planets, surfacePosition, type BodyId } from '../../sim/celestial';
 import { tripFuel } from '../../sim/tripFuel';
+import { preflight } from '../../sim/preflight';
 import { WORLD } from '../../sim/config';
 import { farPosition } from '../../sim/storm';
 import { stormKnowledge } from '../../sim/stormKnowledge';
@@ -148,6 +149,7 @@ function selectedView(w: WorldState): SelectedView {
   if (id !== 'home' || w.ship.state === 'flying' || nearestPlanet(w.ship.position, w.system).id !== 'home') {
     const trip = tripFuel(w, id);
     facts.push(['Fuel for the trip', `about ${Math.ceil(trip.kg / 5) * 5} kg (you have ${Math.floor(w.ship.fuel)})`]);
+    facts.push(['Pre-flight', preflight(w, id).line]);
   }
   const belt = BELT_IDS.find(b => b === id);
   const course = courseTo(w, id);

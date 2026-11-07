@@ -6,7 +6,7 @@ Follows `growth-run-6.md`. The world is now wide (three to four bodies, belts, a
 |---|---|---|---|
 | J1 | **Decide the next direction.** Either start Phase 3 (modular ship roles: scout, miner, interceptor) or spend a run on the open gameplay questions (the fun items, pacing, what the first hour feels like). | Design authority. | Needs a decision |
 | J2 | **Hands-on screenshot pass.** A scripted pass of Ember, drones, relay placement and the pods over a long run. | Hands-on pass. | Planned |
-| J3 | **Phase 3, first cut.** Ship profile and role line in the fitting screen (done). Pre-flight check still to do. | Phase 3. | In progress |
+| J3 | **Phase 3, first cut.** Ship profile and role line in the fitting screen; pre-flight line on the Map (ready, refuel first, or too far for this tank with the fix). | Phase 3. | Done |
 
 Not in this run: new star systems, terraforming.
 
