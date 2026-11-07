@@ -24,6 +24,7 @@ import { isHabitat, type HabitatState } from './habitatConfig';
 import { stepHabitats, chargeHabitats, ventHabitat } from './habitats';
 import type { TowAction } from './towingConfig';
 import { stepMiningRig } from './surfaceExtraction';
+import { stepMinerDrone } from './minerDrone';
 import { availableProduct, createPolicy, industrialPowerBlock, MAX_RESERVE, POLICY_FIELDS, POLICY_INFO, type ColonyPolicy, type PolicyAction } from './colonyPolicy';
 import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selectScheduledRecipe, SCHEDULE_PRODUCTS, type RefinerySchedule, type SchedulingAction } from './scheduling';
 import type { CombatAction } from './combatConfig';
@@ -57,7 +58,7 @@ export interface Building {
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached' | 'no fuel' | 'worn out';
 }
 export interface Colony {
   shielding: ShieldLedger;
@@ -102,6 +103,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   if (sites.some(s => Math.abs(wrap(s.angle)) * colonyPlanet(world).radius < 36 + s.halfWidth - 1e-7)) return 'Keep the landing pad clear';
   if (sites.some(site => (world.siteBody === 'moon' ? STATIONS.filter(s => s.kind === 'depot').map(s => ({ ...s, angle: 54 / colonyPlanet(world).radius })) : STATIONS).some(s => Math.abs(wrap(site.angle - s.angle)) * colonyPlanet(world).radius < site.halfWidth + 13 - 1e-7))) return 'Keep the home terminals clear';
   if (sites.some(site => [...world.colony.buildings, ...(options.reservations ?? world.colony.command.queue)].some(b => foundationSites(b.kind, b.angle, colonyPlanet(world).radius).some(other => Math.abs(wrap(site.angle - other.angle)) * colonyPlanet(world).radius < site.halfWidth + other.halfWidth + 4 - 1e-7)))) return 'Facilities overlap';
+  if (kind === 'droneBay' && !world.colony.research.completed.includes('precision')) return 'Needs Precision extraction research';
   if (kind === 'miningRig') {
     const d = depositAt(world.surfaceDeposits, angle, width, colonyPlanet(world).radius);
     if (!d) return 'Place the rig on a marked ore deposit';
@@ -214,6 +216,7 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (building.kind === 'researchLab') { return stepResearch(world, building, dt, researchStaffed) || researchStaffed; }
   if (needsBoot(building.kind) && !bootStep(world, building, dt)) return researchStaffed;
   if (building.kind === 'observatory') { stepObservatory(world, building, dt); return researchStaffed; }
+  if (building.kind === 'droneBay') { stepMinerDrone(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) return researchStaffed;
   const recipe = recipeFor(building); if (!recipe) return researchStaffed;

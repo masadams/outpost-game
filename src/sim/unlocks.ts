@@ -20,6 +20,7 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
     return industry && (!w.system.sun || w.exploration.surveyed.includes('frost'));
   }
   if (kind === 'relay') return industry;
+  if (kind === 'droneBay') return w.colony.research.completed.includes('precision');
   // Shields come after the second storm has been survived; domes once there is a base on another world.
   if (kind === 'shieldSmall') return w.storm.wave > 2 || (w.storm.wave === 2 && w.storm.phase === 'over');
   if (kind === 'shieldLarge') return w.colony.buildings.some(b => b.kind === 'shieldSmall');

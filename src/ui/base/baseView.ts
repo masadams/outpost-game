@@ -157,6 +157,8 @@ const STATUS: Record<string, { chip: Chip; label: string }> = {
   'output full': { chip: 'stopped', label: 'Storage full' },
   'no deposit': { chip: 'stopped', label: 'No deposit' },
   depleted: { chip: 'stopped', label: 'Used up' },
+  'no fuel': { chip: 'stopped', label: 'No fuel' },
+  'worn out': { chip: 'stopped', label: 'Worn out' },
   'power reserved': { chip: 'stopped', label: 'Power held back' },
   'delivery reserved': { chip: 'stopped', label: 'Room held back' },
   disabled: { chip: 'off', label: 'Off' },
@@ -199,7 +201,11 @@ export function whyStopped(b: Building): string | null {
     case 'depleted':
       return 'The deposit under it is used up.';
     case 'no deposit':
-      return 'It is not on a surface deposit.';
+      return b.kind === 'droneBay' ? 'No ore seam within 300 m. Build it closer to one.' : 'It is not on a surface deposit.';
+    case 'no fuel':
+      return 'The drone needs fuel (0.4 per trip). Make some in a fuel processor.';
+    case 'worn out':
+      return 'The drone is worn out. Walk up to the bay and repair it (U).';
     case 'power reserved':
       return 'Waiting: power is being kept for the turrets (Keep for turrets in Base).';
     case 'delivery reserved':
