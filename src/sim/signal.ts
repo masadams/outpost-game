@@ -23,6 +23,8 @@ export interface DeepSignal {
   sentAt: number;
   hearAt: number;
   echo: SystemEcho | null;
+  /** Which worlds of the far system an expedition has been past. */
+  surveyed?: number[];
 }
 
 export const SIGNAL = {

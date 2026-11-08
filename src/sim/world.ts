@@ -122,7 +122,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isCoreAction(action)){applyCoreAction(world);continue;}
     if(isPodAction(action)){sendPod(world,action.from,action.to);continue;}
     if(isSignalAction(action)){launchBeacon(world);continue;}
-    if(isExpeditionAction(action)){if(action.type==='launchExpedition')launchExpedition(world,action.kit);else chooseExpedition(world,action.choice);continue;}
+    if(isExpeditionAction(action)){if(action.type==='launchExpedition')launchExpedition(world,action.kit,action.target??null);else chooseExpedition(world,action.choice);continue;}
     if(action.type==='salvageWreck'){salvageWreck(world);continue;}
     if (isProgressionAction(action)) { if (action.type === 'equipment') applyEquipment(owner, action); else applyResearch(owner, action); } else if (isExplorationAction(action)) applyExplorationAction(world, action); else if (isCommandAction(action)) applyCommandAction(owner, action); else if (isTowAction(action)) applyTowAction(owner, action); else if (isCombatAction(action)) applyCombatAction(owner, action); else if (isDefenceAction(action)) applyDefenceAction(owner, action); else applyColonyAction(owner, action);
   }

@@ -17,7 +17,8 @@ import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
 import { podError } from '../../sim/pods';
 import { signalError } from '../../sim/signal';
-import { EXPEDITION, expeditionChoices, expeditionCost, expeditionError, oddsWord } from '../../sim/expedition';
+import { EXPEDITION, LEGS, expeditionChoices, expeditionCost, expeditionError, oddsWord } from '../../sim/expedition';
+import { farWorlds, kindWord } from '../../sim/farWorlds';
 import { inventoryMass } from '../../sim/resources';
 import { BODIES, BODY_IDS, type BodyId } from '../../sim/celestial';
 import { bodyKnown } from '../../sim/explorationConfig';
@@ -72,7 +73,9 @@ export interface ExpeditionView {
   /** What has happened so far on the way. */
   log: string[];
   packs: Array<{ key: 'fuel' | 'shielding' | 'stores'; label: string; cost: string }>;
-  /** For each choice of packs (keys joined with +, or none), what it costs, the odds and why it cannot go. */
+  /** The worlds of the far system: what is known of each, and whether you can land on it. */
+  worlds: Array<{ index: number; name: string; line: string; landable: boolean }>;
+  /** For each choice of packs (keys joined with +, or none) and where to (survey or a world number), what it costs, the odds and why it cannot go. */
   plans: Record<string, { cost: string; odds: string; reason: string | null }>;
   /** What the last expedition brought back. */
   report: { result: string; lines: string[] } | null;
@@ -353,24 +356,37 @@ const costWords = (cost: Partial<Record<string, number>>): string =>
 
 function expeditionView(w: WorldState, hazard: string): ExpeditionView {
   const e = w.exploration.expedition;
+  const signal = w.exploration.signal!;
+  const all = farWorlds(w.seed, signal.echo!);
+  const surveyed = signal.surveyed ?? [];
+  const worlds = all.map(f => ({
+    index: f.index,
+    name: f.name,
+    line: surveyed.includes(f.index) ? `${kindWord(f)}${f.landable ? '' : '. Nothing to land on.'}` : 'Not surveyed yet.',
+    landable: surveyed.includes(f.index) && f.landable,
+  }));
   const packs = (['fuel', 'shielding', 'stores'] as const).map(key => ({ key, label: EXPEDITION.packs[key].label, cost: costWords(EXPEDITION.packs[key].cost) }));
   const plans: ExpeditionView['plans'] = {};
-  for (let mask = 0; mask < 8; mask++) {
-    const kit = { fuel: !!(mask & 1), shielding: !!(mask & 2), stores: !!(mask & 4) };
-    const key = (['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+');
-    plans[key] = { cost: costWords(expeditionCost(kit)), odds: oddsWord(hazard, kit), reason: expeditionError(w, kit) };
+  const goals: Array<number | null> = [null, ...worlds.filter(x => x.landable).map(x => x.index)];
+  for (const goal of goals) {
+    for (let mask = 0; mask < 8; mask++) {
+      const kit = { fuel: !!(mask & 1), shielding: !!(mask & 2), stores: !!(mask & 4) };
+      const key = `${(['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+')}|${goal === null ? 's' : goal}`;
+      plans[key] = { cost: costWords(expeditionCost(kit)), odds: oddsWord(hazard, kit, goal === null ? null : all[goal]), reason: expeditionError(w, kit, goal) };
+    }
   }
   const report = e?.report ? { result: e.report.result, lines: e.report.lines } : null;
   if (e && e.phase === 'out') {
     const left = Math.max(0, Math.round((e.returnsAt - w.system.time) / 60));
     if (e.pending) {
       const minutes = Math.max(0, Math.ceil((e.pending.deadline - w.system.time) / 60));
-      const trouble = { title: `Trouble ${['past the edge of the system', 'through the long dark', 'into the far system'][e.pending.leg]}: ${hazard}.`, minutes, choices: expeditionChoices(w) };
-      return { state: 'trouble', line: 'The craft is in trouble and waiting for you.', trouble, log: e.log, packs, plans, report };
+      const trouble = { title: `Trouble ${LEGS[e.pending.leg]}: ${hazard}.`, minutes, choices: expeditionChoices(w) };
+      return { state: 'trouble', line: 'The craft is in trouble and waiting for you.', trouble, log: e.log, packs, worlds, plans, report };
     }
-    return { state: 'out', line: `An expedition is on its way. About ${left} min until it is back.`, trouble: null, log: e.log, packs, plans, report };
+    return { state: 'out', line: `An expedition is on its way. About ${left} min until it is back.`, trouble: null, log: e.log, packs, worlds, plans, report };
   }
-  return { state: 'plan', line: report ? 'Home again. Send another, packed differently if you like.' : 'Send a craft to the far system and back. Pack for the hazard.', trouble: null, log: [], packs, plans, report };
+  const line = report ? 'Home again. Send another, packed differently or to a different world.' : 'Send a craft to the far system and back. Pack for the hazard.';
+  return { state: 'plan', line, trouble: null, log: [], packs, worlds, plans, report };
 }
 
 function signalView(w: WorldState): SignalView | null {
