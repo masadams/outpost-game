@@ -4,6 +4,7 @@ import type { UpgradeId } from './progressionConfig';
 import { engineStats, damageFactor } from './shipStats';
 import { createArmament, type Armament } from './combatConfig';
 import { shipMass } from './shipMass';
+import { turnAgility } from './handling';
 import { ATMOSPHERE, WORLD } from './config';
 import { clamp, dot, heading, length, localAngle, wrap, type Vec } from './math';
 import { emptyInventory, type Inventory } from './resources';
@@ -89,7 +90,7 @@ export function stepShip(ship: Ship, input: Controls, dt: number, system: System
     ship.velocity = groundVelocity(p, ship.position); ship.ground = undefined;
     ship.state = 'flying';
   }
-  ship.angularVelocity += Math.max(-1, Math.min(1, input.turn)) * WORLD.angularAcceleration * dt;
+  ship.angularVelocity += Math.max(-1, Math.min(1, input.turn)) * WORLD.angularAcceleration * turnAgility(shipMass(ship)) * dt;
   ship.angularVelocity *= Math.exp(-WORLD.angularDamping * dt);
   ship.angularVelocity = clamp(ship.angularVelocity, -WORLD.maxAngularSpeed, WORLD.maxAngularSpeed);
   ship.angle = wrap(ship.angle + ship.angularVelocity * dt);

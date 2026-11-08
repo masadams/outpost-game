@@ -89,7 +89,7 @@ describe('supplied local colonies and freight', () => {
   it('flies from home to the moon, lands, returns and lands at home using only normal thrust and rotation', () => {
     const w = createWorld(); w.asteroids = []; w.exploration.sites = [];
     for (let i = 0; i < 3; i++) transferFreight(w, 'alloy', 5); transferFreight(w, 'wire', 5); transferFreight(w, 'components', 5);
-    fly(w, 'home', 1500); fly(w, 'moon', 150); fly(w, 'moon', 7, 90);
+    fly(w, 'home', 1500); fly(w, 'moon', 150); fly(w, 'moon', 40); fly(w, 'moon', 7, 90);
     expect(activeWorld(w).siteBody).toBe('moon'); expect(w.ship.hull).toBe(100); const fuel = w.ship.fuel;
     const site = colonyWorld(w, 'moon'); for (let i = 0; i < 3; i++) transferFreight(site, 'alloy', -5); transferFreight(site, 'wire', -5); transferFreight(site, 'components', -5);
     boardOrExit(site);
@@ -98,7 +98,7 @@ describe('supplied local colonies and freight', () => {
     site.colony.buildOpen = true; site.colony.selected = 'miningRig'; site.colony.offset = 32; applyColonyAction(site, { type: 'place' });
     site.colony.selected = 'solar'; site.colony.offset = 64; applyColonyAction(site, { type: 'place' }); expect(site.colony.buildings).toHaveLength(2); site.colony.buildOpen = false;
     run(w, 8); expect(site.depot.ice).toBeGreaterThan(0); expect(w.depot.ice).toBe(0);
-    for (let i = 0; i < 1200 && arc() > 8; i++) stepWorld(w, { thrust: false, turn: -1 }, STEP); run(w, .6); boardOrExit(site); expect(w.playerMode).toBe('ship');
+    for (let i = 0; i < 1200 && arc() > -4; i++) stepWorld(w, { thrust: false, turn: -1 }, STEP); run(w, .6); boardOrExit(site); expect(w.playerMode).toBe('ship');
     loadDepotOre(site, 'ice'); const carried = w.ship.cargo.ice; expect(carried).toBeGreaterThan(0);
 
     fly(w, 'moon', 1000);

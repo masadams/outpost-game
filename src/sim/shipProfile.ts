@@ -1,4 +1,5 @@
 import { WORLD } from './config';
+import { turnAgility } from './handling';
 import { cannonStats, cargoCapacity, damageFactor, engineStats, equipmentMass, fuelCapacity, miningStats } from './shipStats';
 import { createShip, type Ship } from './physics';
 
@@ -18,6 +19,10 @@ export interface ShipProfile {
   cannon: number;
   /** Share of hit damage that still gets through. */
   exposure: number;
+  /** How lively it is to turn with a full tank and an empty hold (1 is the standard lander). */
+  agility: number;
+  /** The same with the hold full. */
+  loadedAgility: number;
 }
 
 type Fit = Pick<Ship, 'equipment'>;
@@ -36,6 +41,8 @@ export function shipProfile(ship: Fit): ShipProfile {
     mining: miningStats(ship).rate,
     cannon: cannonStats(ship).damage,
     exposure: damageFactor(ship),
+    agility: turnAgility(dry + fuel),
+    loadedAgility: turnAgility(dry + fuel + hold),
   };
 }
 
