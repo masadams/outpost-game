@@ -389,8 +389,10 @@ function expeditionView(w: WorldState, hazard: string): ExpeditionView {
     const left = Math.max(0, Math.round((e.returnsAt - w.system.time) / 60));
     if (e.pending) {
       const minutes = Math.max(0, Math.ceil((e.pending.deadline - w.system.time) / 60));
-      const trouble = { title: `Trouble ${LEGS[e.pending.leg]}: ${hazard}.`, minutes, choices: expeditionChoices(w) };
-      return { state: 'trouble', line: 'The craft is in trouble and waiting for you.', trouble, log: e.log, packs, worlds, plans, report };
+      const find = e.pending.kind === 'find';
+      const title = find ? `A wreck ${LEGS[e.pending.leg]}.` : `Trouble ${LEGS[e.pending.leg]}: ${hazard}.`;
+      const trouble = { title, minutes, choices: expeditionChoices(w) };
+      return { state: 'trouble', line: find ? 'The crew found something and is waiting for you.' : 'The craft is in trouble and waiting for you.', trouble, log: e.log, packs, worlds, plans, report };
     }
     return { state: 'out', line: `An expedition is on its way. About ${left} min until it is back.`, trouble: null, log: e.log, packs, worlds, plans, report };
   }

@@ -39,8 +39,10 @@ export interface Expedition {
   leg: number;
   /** Trouble that got the better of the craft so far. */
   setbacks: number;
-  /** Trouble waiting for a decision, if any, and when the craft decides for itself. */
-  pending: { leg: number; deadline: number } | null;
+  /** Trouble (or a find) waiting for a decision, if any, and when the craft decides for itself. */
+  pending: { leg: number; deadline: number; kind?: 'find' } | null;
+  /** Kilograms of metal salvaged on the way, brought home on top of the haul. */
+  salvage?: number;
   /** What has happened so far, one line a leg. */
   log: string[];
   /** The report from the last one home, kept until the next one leaves. */
@@ -49,7 +51,7 @@ export interface Expedition {
 
 /** One way to answer trouble. */
 export interface ExpeditionChoice {
-  key: 'push' | 'wait' | 'shields' | 'burn' | 'stores';
+  key: 'push' | 'wait' | 'shields' | 'burn' | 'stores' | 'salvage' | 'leave';
   label: string;
   detail: string;
   /** True when it is certain to work. */
@@ -176,12 +178,20 @@ export const legCount = (target: number | null | undefined): number => EXPEDITIO
 /** Seconds the craft waits for an answer before it picks the cautious-but-slow way itself. */
 export const DECISION_SECONDS = 300;
 const WAIT_EXTRA = 300;
+/** A wreck the crew comes across on a clear leg: worth a detour, usually. */
+export const SALVAGE = { chance: 0.3, minutes: 3, odds: 0.75, low: 50, high: 110 } as const;
 
 /** How to answer the trouble on the next leg, given what is packed and what is already spent. */
 export function expeditionChoices(w: WorldState): ExpeditionChoice[] {
   const e = w.exploration.expedition;
   const echo = w.exploration.signal?.echo;
   if (!e || !echo) return [];
+  if (e.pending?.kind === 'find') {
+    return [
+      { key: 'salvage', label: 'Salvage it', detail: `Costs ${SALVAGE.minutes} more minutes. Usually pays; sometimes it bites.`, safe: false },
+      { key: 'leave', label: 'Leave it', detail: 'No cost.', safe: true },
+    ];
+  }
   const have = (k: keyof ExpeditionKit): boolean => e.kit[k] && !e.used[k];
   const list: ExpeditionChoice[] = [
     { key: 'push', label: 'Push on', detail: 'No cost. About a coin flip.', safe: false },
@@ -203,8 +213,24 @@ function answer(w: WorldState, e: Expedition, key: ExpeditionChoice['key']): voi
   const leg = e.pending!.leg;
   const place = LEGS[leg];
   const roll = streamFor(w.seed, `expedition/${e.count}/${leg}/${key}`)();
+  const kind = e.pending!.kind;
   e.pending = null;
   e.leg = leg + 1;
+  if (kind === 'find') {
+    if (key !== 'salvage') {
+      e.log.push(`Passed a wreck by, ${place}.`);
+      return;
+    }
+    e.returnsAt += SALVAGE.minutes * 60;
+    if (roll < SALVAGE.odds) {
+      const kg = Math.round(SALVAGE.low + (roll / SALVAGE.odds) * (SALVAGE.high - SALVAGE.low));
+      e.salvage = (e.salvage ?? 0) + kg;
+      e.log.push(`Salvaged a wreck ${place}: ${kg} kg of metal.`);
+    } else {
+      setback(e, `Salvaging a wreck ${place} went wrong.`);
+    }
+    return;
+  }
   if (key === 'shields') {
     e.used.shielding = true;
     e.log.push(`Trouble ${place} (${echo.hazard}): shields held.`);
@@ -242,6 +268,13 @@ function finish(w: WorldState, e: Expedition): ExpeditionReport {
   for (const [resource, part] of Object.entries(mix)) w.depot[resource as keyof typeof w.depot] += put * (part ?? 0);
   const names = Object.keys(mix).map(r => RESOURCE_INFO[r as keyof typeof mix & Resource].label.toLowerCase()).join(' and ');
   lines.push(`Brought home ${Math.round(put)} kg of ${names}${put < kg ? ' (the rest did not fit)' : ''}.`);
+  if (e.salvage) {
+    const spare = Math.max(0, oreCapacity(w.colony) - inventoryMass(w.depot));
+    const metal = Math.min(e.salvage, spare);
+    w.depot.iron += metal * 0.7;
+    w.depot.copper += metal * 0.3;
+    lines.push(`Salvage: ${Math.round(metal)} kg of iron and copper${metal < e.salvage ? ' (the rest did not fit)' : ''}.`);
+  }
   const signal = w.exploration.signal!;
   if (e.target == null) {
     const surveyed = (signal.surveyed ??= []);
@@ -273,7 +306,7 @@ export function stepExpedition(w: WorldState): void {
   if (!echo) return;
   const time = w.system.time;
   if (e.pending) {
-    if (time >= e.pending.deadline) answer(w, e, 'wait');
+    if (time >= e.pending.deadline) answer(w, e, e.pending.kind === 'find' ? 'leave' : 'wait');
     return;
   }
   const span = e.returnsAt - e.launchedAt;
@@ -285,8 +318,15 @@ export function stepExpedition(w: WorldState): void {
       e.pending = { leg: e.leg, deadline: time + DECISION_SECONDS };
       notify(w, `EXPEDITION IN TROUBLE ${LEGS[e.leg].toUpperCase()} · DECIDE IN BASE`);
     } else {
-      e.log.push(`Clear ${LEGS[e.leg]}.`);
-      e.leg++;
+      const find = e.leg < legs - 1 && streamFor(w.seed, `expedition/${e.count}/${e.leg}/find`)() < SALVAGE.chance;
+      if (find) {
+        e.log.push(`Clear ${LEGS[e.leg]}, and a wreck on the scopes.`);
+        e.pending = { leg: e.leg, deadline: time + DECISION_SECONDS, kind: 'find' };
+        notify(w, 'THE EXPEDITION HAS FOUND A WRECK · DECIDE IN BASE');
+      } else {
+        e.log.push(`Clear ${LEGS[e.leg]}.`);
+        e.leg++;
+      }
     }
   }
   if (e.pending || e.leg < legs || time < e.returnsAt) return;

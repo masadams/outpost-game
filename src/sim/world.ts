@@ -15,6 +15,7 @@ import { chooseExpedition, isExpeditionAction, launchExpedition, stepExpedition 
 import { isSignalAction, launchBeacon, stepSignal } from './signal';
 import { isPodAction, sendPod, stepBeacons, stepPods } from './pods';
 import { createEvents, stepEvents } from './events';
+import { stepDrift } from './drift';
 import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
@@ -176,6 +177,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepBeacons(world);
   stepBlueprintNotices(world);
   stepEvents(world, dt);
+  stepDrift(world, dt);
   stepSignal(world);
   stepExpedition(world);
   stepSupply(world);
