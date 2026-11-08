@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BODY_IDS, bodyExists, planets } from '../src/sim/celestial';
+import { BODIES, BODY_IDS, bodyExists, planets } from '../src/sim/celestial';
 
 const day = (seed: number) => ({ time: 0, binary: true, sun: true, seed });
 
@@ -20,7 +20,7 @@ describe('optional world Ember', () => {
     expect(planets(day(withIt)).map(p => p.id)).toContain('ember');
   });
   it('always keeps the three standard worlds', () => {
-    for (const id of BODY_IDS.filter(i => i !== 'ember' && i !== 'glint')) expect(bodyExists(id, day(7))).toBe(true);
+    for (const id of BODY_IDS.filter(i => !BODIES[i].optional)) expect(bodyExists(id, day(7))).toBe(true);
   });
 });
 

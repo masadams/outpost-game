@@ -1,3 +1,4 @@
+import { natureOf } from '../../sim/nature';
 import { courseTo } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
 import { bodySurvey } from '../../sim/nacreSurvey';
@@ -102,7 +103,7 @@ const fmt = (n: number) => n.toFixed(1);
 function kindOf(id: Destination): string {
   if (id === 'home') return 'Your outpost';
   if (id === 'moon') return 'Moon';
-  if ((BODY_IDS as readonly string[]).includes(id)) return 'World';
+  if ((BODY_IDS as readonly string[]).includes(id)) return KIND_WORDS[natureOf(id as BodyId).kind];
   if (id === 'mark') return 'Marked point';
   if ((BELT_IDS as readonly string[]).includes(id)) return 'Ore cluster';
   return 'Site';
@@ -270,6 +271,8 @@ function beaconMarks(w: WorldState): BeaconMark[] {
     };
   });
 }
+
+const KIND_WORDS = { barren: 'World', living: 'Living world', ocean: 'Ocean world', heavy: 'Thick-aired world' } as const;
 
 export function mapView(w: WorldState): MapView {
   const shown = (id: BodyId): boolean => id === 'home' || featureVisible('moonTravel') || bodyKnown(w.exploration, id);

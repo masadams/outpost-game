@@ -1,3 +1,4 @@
+import { onWater } from './nature';
 import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
 import { bootStep, needsBoot } from './boot';
@@ -99,6 +100,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
   if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
   const lock = blueprintLock(world, kind);
   if (lock) return lock;
+  if (onWater(colonyPlanet(world).id, (world.rootWorld ?? world).seed, angle)) return 'Cannot build on water';
   if (isShield(kind) && !world.colony.research.completed.includes('combat')) return 'Requires Combat engineering research';
   const width = BLUEPRINTS[kind].halfWidth;
   const sites = foundationSites(kind, angle, colonyPlanet(world).radius);
