@@ -1,6 +1,11 @@
 # Current Focus
 
-**Updated:** 2026-11-06 · **Milestone:** Phase 2 (nearby worlds) built; growth runs 1 and 2 under way (see [growth-run.md](tasks/growth-run.md), [growth-run-2.md](tasks/growth-run-2.md))
+**Updated:** 2026-11-08 · **Milestone:** content complete for a long hands-on playtest
+
+## Now
+A long playtest of a fresh seeded game, start to expedition. Since the last update: story reveals (milestones and blueprints appear as things happen, research waits for story beats), events between storms, rocks drifting in, the deep signal and expedition with wrecks to salvage, supply lines, three optional living worlds (Verdant, Tide, Murk), northern lights, giant storm rocks with a missile/laser split, turret range by tier, and a balance pass checked by an economy bot (`npm run bot`). See [DECISIONS.md](DECISIONS.md) and the [playtest report](playtests/2026-11-08.md). The defence drill and hostile patrols are gone from play.
+
+What to watch in the playtest: pacing from first sortie to the first storm, whether the story cues feel discovered rather than instructed, power at night, the giant storm, and landing and building on the new worlds.
 
 ## Why
 The alpha has a strong simulation core (fixed-step physics, landing, resource accounting, 538 passing unit tests) but grew wide before it got good. Seventeen task specs added research, 25 ship parts, combat, drones, shields, towing, autopilot tiers, facility upgrades, freight, scheduling and colony policy. Meanwhile the first minute of play is unclear and the interface reads like a web dashboard. The bible's own rule is depth before breadth, so we are returning to it.
@@ -33,7 +38,7 @@ This is the bible's first signature slice: **the excellent mining sortie**. The 
 Flight, mining laser, cargo, landing, the astronaut on foot for building, the delivery depot, refining and fuel, and a small set of buildings: solar array, battery, storage and refinery.
 
 ## Hidden for now (code kept, not shown in new games)
-Combat and drones, turrets/defence drills, shields, towing, flight computers/autopilot, facility upgrade tiers, production scheduling, colony priority policy, freight manifests, the broad research tree and ship-part catalogue, habitats, and Nacre travel UI. Each returns through a deliberate slice, ideally as something the player discovers or unlocks in play.
+Combat and drones (no longer startable), shields, towing, flight computers/autopilot, facility upgrade tiers, production scheduling, colony priority policy, freight manifests, the broad research tree and ship-part catalogue, habitats, and Nacre travel UI. Each returns through a deliberate slice, ideally as something the player discovers or unlocks in play.
 
 ## Feature visibility
 `src/preferences/features.ts` decides what a new player sees. In the focus set:

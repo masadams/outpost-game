@@ -1,9 +1,6 @@
 import { printPlan } from '../sim/wrecks';
 import { featureVisible } from '../preferences/features';
-import { WORLD } from '../sim/config';
 import type { WorldState } from '../sim/world';
-import { telemetry } from '../sim/physics';
-import { threatTier } from '../sim/combat';
 export function combatPanel(world: WorldState, paused: boolean): string {
   const s = world.ship, a = s.armament, c = world.combat;
   if (!featureVisible('combat')) return recoveryPanel(world, paused);
@@ -12,9 +9,7 @@ export function combatPanel(world: WorldState, paused: boolean): string {
     <div>${a.cannon} cannon · ${a.missile} missiles · ${c.kills} drones defeated</div>
     <small>${world.playerMode === 'ship' ? 'Shift fires' : 'Board the ship to fire'} · Z switches · E repairs/rearms when landed using colony materials.</small>
     <button ${paused ? 'disabled' : ''} data-colony="cycleWeapon">Switch ship weapon [Z]</button>
-    <button ${paused || world.playerMode !== 'ship' || s.state !== 'flying' || telemetry(s, WORLD.shipRadius, world.system).altitude < 200 || c.enemies.length || c.projectiles.length ? 'disabled' : ''} data-colony="startEncounter">Start hostile patrol [O] · tier ${threatTier(world)}</button>
     ${s.state === 'crashed' ? `<button ${paused ? 'disabled' : ''} data-colony="recoverShip">Print new pilot and lander [Backspace] · 8 alloy + 2 components</button>` : ''}
-    <small>Save with K before combat. Land to disengage. A lost lander stays where it fell; salvage it with E.</small>
   </div>`;
 }
 
