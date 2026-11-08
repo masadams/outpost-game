@@ -3,7 +3,7 @@ import type { ProductInventory } from './colonyConfig';
 export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems', 'photovoltaics', 'deepStorage', 'labAutomation', 'fieldRepair', 'surveyOptics', 'geoscience', 'aeronautics', 'massDrivers', 'podLogistics', 'deepSignal'] as const;
 export type TechId = typeof TECH_IDS[number];
 export interface Technology { facilityTier?: 2|3; label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
-export const TECHNOLOGIES: Record<TechId, Technology> = {
+const RAW_TECHNOLOGIES: Record<TechId, Technology> = {
   materials: { label: 'Applied materials', seconds: 15, requires: [], cost: { alloy: 4, wire: 2, components: 1 } },
   propulsion: { label: 'Propulsion systems', seconds: 20, requires: ['materials'], cost: { alloy: 6, wire: 3, components: 1 } },
   extraction: { label: 'Powered extraction', seconds: 20, requires: ['materials'], cost: { alloy: 6, wire: 3, components: 1 } },
@@ -34,6 +34,22 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   deepSignal:{label:'Deep signal',seconds:60,requires:['surveyOptics','navigation'],cost:{alloy:16,wire:10,components:6}},
   industrialSystems:{facilityTier:3,label:'Advanced facility systems',seconds:45,requires:['infrastructure','thermal'],cost:{alloy:14,wire:8,components:4}},
 };
+/** How many steps of research sit below a technology: 0 for the first, one more than its deepest prerequisite. */
+function techDepth(id: TechId, seen: Partial<Record<TechId, number>> = {}): number {
+  const known = seen[id];
+  if (known !== undefined) return known;
+  const depth = RAW_TECHNOLOGIES[id].requires.reduce((deepest, req) => Math.max(deepest, techDepth(req, seen) + 1), 0);
+  seen[id] = depth;
+  return depth;
+}
+export const TECH_DEPTH: Record<TechId, number> = Object.fromEntries(TECH_IDS.map(id => [id, techDepth(id)])) as Record<TechId, number>;
+/** Later research costs more: +12% for each step down the tree, so the end of the tree is a real investment. */
+export const TECH_COST_STEP = 0.12;
+const scaled = (cost: Partial<ProductInventory>, step: number, depth: number): Partial<ProductInventory> =>
+  Object.fromEntries(Object.entries(cost).map(([k, v]) => [k, Math.ceil((v as number) * (1 + step * depth))])) as Partial<ProductInventory>;
+export const TECHNOLOGIES: Record<TechId, Technology> = Object.fromEntries(
+  TECH_IDS.map(id => [id, { ...RAW_TECHNOLOGIES[id], cost: scaled(RAW_TECHNOLOGIES[id].cost, TECH_COST_STEP, TECH_DEPTH[id]) }]),
+) as Record<TechId, Technology>;
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
 export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler', 'landingComputer', 'returnComputer', 'navigationComputer', 'afterburner', 'dropTank', 'cargoBay', 'pulseMiner', 'wideTractor', 'railCoil', 'radiatorFins', 'ablativePlating', 'missionComputer'] as const;
 export type UpgradeId = typeof UPGRADE_IDS[number];
@@ -41,7 +57,7 @@ export const PART_SLOTS = ['drive','tank','hold','mining','tractor','weapon','co
 export type PartSlot = typeof PART_SLOTS[number];
 export const SLOT_LABELS: Record<PartSlot,string> = {drive:'Drive',tank:'Fuel tank',hold:'Cargo hold',mining:'Mining head',tractor:'Tractor',weapon:'Cannon',cooling:'Cooling',armour:'Armour',avionics:'Flight computer'};
 export interface Upgrade { slot: PartSlot; label: string; tech: TechId; cost: Partial<ProductInventory>; mass: number; benefit: string; tradeoff: string }
-export const UPGRADES: Record<UpgradeId, Upgrade> = {
+const RAW_UPGRADES: Record<UpgradeId, Upgrade> = {
   engine: { slot: 'drive', label: 'High-thrust engine', tech: 'propulsion', cost: { alloy: 8, wire: 4, components: 2 }, mass: 14, benefit: '18.2 kN thrust (was 14)', tradeoff: '1.04 kg/s burn (was 0.8) · more thrust, same exhaust efficiency' },
   tank: { slot: 'tank', label: 'Extended fuel tank', tech: 'propulsion', cost: { alloy: 6, wire: 3, components: 1 }, mass: 10, benefit: '320 kg fuel capacity (was 240)', tradeoff: 'Fuel bought separately; each loaded kg adds mass' },
   cargo: { slot: 'hold', label: 'Cargo rack', tech: 'materials', cost: { alloy: 6, wire: 2, components: 1 }, mass: 9, benefit: '200 kg hold (was 120)', tradeoff: 'Loaded ore and rack both reduce acceleration' },
@@ -77,6 +93,7 @@ export const UPGRADES: Record<UpgradeId, Upgrade> = {
   missionComputer:{slot:'avionics',label:'Mission computer',tech:'autonomy',cost:{alloy:11,wire:6,components:3},mass:20,benefit:'Landing, return home and selected-destination flight',tradeoff:'2 kW active cell draw: the same flights as the Navigation computer for less power'},
   navigationComputer:{slot:'avionics',label:'Navigation computer',tech:'autonomy',cost:{alloy:14,wire:8,components:4},mass:26,benefit:'Landing, return home and selected-destination flight',tradeoff:'3 kW active cell draw; heaviest computer, no automatic mining or resource transfers'},
 };
+export const UPGRADES: Record<UpgradeId, Upgrade> = RAW_UPGRADES;
 export const PROGRESSION = { labPower: 4, fabricationEnergy: 20, salvageFraction: .5 } as const;
 export interface ResearchProject { funding: BodyId; tech: TechId; progress: number; paused: boolean }
 export interface ResearchState { completed: TechId[]; queue: ResearchProject[]; energyUsed: number }

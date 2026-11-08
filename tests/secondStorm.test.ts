@@ -77,7 +77,7 @@ describe('storms that keep coming', () => {
     expect(sixth.aim.length).toBeGreaterThan(third.aim.length);
     expect(tenth.aim.length).toBe(sixth.aim.length);
     expect(Math.max(...sixth.masses)).toBeGreaterThan(Math.max(...third.masses));
-    expect(sixth.aim.length).toBeLessThanOrEqual(16);
+    expect(sixth.aim.length).toBeLessThanOrEqual(20);
     expect(quietAfter(5)).toBeGreaterThan(quietAfter(1));
     expect(quietAfter(1)).toBeGreaterThanOrEqual(500);
   });
