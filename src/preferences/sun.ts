@@ -1,3 +1,4 @@
+import { groundVelocity, planetAt } from '../sim/celestial';
 import { createWorld, type WorldState } from '../sim/world';
 import { oldImpactOre } from '../sim/rockFall';
 
@@ -36,6 +37,10 @@ export function worldSeed(): number {
 export function newWorld(seed = worldSeed()): WorldState {
   const world = createWorld(seed);
   world.system.sun = sunEnabled();
-  if (world.system.sun) world.pickups.push(...oldImpactOre(() => world.nextId++, world.system, world.seed));
+  if (world.system.sun) {
+    world.pickups.push(...oldImpactOre(() => world.nextId++, world.system, world.seed));
+    // The planet turns once the day cycle is on: the parked lander turns with it from the first frame.
+    world.ship.velocity = groundVelocity(planetAt('home', world.system), world.ship.position);
+  }
   return world;
 }
