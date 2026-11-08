@@ -1,7 +1,8 @@
 import { ResearchView } from './ResearchTree';
+import { useState } from 'preact/hooks';
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
-import type { BaseView, BuildingView, Chip } from './baseView';
+import type { BaseView, BuildingView, Chip, ExpeditionView } from './baseView';
 import { Demolish } from './Demolish';
 
 export type BaseSection = 'overview' | 'buildings' | 'ship' | 'research' | 'legacy';
@@ -21,6 +22,7 @@ export interface BaseHandlers {
   fit: (upgrade: string) => void;
   send: (to: string) => void;
   beacon: () => void;
+  expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -57,7 +59,40 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Expedition({ view, paused, send }: { view: ExpeditionView; paused: boolean; send: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void }) {
+  const [kit, setKit] = useState({ fuel: false, shielding: false, stores: false });
+  const key = (['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+');
+  const plan = view.plans[key];
+  return (
+    <div class="base-expedition" data-expedition={view.state}>
+      <h4>Expedition</h4>
+      <p>{view.line}</p>
+      {view.report && (
+        <div class="base-report" data-result={view.report.result}>
+          <strong>{view.report.result === 'lost' ? 'Lost' : view.report.result === 'full' ? 'A clean run' : view.report.result === 'partial' ? 'Home, battered' : 'Barely home'}</strong>
+          {view.report.lines.map(l => <p key={l} class="base-note">{l}</p>)}
+        </div>
+      )}
+      {view.state === 'plan' && (
+        <div>
+          {view.packs.map(p => (
+            <label key={p.key} class="base-pack">
+              <input type="checkbox" checked={kit[p.key]} onChange={() => setKit({ ...kit, [p.key]: !kit[p.key] })} />
+              {p.label} <small>{p.cost}</small>
+            </label>
+          ))}
+          <p class="base-note">Costs {plan.cost}. {plan.odds}.</p>
+          <button type="button" class="base-analyse" data-expedition-go disabled={paused || plan.reason !== null} onClick={() => send(kit)}>
+            Send the expedition
+          </button>
+          {plan.reason && <p class="base-why">{plan.reason}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -138,6 +173,7 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
               {view.signal.echo.lines.map(l => <p key={l} class="base-note">{l}</p>)}
             </div>
           )}
+          {view.signal.expedition && <Expedition view={view.signal.expedition} paused={paused} send={expedition} />}
           {view.signal.state === 'ready' && (
             <button type="button" class="base-analyse" data-beacon disabled={view.signal.reason !== null || paused} onClick={click(beacon)}>
               Launch the beacon
@@ -400,7 +436,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} expedition={on.expedition} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {state.section === 'research' && state.view.tree && <ResearchView view={state.view.tree} paused={state.paused} on={{ start: on.research, fit: on.fit }} />}

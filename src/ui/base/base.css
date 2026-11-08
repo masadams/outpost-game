@@ -279,3 +279,11 @@
 #hud .tier-needs { display: flex; flex-wrap: wrap; gap: 4px 8px; color: var(--ui-muted); font-size: calc(12px * var(--text-scale, 1)); }
 #hud .tier-needs em { font-style: normal; }
 #hud .tier-needs em[data-done=true] { color: var(--ui-green); }
+
+#hud .base-expedition { display: grid; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--ui-line); }
+#hud .base-expedition h4 { margin: 0; }
+#hud .base-pack { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+#hud .base-pack small { color: var(--ui-muted); }
+#hud .base-report { padding: 8px 10px; border-radius: 6px; background: var(--ui-raised); border-left: 3px solid var(--ui-mint); }
+#hud .base-report[data-result=lost] { border-left-color: #ff8f75; }
+#hud .base-report[data-result=thin], #hud .base-report[data-result=partial] { border-left-color: var(--ui-amber); }
