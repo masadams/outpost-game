@@ -219,3 +219,78 @@ describe('trouble on the way', () => {
     expect(loaded.exploration.expedition?.log).toEqual(w.exploration.expedition!.log);
   });
 });
+
+import { farWorlds } from '../src/sim/farWorlds';
+import { legCount, legRiskAt } from '../src/sim/expedition';
+
+describe('the far system and landing on it', () => {
+  it('has as many worlds as the beacon said, the same every time, with gas giants you cannot land on', () => {
+    const w = heard();
+    const echo = w.exploration.signal!.echo!;
+    const worlds = farWorlds(w.seed, echo);
+    expect(worlds).toHaveLength(echo.worlds);
+    expect(farWorlds(w.seed, echo)).toEqual(worlds);
+    const kinds = new Set<string>();
+    for (let seed = 1; seed < 60; seed++) for (const f of farWorlds(seed, { ...echo, worlds: 6 })) kinds.add(f.kind);
+    expect(kinds.size).toBeGreaterThanOrEqual(4);
+    for (const f of farWorlds(3, { ...echo, worlds: 7 })) expect(f.landable).toBe(f.kind !== 'gas');
+  });
+
+  it('a fly-by surveys the next world in order; you cannot land on one you have not surveyed', () => {
+    const w = heard();
+    expect(expeditionError(w, noKit(), 0)).toMatch(/Fly past that world first/);
+    launchExpedition(w, noKit());
+    runOut(w, 'best');
+    const e = w.exploration.expedition!;
+    if (e.report!.result !== 'lost') {
+      expect(w.exploration.signal!.surveyed).toEqual([0]);
+      expect(e.report!.lines.join(' ')).toMatch(/Surveyed .* I:/);
+    }
+  });
+
+  it('landing adds a leg, brings home the world\'s own kind of ore, and is riskier than a fly-by', () => {
+    expect(legCount(null)).toBe(3);
+    expect(legCount(0)).toBe(4);
+    const w = heard();
+    const echo = w.exploration.signal!.echo!;
+    echo.worlds = 6;
+    const worlds = farWorlds(w.seed, echo);
+    const world = worlds.find(f => f.landable && f.kind !== 'gas')!;
+    w.exploration.signal!.surveyed = worlds.map(f => f.index);
+    expect(legRiskAt(echo.hazard, noKit(), world, 3)).toBeGreaterThan(0.1);
+    expect(legRiskAt(echo.hazard, noKit(), world, 0)).toBe(legRiskAt(echo.hazard, noKit(), null, 0));
+    let landings = 0;
+    for (let seed = 300; seed < 330 && landings < 3; seed++) {
+      const t = heard(seed);
+      const e2 = t.exploration.signal!.echo!;
+      e2.worlds = 6;
+      const ws = farWorlds(t.seed, e2);
+      const target = ws.find(f => f.landable)!;
+      t.exploration.signal!.surveyed = ws.map(f => f.index);
+      const before = { ...t.depot };
+      launchExpedition(t, { fuel: true, shielding: true, stores: true }, target.index);
+      runOut(t, 'best');
+      if (t.exploration.expedition!.report!.result === 'lost') continue;
+      landings++;
+      for (const resource of Object.keys(target.haul)) expect(t.depot[resource as keyof typeof t.depot]).toBeGreaterThan(before[resource as keyof typeof before]);
+      expect(t.exploration.expedition!.report!.lines.join(' ')).toMatch(/Landed on/);
+    }
+    expect(landings).toBeGreaterThanOrEqual(1);
+  });
+
+  it('refuses to land on a gas giant, and saves with a target and surveyed worlds', () => {
+    const w = heard();
+    const echo = w.exploration.signal!.echo!;
+    echo.worlds = 7;
+    const worlds = farWorlds(w.seed, echo);
+    w.exploration.signal!.surveyed = worlds.map(f => f.index);
+    const gas = worlds.find(f => f.kind === 'gas');
+    if (gas) expect(expeditionError(w, noKit(), gas.index)).toMatch(/gas giant/);
+    const land = worlds.find(f => f.landable)!;
+    launchExpedition(w, noKit(), land.index);
+    const loaded = decodeCheckpoint(encodeCheckpoint(w));
+    expect(loaded.exploration.expedition?.target).toBe(land.index);
+    expect(loaded.exploration.signal?.surveyed).toEqual(worlds.map(f => f.index));
+    expect(baseView(w).signal!.expedition!.worlds.length).toBe(7);
+  });
+});

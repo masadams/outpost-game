@@ -22,7 +22,7 @@ export interface BaseHandlers {
   fit: (upgrade: string) => void;
   send: (to: string) => void;
   beacon: () => void;
-  expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void;
+  expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void;
   choose: (key: string) => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
@@ -60,10 +60,11 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paused: boolean; send: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void; choose: (key: string) => void }) {
+function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paused: boolean; send: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void; choose: (key: string) => void }) {
   const [kit, setKit] = useState({ fuel: false, shielding: false, stores: false });
-  const key = (['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+');
-  const plan = view.plans[key];
+  const [goal, setGoal] = useState<number | null>(null);
+  const key = `${(['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+')}|${goal === null ? 's' : goal}`;
+  const plan = view.plans[key] ?? view.plans[`${key.split('|')[0]}|s`];
   return (
     <div class="base-expedition" data-expedition={view.state}>
       <h4>Expedition</h4>
@@ -87,8 +88,21 @@ function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paus
           ))}
         </div>
       )}
+      <div class="base-worlds" aria-label="The far system's worlds">
+        {view.worlds.map(f => <p key={f.index} class="base-note" data-world={f.index}><strong>{f.name}</strong> · {f.line}</p>)}
+      </div>
       {view.state === 'plan' && (
         <div>
+          <label class="base-pack">
+            <input type="radio" name="expedition-goal" checked={goal === null} onChange={() => setGoal(null)} />
+            Fly past and survey the next world
+          </label>
+          {view.worlds.filter(f => f.landable).map(f => (
+            <label key={f.index} class="base-pack">
+              <input type="radio" name="expedition-goal" checked={goal === f.index} onChange={() => setGoal(f.index)} />
+              Land on {f.name}
+            </label>
+          ))}
           {view.packs.map(p => (
             <label key={p.key} class="base-pack">
               <input type="checkbox" checked={kit[p.key]} onChange={() => setKit({ ...kit, [p.key]: !kit[p.key] })} />
@@ -96,7 +110,7 @@ function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paus
             </label>
           ))}
           <p class="base-note">Costs {plan.cost}. {plan.odds}.</p>
-          <button type="button" class="base-analyse" data-expedition-go disabled={paused || plan.reason !== null} onClick={() => send(kit)}>
+          <button type="button" class="base-analyse" data-expedition-go disabled={paused || plan.reason !== null} onClick={() => send(kit, goal)}>
             Send the expedition
           </button>
           {plan.reason && <p class="base-why">{plan.reason}</p>}
@@ -106,7 +120,7 @@ function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paus
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, choose, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void; choose: (key: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, choose, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void; choose: (key: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');

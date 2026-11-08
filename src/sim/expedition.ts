@@ -6,6 +6,8 @@ import { oreCapacity } from './colony';
 import { inventoryMass } from './resources';
 import { TECHNOLOGIES, TECH_IDS, type TechId } from './progressionConfig';
 import { isFindTech } from './finds';
+import { farWorlds, kindWord, type FarWorld } from './farWorlds';
+import { RESOURCE_INFO, type Resource } from './resources';
 import type { WorldState } from './world';
 
 /** What the player chooses to pack. Each helps against the trip's dangers and costs materials. */
@@ -31,7 +33,9 @@ export interface Expedition {
   kit: ExpeditionKit;
   /** Packs already spent answering trouble. */
   used: ExpeditionKit;
-  /** Which of the three legs comes next (3 once all are past). */
+  /** Which world to land on, or null to fly past and survey the next one. */
+  target: number | null;
+  /** Which leg comes next (all of them once past). */
   leg: number;
   /** Trouble that got the better of the craft so far. */
   setbacks: number;
@@ -65,10 +69,14 @@ export const EXPEDITION = {
   perLightHour: 45,
   /** Dangers on the way. */
   legs: 3,
+  /** A landing adds a last leg, down to the ground. */
+  landingLeg: 1,
   /** Chance of trouble on each leg, by the hazard the beacon heard of. */
   risk: { quiet: 0.15, 'flare star': 0.35, 'dense debris belt': 0.35, 'strong radiation': 0.4, 'tidal storms': 0.35 } as Record<string, number>,
   /** Ore brought home from a full run, kg. */
   haul: 140,
+  /** Ore brought from a landing, kg: more than a fly-by, and the right kind for the world. */
+  landingHaul: 200,
 } as const;
 
 export const noKit = (): ExpeditionKit => ({ fuel: false, shielding: false, stores: false });
@@ -92,26 +100,41 @@ export function expeditionCost(kit: ExpeditionKit): Partial<ProductInventory> {
   return total;
 }
 
+/** Chance of trouble on one leg: the system's hazard on the way in, plus the world's own danger on the last leg down. */
+export function legRiskAt(hazard: string, kit: ExpeditionKit, world: FarWorld | null, leg: number): number {
+  const base = legRisk(hazard, kit);
+  if (world === null || leg < EXPEDITION.legs) return base;
+  const packs = (kit.fuel ? 0.08 : 0) + (kit.stores ? 0.08 : 0);
+  return Math.max(0.05, Math.min(0.9, world.landRisk - packs));
+}
+
 /** A plain read on the odds, from the chance of getting through every leg. */
-export function oddsWord(hazard: string, kit: ExpeditionKit): string {
-  const clear = (1 - legRisk(hazard, kit)) ** EXPEDITION.legs;
+export function oddsWord(hazard: string, kit: ExpeditionKit, world: FarWorld | null = null): string {
+  const legs = legCount(world ? world.index : null);
+  let clear = 1;
+  for (let leg = 0; leg < legs; leg++) clear *= 1 - legRiskAt(hazard, kit, world, leg);
   return clear > 0.7 ? 'Good odds' : clear > 0.5 ? 'Fair odds' : clear > 0.3 ? 'Risky' : 'Very risky';
 }
 
-export function expeditionError(w: WorldState, kit: ExpeditionKit): string | null {
+export function expeditionError(w: WorldState, kit: ExpeditionKit, target: number | null = null): string | null {
   const root = w.rootWorld ?? w;
   const signal = root.exploration.signal;
   if (!signal || signal.phase !== 'heard') return 'Wait for the beacon to hear back first.';
   if (root.exploration.expedition && root.exploration.expedition.phase !== 'back') return 'An expedition is already out.';
+  if (target !== null) {
+    const world = farWorlds(root.seed, signal.echo!)[target];
+    if (!world || !(signal.surveyed ?? []).includes(target)) return 'Fly past that world first, to survey it.';
+    if (!world.landable) return `${world.name} is a gas giant: there is no ground to land on.`;
+  }
   const cost = expeditionCost(kit);
   const short = PRODUCTS.filter(p => availableProduct(root.colony, p) + 1e-9 < (cost[p] ?? 0));
   if (short.length > 0) return `Needs ${short.map(p => `${cost[p]} ${p} (you have ${Math.floor(availableProduct(root.colony, p))})`).join(', ')}.`;
   return null;
 }
 
-export function launchExpedition(w: WorldState, kit: ExpeditionKit): void {
+export function launchExpedition(w: WorldState, kit: ExpeditionKit, target: number | null = null): void {
   const root = w.rootWorld ?? w;
-  const error = expeditionError(root, kit);
+  const error = expeditionError(root, kit, target);
   if (error) {
     notify(root, error);
     return;
@@ -119,7 +142,7 @@ export function launchExpedition(w: WorldState, kit: ExpeditionKit): void {
   const cost = expeditionCost(kit);
   for (const p of PRODUCTS) root.colony.products[p] -= cost[p] ?? 0;
   const echo = root.exploration.signal!.echo!;
-  const seconds = EXPEDITION.seconds + echo.lightHours * EXPEDITION.perLightHour;
+  const seconds = EXPEDITION.seconds + echo.lightHours * EXPEDITION.perLightHour + (target === null ? 0 : 600);
   const before = root.exploration.expedition;
   root.exploration.expedition = {
     count: (before?.count ?? 0) + 1,
@@ -127,6 +150,7 @@ export function launchExpedition(w: WorldState, kit: ExpeditionKit): void {
     launchedAt: root.system.time,
     returnsAt: root.system.time + seconds,
     kit: { ...kit },
+    target,
     used: noKit(),
     leg: 0,
     setbacks: 0,
@@ -134,7 +158,8 @@ export function launchExpedition(w: WorldState, kit: ExpeditionKit): void {
     log: [],
     report: null,
   };
-  notify(root, `EXPEDITION LEFT FOR ${echo.name.toUpperCase()} · BACK IN ABOUT ${Math.round(seconds / 60)} MIN`);
+  const goal = target === null ? 'TO SURVEY' : `TO LAND ON ${farWorlds(root.seed, echo)[target].name.toUpperCase()}`;
+  notify(root, `EXPEDITION LEFT FOR ${echo.name.toUpperCase()} ${goal} · BACK IN ABOUT ${Math.round(seconds / 60)} MIN`);
 }
 
 /** The first technology that is open by prerequisites alone and not yet researched. */
@@ -143,7 +168,10 @@ function openTech(w: WorldState): TechId | null {
   return TECH_IDS.find(id => !done.includes(id) && !isFindTech(id) && TECHNOLOGIES[id].requires.every(r => done.includes(r))) ?? null;
 }
 
-const LEGS = ['past the edge of the system', 'through the long dark', 'into the far system'];
+export const LEGS = ['past the edge of the system', 'through the long dark', 'into the far system', 'down to the surface'];
+
+/** How many legs this trip has. */
+export const legCount = (target: number | null | undefined): number => EXPEDITION.legs + (target == null ? 0 : EXPEDITION.landingLeg);
 
 /** Seconds the craft waits for an answer before it picks the cautious-but-slow way itself. */
 export const DECISION_SECONDS = 300;
@@ -199,18 +227,34 @@ function answer(w: WorldState, e: Expedition, key: ExpeditionChoice['key']): voi
 
 function finish(w: WorldState, e: Expedition): ExpeditionReport {
   const lines = [...e.log];
-  if (e.setbacks >= EXPEDITION.legs) {
+  if (e.setbacks >= legCount(e.target)) {
     lines.push('The craft did not come home.');
     return { result: 'lost', lines };
   }
-  const share = [1, 0.5, 0.25][e.setbacks];
+  const share = [1, 0.5, 0.25, 0.25][e.setbacks];
   const result: ExpeditionReport['result'] = e.setbacks === 0 ? 'full' : e.setbacks === 1 ? 'partial' : 'thin';
-  const kg = Math.round(EXPEDITION.haul * share);
+  const worlds = farWorlds(w.seed, w.exploration.signal!.echo!);
+  const landed = e.target == null ? null : worlds[e.target];
+  const kg = Math.round((landed ? EXPEDITION.landingHaul : EXPEDITION.haul) * share);
   const room = Math.max(0, oreCapacity(w.colony) - inventoryMass(w.depot));
   const put = Math.min(kg, room);
-  w.depot.rareMetals += put * 0.4;
-  w.depot.silicon += put * 0.6;
-  lines.push(`Brought home ${Math.round(put)} kg of rare metals and silicon${put < kg ? ' (the rest did not fit)' : ''}.`);
+  const mix = landed ? landed.haul : { rareMetals: 0.4, silicon: 0.6 };
+  for (const [resource, part] of Object.entries(mix)) w.depot[resource as keyof typeof w.depot] += put * (part ?? 0);
+  const names = Object.keys(mix).map(r => RESOURCE_INFO[r as keyof typeof mix & Resource].label.toLowerCase()).join(' and ');
+  lines.push(`Brought home ${Math.round(put)} kg of ${names}${put < kg ? ' (the rest did not fit)' : ''}.`);
+  const signal = w.exploration.signal!;
+  if (e.target == null) {
+    const surveyed = (signal.surveyed ??= []);
+    const next = worlds.find(x => !surveyed.includes(x.index));
+    if (next) {
+      surveyed.push(next.index);
+      lines.push(`Surveyed ${next.name}: a ${kindWord(next)}${next.landable ? '' : '. No ground to land on'}.`);
+    } else {
+      lines.push('Every world of the system has been surveyed.');
+    }
+  } else {
+    lines.push(`Landed on ${landed!.name} and came home with a sample of its ground.`);
+  }
   if (result !== 'thin') {
     const tech = openTech(w);
     if (tech) {
@@ -233,8 +277,10 @@ export function stepExpedition(w: WorldState): void {
     return;
   }
   const span = e.returnsAt - e.launchedAt;
-  while (e.leg < EXPEDITION.legs && !e.pending && time >= e.launchedAt + (span * (e.leg + 1)) / (EXPEDITION.legs + 1)) {
-    const trouble = streamFor(w.seed, `expedition/${e.count}/${e.leg}`)() < legRisk(echo.hazard, e.kit);
+  const legs = legCount(e.target);
+  const world = e.target == null ? null : farWorlds(w.seed, echo)[e.target];
+  while (e.leg < legs && !e.pending && time >= e.launchedAt + (span * (e.leg + 1)) / (legs + 1)) {
+    const trouble = streamFor(w.seed, `expedition/${e.count}/${e.leg}`)() < legRiskAt(echo.hazard, e.kit, world, e.leg);
     if (trouble) {
       e.pending = { leg: e.leg, deadline: time + DECISION_SECONDS };
       notify(w, `EXPEDITION IN TROUBLE ${LEGS[e.leg].toUpperCase()} · DECIDE IN BASE`);
@@ -243,7 +289,7 @@ export function stepExpedition(w: WorldState): void {
       e.leg++;
     }
   }
-  if (e.pending || e.leg < EXPEDITION.legs || time < e.returnsAt) return;
+  if (e.pending || e.leg < legs || time < e.returnsAt) return;
   e.phase = 'back';
   e.report = finish(w, e);
   notify(w, e.report.result === 'lost' ? 'THE EXPEDITION IS OVERDUE · NO WORD' : 'THE EXPEDITION IS HOME · SEE BASE FOR THE REPORT');
@@ -264,5 +310,5 @@ export function chooseExpedition(w: WorldState, key: string): void {
   answer(root, e, key as ExpeditionChoice['key']);
 }
 
-export type ExpeditionAction = { type: 'launchExpedition'; kit: ExpeditionKit } | { type: 'expeditionChoice'; choice: string };
+export type ExpeditionAction = { type: 'launchExpedition'; kit: ExpeditionKit; target?: number | null } | { type: 'expeditionChoice'; choice: string };
 export const isExpeditionAction = (a: { type: string }): a is ExpeditionAction => a.type === 'launchExpedition' || a.type === 'expeditionChoice';

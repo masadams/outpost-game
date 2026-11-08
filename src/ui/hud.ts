@@ -195,7 +195,7 @@ export class Hud {
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
-      expedition: kit => onColonyAction({ type: 'launchExpedition', kit }),
+      expedition: (kit, target) => onColonyAction({ type: 'launchExpedition', kit, target }),
       choose: choice => onColonyAction({ type: 'expeditionChoice', choice }),
       send: to => onColonyAction({ type: 'sendPod', from: (this.latestWorld?.siteBody ?? 'home') as never, to: to as never }),
       research: tech => onColonyAction({ type: 'researchStart', tech: tech as never }),
