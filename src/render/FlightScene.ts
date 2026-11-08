@@ -39,6 +39,7 @@ import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
 import { tractorStats } from '../sim/shipStats';
 import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
+import { eventChip } from '../sim/events';
 import { objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
@@ -267,6 +268,7 @@ export class FlightScene extends Phaser.Scene {
       pickups: this.pickupFeed.lines(),
       storm: stormView(world),
       day: dayView(world),
+      event: eventChip(world),
       wreck: wreckCard(world),
       trajectory: this.flightTools.trajectory,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : this.prediction?.points.length ?? 0,

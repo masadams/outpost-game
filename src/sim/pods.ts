@@ -6,6 +6,7 @@ import { notify } from './messages';
 import { inventoryMass, RESOURCES, emptyInventory, type Inventory, type Resource } from './resources';
 import { streamFor } from './seed';
 import { activeMassDriver, MASS_DRIVER } from './airMachines';
+import { eventPodRisk } from './events';
 import { capacityFactor } from './facilityStats';
 import { oreCapacity } from './colony';
 import type { WorldState } from './world';
@@ -161,7 +162,7 @@ export function sendPod(w: WorldState, from: BodyId, to: BodyId, manifest?: Part
   const mass = inventoryMass(cargo);
   source.colony.products.fuel -= terms.fuel + terms.fuelPerKg * mass;
   const seconds = podFlightSeconds(root, from, to);
-  const doomed = root.seed !== 0 && streamFor(root.seed, `pod/${root.nextId}`)() < POD.lossChance * (root.colony.research.completed.includes('podLogistics') ? 0.5 : 1);
+  const doomed = root.seed !== 0 && streamFor(root.seed, `pod/${root.nextId}`)() < POD.lossChance * eventPodRisk(root) * (root.colony.research.completed.includes('podLogistics') ? 0.5 : 1);
   root.exploration.pods.push({ id: root.nextId++, from, to, cargo, launched: root.system.time, arrives: root.system.time + seconds, doomed });
   notify(root, `POD LAUNCHED FOR ${BODIES[to].label.toUpperCase()} · ${mass.toFixed(0)} KG · LANDS IN ${Math.round(seconds)} S · FOLLOW IT ON THE MAP`);
 }

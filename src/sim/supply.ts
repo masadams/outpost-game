@@ -1,3 +1,4 @@
+import { lanesBlocked } from './events';
 import { BODY_IDS, BODIES, type BodyId } from './celestial';
 import { colonyWorld } from './localWorld';
 import { bodyKnown } from './explorationConfig';
@@ -66,6 +67,10 @@ export function stepSupply(w: WorldState): void {
   const s = w.exploration.supply;
   if (!s || !s.enabled || w.system.time < s.last + SUPPLY.every) return;
   s.last = w.system.time;
+  if (lanesBlocked(w)) {
+    s.line = 'A debris field is crossing the lanes.';
+    return;
+  }
   if (w.exploration.pods.length >= POD.max) {
     s.line = 'All pods are out.';
     return;

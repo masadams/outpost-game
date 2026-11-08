@@ -14,6 +14,7 @@ import { applySupplyAction, isSupplyAction, stepSupply } from './supply';
 import { chooseExpedition, isExpeditionAction, launchExpedition, stepExpedition } from './expedition';
 import { isSignalAction, launchBeacon, stepSignal } from './signal';
 import { isPodAction, sendPod, stepBeacons, stepPods } from './pods';
+import { createEvents, stepEvents } from './events';
 import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
@@ -102,7 +103,7 @@ export function createWorld(seed = 0): WorldState {
   // A radial iron sample above home makes the first sortie accessible without orbital rendezvous.
   asteroids[0].position = { x: 0, y: -WORLD.radius - 440 }; asteroids[0].velocity = { x: 0, y: 0 };
   asteroids[2].position = { x: 95, y: -WORLD.radius - 470 }; asteroids[2].velocity = { x: 0, y: 0 };
-  const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true, ...(seed !== 0 ? { seed } : {}) }, seed, outposts: createOutposts(seed), exploration: createExploration(), towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
+  const world: WorldState = { autopilot:createAutopilot(),crewOrder:null, objectives: createObjectives(), system: { time: 0, binary: true, ...(seed !== 0 ? { seed } : {}) }, seed, outposts: createOutposts(seed), exploration: { ...createExploration(), ...(seed !== 0 ? { events: createEvents() } : {}) }, towing: createTowing(), ship: createShip(), asteroids, pickups: [], depot: emptyInventory(), beam: null, tractorActive: false, nextId: 16, unloaded: 0,
     playerMode: 'ship', astronaut: createAstronaut(), depotOpen: false, buttons: { board: false, interact: false }, notice: { message: '', time: 0 }, surfaceDeposits: createSurfaceDeposits(undefined, 'home', seed), colony: createColony(), defence: createDefence(), storm: createStorm(), wrecks: [], combat: createCombat() };
   shareResearch(world);
   seedNeighborhood(world);
@@ -174,6 +175,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepPods(world);
   stepBeacons(world);
   stepBlueprintNotices(world);
+  stepEvents(world, dt);
   stepSignal(world);
   stepExpedition(world);
   stepSupply(world);
