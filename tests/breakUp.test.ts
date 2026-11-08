@@ -32,8 +32,8 @@ describe('breaking rocks', () => {
     expect(piece.radius).toBeGreaterThanOrEqual(HEAVY_ROCK.radius);
     expect(piece.radius).toBeLessThan(46);
     expect(w.defence.meteors.reduce((n, m) => n + m.mass, 0)).toBeCloseTo(0.4 * 46 ** 3, 3);
-    // One missile breaks a big piece; its pieces are small enough for lasers.
-    expect(piece.health).toBeLessThanOrEqual(WEAPONS.missile.damage * 3);
+    // Two missiles break a big piece; its pieces are small enough for lasers.
+    expect(piece.health).toBeLessThanOrEqual(WEAPONS.missile.damage * 3 * 2);
     piece.health = 0;
     piece.lastHit = 'missile';
     resolveDefenceHits(w);

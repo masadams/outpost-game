@@ -5,20 +5,13 @@ import type { WorldState } from '../sim/world';
 import { WORLD } from '../sim/config';
 import { heading } from '../sim/math';
 import type { ThreatPrediction } from '../sim/meteor';
+import { nearestPlanet } from '../sim/celestial';
 import { isTurret } from '../sim/defenceConfig';
 import { turretPosition } from '../sim/weapons';
 import { buildingHealth } from '../sim/buildingHealth';
 
 export function drawDefence(g: Phaser.GameObjects.Graphics, world: WorldState, predictions: ThreatPrediction[], zoom: number, view?:RenderView): void {
-  for (const p of predictions) {
-    g.lineStyle(1 / zoom, 0xffa36f, 0.5); g.beginPath();
-    p.points.forEach((v, i) => i % 4 < 2 && i ? g.lineTo(v.x, v.y) : g.moveTo(v.x, v.y)); g.strokePath();
-    if (p.impact) {
-      const r = 10 / zoom; g.lineStyle(1.5 / zoom, 0xffa36f, 0.9); g.strokeCircle(p.impact.x, p.impact.y, r);
-      g.lineBetween(p.impact.x - r, p.impact.y - r, p.impact.x + r, p.impact.y + r);
-      g.lineBetween(p.impact.x + r, p.impact.y - r, p.impact.x - r, p.impact.y + r);
-    }
-  }
+  drawLandingZone(g, world, predictions, zoom);
   for (const m of world.defence.meteors) {
     if(!visible(view,m.position,m.radius+40/zoom))continue;
     const speed = Math.hypot(m.velocity.x, m.velocity.y), r = Math.max(m.radius, 3 / zoom);
@@ -45,5 +38,36 @@ export function drawThreatRadar(g: Phaser.GameObjects.Graphics, world: WorldStat
   for (const m of world.defence.meteors) {
     const distance = Math.hypot(m.position.x, m.position.y), scale = Math.min(radius / WORLD.radius, 61 / distance);
     g.fillStyle(0xff935c); g.fillCircle(x + m.position.x * scale, y + m.position.y * scale, 3);
+  }
+}
+
+/**
+ * One general landing zone for the rocks coming down: a band on the ground from the westmost to the eastmost
+ * expected impact, with some margin, rather than a path and a marker per rock.
+ */
+export function drawLandingZone(g: Phaser.GameObjects.Graphics, world: WorldState, predictions: ThreatPrediction[], zoom: number): void {
+  const groups = new Map<string, { planet: ReturnType<typeof nearestPlanet>; angles: number[] }>();
+  for (const p of predictions) {
+    if (!p.impact) continue;
+    const planet = nearestPlanet(p.impact, world.system);
+    const group = groups.get(planet.id) ?? { planet, angles: [] };
+    group.angles.push(Math.atan2(p.impact.y - planet.position.y, p.impact.x - planet.position.x));
+    groups.set(planet.id, group);
+  }
+  for (const { planet, angles } of groups.values()) {
+    const base = angles[0];
+    const offsets = angles.map(a => Math.atan2(Math.sin(a - base), Math.cos(a - base)));
+    const margin = 50 / planet.radius;
+    const from = base + Math.min(...offsets) - margin;
+    const to = base + Math.max(...offsets) + margin;
+    g.lineStyle(14, 0xff7a4a, 0.22);
+    g.beginPath();
+    g.arc(planet.position.x, planet.position.y, planet.radius + 7, from, to);
+    g.strokePath();
+    g.lineStyle(2 / zoom, 0xffa36f, 0.85);
+    for (const edge of [from, to]) {
+      const n = { x: Math.cos(edge), y: Math.sin(edge) };
+      g.lineBetween(planet.position.x + n.x * planet.radius, planet.position.y + n.y * planet.radius, planet.position.x + n.x * (planet.radius + 30), planet.position.y + n.y * (planet.radius + 30));
+    }
   }
 }

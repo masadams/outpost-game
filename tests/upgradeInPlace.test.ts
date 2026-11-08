@@ -70,7 +70,7 @@ describe('tier effects for the rest', () => {
     const { completedBuilding } = await import('../src/sim/construction');
     const w = createWorld();
     for (const kind of BUILD_TYPES) expect(tierEffect(completedBuilding(1, kind, kind === 'miningRig' ? 160 / 1800 : 0.3, w)).length).toBeGreaterThan(5);
-    expect(tierEffect(completedBuilding(1, 'laser', 0.3, w))).toBe('Fires 1.25× as often');
+    expect(tierEffect(completedBuilding(1, 'laser', 0.3, w))).toBe('Fires 1.25× as often and reaches 1035 m');
     expect(tierEffect(completedBuilding(1, 'shieldSmall', 0.3, w))).toBe('Recharges 1.25× as fast');
   });
 });

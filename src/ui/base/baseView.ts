@@ -1,3 +1,4 @@
+import { turretRange } from '../../sim/weapons';
 import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
 import { featureVisible } from '../../preferences/features';
@@ -285,7 +286,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
   if (w && (b.kind === 'geothermal' || b.kind === 'windTurbine')) facts.push(['Output', `${generatorOutput(w, b).toFixed(1)} kW`]);
   if (isTurret(b.kind)) {
     const weapon = WEAPONS[b.kind];
-    facts.push(['Range', `${weapon.range} m`], ['Per shot', `${weapon.energy} kJ`]);
+    facts.push(['Range', `${Math.round(turretRange(b))} m`], ['Per shot', `${weapon.energy} kJ`]);
   }
   if (b.island) facts.push(['Grid', 'Its own small grid, away from the pad']);
   if (b.feed !== undefined && b.feed < 0.995) facts.push(['Power reaching it', `${Math.round(b.feed * 100)}% (relay line)`]);

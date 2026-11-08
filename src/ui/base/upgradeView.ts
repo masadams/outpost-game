@@ -1,3 +1,4 @@
+import { turretRange } from '../../sim/weapons';
 import { buildingUpgradeError } from '../../sim/buildingUpgrades';
 import { PRODUCTS } from '../../sim/colonyConfig';
 import { BATTERY_CAPACITY } from '../../sim/colony';
@@ -44,7 +45,7 @@ export function tierEffect(b: Building, tier: 2 | 3 = 2): string {
     case 'laser':
     case 'flak':
     case 'missile':
-      return `Fires ${speed}× as often`;
+      return `Fires ${speed}× as often and reaches ${Math.round(turretRange(next))} m`;
     case 'shieldSmall':
     case 'shieldLarge':
       return `Recharges ${speed}× as fast`;
