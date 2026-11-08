@@ -6,7 +6,7 @@ import { HABITAT, HABITATS, isHabitat } from './habitatConfig';
 import { operational, buildingHealth } from './buildingHealth';
 import { policyFor } from './colonyPolicy';
 import { SUIT } from './astronaut';
-import { length, localAngle, wrap } from './math';
+import { length, wrap } from './math';
 import type { Building } from './colony';
 import type { WorldState } from './world';
 

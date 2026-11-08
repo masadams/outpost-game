@@ -110,3 +110,49 @@ describe('storm and observatory cues', () => {
     expect(director.update(w, 1 / 60, false).cues).toContain('stormOver');
   });
 });
+
+import { sendPod, stepPods } from '../src/sim/pods';
+import { completedBuilding } from '../src/sim/construction';
+import { launchBeacon, stepSignal } from '../src/sim/signal';
+import { TECH_IDS } from '../src/sim/progressionConfig';
+
+describe('sounds for pods and the far signal', () => {
+  function podWorld() {
+    const w = createWorld(5);
+    w.system.binary = true;
+    w.exploration.known.push('moon');
+    w.colony.buildings.push(completedBuilding(1, 'refinery', 0.2, w));
+    w.colony.products.fuel = 50;
+    w.depot.iron = 80;
+    w.nextId = 40;
+    return w;
+  }
+
+  it('a pod launching and landing near you is heard once each', () => {
+    const w = podWorld();
+    const director = new AudioDirector();
+    director.reset(w);
+    sendPod(w, 'home', 'moon');
+    expect(director.update(w, 1 / 60, false).cues).toContain('podLaunch');
+    expect(director.update(w, 1 / 60, false).cues).not.toContain('podLaunch');
+    w.system.time = w.exploration.pods[0].arrives + 1;
+    stepPods(w);
+    const heard = director.update(w, 1 / 60, false).cues;
+    expect(heard.filter(c => c === 'podLand' || c === 'podLost').length).toBeLessThanOrEqual(1);
+  });
+
+  it('a signal coming back from far away rings once', () => {
+    const w = createWorld(7);
+    w.colony.research.completed.push(...TECH_IDS);
+    w.colony.products = { ...w.colony.products, fuel: 90, alloy: 90, wire: 90, components: 90 };
+    w.colony.buildings.push(completedBuilding(3, 'observatory', 0.17, w), completedBuilding(4, 'antenna', 0.2, w));
+    for (const b of w.colony.buildings) b.status = 'running';
+    launchBeacon(w);
+    const director = new AudioDirector();
+    director.reset(w);
+    w.system.time = w.exploration.signal!.hearAt + 1;
+    stepSignal(w);
+    expect(director.update(w, 1 / 60, false).cues).toContain('signal');
+    expect(director.update(w, 1 / 60, false).cues).not.toContain('signal');
+  });
+});

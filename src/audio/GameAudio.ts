@@ -226,6 +226,10 @@ export class GameAudio {
     // Finished building: a soft two-note chime.
     else if (cue === 'build') { this.tone(392, 392, 0.2, 0, 'sine', 0.045); this.tone(587, 587, 0.28, 0.12, 'sine', 0.04); }
     else if (cue === 'demolish') { this.noise(0.25, 0.03, 600); this.tone(220, 110, 0.25, 0, 'sine', 0.05); }
+    else if (cue === 'podLaunch') { this.noise(0.7, 0.07, 1400); this.tone(70, 420, 0.8, 0, 'sawtooth', 0.05); this.tone(140, 840, 0.6, 0.15, 'sine', 0.04); }
+    else if (cue === 'podLand') { this.tone(520, 180, 0.35, 0, 'sine', 0.05); this.noise(0.18, 0.07, 500); this.tone(392, 392, 0.2, 0.4, 'sine', 0.045); this.tone(587, 587, 0.3, 0.52, 'sine', 0.04); }
+    else if (cue === 'podLost') { this.tone(420, 90, 0.4, 0, 'sawtooth', 0.05); this.noise(0.35, 0.1, 300); }
+    else if (cue === 'signal') { this.tone(330, 330, 0.5, 0, 'sine', 0.04); this.tone(495, 495, 0.5, 0.35, 'sine', 0.04); this.tone(660, 660, 0.7, 0.7, 'sine', 0.035); }
     else if (cue === 'jump') this.tone(170, 280, 0.12);
     else if (cue === 'launch') this.tone(90, 160, 0.2);
     else this.tone(260, 380, 0.12);

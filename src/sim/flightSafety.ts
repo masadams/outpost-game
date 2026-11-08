@@ -1,7 +1,7 @@
-import { STATIC_SYSTEM, nearestPlanet, relative, surfaceAngle } from './celestial';
+import { STATIC_SYSTEM, nearestPlanet, surfaceAngle } from './celestial';
 import { fuelCapacity } from './shipStats';
 import { WORLD } from './config';
-import { localAngle, wrap } from './math';
+import { wrap } from './math';
 import { landingLimits, telemetry, type Ship } from './physics';
 
 export type SafetyLevel = 'neutral' | 'safe' | 'caution' | 'critical';

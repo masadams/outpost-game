@@ -6,7 +6,6 @@ import { BELTS, BELT_IDS, SITE_IDS, SITE_INFO, EXPLORATION, DESTINATIONS, type S
 import { WORLD } from './config';
 import { emptyInventory, inventoryMass, RESOURCES } from './resources';
 import { heading, length, dot, wrap, localAngle, type Vec } from './math';
-import { rayCircle } from './mining';
 import { shipMass } from './shipMass';
 import { around, streamFor } from './seed';
 import { launchProbe } from './probes';
@@ -67,7 +66,6 @@ export function navigation(w: WorldState, key?: Destination) {
   const delta = { x: target.position.x - viewer.position.x, y: target.position.y - viewer.position.y }, range = length(delta);
   const relative = { x: viewer.velocity.x - target.velocity.x, y: viewer.velocity.y - target.velocity.y };
   const direction = range > 1e-9 ? { x: delta.x / range, y: delta.y / range } : { x: 0, y: 0 };
-  const terrain = range > 1e-9 ? rayCircle(viewer.position, direction, { x: 0, y: 0 }, WORLD.radius) : null;
   return { ...target, range, relativeSpeed: length(relative), closing: dot(relative, direction), bearing: range < 1e-9 ? 0 : wrap(localAngle(delta) - (w.playerMode === 'ship' ? w.ship.angle : localAngle(bodyRelative(viewer.position, nearestPlanet(viewer.position, w.system))))), occluded: !clearTerrain(viewer.position, target.position, w.system) };
 }
 export function siteError(w: WorldState, site: Site): string | null {

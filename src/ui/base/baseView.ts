@@ -17,7 +17,7 @@ import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
 import { podError } from '../../sim/pods';
 import { signalError } from '../../sim/signal';
-import { EXPEDITION, expeditionCost, expeditionError, oddsWord } from '../../sim/expedition';
+import { EXPEDITION, expeditionChoices, expeditionCost, expeditionError, oddsWord } from '../../sim/expedition';
 import { inventoryMass } from '../../sim/resources';
 import { BODIES, BODY_IDS, type BodyId } from '../../sim/celestial';
 import { bodyKnown } from '../../sim/explorationConfig';
@@ -65,8 +65,12 @@ export interface SignalView {
 }
 
 export interface ExpeditionView {
-  state: 'plan' | 'out';
+  state: 'plan' | 'out' | 'trouble';
   line: string;
+  /** What is going wrong and how it can be answered, while the craft waits. */
+  trouble: { title: string; minutes: number; choices: Array<{ key: string; label: string; detail: string; safe: boolean }> } | null;
+  /** What has happened so far on the way. */
+  log: string[];
   packs: Array<{ key: 'fuel' | 'shielding' | 'stores'; label: string; cost: string }>;
   /** For each choice of packs (keys joined with +, or none), what it costs, the odds and why it cannot go. */
   plans: Record<string, { cost: string; odds: string; reason: string | null }>;
@@ -359,9 +363,14 @@ function expeditionView(w: WorldState, hazard: string): ExpeditionView {
   const report = e?.report ? { result: e.report.result, lines: e.report.lines } : null;
   if (e && e.phase === 'out') {
     const left = Math.max(0, Math.round((e.returnsAt - w.system.time) / 60));
-    return { state: 'out', line: `An expedition is on its way. About ${left} min until it is back.`, packs, plans, report };
+    if (e.pending) {
+      const minutes = Math.max(0, Math.ceil((e.pending.deadline - w.system.time) / 60));
+      const trouble = { title: `Trouble ${['past the edge of the system', 'through the long dark', 'into the far system'][e.pending.leg]}: ${hazard}.`, minutes, choices: expeditionChoices(w) };
+      return { state: 'trouble', line: 'The craft is in trouble and waiting for you.', trouble, log: e.log, packs, plans, report };
+    }
+    return { state: 'out', line: `An expedition is on its way. About ${left} min until it is back.`, trouble: null, log: e.log, packs, plans, report };
   }
-  return { state: 'plan', line: report ? 'Home again. Send another, packed differently if you like.' : 'Send a craft to the far system and back. Pack for the hazard.', packs, plans, report };
+  return { state: 'plan', line: report ? 'Home again. Send another, packed differently if you like.' : 'Send a craft to the far system and back. Pack for the hazard.', trouble: null, log: [], packs, plans, report };
 }
 
 function signalView(w: WorldState): SignalView | null {

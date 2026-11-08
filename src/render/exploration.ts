@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SITE_INFO, BELTS, BELT_IDS, type BeltId } from '../sim/explorationConfig';
+import { SITE_INFO } from '../sim/explorationConfig';
 import { courseTo } from '../sim/intercept';
 import { navigation, destination } from '../sim/exploration';
 import type { WorldState } from '../sim/world';

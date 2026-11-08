@@ -1,3 +1,4 @@
+import { beaconPosition, podLane } from '../sim/pods';
 import { SIGHTING_SECONDS } from '../sim/stormKnowledge';
 import { relative } from '../sim/celestial';
 import { airDensity } from '../sim/environment';
@@ -5,11 +6,10 @@ import { colonyPlanet, sitePosition } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { habitatContains, habitatSource } from '../sim/habitats';
-import { heading } from '../sim/math';
 import { flightSafety } from '../sim/flightSafety';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver';
+export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver' | 'podLaunch' | 'podLand' | 'podLost' | 'signal';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
@@ -19,6 +19,8 @@ function snapshot(world: WorldState) {
     position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
     crystal: world.exploration.crystal, core: world.exploration.core, held: world.storm.held,
     scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over',
+    podIds: world.exploration.pods.map(p => p.id), beacons: (world.exploration.beacons ?? []).map(b => `${b.id}:${b.kind}`),
+    signal: world.exploration.signal?.phase ?? 'none', expedition: world.exploration.expedition ? `${world.exploration.expedition.count}:${world.exploration.expedition.phase}` : 'none',
     rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position, stage: b.stage }])),
     buildings: new Map(world.colony.buildings.map(b => [b.id, { progress: b.progress, recipe: b.recipe }])) };
 }
@@ -45,6 +47,19 @@ export class AudioDirector {
     if (next.scanning && !prev.scanning) cues.push('scan');
     if (next.sighted && !prev.sighted) cues.push('sighting');
     if (next.stormOver && !prev.stormOver) cues.push('stormOver');
+    // Cargo pods: heard when they leave or come down near you.
+    for (const pod of world.exploration.pods) {
+      if (!prev.podIds.includes(pod.id)) {
+        const from = podLane(world, pod).from;
+        if (near(from.x, from.y, 9000)) cues.push('podLaunch');
+      }
+    }
+    for (const beacon of world.exploration.beacons ?? []) {
+      if (prev.beacons.includes(`${beacon.id}:${beacon.kind}`)) continue;
+      const at = beaconPosition(world, beacon);
+      if (near(at.x, at.y, 9000)) cues.push(beacon.kind === 'landed' ? 'podLand' : 'podLost');
+    }
+    if ((prev.signal === 'sent' && next.signal === 'heard') || (prev.expedition.endsWith(':out') && next.expedition.endsWith(':back'))) cues.push('signal');
     if (next.shieldBreaches > prev.shieldBreaches) cues.push('shieldBreach');
     else if (next.shieldHits > prev.shieldHits) cues.push('shieldHit');
     if (next.research > prev.research) cues.push('production');
@@ -85,7 +100,7 @@ export class AudioDirector {
     const removed = Array.from(prev.buildings.keys()).some(id => !next.buildings.has(id));
     if (added) cues.push('build'); if (removed) cues.push('demolish');
     const machinery = world.colony.buildings.some(b => {
-      const n = heading(b.angle); return b.status === 'running' && near(sitePosition(world, b.angle).x, sitePosition(world, b.angle).y, 150);
+      return b.status === 'running' && near(sitePosition(world, b.angle).x, sitePosition(world, b.angle).y, 150);
     });
     // Machines finishing a batch make no sound of their own: the quiet hum while they run is enough.
     const safety = flightSafety(world.ship, world.system), fuelLevel = safety.instruments.fuel.level;

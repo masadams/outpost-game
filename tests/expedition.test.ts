@@ -4,7 +4,7 @@ import { stepColony } from '../src/sim/colony';
 import { completedBuilding } from '../src/sim/construction';
 import { STEP } from '../src/sim/config';
 import { launchBeacon, stepSignal } from '../src/sim/signal';
-import { EXPEDITION, expeditionCost, expeditionError, launchExpedition, legRisk, noKit, oddsWord, stepExpedition } from '../src/sim/expedition';
+import { EXPEDITION, DECISION_SECONDS, chooseExpedition, expeditionChoices, expeditionCost, expeditionError, launchExpedition, legRisk, noKit, oddsWord, stepExpedition } from '../src/sim/expedition';
 import { encodeCheckpoint, decodeCheckpoint } from '../src/persistence/checkpoint';
 import { baseView } from '../src/ui/base/baseView';
 import { TECH_IDS } from '../src/sim/progressionConfig';
@@ -25,6 +25,20 @@ function heard(seed = 7): WorldState {
   w.system.time = w.exploration.signal!.hearAt + 1;
   stepSignal(w);
   return w;
+}
+
+/** Plays an expedition out to the end, answering each trouble with the given policy. */
+function runOut(w: WorldState, policy: 'push' | 'wait' | 'best'): void {
+  for (let guard = 0; guard < 40 && w.exploration.expedition!.phase === 'out'; guard++) {
+    const e = w.exploration.expedition!;
+    w.system.time = Math.max(w.system.time, e.pending ? w.system.time : e.returnsAt + 1);
+    stepExpedition(w);
+    if (e.pending) {
+      const choices = expeditionChoices(w);
+      const safe = choices.find(c => c.safe);
+      chooseExpedition(w, policy === 'best' && safe ? safe.key : policy === 'wait' ? 'wait' : 'push');
+    }
+  }
 }
 
 describe('the expedition', () => {
@@ -54,11 +68,10 @@ describe('the expedition', () => {
     const e = w.exploration.expedition!;
     expect(e.returnsAt - e.launchedAt).toBeGreaterThan(1200);
     expect(expeditionError(w, noKit())).toMatch(/already out/);
-    w.system.time = e.returnsAt - 1;
+    w.system.time = e.launchedAt + 1;
     stepExpedition(w);
     expect(e.phase).toBe('out');
-    w.system.time = e.returnsAt + 1;
-    stepExpedition(w);
+    runOut(w, 'push');
     expect(e.phase).toBe('back');
     expect(e.report).not.toBeNull();
     expect(expeditionError(w, noKit())).toBeNull();
@@ -68,8 +81,7 @@ describe('the expedition', () => {
     const results = (kit: ReturnType<typeof noKit>) => Array.from({ length: 40 }, (_, i) => {
       const w = heard(100 + i);
       launchExpedition(w, kit);
-      w.system.time = w.exploration.expedition!.returnsAt + 1;
-      stepExpedition(w);
+      runOut(w, kit.fuel || kit.shielding || kit.stores ? 'best' : 'push');
       return w.exploration.expedition!.report!.result;
     });
     const bare = results(noKit());
@@ -91,8 +103,7 @@ describe('the expedition', () => {
       const researched = w.colony.research.completed.length;
       const ore = w.depot.rareMetals + w.depot.silicon;
       launchExpedition(w, noKit());
-      w.system.time = w.exploration.expedition!.returnsAt + 1;
-      stepExpedition(w);
+      runOut(w, 'push');
       const report = w.exploration.expedition!.report!;
       if (report.result === 'lost') {
         lostOne = true;
@@ -115,9 +126,96 @@ describe('the expedition', () => {
     launchExpedition(w, { fuel: true, shielding: false, stores: false });
     expect(baseView(w).signal!.expedition!.state).toBe('out');
     expect(decodeCheckpoint(encodeCheckpoint(w)).exploration.expedition?.phase).toBe('out');
-    w.system.time = w.exploration.expedition!.returnsAt + 1;
-    stepExpedition(w);
+    runOut(w, 'push');
     const loaded = decodeCheckpoint(encodeCheckpoint(w));
     expect(loaded.exploration.expedition?.report?.lines.length).toBeGreaterThan(0);
+  });
+});
+
+describe('trouble on the way', () => {
+  function findTrouble(kit = noKit()): WorldState {
+    for (let seed = 1; seed < 300; seed++) {
+      const w = heard(seed);
+      w.exploration.signal!.echo!.hazard = 'strong radiation';
+      launchExpedition(w, kit);
+      const e = w.exploration.expedition!;
+      for (let i = 0; i < 200 && !e.pending && e.phase === 'out'; i++) {
+        w.system.time += 60;
+        stepExpedition(w);
+      }
+      if (e.pending) return w;
+    }
+    throw new Error('no trouble found');
+  }
+
+  it('stops and asks: every trouble offers push on and wait, and packs add certain answers', () => {
+    const bare = findTrouble();
+    expect(expeditionChoices(bare).map(c => c.key)).toEqual(['push', 'wait']);
+    expect(baseView(bare).signal!.expedition!.state).toBe('trouble');
+    const packed = findTrouble({ fuel: true, shielding: true, stores: true });
+    expect(expeditionChoices(packed).map(c => c.key)).toEqual(['push', 'wait', 'shields', 'burn', 'stores']);
+    expect(expeditionChoices(packed).filter(c => c.safe)).toHaveLength(3);
+  });
+
+  it('a certain answer uses up its pack and costs nothing else; it cannot be used twice', () => {
+    const w = findTrouble({ fuel: true, shielding: true, stores: false });
+    const e = w.exploration.expedition!;
+    chooseExpedition(w, 'shields');
+    expect(e.setbacks).toBe(0);
+    expect(e.used.shielding).toBe(true);
+    expect(e.pending).toBeNull();
+    expect(e.log.at(-1)).toMatch(/shields held/);
+    expect(expeditionChoices(w).map(c => c.key)).not.toContain('shields');
+  });
+
+  it('waiting adds minutes to the trip; pushing on is a gamble that can cost a setback', () => {
+    const w = findTrouble();
+    const e = w.exploration.expedition!;
+    const home = e.returnsAt;
+    chooseExpedition(w, 'wait');
+    expect(e.returnsAt).toBe(home + 300);
+    const losers = Array.from({ length: 30 }, (_, i) => {
+      const t = findTroubleAt(i);
+      chooseExpedition(t, 'push');
+      return t.exploration.expedition!.setbacks;
+    });
+    expect(Math.min(...losers)).toBe(0);
+    expect(Math.max(...losers)).toBe(1);
+  });
+
+  function findTroubleAt(offset: number): WorldState {
+    let found = 0;
+    for (let seed = 1; seed < 800; seed++) {
+      const w = heard(seed);
+      w.exploration.signal!.echo!.hazard = 'strong radiation';
+      launchExpedition(w, noKit());
+      const e = w.exploration.expedition!;
+      for (let i = 0; i < 200 && !e.pending && e.phase === 'out'; i++) {
+        w.system.time += 60;
+        stepExpedition(w);
+      }
+      if (e.pending && found++ === offset) return w;
+    }
+    throw new Error('not enough trouble');
+  }
+
+  it('an unanswered trouble is waited out after a few minutes, and a bad choice is refused', () => {
+    const w = findTrouble();
+    const e = w.exploration.expedition!;
+    chooseExpedition(w, 'shields');
+    expect(e.pending).not.toBeNull();
+    expect(w.notice.message).toMatch(/not an option/);
+    w.system.time = e.pending!.deadline + 1;
+    stepExpedition(w);
+    expect(e.pending).toBeNull();
+    expect(e.log.at(-1)).toMatch(/waited|held/);
+    expect(DECISION_SECONDS).toBe(300);
+  });
+
+  it('saves with trouble waiting', () => {
+    const w = findTrouble({ fuel: true, shielding: false, stores: false });
+    const loaded = decodeCheckpoint(encodeCheckpoint(w));
+    expect(loaded.exploration.expedition?.pending).toEqual(w.exploration.expedition!.pending);
+    expect(loaded.exploration.expedition?.log).toEqual(w.exploration.expedition!.log);
   });
 });

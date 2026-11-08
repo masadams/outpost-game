@@ -1,6 +1,5 @@
 import { BODIES, groundVelocity, planets, relative, STATIC_SYSTEM, type Planet, type SystemFrame } from './celestial';
 import { starTide } from './starHazard';
-import { ATMOSPHERE, WORLD } from './config';
 import { clamp, length, type Vec } from './math';
 
 // Shared binary-source gravity; uniform-density interiors keep acceleration finite at both cores.

@@ -1,6 +1,6 @@
 import { planetAt, relative, surfaceAngle, type SystemFrame } from './celestial';
 import { WORLD } from './config';
-import { localAngle, heading, wrap, type Vec } from './math';
+import { heading, wrap, type Vec } from './math';
 import { predictMeteor } from './meteor';
 import { notify } from './messages';
 import { seeded } from './random';
