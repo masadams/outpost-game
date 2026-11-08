@@ -61,7 +61,7 @@ export function researchView(w: WorldState): ResearchRow[] | null {
       ...base,
       line: `${part.label}: ${part.benefit}. Costs ${costText(part.cost)}.`,
       progress: null,
-      action: { kind: 'fit', label: 'Fabricate and fit', reason: equipmentError(root, f.upgrade, 'install'), tech: f.tech, upgrade: f.upgrade },
+      action: { kind: 'fit', label: 'Build and fit', reason: equipmentError(root, f.upgrade, 'install'), tech: f.tech, upgrade: f.upgrade },
     };
   });
 }

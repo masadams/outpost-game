@@ -18,7 +18,7 @@ export function manifestPlan(w: WorldState, id: ManifestId): { missing: ProductI
   const missing = Object.fromEntries(PRODUCTS.map(p => [p, Math.max(0, (spec[p] ?? 0) - w.ship.freight[p])])) as ProductInventory;
   const mass = PRODUCTS.reduce((sum, p) => sum + missing[p], 0);
   const error = freightError(w) ?? (mass <= 1e-9 ? 'Manifest already aboard' :
-    PRODUCTS.some(p => availableProduct(w.colony, p) + 1e-9 < missing[p]) ? 'Insufficient unreserved local stock' :
+    PRODUCTS.some(p => availableProduct(w.colony, p) + 1e-9 < missing[p]) ? 'Not enough stock here' :
     cargoMass(w.ship) + mass > cargoCapacity(w.ship) + 1e-9 ? 'Insufficient shared hold capacity' : null);
   return { missing, mass, error };
 }

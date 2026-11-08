@@ -36,7 +36,7 @@ it('derives a finite starter bill from actual costs and reads without mutating o
 });
 it('accounts for committed work and research once, then restores the bill on cancellation',()=>{
  const w=createWorld();applyCommandAction(w,{type:'queueBuild',kind:'solar',angle:200/1800});
- expect(starterPlan(w).required.alloy).toBe(22);expect(starterPlan(w).pending).toContain('Solar array: paid work queued');
+ expect(starterPlan(w).required.alloy).toBe(22);expect(starterPlan(w).pending).toContain('Solar array: queued');
  applyResearch(w,{type:'researchStart',tech:'materials'});w.colony.research.queue[0].progress=5;
  expect(starterPlan(w)).toMatchObject({researchEnergy:40});expect(starterPlan(w).required.alloy).toBe(18);
  applyCommandAction(w,{type:'queueControl',id:1,operation:'cancel'});expect(starterPlan(w).required.alloy).toBe(22);

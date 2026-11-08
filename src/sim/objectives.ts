@@ -90,7 +90,7 @@ export function objectiveProgress(source: WorldState, id: ObjectiveId): { value:
     case 'equipment': value = w.ship.equipment.length > 0 ? 1 : 0; break;
     case 'moonWork': target = 2; unit = 'steps'; value = (w.playerMode === 'astronaut' && w.astronaut.health > 0 && nearestPlanet(w.astronaut.position,w.system).id === 'moon' ? 1 : 0) + (w.outposts.moon.surfaceDeposits.some(d=>d.remaining<d.initial-1e-6) && w.outposts.moon.colony.buildings.some(b=>b.kind==='miningRig'&&b.status==='running') ? 1 : 0); break;
     case 'return': target = 2; unit = 'steps'; value = w.objectives.returnArmed ? 1 : 0; break;
-    case 'habitat': target = HABITAT_WORK_GOAL; unit = 's of supplied air'; value = w.objectives.habitatSeconds; break;
+    case 'habitat': target = HABITAT_WORK_GOAL; unit = 's with the air on'; value = w.objectives.habitatSeconds; break;
     case 'research': target = TECH_IDS.length; unit = 'technologies'; value = w.colony.research.completed.length; break;
     case 'defence': unit = 'interception'; value = w.defence.intercepted; break;
   }

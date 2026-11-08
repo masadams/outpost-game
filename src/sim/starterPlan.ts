@@ -16,14 +16,14 @@ export function starterPlan(source: WorldState,includeRecovery=false) {
   const add = (cost: Partial<ProductInventory>) => { for (const p of PRODUCTS) required[p] += cost[p] ?? 0; };
   const facility = (kind: BuildType) => {
     if (c.buildings.some(b => b.kind === kind && operational(b))) return;
-    if (c.command.queue.some(o => o.kind === kind)) pending.push(`${BLUEPRINTS[kind].label}: paid work queued`);
+    if (c.command.queue.some(o => o.kind === kind)) pending.push(`${BLUEPRINTS[kind].label}: queued`);
     else { add(BLUEPRINTS[kind].cost); missing.push(BLUEPRINTS[kind].label); }
   };
   facility('solar'); facility('refinery');
   const researched = c.research.completed.includes('materials'), project = c.research.queue.find(p => p.tech === 'materials');
   if (!researched) {
     facility('researchLab');
-    if (project) pending.push('Applied materials: paid research queued');
+    if (project) pending.push('Applied materials: research queued');
     else { add(TECHNOLOGIES.materials.cost); missing.push('Applied materials research'); }
   }
   const equipped = !!fittedPart(w.ship,'hold');
