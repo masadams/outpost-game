@@ -183,6 +183,8 @@ export function stepStorm(world: WorldState): void {
     for (const planned of storm.plan) {
       if (planned.impactAngle !== null) storm.samples.push({ id: planned.id, angle: planned.impactAngle });
     }
+    // Only the newest pieces stay on the ground, so an uncollected pile cannot grow without limit.
+    storm.samples = storm.samples.slice(-32);
     if (storm.samples.length > 0) notify(world, 'The sky is clear. Pieces of the storm are lying out on the ground.');
     else notify(world, 'The sky is clear.');
   }

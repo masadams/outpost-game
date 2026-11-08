@@ -334,3 +334,5 @@ The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s,
 
 - **Trouble on the expedition is a decision.** Each of three legs may bring trouble (chance set by the far system's hazard, lowered by what is packed). The craft stops and waits in Base: push on (about a coin flip), hold and wait (five more minutes, usually works), or a certain answer if the matching pack is aboard (shields, long-range fuel, supply stores; each used once). If nobody answers in five minutes it waits the trouble out. Pods, the beacon echo and the expedition's return each have a sound.
 - **Unused code swept.** All unused imports and locals in `src/` were removed.
+
+- **A long soak test caught three ways a game could become unsaveable.** Slow machines (condenser, drone bay) kept a cycle timer past the save limit of 3 s; a big storm body's toughness was above the save limit; and uncollected storm pieces piled past 16. Limits are now wide enough for the sim, pieces on the ground are capped at the newest 32, and `tests/soak.test.ts` plays a hundred minutes of a busy base with pods, a beacon and an expedition, checking for bad numbers and that it saves.
