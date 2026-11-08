@@ -61,11 +61,19 @@ import { guideTarget } from '../ui/flight/guide';
 import { drawCoachPointer } from './coachPointer';
 import { FlightTools } from '../ui/FlightTools';
 import { predictCoast, type Trajectory } from '../sim/trajectory';
-import { createAtmosphere } from './atmosphere';
+import { createAtmosphere, createHalo } from './atmosphere';
+import { drawNature } from './nature';
+import { drawAuroraSky } from './aurora';
+import { CELESTIAL, type BodyId } from '../sim/celestial';
+import { auroraStrength } from '../sim/aurora';
 import { createPlanet } from './planet';
 import { drawTrajectory } from './trajectory';
 
 const PAD_LAMPS = { safe: 0x73f3cf, caution: 0xffb06a, critical: 0xff6b5a, neutral: 0x73f3cf } as const;
+
+/** Worlds beyond the original five that only some seeds have. */
+const EXTRA_WORLDS: BodyId[] = ['verdant', 'tide', 'murk'];
+const HALO_COLOUR: Partial<Record<BodyId, string>> = { verdant: '110,190,160', tide: '90,150,230', murk: '190,150,90' };
 
 export class FlightScene extends Phaser.Scene {
   private effects=new VisualEffects();
@@ -89,8 +97,11 @@ export class FlightScene extends Phaser.Scene {
   private cinder!: Phaser.GameObjects.Image;
   private ember!: Phaser.GameObjects.Image;
   private glint!: Phaser.GameObjects.Image;
+  /** The seeded extra worlds and their halos of air. */
+  private extras: { id: BodyId; image: Phaser.GameObjects.Image; halo: Phaser.GameObjects.Image | null }[] = [];
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
+  private aurora!: Phaser.GameObjects.Graphics;
   private skyImage!: Phaser.GameObjects.Image;
   private skyTexture = '';
   private map!: Phaser.GameObjects.Graphics;
@@ -150,6 +161,7 @@ export class FlightScene extends Phaser.Scene {
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
     this.skyImage = this.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setVisible(false);
     this.stars = this.add.graphics();
+    this.aurora = this.add.graphics();
     this.sky = this.add.graphics();
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
     this.planet = createPlanet(this);
@@ -157,7 +169,12 @@ export class FlightScene extends Phaser.Scene {
     this.cinder = createPlanet(this, 'cinder').setTint(0xcdb3a2);
     this.ember = createPlanet(this, 'ember').setTint(0xe0a487);
     this.glint = createPlanet(this, 'glint').setTint(0xa9d6ee);
-    this.art = this.add.graphics(); this.world.add([this.atmosphere, this.planet, this.moon, this.cinder, this.ember, this.glint, this.art]);
+    this.extras = EXTRA_WORLDS.map(id => {
+      const spec = CELESTIAL[id];
+      const halo = spec.air ? createHalo(this, `halo-${id}`, spec.radius, spec.atmosphere, HALO_COLOUR[id] ?? '120,160,200', Math.min(0.6, 0.25 + spec.air.surfaceDensity * 1.5)) : null;
+      return { id, image: createPlanet(this, id), halo };
+    });
+    this.art = this.add.graphics(); this.world.add([this.atmosphere, ...this.extras.flatMap(e => (e.halo ? [e.halo] : [])), this.planet, this.moon, this.cinder, this.ember, this.glint, ...this.extras.map(e => e.image), this.art]);
     this.map = this.add.graphics();
     this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
       if(this.menu?.isOpen||this.help.isOpen||this.settings.isOpen||pointer.event.target!==this.game.canvas)return;
@@ -491,6 +508,7 @@ export class FlightScene extends Phaser.Scene {
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
+    drawAuroraSky(this.aurora, width, height, this.simulation.system.time, look.stars * Math.max(0, 1 - daylight * 1.5) * auroraStrength(this.simulation, eyePlanet.id as BodyId));
     this.skyImage.setAlpha(look.stars);
     this.starVisibility = look.stars;
     this.drawSun(width, height, daylight);
@@ -509,6 +527,13 @@ export class FlightScene extends Phaser.Scene {
     const glint = planetAt('glint', this.simulation.system);
     const glintHere = bodyExists('glint', this.simulation.system) && this.simulation.system.binary;
     this.glint.setVisible(glintHere).setPosition(glint.position.x - this.follow.x, glint.position.y - this.follow.y);
+    for (const extra of this.extras) {
+      const body = planetAt(extra.id, this.simulation.system);
+      const here = bodyExists(extra.id, this.simulation.system) && this.simulation.system.binary;
+      extra.image.setVisible(here).setPosition(body.position.x - this.follow.x, body.position.y - this.follow.y);
+      extra.halo?.setVisible(here).setPosition(body.position.x - this.follow.x, body.position.y - this.follow.y);
+      if (here) drawNature(g, body, this.simulation.seed);
+    }
     const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
     const padLevel = padSafety.approach ? padSafety.level : 'neutral';
     const padBody = nearestPlanet(this.simulation.ship.position, this.simulation.system).id;

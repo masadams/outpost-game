@@ -1,6 +1,9 @@
 import type Phaser from 'phaser';
 import { CELESTIAL, type BodyId } from '../sim/celestial';
 /** Body-specific, cached geology, clipped within the exact circular collision surface. */
+/** Ground colours (light, deep) for the worlds that are not grey rock. */
+const PALETTE: Partial<Record<BodyId, [string, string]>> = { verdant: ['#5f8a5a', '#1f3d2c'], tide: ['#3f6f9a', '#122c48'], murk: ['#9a8253', '#3d3020'] };
+
 export function createPlanet(scene: Phaser.Scene, body: BodyId = 'home'): Phaser.GameObjects.Image {
  const radius=CELESTIAL[body].radius,key=`surface-${body}`,size=body==='home'?2048:1024,extent=radius+2;
  if(!scene.textures.exists(key)){
@@ -8,7 +11,7 @@ export function createPlanet(scene: Phaser.Scene, body: BodyId = 'home'): Phaser
   c.translate(size/2,size/2);c.scale(size/(2*extent),size/(2*extent));
   c.save();c.beginPath();c.arc(0,0,radius,0,Math.PI*2);c.clip();
   const shade=c.createRadialGradient(-radius*.38,-radius*.7,0,0,0,radius*1.8);
-  shade.addColorStop(0,body==='home'?'#526b70':'#9b91a5');shade.addColorStop(.55,body==='home'?'#213b47':'#494358');shade.addColorStop(1,'#091621');c.fillStyle=shade;c.fillRect(-radius,-radius,radius*2,radius*2);
+  const pal=PALETTE[body];shade.addColorStop(0,pal?pal[0]:body==='home'?'#526b70':'#9b91a5');shade.addColorStop(.55,pal?pal[1]:body==='home'?'#213b47':'#494358');shade.addColorStop(1,'#091621');c.fillStyle=shade;c.fillRect(-radius,-radius,radius*2,radius*2);
   let seed=body==='home'?7249:1931;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
   for(let i=0;i<520;i++){
    const a=rand()*Math.PI*2,r=Math.sqrt(rand())*radius,x=Math.cos(a)*r,y=Math.sin(a)*r;

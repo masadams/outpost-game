@@ -47,8 +47,18 @@ export const TECH_DEPTH: Record<TechId, number> = Object.fromEntries(TECH_IDS.ma
 export const TECH_COST_STEP = 0.12;
 const scaled = (cost: Partial<ProductInventory>, step: number, depth: number): Partial<ProductInventory> =>
   Object.fromEntries(Object.entries(cost).map(([k, v]) => [k, Math.ceil((v as number) * (1 + step * depth))])) as Partial<ProductInventory>;
+/** Deeper research is electronics more than metal: this share of its alloy (per step, up to the cap) moves to wire and components. */
+export const TECH_ALLOY_SHIFT = { step: 0.08, cap: 0.4, wire: 0.6 } as const;
+function shiftAlloy(cost: Partial<ProductInventory>, depth: number): Partial<ProductInventory> {
+  const share = Math.min(TECH_ALLOY_SHIFT.cap, TECH_ALLOY_SHIFT.step * depth);
+  const alloy = cost.alloy ?? 0;
+  const moved = Math.floor(alloy * share);
+  if (moved <= 0) return cost;
+  const wire = Math.round(moved * TECH_ALLOY_SHIFT.wire);
+  return { ...cost, alloy: alloy - moved, wire: (cost.wire ?? 0) + wire, components: (cost.components ?? 0) + moved - wire };
+}
 export const TECHNOLOGIES: Record<TechId, Technology> = Object.fromEntries(
-  TECH_IDS.map(id => [id, { ...RAW_TECHNOLOGIES[id], cost: scaled(RAW_TECHNOLOGIES[id].cost, TECH_COST_STEP, TECH_DEPTH[id]) }]),
+  TECH_IDS.map(id => [id, { ...RAW_TECHNOLOGIES[id], cost: shiftAlloy(scaled(RAW_TECHNOLOGIES[id].cost, TECH_COST_STEP, TECH_DEPTH[id]), TECH_DEPTH[id]) }]),
 ) as Record<TechId, Technology>;
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
 export const UPGRADE_IDS = [...BASE_UPGRADE_IDS, 'efficientEngine', 'surveyTank', 'bulkHold', 'deepMining', 'precisionTractor', 'heavyCoil', 'cryoCooling', 'layeredArmour', 'ionDrive', 'lightHold', 'stripMiner', 'broadTractor', 'efficientCoil', 'capacitorCooler', 'landingComputer', 'returnComputer', 'navigationComputer', 'afterburner', 'dropTank', 'cargoBay', 'pulseMiner', 'wideTractor', 'railCoil', 'radiatorFins', 'ablativePlating', 'missionComputer'] as const;

@@ -1,7 +1,7 @@
 import { ATMOSPHERE, DAY_LENGTH, WORLD } from './config';
 import { streamFor } from './seed';
 import { heading, length, localAngle, wrap, type Vec } from './math';
-export const BODY_IDS = ['home', 'moon', 'cinder', 'ember', 'glint'] as const;
+export const BODY_IDS = ['home', 'moon', 'cinder', 'ember', 'glint', 'verdant', 'tide', 'murk'] as const;
 export type BodyId = typeof BODY_IDS[number];
 /** `sun` switches the day and night cycle on; without it every place is always in full daylight. */
 export interface SystemFrame { time: number; binary: boolean; sun?: boolean; /** The world seed: seed 0 (or none) is the standard layout. */ seed?: number }
@@ -50,13 +50,33 @@ export const BODIES: Record<BodyId, BodySpec> = {
     orbit: { kind: 'circle', radius: 52000, phase: 4.1 }, spin: 'tidal', requiresBinary: true, surveySeconds: 1000,
     optional: true,
     hint: { at: 700, text: 'A very faint, cold point far beyond the others. Keep watching.' } },
+  // A living world: thick air, seas and forests. Only some seeds have it.
+  verdant: { label: 'Verdant', radius: 520, mu: 1.2 * 520 ** 2, atmosphere: 700,
+    air: { scaleHeight: 260, surfaceDensity: 0.12 },
+    orbit: { kind: 'circle', radius: 29000, phase: 3.4 }, spin: 'tidal', requiresBinary: true, surveySeconds: 560,
+    optional: true,
+    hint: { at: 380, text: 'A green-blue point out there. Its light changes as it turns. Keep watching.' } },
+  // Mostly ocean, with a few islands. Only some seeds have it.
+  tide: { label: 'Tide', radius: 600, mu: 1.25 * 600 ** 2, atmosphere: 650,
+    air: { scaleHeight: 240, surfaceDensity: 0.1 },
+    orbit: { kind: 'circle', radius: 44000, phase: 5.3 }, spin: 'tidal', requiresBinary: true, surveySeconds: 820,
+    optional: true,
+    hint: { at: 560, text: 'A deep blue point, bright where its seas catch the light. Keep watching.' } },
+  // Wrapped in thick, hazy air: hard to fly in, dim under the haze. Only some seeds have it.
+  murk: { label: 'Murk', radius: 480, mu: 1.3 * 480 ** 2, atmosphere: 1000,
+    air: { scaleHeight: 380, surfaceDensity: 0.3 },
+    orbit: { kind: 'circle', radius: 62000, phase: 1.4 }, spin: 'tidal', requiresBinary: true, surveySeconds: 1150,
+    optional: true,
+    hint: { at: 820, text: 'A dull ochre smudge at the very edge. Its air must be thick. Keep watching.' } },
 };
+/** How often each optional world turns up in a seeded game. */
+const OPTIONAL_CHANCE: Partial<Record<BodyId, number>> = { glint: 0.4, verdant: 0.5, tide: 0.5, murk: 0.5 };
 /** Whether a body is in this system. Optional bodies are never in the standard layout and only in some seeds. */
 export function bodyExists(id: BodyId, system: SystemFrame = STATIC_SYSTEM): boolean {
   if (!BODIES[id].optional) return true;
   const seed = system.seed ?? 0;
   if (seed === 0) return false;
-  return streamFor(seed, 'extra/' + id)() < (id === 'glint' ? 0.4 : 0.6);
+  return streamFor(seed, 'extra/' + id)() < (OPTIONAL_CHANCE[id] ?? 0.6);
 }
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;

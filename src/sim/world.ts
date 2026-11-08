@@ -1,9 +1,10 @@
+import { onWater } from './nature';
 import {createAutopilot,type AutopilotState} from './autopilotConfig';
 import {applyAutopilotAction,autopilotControls,stopAutopilot} from './autopilot';
 import {applyBuildingUpgrade} from './buildingUpgrades';
 import { applyCrewOrder, crewMove, type CrewOrder } from './crewOrders';
 import { createObjectives, observeObjectives, type ObjectiveState } from './objectives';
-import { planetAt, nearestPlanet, CELESTIAL, BODY_IDS, type SystemFrame, type BodyId } from './celestial';
+import { planetAt, nearestPlanet, surfaceAngle, CELESTIAL, BODY_IDS, type SystemFrame, type BodyId } from './celestial';
 import { activeWorld, allColonies, colonyPlanet, colonyWorld, localAngleAt } from './localWorld';
 import { isProgressionAction } from './progressionConfig';
 import { applyResearch } from './research';
@@ -142,7 +143,12 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   const startShip = { ...world.ship.position };
   const starts = new Map([...world.asteroids, ...world.exploration.sites].map(rock => [rock.id, { ...rock.position }]));
   const flightInput=autopilotControls(world,input,dt);
+  const landingsBefore = world.ship.landings;
   stepShip(world.ship, piloting ? flightInput : { thrust: false, turn: 0 }, dt, world.system);
+  if (world.ship.landings > landingsBefore && world.ship.ground) {
+    const body = planetAt(world.ship.ground, world.system);
+    if (onWater(body.id, world.seed, surfaceAngle(body, world.ship.position))) notify(world, 'SPLASHDOWN · THE LANDER FLOATS · NOTHING CAN BE BUILT ON WATER');
+  }
   let paidHabitatSeconds = 0;
   if (!piloting) {
     const controlling = !!controlledTurret(local);
