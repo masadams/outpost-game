@@ -20,7 +20,7 @@ import { drawExploration } from './exploration';
 import { drawGeology } from './geology';
 import { drawTowing } from './towing';
 import { drawCombat } from './combat';
-import { predictMeteor, type ThreatPrediction } from '../sim/meteor';
+import { quickImpact, type ThreatPrediction } from '../sim/meteor';
 import { drawDefence } from './defence';
 import Phaser from 'phaser';
 import { Keyboard } from '../input/keyboard';
@@ -445,25 +445,18 @@ export class FlightScene extends Phaser.Scene {
     sky.fillCircle(x, y, 11);
     void daylight;
   }
-  private threatCache = new Map<number, { prediction: ThreatPrediction; age: number }>();
+  private threatAge = Infinity;
   /**
-   * Predictions for the incoming rocks are the costly part of a storm, so they are cheap and spread out: one rock per frame,
-   * on a coarse step, each refreshed about once a second and a half. A rock with no prediction yet is done first.
+   * Where the incoming rocks are headed, roughly: a cheap guess for every rock, twice a second. The screen shows one
+   * landing zone from these rather than a path per rock.
    */
   private updateThreats(seconds: number): void {
-    const rocks = this.simulation.defence.meteors.slice(0, 12);
-    const ids = new Set(rocks.map(m => m.id));
-    for (const id of this.threatCache.keys()) if (!ids.has(id)) this.threatCache.delete(id);
-    if (!this.halted) for (const entry of this.threatCache.values()) entry.age += seconds;
-    const due = rocks
-      .map(m => ({ m, age: this.threatCache.get(m.id)?.age ?? Infinity }))
-      .filter(v => v.age >= 1.5 && (!this.halted || v.age === Infinity))
-      .sort((a, b) => b.age - a.age)[0];
-    if (due) {
-      const prediction = this.onGround(predictMeteor(due.m, 90, this.simulation.system, 0.1));
-      this.threatCache.set(due.m.id, { prediction, age: 0 });
-    }
-    this.threats = rocks.map(m => this.threatCache.get(m.id)?.prediction).filter((p): p is ThreatPrediction => !!p);
+    if (!this.halted) this.threatAge += seconds;
+    if (this.threatAge < 0.5 && this.threats.length > 0) return;
+    if (this.halted && this.threatAge !== Infinity && this.threats.length > 0) return;
+    this.threatAge = 0;
+    const system = this.simulation.system;
+    this.threats = this.simulation.defence.meteors.slice(0, 24).map(m => this.onGround(quickImpact(m, system)));
   }
   /** Threat paths and impact markers drawn on the ground as it is now, so they point at the right place on a turning planet. */
   private onGround(p: ThreatPrediction): ThreatPrediction {

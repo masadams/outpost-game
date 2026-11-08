@@ -24,7 +24,7 @@ describe('the giant', () => {
   it('is broken by missiles in a handful of hits, but barely scratched by lasers', () => {
     const toughness = (GIANT.radius + 8) * GIANT.toughness;
     const missile = blastDamage('missile', DEFENCE_WEAPONS.missile.damage, GIANT.radius);
-    expect(toughness / missile).toBeLessThan(10);
+    expect(toughness / missile).toBeLessThan(12);
     expect(toughness / DEFENCE_WEAPONS.laser.damage).toBeGreaterThan(80);
     expect(blastDamage('flak', 1, HEAVY_ROCK.radius + 5)).toBe(1);
     expect(blastDamage('missile', 1, HEAVY_ROCK.radius - 1)).toBe(1);

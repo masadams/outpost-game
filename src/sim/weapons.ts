@@ -1,4 +1,4 @@
-import { workFactor } from './facilityStats';
+import { facilityLevel, workFactor } from './facilityStats';
 import { pursuitAcceleration } from './guidance';
 import { groundVelocity, relative } from './celestial';
 import { allColonies, sitePosition, colonyPlanet } from './localWorld';
@@ -32,11 +32,15 @@ export function lineOfSight(start: Vec, end: Vec, system = STATIC_SYSTEM): boole
 }
 function targetFor(world: WorldState, b: Building) {
   if (!isTurret(b.kind)) return undefined;
-  const at = turretPosition(b, world), range = WEAPONS[b.kind].range;
+  const at = turretPosition(b, world), range = turretRange(b);
   return world.defence.meteors.filter(m => Math.hypot(m.position.x - at.x, m.position.y - at.y) <= range && lineOfSight(at, m.position, world.system) &&
     Math.abs(wrap(localAngle({ x: m.position.x - at.x, y: m.position.y - at.y }) - b.angle - colonyPlanet(world).spin)) <= 1.4)
     .sort((a, c) => length(relative(a.position, colonyPlanet(world))) - length(relative(c.position, colonyPlanet(world))) || a.id - c.id)[0];
 }
+/** Upgraded turrets reach farther: +15% at tier II, +30% at tier III. */
+export const RANGE_PER_TIER = 0.15;
+export const turretRange = (b: Building): number => WEAPONS[b.kind as keyof typeof WEAPONS].range * (1 + RANGE_PER_TIER * (facilityLevel(b) - 1));
+
 /** Missiles carry a penetrating charge: against a big rock they do several times their usual damage. */
 export const HEAVY_ROCK = { radius: 20, missileFactor: 3 } as const;
 export const blastDamage = (kind: 'flak' | 'missile', damage: number, rockRadius: number): number =>
@@ -83,7 +87,7 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     site.colony.products.components = Math.max(0, site.colony.products.components - spec.components);
     b.gridPower = spec.energy / dt; state.cooldown = cooldown; b.status = 'running'; defence.shots++;
     if (b.kind === 'laser') {
-      let distance: number = spec.range, victim;
+      let distance: number = turretRange(b), victim;
       for (const m of [...defence.meteors, ...site.asteroids]) {
         const hit = rayCircle(at, direction, m.position, m.radius);
         if (hit !== null && hit < distance) { distance = hit; victim = m; }

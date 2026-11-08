@@ -1,4 +1,4 @@
-import { STATIC_SYSTEM, terrainHit, surfacePosition } from './celestial';
+import { STATIC_SYSTEM, nearestPlanet, terrainHit, surfacePosition } from './celestial';
 import { collideShip } from './bodies';
 import { firstShieldHit, absorbShield } from './shields';
 import type { WorldState } from './world';
@@ -58,4 +58,35 @@ export function predictMeteor(source: Meteor, horizon = 120, system = STATIC_SYS
 
 export function meteorDamage(m: Meteor, frameVelocity: Vec = { x: 0, y: 0 }): number {
   return m.impactBudget ?? Math.min(180, Math.max(15, m.mass * ((m.velocity.x - frameVelocity.x) ** 2 + (m.velocity.y - frameVelocity.y) ** 2) / 4000));
+}
+
+/**
+ * A cheap guess at where and when a rock comes down: one-second steps under the nearest world's gravity, with that
+ * world held still, and no air, shields or terrain. Good enough for a rough landing zone, at a tiny fraction of the
+ * cost of `predictMeteor`.
+ */
+export function quickImpact(m: Meteor, system = STATIC_SYSTEM, horizon = 120): ThreatPrediction {
+  const planet = nearestPlanet(m.position, system);
+  let x = m.position.x - planet.position.x;
+  let y = m.position.y - planet.position.y;
+  let vx = m.velocity.x - planet.velocity.x;
+  let vy = m.velocity.y - planet.velocity.y;
+  const ground = planet.radius + m.radius;
+  for (let t = 1; t <= horizon; t++) {
+    const r = Math.hypot(x, y);
+    const g = planet.mu / Math.max(r, planet.radius) ** 3;
+    vx -= x * g;
+    vy -= y * g;
+    const nx = x + vx;
+    const ny = y + vy;
+    if (Math.hypot(nx, ny) <= ground) {
+      // Finish the step on the surface.
+      const scale = planet.radius / Math.hypot(nx, ny);
+      return { id: m.id, points: [], impact: { x: planet.position.x + nx * scale, y: planet.position.y + ny * scale }, seconds: t };
+    }
+    if (Math.hypot(nx, ny) > planet.radius + 20000) break;
+    x = nx;
+    y = ny;
+  }
+  return { id: m.id, points: [], impact: null, seconds: horizon };
 }

@@ -55,7 +55,7 @@ export interface StormConfig {
 export type BodyKind = 'hit' | 'miss' | 'large' | 'giant';
 
 /** The rare giant: from the fourth storm, aimed at the base. Toughness is per metre of radius. */
-export const GIANT = { chance: 0.3, radius: 40, toughness: 0.6 } as const;
+export const GIANT = { chance: 0.35, radius: 40, toughness: 0.8 } as const;
 
 /** Storms past the second keep the second's pattern, with more bodies and a little more of everything, up to a limit. */
 export const LATER_STORM_LIMIT = 9;
@@ -120,7 +120,7 @@ function baseStormFor(wave: number): StormConfig {
     masses.push(STORM_2.masses[from]);
     health.push(STORM_2.health[from]);
   }
-  const scale = 1 + 0.08 * grow;
+  const scale = 1 + 0.1 * grow;
   return {
     ...STORM_2, seed: STORM_2.seed + wave * 7, aim, radii: radii.map(r => r * Math.min(1.3, scale)),
     masses: masses.map(m => m * scale ** 3), health: health.map(h => h * scale),

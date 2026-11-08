@@ -101,7 +101,7 @@ export function resolveDefenceHits(world: WorldState): void {
 }
 
 /** How a big rock breaks: into this many pieces, with toughness per metre of radius. */
-export const BREAK_UP = { pieces: 3, giantPieces: 4, giant: 40, toughness: 0.12, spread: 4, limit: 48 } as const;
+export const BREAK_UP = { pieces: 3, giantPieces: 4, giant: 40, toughness: 0.16, spread: 4, limit: 48 } as const;
 
 /** Breaks a big rock into three or four smaller ones, flung a little apart. */
 export function breakUp(m: Meteor, count: number, nextId: () => number): Meteor[] {
