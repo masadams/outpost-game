@@ -55,7 +55,7 @@ export interface StormConfig {
 export type BodyKind = 'hit' | 'miss' | 'large';
 
 /** Storms past the second keep the second's pattern, with more bodies and a little more of everything, up to a limit. */
-export const LATER_STORM_LIMIT = 6;
+export const LATER_STORM_LIMIT = 9;
 
 /**
  * The storm for a wave. Seed 0 is the standard storm, always the same. Any other seed adds strays from the second
@@ -95,7 +95,7 @@ function baseStormFor(wave: number): StormConfig {
   if (wave <= 1) return STORM;
   if (wave === 2) return STORM_2;
   const grow = Math.min(wave, LATER_STORM_LIMIT) - 2;
-  const extra = Math.min(grow * 2, 6);
+  const extra = Math.min(grow * 2, 10);
   const aim: number[] = [...STORM_2.aim];
   const radii: number[] = [...STORM_2.radii];
   const masses: number[] = [...STORM_2.masses];

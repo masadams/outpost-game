@@ -56,8 +56,8 @@ describe('paid research progression', () => {
   it('pause yields to other eligible projects; cancellation refunds unworked material once', () => {
     const w = laboratory(); w.colony.research.completed = ['materials']; applyResearch(w, { type: 'researchStart', tech: 'propulsion' }); applyResearch(w, { type: 'researchStart', tech: 'extraction' });
     run(w, 10); applyResearch(w, { type: 'researchControl', tech: 'propulsion', operation: 'pause' }); run(w, 1); expect(w.colony.research.queue[1].progress).toBeCloseTo(1);
-    const alloy = w.colony.products.alloy; applyResearch(w, { type: 'researchControl', tech: 'propulsion', operation: 'cancel' }); expect(w.colony.products.alloy).toBeCloseTo(alloy + 3);
-    applyResearch(w, { type: 'researchControl', tech: 'propulsion', operation: 'cancel' }); expect(w.colony.products.alloy).toBeCloseTo(alloy + 3);
+    const alloy = w.colony.products.alloy; applyResearch(w, { type: 'researchControl', tech: 'propulsion', operation: 'cancel' }); expect(w.colony.products.alloy).toBeCloseTo(alloy + TECHNOLOGIES.propulsion.cost.alloy! / 2);
+    applyResearch(w, { type: 'researchControl', tech: 'propulsion', operation: 'cancel' }); expect(w.colony.products.alloy).toBeCloseTo(alloy + TECHNOLOGIES.propulsion.cost.alloy! / 2);
   });
   it('retains committed work rather than discarding a refund that cannot fit storage', () => {
     const w = laboratory(); applyResearch(w, { type: 'researchStart', tech: 'materials' }); w.colony.products.alloy = 100;

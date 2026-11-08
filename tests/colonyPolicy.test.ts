@@ -78,7 +78,7 @@ describe('turret material protection', () => {
     w.colony.buildOpen = true; w.colony.policy = { ...createPolicy(), alloyReserve: 28 };
     const before = { ...w.colony.products }; applyColonyAction(w, { type: 'place' }); expect(w.colony.products).toEqual(before); expect(placementError(w)).toContain('reserved');
     w.colony.policy.alloyReserve = 20; applyColonyAction(w, { type: 'place' }); expect(w.colony.products.alloy).toBe(24);
-    w.colony.products.alloy = 0; expect(placementError(w, 'solar', 160 / WORLD.radius)).toContain('Insufficient');
+    w.colony.products.alloy = 0; expect(placementError(w, 'solar', 160 / WORLD.radius)).toContain('Not enough');
   });
   it.each(['flak', 'missile'] as const)('lets %s turrets spend reserved alloy/components with normal finite shot costs', kind => {
     const { w, policy } = fixture(); policy.alloyReserve = 28; policy.componentsReserve = 8;
