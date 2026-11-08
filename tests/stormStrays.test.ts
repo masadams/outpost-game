@@ -82,3 +82,19 @@ describe('a body that missed', () => {
     expect(w.defence.meteors).toHaveLength(1);
   });
 });
+
+import { encodeCheckpoint } from '../src/persistence/checkpoint';
+
+describe('what strays and long games do to saves', () => {
+  it('a big, tough body in flight and a pile of uncollected pieces can both be saved', () => {
+    const seed = withStrays(3, 'large')[0];
+    const w = createWorld(seed);
+    w.storm.wave = 3;
+    w.storm.armed = true;
+    planStorm(w);
+    expect(Math.max(...w.storm.far.map(b => b.health))).toBeGreaterThan(8);
+    expect(() => encodeCheckpoint(w)).not.toThrow();
+    w.storm.samples = Array.from({ length: 30 }, (_, i) => ({ id: 500 + i, angle: 0.01 * i }));
+    expect(() => encodeCheckpoint(w)).not.toThrow();
+  }, 30000);
+});

@@ -63,7 +63,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 3) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached', 'no fuel', 'worn out'].includes(b.status))) return false;
+    number(b.progress, 0, 200) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached', 'no fuel', 'worn out'].includes(b.status))) return false;
   if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
   if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)) && (b.linked === undefined || b.linked === false) && (b.feed === undefined || number(b.feed, 0, 1)) && (b.charge === undefined || number(b.charge, 0, 1e6)) && (b.island === undefined || typeof b.island === 'boolean'))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, airCapacity(b)) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
@@ -93,13 +93,13 @@ function validWrecks(world: WorldState): boolean {
 function validStorm(world: WorldState): boolean {
   const s = world.storm;
   if (!['quiet', 'approaching', 'over'].includes(s.phase) || typeof s.planned !== 'boolean' || typeof s.armed !== 'boolean' || !number(s.arrival, 0, 1e9) || !number(s.observed, 0, 1e9) || !Array.isArray(s.plan) || s.plan.length > 24) return false;
-  if (!Array.isArray(s.samples) || s.samples.length > 16 || !Number.isInteger(s.held) || s.held < 0 || s.held > 16 || typeof s.analysed !== 'boolean' || !Number.isInteger(s.wave) || s.wave < 1 || s.wave > 99 || !number(s.endedAt, 0, 1e9)) return false;
+  if (!Array.isArray(s.samples) || s.samples.length > 32 || !Number.isInteger(s.held) || s.held < 0 || s.held > 32 || typeof s.analysed !== 'boolean' || !Number.isInteger(s.wave) || s.wave < 1 || s.wave > 99 || !number(s.endedAt, 0, 1e9)) return false;
   if (!s.samples.every(p => object(p) && Number.isInteger(p.id) && number(p.angle, -Math.PI - 1e-6, Math.PI + 1e-6))) return false;
   if (!s.plan.every(p => object(p) && Number.isInteger(p.id) && (p.impactAngle === null || number(p.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (p.impactTime === null || number(p.impactTime, 0, 1e9)))) return false;
   if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 24 || s.ids.length > 24) return false;
   const vec = (v: unknown) => object(v) && number(v.x, -1e7, 1e7) && number(v.y, -1e7, 1e7);
   return s.ids.every(id => Number.isInteger(id) && id > 0) && s.far.every(b => object(b) && Number.isInteger(b.id) && vec(b.entry) && vec(b.velocity) &&
-    number(b.entryTime, 0, 1e9) && number(b.radius, 0.01, 200) && number(b.mass, 1e-12, 1e6) && number(b.health, 0.01, 12) &&
+    number(b.entryTime, 0, 1e9) && number(b.radius, 0.01, 200) && number(b.mass, 1e-12, 1e6) && number(b.health, 0.01, 40) &&
     (b.impactAngle === null || number(b.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (b.impactTime === null || number(b.impactTime, 0, 1e9)));
 }
 export function encodeCheckpoint(world: WorldState): string {

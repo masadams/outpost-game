@@ -126,3 +126,16 @@ describe('workshop', () => {
     expect(blueprintRevealed(w, 'workshop')).toBe(true);
   });
 });
+
+import { encodeCheckpoint } from '../src/persistence/checkpoint';
+
+describe('long cycles can be saved', () => {
+  it('a condenser and a drone bay part-way through their cycles do not make the game unsaveable', () => {
+    const w = powered();
+    w.colony.products.fuel = 10;
+    w.colony.buildings.push(completedBuilding(5, 'condenser', 0.25, w), completedBuilding(6, 'droneBay', 0.3, w));
+    run(w, 6);
+    expect(w.colony.buildings.find(b => b.kind === 'condenser')!.progress).toBeGreaterThan(3);
+    expect(() => encodeCheckpoint(w)).not.toThrow();
+  });
+});
