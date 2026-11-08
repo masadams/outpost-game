@@ -8,7 +8,7 @@ export const WEAPONS = {
 } as const;
 export type Weapon = keyof typeof WEAPONS;
 export const isTurret = (kind: string): kind is Weapon => kind === 'laser' || kind === 'flak' || kind === 'missile';
-export interface Meteor extends Asteroid { impactBudget?: number }
+export interface Meteor extends Asteroid { impactBudget?: number; /** The weapon that hit it last: a missile vaporises a small rock outright. */ lastHit?: 'laser' | 'flak' | 'missile' }
 export interface Projectile { frameVelocity?: Vec; id: number; kind: 'flak' | 'missile'; position: Vec; velocity: Vec; targetId: number | null; life: number; fuse: number }
 export interface DefenceBeam { start: Vec; end: Vec; life: number }
 export interface DefenceState {

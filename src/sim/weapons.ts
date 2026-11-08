@@ -4,7 +4,7 @@ import { groundVelocity, relative } from './celestial';
 import { allColonies, sitePosition, colonyPlanet } from './localWorld';
 import { STATIC_SYSTEM, clearTerrain, terrainHit } from './celestial';
 import { orderedBuildings } from './power';
-import { isTurret, WEAPONS, type Projectile } from './defenceConfig';
+import { isTurret, WEAPONS, type Meteor, type Projectile } from './defenceConfig';
 import { WORLD } from './config';
 import { clamp, heading, length, localAngle, wrap, type Vec } from './math';
 import { rayCircle, rayTerrain } from './mining';
@@ -45,6 +45,7 @@ function blast(world: WorldState, at: Vec, radius: number, damage: number, kind:
   for (const m of world.defence.meteors) {
     if (Math.hypot(m.position.x - at.x, m.position.y - at.y) > radius + m.radius || !lineOfSight(at, m.position, world.system)) continue;
     m.health -= blastDamage(kind, damage, m.radius);
+    m.lastHit = kind;
   }
 }
 export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: number, starts: Map<number, Vec>): void {
@@ -89,7 +90,10 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
       }
       const terrain = rayTerrain(at, direction, site.system);
       if (terrain !== null && terrain < distance) { distance = terrain; victim = undefined; }
-      if (victim) victim.health -= spec.damage;
+      if (victim) {
+        victim.health -= spec.damage;
+        if (defence.meteors.includes(victim as Meteor)) (victim as Meteor).lastHit = 'laser';
+      }
       defence.beams.push({ start: at, end: { x: at.x + direction.x * distance, y: at.y + direction.y * distance }, life: 0.13 });
     } else {
       const targetDistance = target ? Math.hypot(target.position.x - at.x, target.position.y - at.y) : 550;
