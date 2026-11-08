@@ -287,3 +287,6 @@
 #hud .base-report { padding: 8px 10px; border-radius: 6px; background: var(--ui-raised); border-left: 3px solid var(--ui-mint); }
 #hud .base-report[data-result=lost] { border-left-color: #ff8f75; }
 #hud .base-report[data-result=thin], #hud .base-report[data-result=partial] { border-left-color: var(--ui-amber); }
+
+#hud .base-trouble { display: grid; gap: 6px; padding: 8px 10px; border-radius: 6px; background: var(--ui-raised); border-left: 3px solid var(--ui-amber); }
+#hud .base-trouble [data-safe=true] { border-color: var(--ui-mint); }

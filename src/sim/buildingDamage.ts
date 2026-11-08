@@ -37,7 +37,6 @@ export function damageColony(world: WorldState, position: Vec, damage: number, r
     b.health = Math.max(0, buildingHealth(b) - damage * facilityDamageFactor(b) * (root.storm.analysed ? ANALYSED_DAMAGE_FACTOR : 1) * (1 - distance / reach)); hit = true;
     if (!operational(b)) { ventHabitat(world, b); drainShield(world, b); b.status = 'wrecked'; if (world.defence.controlled === b.id) world.defence.controlled = null; }
   }
-  const n = { x: Math.sin(angle), y: -Math.cos(angle) };
   const at = sitePosition(world, angle, 0);
   const distanceShip = Math.hypot(at.x - world.ship.position.x, at.y - world.ship.position.y);
   if (distanceShip < radius) {

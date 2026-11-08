@@ -6,11 +6,12 @@ import { stepColony } from '../../src/sim/colony';
 import { STEP } from '../../src/sim/config';
 import { TECH_IDS } from '../../src/sim/progressionConfig';
 import { launchBeacon, stepSignal } from '../../src/sim/signal';
+import { launchExpedition, stepExpedition } from '../../src/sim/expedition';
 
 test.use({ viewport: { width: 1600, height: 900 }, storageState: { cookies: [], origins: [] } });
 
-function staged(sent: boolean, heard = false) {
-  const w = createWorld(4242);
+function staged(sent: boolean, heard = false, seed = 4242) {
+  const w = createWorld(seed);
   w.system.sun = true;
   w.objectives.completed.push('delivery', 'industry', 'buoy');
   w.exploration.surveyed.push('frost');
@@ -84,5 +85,31 @@ test('once the echo is in, an expedition can be packed and sent from Base', asyn
   await page.screenshot({ path: '/tmp/claude-0/-home-user-outpost-game/69b8c470-1738-5ca3-a382-1afb3ca6b07d/scratchpad/shots/expedition-plan.png' });
   await page.locator('[data-expedition-go]').click();
   await expect(page.locator('[data-expedition="out"]')).toContainText('on its way');
+  expect(errors).toEqual([]);
+});
+
+test('trouble on the way waits in Base for a decision', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  let w = staged(false, true);
+  for (let seed = 4243; seed < 4600; seed++) {
+    w = staged(false, true, seed);
+    w.exploration.signal!.echo!.hazard = 'strong radiation';
+    launchExpedition(w, { fuel: false, shielding: true, stores: false });
+    const e = w.exploration.expedition!;
+    for (let i = 0; i < 200 && !e.pending && e.phase === 'out'; i++) {
+      w.system.time += 60;
+      stepExpedition(w);
+    }
+    if (e.pending) break;
+  }
+  await open(page, encodeCheckpoint(w));
+  await page.keyboard.press('p');
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await expect(page.locator('[data-trouble]')).toContainText('strong radiation');
+  await expect(page.locator('[data-choice="shields"]')).toHaveAttribute('data-safe', 'true');
+  await page.locator('[data-choice="shields"]').click();
+  await expect(page.locator('[data-expedition="out"]')).toContainText('shields held');
   expect(errors).toEqual([]);
 });

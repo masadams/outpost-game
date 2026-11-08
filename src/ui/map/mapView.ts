@@ -1,4 +1,4 @@
-import { courseTo, interceptBelt } from '../../sim/intercept';
+import { courseTo } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
 import { bodySurvey } from '../../sim/nacreSurvey';
 import { featureVisible } from '../../preferences/features';
@@ -237,7 +237,9 @@ function echoMark(w: WorldState): MapView['echo'] {
   if (!signal) return null;
   if (signal.phase === 'sent') return { label: 'Beacon out · listening', bearing: Math.PI / 2 };
   const echo = signal.echo!;
-  return { label: `${echo.name} · ${echo.lightHours} light-hours`, bearing: echo.bearing };
+  const e = w.exploration.expedition;
+  const status = e?.phase === 'out' ? (e.pending ? ' · expedition in trouble' : ' · expedition out') : '';
+  return { label: `${echo.name} · ${echo.lightHours} light-hours${status}`, bearing: echo.bearing };
 }
 
 function podMarks(w: WorldState): PodMark[] {

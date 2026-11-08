@@ -12,8 +12,7 @@ import { drawShip } from './ship';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
-import { bodyExists, nearestPlanet, onGroundNow, planetAt, planets, relative, surfaceAngle } from '../sim/celestial';
-import { localAngle } from '../sim/math';
+import { bodyExists, nearestPlanet, onGroundNow, planetAt, planets, surfaceAngle } from '../sim/celestial';
 import { flightSafety } from '../sim/flightSafety';
 import { drawShields } from './shields';
 import { applyExplorationAction } from '../sim/exploration';
@@ -27,7 +26,7 @@ import Phaser from 'phaser';
 import { Keyboard } from '../input/keyboard';
 import { FixedClock } from '../sim/clock';
 import { WORLD } from '../sim/config';
-import { createWorld, stepWorld } from '../sim/world';
+import { stepWorld } from '../sim/world';
 import { Hud } from '../ui/hud';
 import { FlightCamera, FOCUS_Y } from './camera';
 import { drawMining } from './mining';
@@ -112,7 +111,6 @@ export class FlightScene extends Phaser.Scene {
   private prediction: Trajectory | null = null;
   private predictionTime = 0;
   private threats: ThreatPrediction[] = [];
-  private threatTime = 0;
   private starPoints = Array.from({ length: 240 }, (_, i) => ({ x: ((i * 0.61803398875) % 1), y: ((i * i * 0.41421356237) % 1), bright: i % 7 === 0 }));
   constructor() { super('flight'); }
   create(): void {

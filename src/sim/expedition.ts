@@ -29,8 +29,27 @@ export interface Expedition {
   launchedAt: number;
   returnsAt: number;
   kit: ExpeditionKit;
+  /** Packs already spent answering trouble. */
+  used: ExpeditionKit;
+  /** Which of the three legs comes next (3 once all are past). */
+  leg: number;
+  /** Trouble that got the better of the craft so far. */
+  setbacks: number;
+  /** Trouble waiting for a decision, if any, and when the craft decides for itself. */
+  pending: { leg: number; deadline: number } | null;
+  /** What has happened so far, one line a leg. */
+  log: string[];
   /** The report from the last one home, kept until the next one leaves. */
   report: ExpeditionReport | null;
+}
+
+/** One way to answer trouble. */
+export interface ExpeditionChoice {
+  key: 'push' | 'wait' | 'shields' | 'burn' | 'stores';
+  label: string;
+  detail: string;
+  /** True when it is certain to work. */
+  safe: boolean;
 }
 
 export const EXPEDITION = {
@@ -108,6 +127,11 @@ export function launchExpedition(w: WorldState, kit: ExpeditionKit): void {
     launchedAt: root.system.time,
     returnsAt: root.system.time + seconds,
     kit: { ...kit },
+    used: noKit(),
+    leg: 0,
+    setbacks: 0,
+    pending: null,
+    log: [],
     report: null,
   };
   notify(root, `EXPEDITION LEFT FOR ${echo.name.toUpperCase()} · BACK IN ABOUT ${Math.round(seconds / 60)} MIN`);
@@ -119,27 +143,68 @@ function openTech(w: WorldState): TechId | null {
   return TECH_IDS.find(id => !done.includes(id) && !isFindTech(id) && TECHNOLOGIES[id].requires.every(r => done.includes(r))) ?? null;
 }
 
-function resolve(w: WorldState, e: Expedition): ExpeditionReport {
+const LEGS = ['past the edge of the system', 'through the long dark', 'into the far system'];
+
+/** Seconds the craft waits for an answer before it picks the cautious-but-slow way itself. */
+export const DECISION_SECONDS = 300;
+const WAIT_EXTRA = 300;
+
+/** How to answer the trouble on the next leg, given what is packed and what is already spent. */
+export function expeditionChoices(w: WorldState): ExpeditionChoice[] {
+  const e = w.exploration.expedition;
+  const echo = w.exploration.signal?.echo;
+  if (!e || !echo) return [];
+  const have = (k: keyof ExpeditionKit): boolean => e.kit[k] && !e.used[k];
+  const list: ExpeditionChoice[] = [
+    { key: 'push', label: 'Push on', detail: 'No cost. About a coin flip.', safe: false },
+    { key: 'wait', label: 'Hold and wait it out', detail: `Costs ${WAIT_EXTRA / 60} more minutes. Usually works.`, safe: false },
+  ];
+  if (have('shielding') && SHIELDED.includes(echo.hazard)) list.push({ key: 'shields', label: 'Shields up', detail: 'Uses the shielding. Certain to work.', safe: true });
+  if (have('fuel')) list.push({ key: 'burn', label: 'Burn clear of it', detail: 'Uses the long-range fuel. Certain to work.', safe: true });
+  if (have('stores')) list.push({ key: 'stores', label: 'Ride it out on stores', detail: 'Uses the supplies. Certain to work.', safe: true });
+  return list;
+}
+
+function setback(e: Expedition, text: string): void {
+  e.setbacks++;
+  e.log.push(text);
+}
+
+function answer(w: WorldState, e: Expedition, key: ExpeditionChoice['key']): void {
   const echo = w.exploration.signal!.echo!;
-  const rand = streamFor(w.seed, `expedition/${e.count}`);
-  const risk = legRisk(echo.hazard, e.kit);
-  let trouble = 0;
-  const lines: string[] = [];
-  const legs = ['past the edge of the system', 'through the long dark', `into the ${echo.name} system`];
-  for (let i = 0; i < EXPEDITION.legs; i++) {
-    if (rand() < risk) {
-      trouble++;
-      lines.push(`Trouble ${legs[i]}: ${echo.hazard}.`);
-    } else {
-      lines.push(`Clear ${legs[i]}.`);
-    }
+  const leg = e.pending!.leg;
+  const place = LEGS[leg];
+  const roll = streamFor(w.seed, `expedition/${e.count}/${leg}/${key}`)();
+  e.pending = null;
+  e.leg = leg + 1;
+  if (key === 'shields') {
+    e.used.shielding = true;
+    e.log.push(`Trouble ${place} (${echo.hazard}): shields held.`);
+  } else if (key === 'burn') {
+    e.used.fuel = true;
+    e.log.push(`Trouble ${place} (${echo.hazard}): burned clear of it.`);
+  } else if (key === 'stores') {
+    e.used.stores = true;
+    e.log.push(`Trouble ${place} (${echo.hazard}): rode it out on the stores.`);
+  } else if (key === 'wait') {
+    e.returnsAt += WAIT_EXTRA;
+    if (roll < 0.85) e.log.push(`Trouble ${place} (${echo.hazard}): held and waited, and it passed.`);
+    else setback(e, `Trouble ${place} (${echo.hazard}): waited, but it did damage.`);
+  } else if (roll < 0.5) {
+    e.log.push(`Trouble ${place} (${echo.hazard}): pushed on and got through.`);
+  } else {
+    setback(e, `Trouble ${place} (${echo.hazard}): pushed on and paid for it.`);
   }
-  if (trouble >= EXPEDITION.legs) {
+}
+
+function finish(w: WorldState, e: Expedition): ExpeditionReport {
+  const lines = [...e.log];
+  if (e.setbacks >= EXPEDITION.legs) {
     lines.push('The craft did not come home.');
     return { result: 'lost', lines };
   }
-  const share = [1, 0.5, 0.25][trouble];
-  const result: ExpeditionReport['result'] = trouble === 0 ? 'full' : trouble === 1 ? 'partial' : 'thin';
+  const share = [1, 0.5, 0.25][e.setbacks];
+  const result: ExpeditionReport['result'] = e.setbacks === 0 ? 'full' : e.setbacks === 1 ? 'partial' : 'thin';
   const kg = Math.round(EXPEDITION.haul * share);
   const room = Math.max(0, oreCapacity(w.colony) - inventoryMass(w.depot));
   const put = Math.min(kg, room);
@@ -156,14 +221,48 @@ function resolve(w: WorldState, e: Expedition): ExpeditionReport {
   return { result, lines };
 }
 
-/** Brings the expedition home when its time is up. */
+/** Moves the expedition on: trouble arrives at each leg, waits for a decision, then it comes home. */
 export function stepExpedition(w: WorldState): void {
   const e = w.exploration.expedition;
-  if (!e || e.phase !== 'out' || w.system.time < e.returnsAt) return;
+  if (!e || e.phase !== 'out') return;
+  const echo = w.exploration.signal?.echo;
+  if (!echo) return;
+  const time = w.system.time;
+  if (e.pending) {
+    if (time >= e.pending.deadline) answer(w, e, 'wait');
+    return;
+  }
+  const span = e.returnsAt - e.launchedAt;
+  while (e.leg < EXPEDITION.legs && !e.pending && time >= e.launchedAt + (span * (e.leg + 1)) / (EXPEDITION.legs + 1)) {
+    const trouble = streamFor(w.seed, `expedition/${e.count}/${e.leg}`)() < legRisk(echo.hazard, e.kit);
+    if (trouble) {
+      e.pending = { leg: e.leg, deadline: time + DECISION_SECONDS };
+      notify(w, `EXPEDITION IN TROUBLE ${LEGS[e.leg].toUpperCase()} · DECIDE IN BASE`);
+    } else {
+      e.log.push(`Clear ${LEGS[e.leg]}.`);
+      e.leg++;
+    }
+  }
+  if (e.pending || e.leg < EXPEDITION.legs || time < e.returnsAt) return;
   e.phase = 'back';
-  e.report = resolve(w, e);
+  e.report = finish(w, e);
   notify(w, e.report.result === 'lost' ? 'THE EXPEDITION IS OVERDUE · NO WORD' : 'THE EXPEDITION IS HOME · SEE BASE FOR THE REPORT');
 }
 
-export type ExpeditionAction = { type: 'launchExpedition'; kit: ExpeditionKit };
-export const isExpeditionAction = (a: { type: string }): a is ExpeditionAction => a.type === 'launchExpedition';
+/** Answers the trouble that is waiting, if the choice is one that is offered. */
+export function chooseExpedition(w: WorldState, key: string): void {
+  const root = w.rootWorld ?? w;
+  const e = root.exploration.expedition;
+  if (!e || !e.pending) {
+    notify(root, 'Nothing needs deciding.');
+    return;
+  }
+  if (!expeditionChoices(root).some(c => c.key === key)) {
+    notify(root, 'That is not an option now.');
+    return;
+  }
+  answer(root, e, key as ExpeditionChoice['key']);
+}
+
+export type ExpeditionAction = { type: 'launchExpedition'; kit: ExpeditionKit } | { type: 'expeditionChoice'; choice: string };
+export const isExpeditionAction = (a: { type: string }): a is ExpeditionAction => a.type === 'launchExpedition' || a.type === 'expeditionChoice';

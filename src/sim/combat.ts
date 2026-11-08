@@ -1,16 +1,15 @@
 import { colonyWorld } from './localWorld';
-import { groundVelocity, planetAt, surfaceAngle } from './celestial';
+import { surfaceAngle } from './celestial';
 import { cargoMass } from './shipMass';
 import { nearestPlanet, relative, surfacePosition } from './celestial';
 import { cannonStats, thermalStats } from './shipStats';
 import { createCombat, SHIP_WEAPONS, type CombatAction, type Drone } from './combatConfig';
 import { printPilot, printPlan } from './wrecks';
-import { createShip, telemetry } from './physics';
+import { telemetry } from './physics';
 import { shipMass } from './shipMass';
 import { heading, length, localAngle, wrap } from './math';
 import { WORLD } from './config';
 import { notify } from './messages';
-import { availableProduct } from './colonyPolicy';
 import { releaseTow } from './towing';
 import { stepDrone } from './drones';
 import { stepCombatProjectiles, type CombatStarts } from './combatProjectiles';

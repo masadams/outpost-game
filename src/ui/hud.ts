@@ -196,6 +196,7 @@ export class Hud {
       studyCore: () => onColonyAction({ type: 'studyCore' }),
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
       expedition: kit => onColonyAction({ type: 'launchExpedition', kit }),
+      choose: choice => onColonyAction({ type: 'expeditionChoice', choice }),
       send: to => onColonyAction({ type: 'sendPod', from: (this.latestWorld?.siteBody ?? 'home') as never, to: to as never }),
       research: tech => onColonyAction({ type: 'researchStart', tech: tech as never }),
       fit: upgrade => onColonyAction({ type: 'equipment', upgrade: upgrade as never, operation: 'install' }),

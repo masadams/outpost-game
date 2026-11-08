@@ -1,4 +1,4 @@
-import { localAngleAt, upAngleAt } from '../sim/localWorld';
+import { upAngleAt } from '../sim/localWorld';
 import { fuelCapacity } from '../sim/shipStats';
 import { HABITATS, isHabitat } from '../sim/habitatConfig';
 import { habitatSource } from '../sim/habitats';

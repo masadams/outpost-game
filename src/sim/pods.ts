@@ -1,4 +1,4 @@
-import { BODIES, planetAt, surfaceAngle, surfacePosition, BODY_IDS, type BodyId } from './celestial';
+import { BODIES, planetAt, surfacePosition, BODY_IDS, type BodyId } from './celestial';
 import type { Vec } from './math';
 import { bodyKnown } from './explorationConfig';
 import { colonyWorld } from './localWorld';
@@ -52,12 +52,6 @@ export const POD = {
   /** Pods in flight at once. */
   max: 4,
 } as const;
-
-const length = (v: Vec): number => Math.hypot(v.x, v.y);
-const unit = (v: Vec): Vec => {
-  const l = Math.max(1e-9, length(v));
-  return { x: v.x / l, y: v.y / l };
-};
 
 /** How long a pod takes: it aims for where the far world will be, so the distance depends on the time. */
 export function podFlightSeconds(w: WorldState, from: BodyId, to: BodyId): number {

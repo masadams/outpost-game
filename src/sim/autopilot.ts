@@ -6,7 +6,7 @@ import {engineStats} from './shipStats';
 import {shipMass} from './shipMass';
 import {destination} from './exploration';
 import {SITE_IDS,BELT_IDS,type Destination} from './explorationConfig';
-import {wrap,localAngle,type Vec} from './math';
+import { wrap, type Vec } from './math';
 import {flightComputer,type AutopilotAction,type AutopilotMode,type FlightProgram} from './autopilotConfig';
 import {flightControl} from './flightController';
 import {notify} from './messages';

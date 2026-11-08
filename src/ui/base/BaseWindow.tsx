@@ -23,6 +23,7 @@ export interface BaseHandlers {
   send: (to: string) => void;
   beacon: () => void;
   expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void;
+  choose: (key: string) => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -59,7 +60,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Expedition({ view, paused, send }: { view: ExpeditionView; paused: boolean; send: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void }) {
+function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paused: boolean; send: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void; choose: (key: string) => void }) {
   const [kit, setKit] = useState({ fuel: false, shielding: false, stores: false });
   const key = (['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+');
   const plan = view.plans[key];
@@ -71,6 +72,19 @@ function Expedition({ view, paused, send }: { view: ExpeditionView; paused: bool
         <div class="base-report" data-result={view.report.result}>
           <strong>{view.report.result === 'lost' ? 'Lost' : view.report.result === 'full' ? 'A clean run' : view.report.result === 'partial' ? 'Home, battered' : 'Barely home'}</strong>
           {view.report.lines.map(l => <p key={l} class="base-note">{l}</p>)}
+        </div>
+      )}
+      {view.log.length > 0 && view.state !== 'plan' && view.log.map(l => <p key={l} class="base-note">{l}</p>)}
+      {view.trouble && (
+        <div class="base-trouble" data-trouble>
+          <strong>{view.trouble.title}</strong>
+          <p class="base-note">It decides for itself in about {view.trouble.minutes} min (it waits it out).</p>
+          {view.trouble.choices.map(c => (
+            <div key={c.key}>
+              <button type="button" class="base-analyse" data-choice={c.key} data-safe={String(c.safe)} disabled={paused} onClick={() => choose(c.key)}>{c.label}</button>
+              <small class="base-note"> {c.detail}</small>
+            </div>
+          ))}
         </div>
       )}
       {view.state === 'plan' && (
@@ -92,7 +106,7 @@ function Expedition({ view, paused, send }: { view: ExpeditionView; paused: bool
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, choose, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }) => void; choose: (key: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -173,7 +187,7 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
               {view.signal.echo.lines.map(l => <p key={l} class="base-note">{l}</p>)}
             </div>
           )}
-          {view.signal.expedition && <Expedition view={view.signal.expedition} paused={paused} send={expedition} />}
+          {view.signal.expedition && <Expedition view={view.signal.expedition} paused={paused} send={expedition} choose={choose} />}
           {view.signal.state === 'ready' && (
             <button type="button" class="base-analyse" data-beacon disabled={view.signal.reason !== null || paused} onClick={click(beacon)}>
               Launch the beacon
@@ -436,7 +450,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} expedition={on.expedition} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} expedition={on.expedition} choose={on.choose} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {state.section === 'research' && state.view.tree && <ResearchView view={state.view.tree} paused={state.paused} on={{ start: on.research, fit: on.fit }} />}
