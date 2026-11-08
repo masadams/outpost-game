@@ -6,6 +6,7 @@ import { heading, wrap } from './math';
 import { nearbyBuilding, type Building } from './colony';
 import { operational } from './buildingHealth';
 import { damageColony, repairBuilding } from './buildingDamage';
+import { HEAVY_ROCK } from './weapons';
 import { advanceMeteor, meteorDamage } from './meteor';
 import { fracture } from './mining';
 import { isTurret, type DefenceAction, type Meteor } from './defenceConfig';
@@ -85,11 +86,43 @@ export function resolveDefenceHits(world: WorldState): void {
   d.meteors = d.meteors.filter(m => m.health > 0);
   for (const m of destroyed) {
     d.intercepted++;
-    if (m.stage === 0 && d.meteors.length <= 46) {
+    if (m.radius >= HEAVY_ROCK.radius) {
+      // A big rock does not vanish: it breaks into a few smaller ones, each still worth shooting.
+      d.meteors.push(...breakUp(m, d.meteors.length, () => world.nextId++));
+    } else if (m.lastHit === 'missile') {
+      // A missile turns a small or medium rock to dust.
+    } else if (m.stage === 0 && d.meteors.length <= 46) {
       const children: Meteor[] = fracture(m, () => world.nextId++).rocks;
       if (m.impactBudget !== undefined) children.forEach(child => { child.impactBudget = m.impactBudget! / 2; });
       d.meteors.push(...children);
     }
     // A second hit disperses fragments into non-collectible dust; impacts never create free ore.
   }
+}
+
+/** How a big rock breaks: into this many pieces, with toughness per metre of radius. */
+export const BREAK_UP = { pieces: 3, giantPieces: 4, giant: 40, toughness: 0.12, spread: 4, limit: 48 } as const;
+
+/** Breaks a big rock into three or four smaller ones, flung a little apart. */
+export function breakUp(m: Meteor, count: number, nextId: () => number): Meteor[] {
+  const n = Math.min(m.radius >= BREAK_UP.giant ? BREAK_UP.giantPieces : BREAK_UP.pieces, BREAK_UP.limit - count);
+  if (n <= 0) return [];
+  const radius = m.radius / Math.sqrt(n) * 1.1;
+  const health = Math.round(radius * BREAK_UP.toughness * 100) / 100;
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2 + m.id;
+    const out = { x: Math.cos(a), y: Math.sin(a) };
+    return {
+      id: nextId(),
+      position: { x: m.position.x + out.x * radius, y: m.position.y + out.y * radius },
+      velocity: { x: m.velocity.x + out.x * BREAK_UP.spread, y: m.velocity.y + out.y * BREAK_UP.spread },
+      radius,
+      mass: m.mass / n,
+      resource: m.resource,
+      stage: 0,
+      health,
+      maxHealth: health,
+      ...(m.impactBudget !== undefined ? { impactBudget: m.impactBudget / n } : {}),
+    };
+  });
 }
