@@ -106,6 +106,22 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
           <circle cx={at(view.intercept.at).x} cy={at(view.intercept.at).y} r={2} />
         </g>
       )}
+      {view.echo && (
+        <g class="map-echo" aria-label={`Far signal: ${view.echo.label}`}>
+          <path
+            d="M0 0 L-9 -5 L-9 5 Z"
+            transform={`translate(${W / 2 + Math.cos(view.echo.bearing) * (W / 2 - 40)} ${H / 2 + Math.sin(view.echo.bearing) * (H / 2 - 28)}) rotate(${(view.echo.bearing * 180) / Math.PI})`}
+          />
+          <text
+            x={W / 2 + Math.cos(view.echo.bearing) * (W / 2 - 60)}
+            y={H / 2 + Math.sin(view.echo.bearing) * (H / 2 - 42)}
+            class="map-label"
+            text-anchor="middle"
+          >
+            {view.echo.label}
+          </text>
+        </g>
+      )}
       {view.pods.map((p, i) => (
         <g key={`pod-${i}`} class="map-pod-flight" aria-label={p.label}>
           <line x1={at(p.from).x} y1={at(p.from).y} x2={at(p.to).x} y2={at(p.to).y} class="map-pod-lane" />

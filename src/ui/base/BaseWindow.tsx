@@ -20,6 +20,7 @@ export interface BaseHandlers {
   research: (tech: string) => void;
   fit: (upgrade: string) => void;
   send: (to: string) => void;
+  beacon: () => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -56,7 +57,7 @@ function Meter({ fraction, tone }: { fraction: number; tone: string }) {
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, send, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -125,6 +126,24 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
             </div>
           ))}
           {view.pods.flying.map(line => <p key={line} class="base-note">On its way: {line}</p>)}
+        </section>
+      )}
+      {view.signal && (
+        <section class="base-storm" aria-label="Deep signal" data-signal={view.signal.state}>
+          <h3>Deep signal</h3>
+          <p>{view.signal.line}</p>
+          {view.signal.echo && (
+            <div class="base-echo" data-echo>
+              <strong>{view.signal.echo.name}</strong>
+              {view.signal.echo.lines.map(l => <p key={l} class="base-note">{l}</p>)}
+            </div>
+          )}
+          {view.signal.state === 'ready' && (
+            <button type="button" class="base-analyse" data-beacon disabled={view.signal.reason !== null || paused} onClick={click(beacon)}>
+              Launch the beacon
+            </button>
+          )}
+          {view.signal.reason && <p class="base-why">{view.signal.reason}</p>}
         </section>
       )}
       {view.elsewhere.length > 0 && (
@@ -381,7 +400,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {state.section === 'research' && state.view.tree && <ResearchView view={state.view.tree} paused={state.paused} on={{ start: on.research, fit: on.fit }} />}

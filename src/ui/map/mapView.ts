@@ -44,6 +44,8 @@ export interface MapView {
   pods: PodMark[];
   /** Where pods came down lately: the ore went in, or the pod was lost. */
   beacons: BeaconMark[];
+  /** A far system the beacon heard, shown at the edge of the chart in its direction. */
+  echo: { label: string; bearing: number } | null;
   /** Where a belt you picked will be when you get there, aiming from your ship. */
   intercept: { at: Vec; seconds: number } | null;
   ship: Vec;
@@ -230,6 +232,14 @@ function interceptMark(w: WorldState): { at: Vec; seconds: number } | null {
   return course ? { at: course.aim, seconds: course.seconds } : null;
 }
 
+function echoMark(w: WorldState): MapView['echo'] {
+  const signal = w.exploration.signal;
+  if (!signal) return null;
+  if (signal.phase === 'sent') return { label: 'Beacon out · listening', bearing: Math.PI / 2 };
+  const echo = signal.echo!;
+  return { label: `${echo.name} · ${echo.lightHours} light-hours`, bearing: echo.bearing };
+}
+
 function podMarks(w: WorldState): PodMark[] {
   return w.exploration.pods.map(p => {
     const lane = podLane(w, p);
@@ -302,6 +312,7 @@ export function mapView(w: WorldState): MapView {
     belts,
     sites,
     probes: w.exploration.probes.map(p => ({ at: p.position })),
+    echo: echoMark(w),
     pods: podMarks(w),
     beacons: beaconMarks(w),
     intercept: interceptMark(w),

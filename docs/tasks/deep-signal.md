@@ -1,4 +1,9 @@
-# Deep signal: a one-way beacon and a far system (idea, not built)
+# Deep signal: a one-way beacon and a far system
+
+**Decision:** the voyage is an expedition that returns (not a relocation).
+**Built:** the Deep signal technology, the beacon (needs a running Observatory and Comms antenna), the seeded wait (60 to 180 minutes, shortened a little by antennas and Survey optics), the echo (a seeded far system) on the Base screen and as an arrow at the Map's edge.
+**Next:** planning the voyage and the expedition itself (steps 4 and 5 below).
+
 
 **Idea (from play):** launch a one-way beacon into the dark. Some random time later (an hour or a few of play) it hears something: a new star system, far away, that you can plan a long voyage to.
 
