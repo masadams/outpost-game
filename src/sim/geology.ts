@@ -21,6 +21,9 @@ const EMBER_SEAMS: typeof SEAMS = [['ice', 90, 34, 200], ['iron', -200, 32, 170]
 /** Glint: a small ice dwarf, with water on top and a little metal under it. */
 const GLINT_SEAMS: typeof SEAMS = [['ice', 60, 34, 260], ['ice', -190, 30, 200], ['iron', 250, 26, 90], ['rareMetals', -320, 20, 50]];
 
+/** Selene's iron in a seeded game is richer than the standard layout: alloy is the metal everything needs most. */
+export const HOME_IRON_BOOST = 1.4;
+
 /** The first seams near the pad are never made smaller than the standard game: a fair start for every seed. */
 const FAIR_SEAMS = 3;
 
@@ -33,7 +36,8 @@ export function createSurfaceDeposits(radius: number = WORLD.radius, body?: Body
     if (seed === 0) return { id: i + 1, resource, angle: arc / radius, halfWidth, initial, remaining: initial };
     const size = i < FAIR_SEAMS && (body ?? 'home') === 'home' ? Math.max(1, around(rand, 0.25)) : around(rand, 0.25);
     const width = around(rand, 0.1);
-    const amount = Math.round(initial * size);
+    const boost = resource === 'iron' && (body ?? 'home') === 'home' && radius === WORLD.radius ? HOME_IRON_BOOST : 1;
+    const amount = Math.round(initial * size * boost);
     return { id: i + 1, resource, angle: arc / radius, halfWidth: Math.round(halfWidth * width * 10) / 10, initial: amount, remaining: amount };
   });
 }

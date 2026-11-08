@@ -72,7 +72,25 @@ a fully built base runs to several thousand kg.
 | Expedition (deep signal) | day 8+ | Deep signal tech needs two storms survived and an Antenna |
 | End game | storm 9 plateau, all tiers, far worlds | defence and supply have to scale together |
 
+## What the economy bot showed
+
+`npm run bot` plays a fixed build order on a seeded game for ten days (it cannot fly: hauling is one 120 kg trip every
+150 s, and the buoy and derelict finds are assumed). Findings:
+
+* The 28 alloy start covers solar, refinery, battery, storage and a rig, so industry can run within minutes.
+* Hauling clears the 31 starting rocks in about one day. After that the ship only earns from belts and comets.
+* Alloy runs out first, at about day 4.5, while wire and components pile up (200+ each). With home iron 1.4x richer
+  in seeded games (below) the home-only run reaches 15 to 16 technologies instead of 12 before it stalls. The rest needs
+  finds from other worlds (Nacre crystal, Cinder core) and their iron, which is the intended push outward.
+* Night is tight: with three or four batteries the store still touches zero before dawn in the first days.
+* Storms wreck a building every few days if nobody repairs.
+
+**Change made:** in seeded games Selene's iron seams hold 1.4x the standard amount. The standard layout (seed 0) is unchanged.
+
 ## Further knobs, not changed yet
+
+* Rocks never come back once the starting ones are gone; a slow drift of new rocks would keep the ship earning.
+* Wire and components pile up mid-game; shifting a little alloy cost to wire on the big buildings would even it out.
 
 * Tier III costs 2× base; with the new tech costs it may be worth 2.5× for the dearest buildings.
 * Iron on Nacre (160) could rise to 220 so the first expedition pays off sooner.
