@@ -5,24 +5,28 @@ import { completedBuilding } from '../../src/sim/construction';
 import { stepColony } from '../../src/sim/colony';
 import { STEP } from '../../src/sim/config';
 import { TECH_IDS } from '../../src/sim/progressionConfig';
-import { launchBeacon } from '../../src/sim/signal';
+import { launchBeacon, stepSignal } from '../../src/sim/signal';
 
 test.use({ viewport: { width: 1600, height: 900 }, storageState: { cookies: [], origins: [] } });
 
-function staged(sent: boolean) {
+function staged(sent: boolean, heard = false) {
   const w = createWorld(4242);
   w.system.sun = true;
   w.objectives.completed.push('delivery', 'industry', 'buoy');
   w.exploration.surveyed.push('frost');
   w.colony.research.completed.push(...TECH_IDS);
-  w.colony.products = { ...w.colony.products, fuel: 60, alloy: 60, wire: 30, components: 30 };
+  w.colony.products = { ...w.colony.products, fuel: 90, alloy: 90, wire: 60, components: 60, water: 40, oxygen: 20 };
   w.colony.buildings.push(completedBuilding(1, 'solar', 0.12, w), completedBuilding(2, 'battery', 0.14, w), completedBuilding(3, 'observatory', 0.17, w), completedBuilding(4, 'antenna', 0.2, w));
   w.colony.nextId = 10;
   w.colony.energy = 20;
   for (let i = 0; i < 400; i++) stepColony(w, STEP);
-  if (sent) {
+  if (sent || heard) {
     launchBeacon(w);
     w.system.time = w.exploration.signal!.hearAt - 3;
+  }
+  if (heard) {
+    w.system.time = w.exploration.signal!.hearAt + 1;
+    stepSignal(w);
   }
   return w;
 }
@@ -64,5 +68,21 @@ test('when the echo comes back Base and the Map name the far system', async ({ p
   await page.getByRole('button', { name: 'Map', exact: true }).click();
   await expect(page.locator('.map-echo')).toHaveAttribute('aria-label', /light-hours/);
   await page.screenshot({ path: '/tmp/claude-0/-home-user-outpost-game/69b8c470-1738-5ca3-a382-1afb3ca6b07d/scratchpad/shots/signal-map.png' });
+  expect(errors).toEqual([]);
+});
+
+test('once the echo is in, an expedition can be packed and sent from Base', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await open(page, encodeCheckpoint(staged(false, true)));
+  await page.keyboard.press('p');
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await expect(page.locator('[data-expedition="plan"]')).toContainText('Pack for the hazard');
+  await page.getByLabel(/Radiation shielding/).check();
+  await expect(page.locator('[data-expedition="plan"]')).toContainText(/odds|Risky/);
+  await page.screenshot({ path: '/tmp/claude-0/-home-user-outpost-game/69b8c470-1738-5ca3-a382-1afb3ca6b07d/scratchpad/shots/expedition-plan.png' });
+  await page.locator('[data-expedition-go]').click();
+  await expect(page.locator('[data-expedition="out"]')).toContainText('on its way');
   expect(errors).toEqual([]);
 });

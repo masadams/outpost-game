@@ -17,6 +17,7 @@ import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
 import { podError } from '../../sim/pods';
 import { signalError } from '../../sim/signal';
+import { EXPEDITION, expeditionCost, expeditionError, oddsWord } from '../../sim/expedition';
 import { inventoryMass } from '../../sim/resources';
 import { BODIES, BODY_IDS, type BodyId } from '../../sim/celestial';
 import { bodyKnown } from '../../sim/explorationConfig';
@@ -59,6 +60,18 @@ export interface SignalView {
   /** Why it cannot be sent now, or null. */
   reason: string | null;
   echo: { name: string; lines: string[] } | null;
+  /** Sending a craft to the far system and back. Present once the echo is in. */
+  expedition: ExpeditionView | null;
+}
+
+export interface ExpeditionView {
+  state: 'plan' | 'out';
+  line: string;
+  packs: Array<{ key: 'fuel' | 'shielding' | 'stores'; label: string; cost: string }>;
+  /** For each choice of packs (keys joined with +, or none), what it costs, the odds and why it cannot go. */
+  plans: Record<string, { cost: string; odds: string; reason: string | null }>;
+  /** What the last expedition brought back. */
+  report: { result: string; lines: string[] } | null;
 }
 
 export interface PodsView {
@@ -331,14 +344,34 @@ function defenceLine(w: WorldState): string | null {
   return `Turrets: stored power covers about ${shots} shots.`;
 }
 
+const costWords = (cost: Partial<Record<string, number>>): string =>
+  Object.entries(cost).filter(([, n]) => (n ?? 0) > 0).map(([k, n]) => `${n} ${k}`).join(', ');
+
+function expeditionView(w: WorldState, hazard: string): ExpeditionView {
+  const e = w.exploration.expedition;
+  const packs = (['fuel', 'shielding', 'stores'] as const).map(key => ({ key, label: EXPEDITION.packs[key].label, cost: costWords(EXPEDITION.packs[key].cost) }));
+  const plans: ExpeditionView['plans'] = {};
+  for (let mask = 0; mask < 8; mask++) {
+    const kit = { fuel: !!(mask & 1), shielding: !!(mask & 2), stores: !!(mask & 4) };
+    const key = (['fuel', 'shielding', 'stores'] as const).filter(k => kit[k]).join('+');
+    plans[key] = { cost: costWords(expeditionCost(kit)), odds: oddsWord(hazard, kit), reason: expeditionError(w, kit) };
+  }
+  const report = e?.report ? { result: e.report.result, lines: e.report.lines } : null;
+  if (e && e.phase === 'out') {
+    const left = Math.max(0, Math.round((e.returnsAt - w.system.time) / 60));
+    return { state: 'out', line: `An expedition is on its way. About ${left} min until it is back.`, packs, plans, report };
+  }
+  return { state: 'plan', line: report ? 'Home again. Send another, packed differently if you like.' : 'Send a craft to the far system and back. Pack for the hazard.', packs, plans, report };
+}
+
 function signalView(w: WorldState): SignalView | null {
   const root = w.rootWorld ?? w;
   const signal = root.exploration.signal;
   if (!signal && !root.colony.research.completed.includes('deepSignal')) return null;
-  if (!signal) return { state: 'ready', line: 'Send a one-way beacon into the dark and listen for an echo. It can take an hour or more.', reason: signalError(root), echo: null };
+  if (!signal) return { state: 'ready', line: 'Send a one-way beacon into the dark and listen for an echo. It can take an hour or more.', reason: signalError(root), echo: null, expedition: null };
   if (signal.phase === 'sent') {
     const left = Math.max(0, Math.round((signal.hearAt - root.system.time) / 60));
-    return { state: 'waiting', line: `The beacon is out there. Listening… about ${left} min to go.`, reason: null, echo: null };
+    return { state: 'waiting', line: `The beacon is out there. Listening… about ${left} min to go.`, reason: null, echo: null, expedition: null };
   }
   const echo = signal.echo!;
   return {
@@ -346,6 +379,7 @@ function signalView(w: WorldState): SignalView | null {
     line: `A signal came back from the ${echo.name} system.`,
     reason: null,
     echo: { name: echo.name, lines: [`A ${echo.star}, ${echo.lightHours} light-hours out.`, `${echo.worlds} worlds. Hazard: ${echo.hazard}.`] },
+    expedition: expeditionView(root, echo.hazard),
   };
 }
 

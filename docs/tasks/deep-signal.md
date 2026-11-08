@@ -23,3 +23,7 @@
 - Expedition that returns, or relocation you commit to? (Expedition first is the safe route.)
 - Does the voyage run in real time while the base keeps working, or skip ahead?
 - One echo per game, or a chain (each system can send its own beacon)?
+
+## Expedition (built)
+After the echo is in, Base offers an expedition: a craft (30 alloy, 14 wire, 14 components) plus up to three packs (Long-range fuel, Radiation shielding, Supply stores), each cutting the chance of trouble on each of three legs. The hazard the beacon heard of sets the base chance (quiet 15%, others 35 to 40%); shielding helps most against hazards you can shield from. It is away 20 minutes plus 45 s per light-hour (a half hour or so), then reports: a clean run brings 140 kg of rare metals and silicon and completes a technology that is open by prerequisites; one bad leg halves it, two quarter it and bring no technology, three lose the craft. Seeded by the world and the number of expeditions, so it is the same on reload.
+**Still open:** a real destination (landing in the far system), events you choose between, and relocation (not planned).
