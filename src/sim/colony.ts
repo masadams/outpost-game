@@ -33,7 +33,7 @@ import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, type Product, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
 import { clamp, wrap } from './math';
-import { inventoryMass } from './resources';
+import { inventoryMass, type Resource } from './resources';
 import { STATIONS } from './stations';
 import { notify } from './messages';
 import type { WorldState } from './world';
@@ -70,7 +70,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.

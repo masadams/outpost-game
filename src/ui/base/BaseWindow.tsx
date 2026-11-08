@@ -24,6 +24,8 @@ export interface BaseHandlers {
   beacon: () => void;
   expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void;
   choose: (key: string) => void;
+  supplyToggle: () => void;
+  supplyReserve: (body: string, resource: string, delta: number) => void;
   reserve: (direction: -1 | 1) => void;
   demolish: (id: number) => void;
 }
@@ -120,7 +122,7 @@ function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paus
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, choose, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void; choose: (key: string) => void; reserve: (d: -1 | 1) => void; paused: boolean }) {
+function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, choose, supply, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void; choose: (key: string) => void; supply: { toggle: () => void; reserve: (body: string, resource: string, delta: number) => void }; reserve: (d: -1 | 1) => void; paused: boolean }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
@@ -189,6 +191,32 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
             </div>
           ))}
           {view.pods.flying.map(line => <p key={line} class="base-note">On its way: {line}</p>)}
+        </section>
+      )}
+      {view.supply && (
+        <section class="base-storm" aria-label="Supply lines" data-supply={String(view.supply.enabled)}>
+          <h3>Supply lines</h3>
+          <p class="base-note">Keep each world stocked to a reserve of ore. Pods are sent on their own from worlds with some to spare.</p>
+          <button type="button" class="base-analyse" data-supply-toggle aria-pressed={view.supply.enabled} disabled={paused} onClick={click(supply.toggle)}>
+            Automatic supply: {view.supply.enabled ? 'on' : 'off'}
+          </button>
+          <div class="base-supply">
+            {view.supply.worlds.map(world => (
+              <div key={world.body} class="base-supply-world" data-supply-world={world.body}>
+                <strong>{world.label}</strong>
+                {world.cells.map(c => (
+                  <span key={c.resource} class="base-supply-cell" title={`${c.have} kg in the depot`}>
+                    {c.label}
+                    <button type="button" aria-label={`Lower ${world.label} ${c.label} reserve`} disabled={paused || c.reserve <= 0} onClick={click(() => supply.reserve(world.body, c.resource, -10))}>−</button>
+                    <b data-reserve-value={`${world.body}:${c.resource}`}>{c.reserve}</b>
+                    <button type="button" aria-label={`Raise ${world.label} ${c.label} reserve`} disabled={paused} onClick={click(() => supply.reserve(world.body, c.resource, 10))}>+</button>
+                    <small>{c.have} kg</small>
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+          <p class="base-note" data-supply-line>{view.supply.line}</p>
         </section>
       )}
       {view.signal && (
@@ -464,7 +492,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} expedition={on.expedition} choose={on.choose} reserve={on.reserve} paused={state.paused} />}
+        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} expedition={on.expedition} choose={on.choose} supply={{ toggle: on.supplyToggle, reserve: on.supplyReserve }} reserve={on.reserve} paused={state.paused} />}
         {state.section === 'buildings' && <Buildings state={state} on={on} />}
         {state.section === 'ship' && <Ship view={state.view} />}
         {state.section === 'research' && state.view.tree && <ResearchView view={state.view.tree} paused={state.paused} on={{ start: on.research, fit: on.fit }} />}

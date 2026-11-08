@@ -290,3 +290,10 @@
 
 #hud .base-trouble { display: grid; gap: 6px; padding: 8px 10px; border-radius: 6px; background: var(--ui-raised); border-left: 3px solid var(--ui-amber); }
 #hud .base-trouble [data-safe=true] { border-color: var(--ui-mint); }
+
+#hud .base-supply { display: grid; gap: 8px; margin: 8px 0; }
+#hud .base-supply-world { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 6px 8px; border-radius: 6px; background: var(--ui-raised); }
+#hud .base-supply-world > strong { min-width: 5em; }
+#hud .base-supply-cell { display: inline-flex; align-items: center; gap: 4px; }
+#hud .base-supply-cell b { min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
+#hud .base-supply-cell small { color: var(--ui-muted); }
