@@ -22,7 +22,7 @@ test('builds a powered lab, earns research with real work and fabricates cargo e
   await page.keyboard.down('a'); await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 15000, intervals: [100] }).toBeLessThan(10);
   await page.keyboard.up('a'); await page.waitForTimeout(450); await page.keyboard.press('f'); await expect(hud).toHaveAttribute('data-mode', 'ship');
   await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Ship fitting',exact:true}).click();
-  const fabricate = page.getByRole('button', { name: 'Fabricate Cargo rack', exact: true }); await expect(fabricate).toBeEnabled(); await fabricate.focus(); await page.keyboard.press('Enter');
+  const fabricate = page.getByRole('button', { name: 'Build Cargo rack', exact: true }); await expect(fabricate).toBeEnabled(); await fabricate.focus(); await page.keyboard.press('Enter');
   await expect(console.locator('[data-upgrade="cargo"]')).toHaveAttribute('data-installed', 'true');
   await console.locator('[data-upgrade="cargo"]').scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/screenshots/ship-equipment.png' });
   await page.getByRole('button', { name:'Ship', exact: true }).click(); await expect(page.locator('.mining')).toContainText('/ 200 kg');
@@ -37,8 +37,8 @@ test('compares and installs bounded modules, fills a paid extended tank and safe
   await page.addInitScript(text => { if (!sessionStorage.getItem('equipment-fixture')) { localStorage.setItem('outpost.checkpoint.v1', text); sessionStorage.setItem('equipment-fixture', 'yes'); } }, encodeCheckpoint(w));
   await page.goto('/'); const hud = page.locator('#hud'), console = page.locator('#command-console'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Ship fitting',exact:true}).click();
-  await page.locator('[data-part-slot="drive"]').click();await expect(page.getByRole('button', { name: 'Fabricate High-thrust engine', exact: true })).toBeDisabled(); await page.keyboard.press('p');
-  for (const id of BASE_UPGRADE_IDS) { await page.locator('[data-part-slot="'+UPGRADES[id].slot+'"]').click();await expect(console.locator(`[data-upgrade="${id}"]`)).toBeVisible(); await page.getByRole('button', { name: `Fabricate ${UPGRADES[id].label}`, exact: true }).click(); await expect(console.locator(`[data-upgrade="${id}"]`)).toHaveAttribute('data-installed', 'true'); }
+  await page.locator('[data-part-slot="drive"]').click();await expect(page.getByRole('button', { name: 'Build High-thrust engine', exact: true })).toBeDisabled(); await page.keyboard.press('p');
+  for (const id of BASE_UPGRADE_IDS) { await page.locator('[data-part-slot="'+UPGRADES[id].slot+'"]').click();await expect(console.locator(`[data-upgrade="${id}"]`)).toBeVisible(); await page.getByRole('button', { name: `Build ${UPGRADES[id].label}`, exact: true }).click(); await expect(console.locator(`[data-upgrade="${id}"]`)).toHaveAttribute('data-installed', 'true'); }
   await expect(console.locator('.equipment-panel')).toContainText('modules 98 kg'); await expect(console.locator('.equipment-panel')).toContainText('/ 320 kg');
   await page.keyboard.press('Escape'); await page.keyboard.press('e'); await expect(hud).toHaveAttribute('data-fuel', '320.00');
   await page.getByRole('button', { name:'Base', exact: true }).click();await page.locator('[data-part-slot="tank"]').click(); await page.getByRole('button', { name: 'Remove Extended fuel tank', exact: true }).click();

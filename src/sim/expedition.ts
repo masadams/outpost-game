@@ -221,7 +221,7 @@ function answer(w: WorldState, e: Expedition, key: ExpeditionChoice['key']): voi
   } else if (roll < 0.5) {
     e.log.push(`Trouble ${place} (${echo.hazard}): pushed on and got through.`);
   } else {
-    setback(e, `Trouble ${place} (${echo.hazard}): pushed on and paid for it.`);
+    setback(e, `Trouble ${place} (${echo.hazard}): pushed on, at a cost.`);
   }
 }
 

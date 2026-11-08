@@ -13,8 +13,8 @@ export function buildingUpgradeError(w:WorldState,b:Building):string|null{
  const level=facilityLevel(b);if(level===3)return 'Maximum facility tier';
  const missing=tierTechs(b.kind,level===1?2:3).find(t=>!w.colony.research.completed.includes(t));if(missing)return `Research ${TECHNOLOGIES[missing].label}`;
  if(buildingHealth(b)<100-1e-9)return 'Repair facility fully before upgrading';
- const cost=upgradeCost(b,level===1?2:3);if(PRODUCTS.some(p=>availableProduct(w.colony,p)<(cost[p]??0)))return 'Needs unreserved local upgrade materials';
- if(industrialPowerBlock(w.colony,level===1?20:40))return `Needs ${level===1?20:40} kJ unreserved local grid charge`;
+ const cost=upgradeCost(b,level===1?2:3);if(PRODUCTS.some(p=>availableProduct(w.colony,p)<(cost[p]??0)))return 'Needs more materials';
+ if(industrialPowerBlock(w.colony,level===1?20:40))return `Needs ${level===1?20:40} kJ of stored power`;
  return null;
 }
 export function applyBuildingUpgrade(w:WorldState,a:BuildingUpgradeAction):void{

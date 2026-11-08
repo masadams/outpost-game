@@ -8,7 +8,7 @@ export function defencePanel(world: WorldState, paused: boolean, threats: Threat
     <label>PLANETARY DEFENCE · DRILL ${d.wave}</label>
     <div class="${d.meteors.length ? 'warning' : ''}">${d.meteors.length ? `${d.meteors.length} INCOMING${first ? ` · impact ${first.seconds.toFixed(0)} s` : ' · tracking'}` : d.wave ? 'SKY CLEAR · START NEXT DRILL WHEN READY' : 'Peaceful sandbox · drills are opt-in'}</div>
     <small>${d.intercepted} intercepts · ${d.impacts} impacts${d.lostStock ? ` · ${d.lostStock.toFixed(1)} kg stock lost` : ''}</small>
-    <button ${paused || d.meteors.length || d.projectiles.length ? 'disabled' : ''} data-colony="startWave">Start defence drill [N] · real damage</button>
+    <button ${paused || d.meteors.length || d.projectiles.length ? 'disabled' : ''} data-colony="startWave">Start defence drill [N] · damage countse</button>
     ${d.controlled !== null ? '<p class="warning">TURRET CONTROL · A/D aim · Space fire · E release</p>' : ''}
     ${world.colony.buildings.filter(b => isShield(b.kind)).map(b => `<p>Emitter #${b.id}: ${b.status} · ${(b.shield?.charge ?? 0).toFixed(0)} / ${isShield(b.kind) ? SHIELDS[b.kind].capacity : 0} SP</p>`).join('')}
     <small>Save with K before a drill. Orange paths predict terrain impact without future turret/shield interception.</small>

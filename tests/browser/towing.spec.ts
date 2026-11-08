@@ -11,7 +11,7 @@ test('fabricates a paid tow rig using native controls and preserves the equipmen
   await expect(hud).toHaveAttribute('data-state', 'landed');
   await page.keyboard.press('i'); await expect(panel).toBeVisible();
   await expect(panel).toHaveAttribute('data-equipped', 'false');
-  await page.getByRole('button', { name: 'Fabricate tow rig · home pad', exact: true }).focus(); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Build tow rig · home pad', exact: true }).focus(); await page.keyboard.press('Enter');
   await expect(panel).toHaveAttribute('data-equipped', 'true'); await expect(hud).toHaveAttribute('data-state', 'landed');
   await page.keyboard.press('p'); await page.keyboard.press('k');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));

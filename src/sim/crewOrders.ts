@@ -15,7 +15,7 @@ export function applyCrewOrder(w:WorldState,a:CrewAction):void {
  if(w.playerMode!=='astronaut'||!w.astronaut.grounded||w.astronaut.health<=0||nearestPlanet(w.astronaut.position,w.system).id!==body.id){notify(root,'DEPLOY HEALTHY CREW ON THIS WORLD FIRST · F LEAVES THE SHIP');return;}
  if(a.operation==='walk'&&Number.isFinite(a.angle)&&Math.abs(a.angle!)<=Math.PI)root.crewOrder={type:'walk',body:body.id,angle:a.angle!};
  else if(a.operation==='build'&&w.colony.command.queue.some(o=>!o.paused))root.crewOrder={type:'build',body:body.id};
- else{notify(root,'NO AVAILABLE WORK · QUEUE A PAID SITE FIRST');return;}
+ else{notify(root,'NOTHING TO BUILD · PLACE A BUILDING FIRST');return;}
  root.defence.controlled=null;notify(root,a.operation==='walk'?'CREW WALK ORDER · MANUAL INPUT CANCELS':'CREW DISPATCHED · TRAVEL, AIR AND WORK STILL COUNT');
 }
 export function crewMove(w:WorldState,manual:boolean):number {

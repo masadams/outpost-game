@@ -10,10 +10,10 @@ import type { WorldState } from './world';
 
 export const isTowAction = (action: { type: string }): action is TowAction => action.type === 'toggleTow' || action.type === 'installTowRig';
 export function towInstallationError(w: WorldState): string | null {
-  if (w.siteBody === 'moon') return 'Equipment fabrication requires the home pad';
+  if (w.siteBody === 'moon') return 'Ship parts are built at the home pad';
   if (w.ship.towRig) return 'Tow rig already fitted';
   if (w.playerMode !== 'ship' || w.ship.state !== 'landed' || Math.abs(Math.hypot(localPosition(w, w.ship.position).x, localPosition(w, w.ship.position).y) - colonyPlanet(w).radius - WORLD.shipRadius) > 0.1 || Math.abs(wrap(localAngleAt(w, w.ship.position) - WORLD.padAngle)) * colonyPlanet(w).radius > WORLD.padHalfWidth) return 'Pilot the landed ship on the home pad to fit a tow rig';
-  if (Object.entries(TOW.cost).some(([p, q]) => availableProduct(w.colony, p as keyof typeof TOW.cost) + 1e-9 < q)) return 'Needs 16 unreserved alloy + 6 wire + 3 components';
+  if (Object.entries(TOW.cost).some(([p, q]) => availableProduct(w.colony, p as keyof typeof TOW.cost) + 1e-9 < q)) return 'Needs 16 alloy, 6 wire and 3 components';
   return null;
 }
 export function releaseTow(w: WorldState, broken = false, reason = ''): void {

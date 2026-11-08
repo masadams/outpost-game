@@ -35,7 +35,7 @@ export function applyDefenceAction(world: WorldState, action: DefenceAction): vo
       d.meteors.push({ id: world.nextId++, position: sitePosition(world, angle, radius - colonyPlanet(world).radius), velocity: { x: colonyPlanet(world).velocity.x - n.x * 115, y: colonyPlanet(world).velocity.y - n.y * 115 },
         radius: 14, mass: 1200, stage: 0, resource: 'iron', health: 1, maxHealth: 1 });
     }
-    notify(world, `DEFENCE DRILL ${d.wave} · ${count} INCOMING · DAMAGE IS REAL · K SAVES`); return;
+    notify(world, `DEFENCE DRILL ${d.wave} · ${count} INCOMING · DAMAGE COUNTS · K SAVES`); return;
   }
   if (action.type === 'releaseTurret') { d.controlled = null; return; }
   if (world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0) { notify(world, 'STAND BESIDE A FACILITY ON FOOT'); return; }

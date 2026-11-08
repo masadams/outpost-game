@@ -14,7 +14,7 @@ test('queues a paid emitter, charges it from solar, operates native controls and
   await page.goto('/'); const hud = page.locator('#hud'), console = page.locator('#command-console'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Construction',exact:true}).click();
   await page.keyboard.press('p'); await page.locator('#command-blueprint').selectOption('shieldSmall'); await page.locator('#command-site').fill('90'); await page.locator('#command-site').press('Tab');
-  const queue = page.getByRole('button', { name: 'Queue paid construction', exact: true }); await expect(queue).toBeEnabled(); await queue.focus(); await page.keyboard.press('Enter');
+  const queue = page.getByRole('button', { name: 'Place building', exact: true }); await expect(queue).toBeEnabled(); await queue.focus(); await page.keyboard.press('Enter');
   await expect(hud).toHaveAttribute('data-buildings', '3', { timeout: 30000 }); await page.getByRole('button',{name:'Facilities',exact:true}).click(); await page.getByRole('button', { name: 'Select facility 3', exact: true }).click();
   const charge = page.getByRole('meter', { name: 'Shield charge', exact: true }); await expect.poll(async () => Number(await charge.getAttribute('value')), { timeout: 30000 }).toBeGreaterThan(30);
   await expect(console.locator('[data-selected="3"]')).toContainText('shield active');

@@ -33,9 +33,9 @@ export function equipmentError(w: WorldState, id: UpgradeId, operation: 'install
   const spec=UPGRADES[id],s=w.ship,installed=s.equipment.includes(id);
   if(operation==='install'){
     if(installed)return 'Already installed · no stacking';
-    if(!w.colony.research.completed.includes(spec.tech))return 'Research required before fabrication';
-    if(PRODUCTS.some(p=>availableProduct(w.colony,p)+1e-9<(spec.cost[p]??0)))return 'Needs unreserved fabrication materials · full cost before salvage';
-    if(industrialPowerBlock(w.colony,PROGRESSION.fabricationEnergy))return `Needs ${PROGRESSION.fabricationEnergy} kJ unreserved grid energy`;
+    if(!w.colony.research.completed.includes(spec.tech))return 'Research it first';
+    if(PRODUCTS.some(p=>availableProduct(w.colony,p)+1e-9<(spec.cost[p]??0)))return 'Not enough materials · you need the full cost before the old part is scrapped';
+    if(industrialPowerBlock(w.colony,PROGRESSION.fabricationEnergy))return `Needs ${PROGRESSION.fabricationEnergy} kJ of stored power`;
   }else if(!installed)return 'Equipment is not installed';
   const plan=equipmentPlan(w,id,operation),capacity=cargoCapacity({equipment:plan.equipment});
   if(cargoMass(s)>capacity+1e-9)return `Unload cargo below ${capacity} kg before changing hold`;
@@ -49,5 +49,5 @@ export function applyEquipment(w: WorldState,a:Extract<ProgressionAction,{type:'
   for(const p of PRODUCTS)w.colony.products[p]+=plan.refund[p]-(a.operation==='install'?(spec.cost[p]??0):0)+(p==='fuel'?plan.fuelReturn:0);
   if(a.operation==='install')w.colony.energy=Math.max(0,w.colony.energy-PROGRESSION.fabricationEnergy);
   s.fuel-=plan.fuelReturn;s.equipment=plan.equipment;
-  notify(w,a.operation==='install'?`${spec.label.toUpperCase()} FITTED · ONE PART PER SLOT · MATERIALS AND ENERGY PAID`:'PART REMOVED · HULL-SCALED 50% SALVAGE · EXCESS FUEL RETURNED');
+  notify(w,a.operation==='install'?`${spec.label.toUpperCase()} FITTED`:'PART REMOVED · HULL-SCALED 50% SALVAGE · EXCESS FUEL RETURNED');
 }

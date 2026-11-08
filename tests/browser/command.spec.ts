@@ -45,8 +45,8 @@ test('queues paid construction, needs a real worker, supports cancellation and r
   await page.addInitScript(text => { if (!sessionStorage.getItem('queue-fixture')) { localStorage.setItem('outpost.checkpoint.v1', text); sessionStorage.setItem('queue-fixture', 'yes'); } }, encodeCheckpoint(w));
   await page.goto('/'); const hud = page.locator('#hud'), console = page.locator('#command-console'); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Construction',exact:true}).click();
-  await expect(page.getByRole('button', { name: 'Queue paid construction', exact: true })).toBeDisabled(); await page.keyboard.press('p');
-  await page.getByRole('button', { name: 'Queue paid construction', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1); await expect(console).toContainText('crew building');
+  await expect(page.getByRole('button', { name: 'Place building', exact: true })).toBeDisabled(); await page.keyboard.press('p');
+  await page.getByRole('button', { name: 'Place building', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1); await expect(console).toContainText('crew building');
   await page.getByRole('button', { name: 'Pause order 1', exact: true }).click(); await expect(page.getByRole('button', { name: 'Resume order 1', exact: true })).toBeVisible(); await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.world.colony.products.alloy).toBe(24); expect(saved.world.colony.command.queue[0].paused).toBe(true); expect(saved.world.colony.command.queue[0].progress).toBeGreaterThan(0);
@@ -54,7 +54,7 @@ test('queues paid construction, needs a real worker, supports cancellation and r
   await page.getByRole('button',{name:'Construction',exact:true}).click(); await page.keyboard.press('p'); await page.getByRole('button', { name: 'Resume order 1', exact: true }).click();
   await expect(hud).toHaveAttribute('data-buildings', '1', { timeout: 18000 }); await expect(console.locator('.command-order')).toHaveCount(0);
   await console.locator('#command-site').fill('160'); await console.locator('#command-site').press('Tab'); await console.locator('#command-blueprint').selectOption('battery');
-  await page.getByRole('button', { name: 'Queue paid construction', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Place building', exact: true }).click(); await expect(console.locator('.command-order')).toHaveCount(1);
   await page.getByRole('button', { name: 'Pause order 2', exact: true }).click(); await expect(page.getByRole('button', { name: 'Resume order 2', exact: true })).toBeVisible();
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
   const beforeCancel = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));

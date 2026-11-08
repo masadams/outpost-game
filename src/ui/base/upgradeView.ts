@@ -72,8 +72,8 @@ export function upgradeView(w: WorldState, b: Building): UpgradeView | null {
   if (error) {
     if (REASON[error]) blocked = REASON[error];
     else if (error.startsWith('Research ')) blocked = `${error} first.`;
-    else if (error.startsWith('Needs unreserved')) blocked = `Needs ${words}.`;
-    else if (error.startsWith('Needs')) blocked = error.replace(' unreserved local grid charge', ' stored') + '.';
+    else if (error === 'Needs more materials') blocked = `Needs ${words}.`;
+    else if (error.startsWith('Needs')) blocked = error + '.';
     else blocked = error + '.';
   }
   return { effect: tierEffect(b, tier), cost: words, blocked, tier };

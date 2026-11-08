@@ -18,7 +18,7 @@ export const FINDS: readonly Find[] = [
   { id: 'storm', label: 'Pieces of the storm', tech: 'materials', upgrade: 'armour' },
   { id: 'buoy', label: 'Survey buoy data', tech: 'extraction', upgrade: 'mining' },
   { id: 'derelict', label: 'Derelict data', tech: 'propulsion', upgrade: 'engine' },
-  { id: 'retrofit', label: 'Retrofit designs', tech: 'infrastructure' },
+  { id: 'retrofit', label: 'Upgrade designs', tech: 'infrastructure' },
   { id: 'bulwark', label: 'The second storm', tech: 'combat' },
   { id: 'core', label: 'Cinder core sample', tech: 'precision', upgrade: 'deepMining' },
   { id: 'crystal', label: 'Nacre crystal', tech: 'logistics', upgrade: 'bulkHold' },
