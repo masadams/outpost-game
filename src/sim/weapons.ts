@@ -37,8 +37,15 @@ function targetFor(world: WorldState, b: Building) {
     Math.abs(wrap(localAngle({ x: m.position.x - at.x, y: m.position.y - at.y }) - b.angle - colonyPlanet(world).spin)) <= 1.4)
     .sort((a, c) => length(relative(a.position, colonyPlanet(world))) - length(relative(c.position, colonyPlanet(world))) || a.id - c.id)[0];
 }
-function blast(world: WorldState, at: Vec, radius: number, damage: number): void {
-  for (const m of world.defence.meteors) if (Math.hypot(m.position.x - at.x, m.position.y - at.y) <= radius + m.radius && lineOfSight(at, m.position, world.system)) m.health -= damage;
+/** Missiles carry a penetrating charge: against a big rock they do several times their usual damage. */
+export const HEAVY_ROCK = { radius: 20, missileFactor: 3 } as const;
+export const blastDamage = (kind: 'flak' | 'missile', damage: number, rockRadius: number): number =>
+  kind === 'missile' && rockRadius >= HEAVY_ROCK.radius ? damage * HEAVY_ROCK.missileFactor : damage;
+function blast(world: WorldState, at: Vec, radius: number, damage: number, kind: 'flak' | 'missile'): void {
+  for (const m of world.defence.meteors) {
+    if (Math.hypot(m.position.x - at.x, m.position.y - at.y) > radius + m.radius || !lineOfSight(at, m.position, world.system)) continue;
+    m.health -= blastDamage(kind, damage, m.radius);
+  }
 }
 export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: number, starts: Map<number, Vec>): void {
   const defence = world.defence;
@@ -112,8 +119,8 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
     }
     if (first !== null) {
       const at = { x: start.x + (p.position.x - start.x) * first, y: start.y + (p.position.y - start.y) * first };
-      if (!terrain) blast(world, at, spec.blast, spec.damage);
-    } else if (p.fuse === 0 || p.life === 0) blast(world, p.position, spec.blast, spec.damage);
+      if (!terrain) blast(world, at, spec.blast, spec.damage, p.kind);
+    } else if (p.fuse === 0 || p.life === 0) blast(world, p.position, spec.blast, spec.damage, p.kind);
     else remaining.push(p);
   }
   defence.projectiles = remaining;

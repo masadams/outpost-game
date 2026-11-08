@@ -6,7 +6,7 @@ import { notify } from './messages';
 import { seeded } from './random';
 import { around, streamFor } from './seed';
 import { operational } from './buildingHealth';
-import { ANALYSIS_ENERGY, PICKUP_REACH, quietAfter, stormFor, type FarBody } from './stormConfig';
+import { ANALYSIS_ENERGY, GIANT, PICKUP_REACH, quietAfter, stormFor, type FarBody } from './stormConfig';
 import type { Meteor } from './defenceConfig';
 import type { WorldState } from './world';
 
@@ -157,7 +157,10 @@ export function stepStorm(world: WorldState): void {
     planNextBody(world);
     if (!storm.planned) return;
   }
-  if (storm.phase === 'quiet' && time >= storm.arrival - STORM.lead) storm.phase = 'approaching';
+  if (storm.phase === 'quiet' && time >= storm.arrival - STORM.lead) {
+    storm.phase = 'approaching';
+    if (storm.far.some(b => b.radius >= GIANT.radius)) notify(world, 'SOMETHING HUGE IS IN THIS STORM · LASERS WILL NOT STOP IT · MISSILES CAN');
+  }
   if (storm.phase === 'quiet') return;
   while (storm.far.length > 0 && storm.far[0].entryTime <= time) {
     const body = storm.far.shift()!;

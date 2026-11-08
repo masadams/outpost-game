@@ -52,7 +52,10 @@ export interface StormConfig {
   /** What each body is meant to do; missing means every one is aimed at the zone. 'miss' passes by, 'large' is one big body. */
   readonly kinds?: readonly BodyKind[];
 }
-export type BodyKind = 'hit' | 'miss' | 'large';
+export type BodyKind = 'hit' | 'miss' | 'large' | 'giant';
+
+/** The rare giant: from the fourth storm, aimed at the base. Toughness is per metre of radius. */
+export const GIANT = { chance: 0.3, radius: 40, toughness: 0.6 } as const;
 
 /** Storms past the second keep the second's pattern, with more bodies and a little more of everything, up to a limit. */
 export const LATER_STORM_LIMIT = 9;
@@ -87,6 +90,16 @@ export function stormFor(wave: number, seed = 0): StormConfig {
     masses.push(Math.round(0.41 * r ** 3));
     health.push(Math.round(r * 4) / 10);
     kinds.push('large');
+  }
+  if (wave >= 4 && rand() < GIANT.chance) {
+    // The big one: aimed close to the base. No laser will stop it in time; missiles can.
+    const side = rand() < 0.5 ? -1 : 1;
+    aim.push(-base.targetOffset + side * (40 + rand() * 100));
+    const r = GIANT.radius + rand() * 8;
+    radii.push(r);
+    masses.push(Math.round(0.41 * r ** 3));
+    health.push(Math.round(r * GIANT.toughness * 10) / 10);
+    kinds.push('giant');
   }
   return { ...base, aim, radii, masses, health, kinds };
 }

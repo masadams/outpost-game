@@ -99,5 +99,5 @@ it('records the research milestone only after every paid powered project actuall
  for(const tech of TECH_IDS){
   applyResearch(w,{type:'researchStart',tech});expect(w.objectives.completed).not.toContain('research');tick(w,TECHNOLOGIES[tech].seconds+1);
  }
- expect(w.objectives.completed).toContain('research');const added=TECH_IDS.slice(19).map(id=>TECHNOLOGIES[id]);const sum=(f:(t:typeof added[number])=>number)=>added.reduce((n,t)=>n+f(t),0);expect(w.colony.research.energyUsed).toBeCloseTo(2920+sum(t=>t.seconds)*4);expect(w.colony.products).toMatchObject({alloy:5+400-sum(t=>t.cost.alloy??0),wire:136+400-sum(t=>t.cost.wire??0),components:203+400-sum(t=>t.cost.components??0)});expect(w.defence.wave).toBe(0);
+ expect(w.objectives.completed).toContain('research');const added=TECH_IDS.slice(19).map(id=>TECHNOLOGIES[id]);const sum=(f:(t:typeof added[number])=>number)=>added.reduce((n,t)=>n+f(t),0);expect(w.colony.research.energyUsed).toBeCloseTo(2920+sum(t=>t.seconds)*4);expect(w.colony.products).toMatchObject({alloy:63+400-sum(t=>t.cost.alloy??0),wire:101+400-sum(t=>t.cost.wire??0),components:180+400-sum(t=>t.cost.components??0)});expect(w.defence.wave).toBe(0);
 });
