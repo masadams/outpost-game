@@ -89,7 +89,7 @@ a fully built base runs to several thousand kg.
 
 ## Further knobs, not changed yet
 
-* Rocks never come back once the starting ones are gone; a slow drift of new rocks would keep the ship earning.
+* Rocks now drift in (one every 300 s while fewer than six are left); with that the bot's stock fills up after day 5 and the limit becomes finds on other worlds.
 * Wire and components pile up mid-game; shifting a little alloy cost to wire on the big buildings would even it out.
 
 * Tier III costs 2× base; with the new tech costs it may be worth 2.5× for the dearest buildings.

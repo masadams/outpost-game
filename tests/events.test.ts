@@ -145,4 +145,14 @@ describe('events between storms', () => {
     expect(loaded.exploration.events).toEqual(w.exploration.events);
     stepWorld(loaded, { thrust: false, turn: 0 }, STEP);
   });
+
+  it('lets a dome spring a leak', () => {
+    const w = game();
+    w.colony.buildings.push({ id: 98, kind: 'habitatSmall', angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'running', habitat: { oxygen: 1, energy: 0, powered: true, backup: false } });
+    expect(startEvent(w, 'leak')).toBe(true);
+    expect(w.colony.buildings[0].habitat!.oxygen).toBeCloseTo(1 - EVENTS.leak.airLost);
+    expect(w.colony.buildings[0].health).toBe(100 - EVENTS.leak.damage);
+    const empty = game();
+    expect(startEvent(empty, 'leak')).toBe(false);
+  });
 });

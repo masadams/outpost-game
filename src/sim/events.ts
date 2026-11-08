@@ -2,7 +2,9 @@ import { surfaceAir } from './airMachines';
 import { colonyWorld } from './localWorld';
 import { energyCapacity, type Building, type Colony } from './colony';
 import { operational } from './buildingHealth';
+import { isHabitat } from './habitatConfig';
 import { notify } from './messages';
+import { orbitRock } from './drift';
 import { streamFor } from './seed';
 import type { BodyId } from './celestial';
 import type { WorldState } from './world';
@@ -11,8 +13,8 @@ import type { WorldState } from './world';
  * Things that happen between storms. They come from a seeded timeline (so the same game tells the same story), are
  * warned about when they can be, and are held back until the story has reached them.
  */
-export type EventKind = 'flare' | 'dust' | 'pocket' | 'comet' | 'fault' | 'jumper' | 'debris';
-export const EVENT_KINDS: readonly EventKind[] = ['flare', 'dust', 'pocket', 'comet', 'fault', 'jumper', 'debris'];
+export type EventKind = 'flare' | 'dust' | 'pocket' | 'comet' | 'fault' | 'jumper' | 'debris' | 'leak';
+export const EVENT_KINDS: readonly EventKind[] = ['flare', 'dust', 'pocket', 'comet', 'fault', 'jumper', 'debris', 'leak'];
 
 export interface ActiveEvent {
   id: number;
@@ -50,6 +52,7 @@ export const EVENTS = {
   fault: { damage: 35 },
   pocket: { low: 0.25, high: 0.5 },
   comet: { rocks: 5 },
+  leak: { damage: 20, airLost: 0.5 },
 } as const;
 
 export const createEvents = (): EventsState => ({ next: EVENTS.first, count: 0, active: [], journal: [] });
@@ -75,8 +78,12 @@ function eligible(w: WorldState): EventKind[] {
   if (colonies(w).reduce((n, c) => n + c.buildings.length, 0) >= 4) kinds.push('fault');
   if (Object.values(w.outposts).some(o => o.colony.buildings.length > 0) && freeSeams(w).length > 0) kinds.push('jumper');
   if (w.exploration.pods.length > 0 || (w.exploration.beacons?.length ?? 0) > 0 || w.exploration.supply?.enabled) kinds.push('debris');
+  if (domes(w).length > 0) kinds.push('leak');
   return kinds;
 }
+
+/** Habitats with air in them. */
+const domes = (w: WorldState): Building[] => colonies(w).flatMap(c => c.buildings.filter(b => isHabitat(b.kind) && operational(b) && (b.habitat?.oxygen ?? 0) > 0));
 
 /** Home seams with something left and no rig sitting on them. */
 function freeSeams(w: WorldState): typeof w.surfaceDeposits {
@@ -112,7 +119,7 @@ export function eventChip(w: WorldState): { label: string; detail: string; activ
   if (!events) return null;
   const now = root(w).system.time;
   const names: Record<EventKind, string> = {
-    flare: 'Solar flare', dust: 'Dust front', pocket: 'Seam', comet: 'Comet', fault: 'Fault', jumper: 'Claim-jumper', debris: 'Debris field',
+    flare: 'Solar flare', dust: 'Dust front', pocket: 'Seam', comet: 'Comet', fault: 'Fault', jumper: 'Claim-jumper', debris: 'Debris field', leak: 'Air leak',
   };
   const e = [...events.active].sort((a, b) => a.starts - b.starts).find(x => x.kind !== 'pocket' && now < x.ends);
   if (!e) return null;
@@ -182,18 +189,8 @@ function strike(w: WorldState, e: ActiveEvent, events: EventsState, rand: () => 
       return true;
     }
     case 'comet': {
-      const base = w.asteroids.find(a => a.stage === 0);
-      const radius = base ? Math.hypot(base.position.x, base.position.y) : 3200;
       const angle = rand() * Math.PI * 2;
-      for (let i = 0; i < EVENTS.comet.rocks; i++) {
-        const a = angle + i * 0.05;
-        const speed = Math.sqrt((5 * 1800 ** 2) / radius);
-        w.asteroids.push({
-          id: w.nextId++, position: { x: Math.cos(a) * radius, y: Math.sin(a) * radius },
-          velocity: { x: -Math.sin(a) * speed, y: Math.cos(a) * speed },
-          radius: 16, mass: 56, resource: 'ice', stage: 0, health: 1, maxHealth: 1,
-        });
-      }
+      for (let i = 0; i < EVENTS.comet.rocks; i++) orbitRock(w, angle + i * 0.05, 1600 + i * 30, 'ice', 56, 16);
       notify(w, 'A COMET IS PASSING CLOSE · ICE ROCKS ARE DRIFTING IN YOUR ORBIT');
       say(events, 'A comet passed close and left ice rocks in orbit.');
       return true;
@@ -205,6 +202,16 @@ function strike(w: WorldState, e: ActiveEvent, events: EventsState, rand: () => 
       victim.health = Math.max(1, (victim.health ?? 100) - EVENTS.fault.damage);
       notify(w, `A ${victim.kind.toUpperCase()} HAS SUFFERED A FAULT · PRESS U NEAR IT TO REPAIR`);
       say(events, `A ${victim.kind} developed a fault and needed a repair.`);
+      return true;
+    }
+    case 'leak': {
+      const all = domes(w);
+      if (all.length === 0) return false;
+      const dome = all[Math.floor(rand() * all.length)];
+      dome.habitat!.oxygen *= 1 - EVENTS.leak.airLost;
+      dome.health = Math.max(1, (dome.health ?? 100) - EVENTS.leak.damage);
+      notify(w, 'A DOME IS LEAKING AIR · PRESS U NEAR IT TO PATCH IT');
+      say(events, 'A dome sprang a leak and lost half its air.');
       return true;
     }
     default: return true;

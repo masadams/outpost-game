@@ -4,7 +4,7 @@ import { stepColony } from '../src/sim/colony';
 import { completedBuilding } from '../src/sim/construction';
 import { STEP } from '../src/sim/config';
 import { launchBeacon, stepSignal } from '../src/sim/signal';
-import { EXPEDITION, DECISION_SECONDS, chooseExpedition, expeditionChoices, expeditionCost, expeditionError, launchExpedition, legRisk, noKit, oddsWord, stepExpedition } from '../src/sim/expedition';
+import { EXPEDITION, DECISION_SECONDS, chooseExpedition, expeditionChoices, expeditionCost, expeditionError, launchExpedition, legRisk, noKit, oddsWord, SALVAGE, stepExpedition } from '../src/sim/expedition';
 import { encodeCheckpoint, decodeCheckpoint } from '../src/persistence/checkpoint';
 import { baseView } from '../src/ui/base/baseView';
 import { TECH_IDS } from '../src/sim/progressionConfig';
@@ -33,6 +33,10 @@ function runOut(w: WorldState, policy: 'push' | 'wait' | 'best'): void {
     const e = w.exploration.expedition!;
     w.system.time = Math.max(w.system.time, e.pending ? w.system.time : e.returnsAt + 1);
     stepExpedition(w);
+    if (e.pending?.kind === 'find') {
+      chooseExpedition(w, 'leave');
+      continue;
+    }
     if (e.pending) {
       const choices = expeditionChoices(w);
       const safe = choices.find(c => c.safe);
@@ -139,11 +143,12 @@ describe('trouble on the way', () => {
       w.exploration.signal!.echo!.hazard = 'strong radiation';
       launchExpedition(w, kit);
       const e = w.exploration.expedition!;
-      for (let i = 0; i < 200 && !e.pending && e.phase === 'out'; i++) {
+      for (let i = 0; i < 200 && (!e.pending || e.pending.kind === 'find') && e.phase === 'out'; i++) {
+        if (e.pending?.kind === 'find') chooseExpedition(w, 'leave');
         w.system.time += 60;
         stepExpedition(w);
       }
-      if (e.pending) return w;
+      if (e.pending && !e.pending.kind) return w;
     }
     throw new Error('no trouble found');
   }
@@ -190,11 +195,12 @@ describe('trouble on the way', () => {
       w.exploration.signal!.echo!.hazard = 'strong radiation';
       launchExpedition(w, noKit());
       const e = w.exploration.expedition!;
-      for (let i = 0; i < 200 && !e.pending && e.phase === 'out'; i++) {
+      for (let i = 0; i < 200 && (!e.pending || e.pending.kind === 'find') && e.phase === 'out'; i++) {
+        if (e.pending?.kind === 'find') chooseExpedition(w, 'leave');
         w.system.time += 60;
         stepExpedition(w);
       }
-      if (e.pending && found++ === offset) return w;
+      if (e.pending && !e.pending.kind && found++ === offset) return w;
     }
     throw new Error('not enough trouble');
   }
@@ -292,5 +298,52 @@ describe('the far system and landing on it', () => {
     expect(loaded.exploration.expedition?.target).toBe(land.index);
     expect(loaded.exploration.signal?.surveyed).toEqual(worlds.map(f => f.index));
     expect(baseView(w).signal!.expedition!.worlds.length).toBe(7);
+  });
+});
+
+describe('a wreck on the way', () => {
+  function findWreck(): WorldState {
+    for (let seed = 1; seed < 400; seed++) {
+      const w = heard(seed);
+      w.exploration.signal!.echo!.hazard = 'calm';
+      launchExpedition(w, noKit());
+      const e = w.exploration.expedition!;
+      for (let i = 0; i < 200 && !e.pending && e.phase === 'out'; i++) {
+        w.system.time += 60;
+        stepExpedition(w);
+      }
+      if (e.pending?.kind === 'find') return w;
+    }
+    throw new Error('no wreck found');
+  }
+
+  it('offers salvage or leave, and salvage adds time and usually metal', () => {
+    const w = findWreck();
+    expect(expeditionChoices(w).map(c => c.key)).toEqual(['salvage', 'leave']);
+    expect(baseView(w).signal!.expedition!.trouble!.title).toMatch(/wreck/);
+    const e = w.exploration.expedition!;
+    const home = e.returnsAt;
+    chooseExpedition(w, 'salvage');
+    expect(e.returnsAt).toBe(home + SALVAGE.minutes * 60);
+    expect(e.pending).toBeNull();
+    expect((e.salvage ?? 0) > 0 || e.setbacks === 1).toBe(true);
+  });
+
+  it('is passed by if nobody answers, and salvage comes home in the depot', () => {
+    const w = findWreck();
+    const e = w.exploration.expedition!;
+    w.system.time = e.pending!.deadline + 1;
+    stepExpedition(w);
+    expect(e.log.at(-1)).toMatch(/Passed a wreck/);
+    e.salvage = 80;
+    const iron = w.depot.iron;
+    runOut(w, 'best');
+    if (e.report!.result !== 'lost') expect(w.depot.iron).toBeGreaterThan(iron);
+  });
+
+  it('saves with a wreck waiting', () => {
+    const w = findWreck();
+    const loaded = decodeCheckpoint(encodeCheckpoint(w));
+    expect(loaded.exploration.expedition!.pending).toEqual(w.exploration.expedition!.pending);
   });
 });

@@ -10,7 +10,8 @@ function validExpedition(x: NonNullable<WorldState['exploration']['expedition']>
   if (!(Number.isInteger(x.count) && ['out', 'back'].includes(x.phase) && num(x.launchedAt, 0, 1e9) && num(x.returnsAt, 0, 1e9) && kitOk(x.kit) && kitOk(x.used))) return false;
   if (!(x.target === undefined || x.target === null || (Number.isInteger(x.target) && x.target >= 0 && x.target < 8))) return false;
   if (!(Number.isInteger(x.leg) && x.leg >= 0 && x.leg <= 4 && Number.isInteger(x.setbacks) && x.setbacks >= 0 && x.setbacks <= 4)) return false;
-  if (!(x.pending === null || (!!x.pending && Number.isInteger(x.pending.leg) && num(x.pending.deadline, 0, 1e9)))) return false;
+  if (!(x.pending === null || (!!x.pending && Number.isInteger(x.pending.leg) && num(x.pending.deadline, 0, 1e9) && (x.pending.kind === undefined || x.pending.kind === 'find')))) return false;
+  if (!(x.salvage === undefined || num(x.salvage, 0, 2000))) return false;
   if (!Array.isArray(x.log) || x.log.length > 12 || !x.log.every(l => typeof l === 'string' && l.length < 200)) return false;
   return x.report === null || (!!x.report && ['full', 'partial', 'thin', 'lost'].includes(x.report.result) && Array.isArray(x.report.lines) && x.report.lines.length <= 14);
 }
