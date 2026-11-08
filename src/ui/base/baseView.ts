@@ -16,6 +16,7 @@ import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
 import { podError } from '../../sim/pods';
+import { signalError } from '../../sim/signal';
 import { inventoryMass } from '../../sim/resources';
 import { BODIES, BODY_IDS, type BodyId } from '../../sim/celestial';
 import { bodyKnown } from '../../sim/explorationConfig';
@@ -48,6 +49,16 @@ export interface BaseView {
   elsewhere: OutpostView[];
   /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
   pods: PodsView | null;
+  /** The deep-space beacon: how to send it, how long is left, what came back. Null until it is researched. */
+  signal: SignalView | null;
+}
+
+export interface SignalView {
+  state: 'ready' | 'waiting' | 'heard';
+  line: string;
+  /** Why it cannot be sent now, or null. */
+  reason: string | null;
+  echo: { name: string; lines: string[] } | null;
 }
 
 export interface PodsView {
@@ -320,6 +331,24 @@ function defenceLine(w: WorldState): string | null {
   return `Turrets: stored power covers about ${shots} shots.`;
 }
 
+function signalView(w: WorldState): SignalView | null {
+  const root = w.rootWorld ?? w;
+  const signal = root.exploration.signal;
+  if (!signal && !root.colony.research.completed.includes('deepSignal')) return null;
+  if (!signal) return { state: 'ready', line: 'Send a one-way beacon into the dark and listen for an echo. It can take an hour or more.', reason: signalError(root), echo: null };
+  if (signal.phase === 'sent') {
+    const left = Math.max(0, Math.round((signal.hearAt - root.system.time) / 60));
+    return { state: 'waiting', line: `The beacon is out there. Listening… about ${left} min to go.`, reason: null, echo: null };
+  }
+  const echo = signal.echo!;
+  return {
+    state: 'heard',
+    line: `A signal came back from the ${echo.name} system.`,
+    reason: null,
+    echo: { name: echo.name, lines: [`A ${echo.star}, ${echo.lightHours} light-hours out.`, `${echo.worlds} worlds. Hazard: ${echo.hazard}.`] },
+  };
+}
+
 function podsView(w: WorldState): PodsView | null {
   const root = w.rootWorld ?? w;
   const here = (w.siteBody ?? 'home') as BodyId;
@@ -435,6 +464,7 @@ export function baseView(w: WorldState): BaseView {
     tree: researchView(w) !== null || featureVisible('catalogue') ? researchTreeView(w) : null,
     elsewhere: elsewhereView(w),
     pods: podsView(w),
+    signal: signalView(w),
   };
 }
 

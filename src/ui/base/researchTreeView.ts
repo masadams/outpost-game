@@ -99,6 +99,7 @@ const EXTRA_UNLOCKS: Partial<Record<TechId, string[]>> = {
   fieldRepair: ['Repairs cost half the alloy'],
   podLogistics: ['Cargo pods are lost half as often'],
   surveyOptics: ['Observatories watch 25% faster'],
+  deepSignal: ['A one-way beacon that listens for a far system'],
   combat: ['Shield domes'],
   infrastructure: ['Tier II building upgrades'],
   industrialSystems: ['Tier III building upgrades'],

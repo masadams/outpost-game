@@ -90,3 +90,6 @@
 .map-chart .map-beacon[data-kind=lost] .map-beacon-ring { stroke: #ff8f75; }
 @keyframes map-beacon-pulse { from { transform: scale(0.6); opacity: .9; } to { transform: scale(1.8); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .map-chart .map-beacon .map-beacon-ring { animation: none; } }
+
+.map-chart .map-echo path { fill: #c9a8ff; stroke: #efe2ff; stroke-width: 1; }
+.map-chart .map-echo text { fill: #e1d0ff; }

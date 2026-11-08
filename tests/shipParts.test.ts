@@ -16,9 +16,9 @@ const shop=()=>{const w=createWorld();w.asteroids=[];w.exploration.sites=[];w.co
 const fit=(w:ReturnType<typeof shop>,id:UpgradeId)=>{w.colony.energy=20;applyEquipment(w,{type:'equipment',upgrade:id,operation:'install'});};
 const starts=(w:ReturnType<typeof shop>)=>({ship:{...w.ship.position},suit:{...w.astronaut.position},rocks:new Map(),meteors:new Map()});
 it('defines a complete acyclic research tree and material-funded alternatives per slot',()=>{
- expect(TECH_IDS).toHaveLength(28);expect(UPGRADE_IDS).toHaveLength(34);
+ expect(TECH_IDS).toHaveLength(29);expect(UPGRADE_IDS).toHaveLength(34);
  for(const [index,id]of TECH_IDS.entries()){
-  const spec=TECHNOLOGIES[id];expect(spec.seconds).toBeGreaterThan(0);expect(UPGRADE_IDS.some(part=>UPGRADES[part].tech===id)||!!spec.facilityTier||['photovoltaics','deepStorage','labAutomation','fieldRepair','podLogistics','surveyOptics','geoscience','aeronautics','massDrivers'].includes(id)).toBe(true);
+  const spec=TECHNOLOGIES[id];expect(spec.seconds).toBeGreaterThan(0);expect(UPGRADE_IDS.some(part=>UPGRADES[part].tech===id)||!!spec.facilityTier||['photovoltaics','deepStorage','labAutomation','fieldRepair','podLogistics','surveyOptics','geoscience','aeronautics','massDrivers','deepSignal'].includes(id)).toBe(true);
   for(const requirement of spec.requires)expect(TECH_IDS.indexOf(requirement)).toBeLessThan(index);
  }
  for(const slot of PART_SLOTS)expect(UPGRADE_IDS.filter(id=>UPGRADES[id].slot===slot).length).toBeGreaterThanOrEqual(2);

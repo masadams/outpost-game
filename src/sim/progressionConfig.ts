@@ -1,6 +1,6 @@
 import type { BodyId } from './celestial';
 import type { ProductInventory } from './colonyConfig';
-export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems', 'photovoltaics', 'deepStorage', 'labAutomation', 'fieldRepair', 'surveyOptics', 'geoscience', 'aeronautics', 'massDrivers', 'podLogistics'] as const;
+export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems', 'photovoltaics', 'deepStorage', 'labAutomation', 'fieldRepair', 'surveyOptics', 'geoscience', 'aeronautics', 'massDrivers', 'podLogistics', 'deepSignal'] as const;
 export type TechId = typeof TECH_IDS[number];
 export interface Technology { facilityTier?: 2|3; label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
 export const TECHNOLOGIES: Record<TechId, Technology> = {
@@ -31,6 +31,7 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   geoscience:{label:'Geoscience',seconds:45,requires:['industrial','thermal'],cost:{alloy:14,wire:7,components:4}},
   aeronautics:{label:'Aeronautics',seconds:35,requires:['flightControl','materials'],cost:{alloy:10,wire:6,components:3}},
   massDrivers:{label:'Mass drivers',seconds:50,requires:['logistics','orbital'],cost:{alloy:14,wire:8,components:5}},
+  deepSignal:{label:'Deep signal',seconds:60,requires:['surveyOptics','navigation'],cost:{alloy:16,wire:10,components:6}},
   industrialSystems:{facilityTier:3,label:'Advanced facility systems',seconds:45,requires:['infrastructure','thermal'],cost:{alloy:14,wire:8,components:4}},
 };
 export const BASE_UPGRADE_IDS = ['engine', 'tank', 'cargo', 'mining', 'tractor', 'coil', 'cooling', 'armour'] as const;
