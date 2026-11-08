@@ -3,7 +3,7 @@ import { OBJECTIVES, objectiveProgress, type ObjectiveId, type ObjectiveLink } f
 import { starterPlan } from '../sim/starterPlan';
 import type { WorldState } from '../sim/world';
 import { patchMarkup } from './dom';
-import { shownObjectives } from './flight/chromeView';
+import { cued, shownObjectives } from './flight/chromeView';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { isolateControlKeys } from './controlKeys';
 
@@ -21,14 +21,15 @@ export class Objectives {
   this.content.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('button[data-objective-link]');const link=button?.dataset.objectiveLink as ObjectiveLink|undefined;if(link&&Object.hasOwn(LINKS,link)){navigate(link,e.detail===0);if(e.detail>0)button?.blur();}});
  }
  update(w:WorldState,p:PresentationPreferences):void {
-  const shown=shownObjectives(w), done=w.objectives.completed.filter(id=>shown.some(o=>o.id===id));
+  const all=shownObjectives(w), done=w.objectives.completed.filter(id=>all.some(o=>o.id===id));
+  const shown=all.filter(o=>done.includes(o.id)||cued(w,o.id));
   const next=this.tracked==='auto'?shown.find(o=>!done.includes(o.id)):shown.find(o=>o.id===this.tracked);
   if(this.content.closest('[hidden]'))return;
   const progress=next?objectiveProgress(w,next.id):null, recorded=!!next&&done.includes(next.id);
   const plan=starterPlan(w,this.includeRecovery), fmt=(n:number)=>Number(n.toFixed(2));
-  patchMarkup(this.content, `<label for="tracked-objective">Tracked objective</label><select id="tracked-objective"><option value="auto" ${this.tracked==='auto'?'selected':''}>Next unfinished milestone</option>${shown.map(o=>`<option value="${o.id}" ${this.tracked===o.id?'selected':''}>${done.includes(o.id)?'✓ ':''}${o.label}</option>`).join('')}</select>
-   ${next&&progress?`<article class="tracked-goal" data-objective="${next.id}" data-complete="${recorded}"><h3>${recorded?'✓ ':''}${next.label}</h3><label for="objective-progress">${recorded?'Recorded · ':''}${fmt(progress.value)} / ${progress.target} ${progress.unit}</label><progress id="objective-progress" max="${progress.target}" value="${progress.value}"></progress><p>${controlHint(next.hint,p)}</p><button data-objective-link="${next.link}">${LINKS[next.link]}</button></article>`:'<p>All eight milestones recorded. Continue mining, expanding and defending at your own pace.</p>'}
-   <details data-preserve-open><summary>All milestones · ${done.length}/${shown.length}</summary>${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition route':'Colony milestones · optional order'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓ Recorded':'○ Open'} · ${o.label}</p>`).join('')}`).join('')}</details>
+  patchMarkup(this.content, `<label for="tracked-objective">Following</label><select id="tracked-objective"><option value="auto" ${this.tracked==='auto'?'selected':''}>Latest</option>${shown.map(o=>`<option value="${o.id}" ${this.tracked===o.id?'selected':''}>${done.includes(o.id)?'✓ ':''}${o.label}</option>`).join('')}</select>
+   ${next&&progress?`<article class="tracked-goal" data-objective="${next.id}" data-complete="${recorded}"><h3>${recorded?'✓ ':''}${next.label}</h3><label for="objective-progress">${recorded?'Recorded · ':''}${fmt(progress.value)} / ${progress.target} ${progress.unit}</label><progress id="objective-progress" max="${progress.target}" value="${progress.value}"></progress><p>${controlHint(next.hint,p)}</p><button data-objective-link="${next.link}">${LINKS[next.link]}</button></article>`:'<p>Nothing pressing. Keep going at your own pace.</p>'}
+   <details data-preserve-open><summary>Journal · ${done.length}</summary>${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
    ${featureVisible('starterBudget')?`<details id="starter-budget" data-preserve-open><summary>Selene starter-route budget</summary><p>Solar + refinery → lab + Applied materials → cargo rack. Missing work on Selene only; remote stock and ship freight are not pooled.</p>
    <label class="budget-spares"><input id="budget-recovery" type="checkbox" ${this.includeRecovery?'checked':''}> Include recovery parts in this budget</label><small>Planning allowance only; no stock is locked. Turret reserves can block recovery.</small><div class="route-budget">${plan.rows.map(r=>`<p data-budget="${r.product}"><b>${r.product}</b><br>Need ${fmt(r.need)} kg · usable ${fmt(r.usable)} kg<br><span ${r.shortfall>0?'class="budget-shortfall"':''}>Shortfall ${fmt(r.shortfall)} kg</span></p>`).join('')||'<p>No further fabrication materials needed for this route.</p>'}</div>
    ${plan.raw.length?`<p>Refining inputs for the shortfall (whole cycles):</p>${plan.raw.map(r=>`<p data-raw-budget="${r.resource}">${r.resource}: ${fmt(r.need)} kg needed · ${fmt(r.inDepot)} kg in Selene depot · ${fmt(r.shortfall)} kg still to deliver</p>`).join('')}`:'<p>Materials covered. Feedstock, power and travel still count.</p>'}

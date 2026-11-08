@@ -2,23 +2,48 @@ import type { WorldState } from './world';
 import { WORLD } from './config';
 import { relative, nearestPlanet } from './celestial';
 import { TECH_IDS } from './progressionConfig';
+import { bodyKnown } from './explorationConfig';
 export type ObjectiveLink = 'cargo' | 'build' | 'equipment' | 'map' | 'research' | 'defence';
 export const HABITAT_WORK_GOAL = 20;
 export const OBJECTIVES = [
   { id: 'delivery', group: 'expedition', link: 'cargo', label: 'Make your first delivery', hint: 'Press W to launch. Hold Space to mine a rock, then hold C to pull the fragments in. Land on the green pad and press E to unload.' },
-  { id: 'industry', group: 'expedition', link: 'build', label: 'Get industry running', hint: 'Press F to step out and walk with A/D. Press B to build a solar array and a refinery. The refinery runs once it has ore and power.' },
-  { id: 'buoy', group: 'expedition', link: 'map', label: 'Reach the survey buoy', hint: 'Open the Map, pick the Frost survey buoy, fly there and survey it. Its data lets you build an Observatory.' },
-  { id: 'sky', group: 'expedition', link: 'build', label: 'Watch the sky', hint: 'Build an Observatory and a solar array to power it. Leave it scanning; the longer it watches, the better it can tell you what is out there.' },
-  { id: 'storm', group: 'expedition', link: 'defence', label: 'Survive the storm', hint: 'Something is coming. Use the warning to get ready, then ride it out. Turrets and your ship laser can break rocks up before they land.' },
-  { id: 'analysis', group: 'expedition', link: 'build', label: 'Learn from the storm', hint: 'Pieces of the storm lie on the ground. Walk over one, then open Base and analyse it.' },
-  { id: 'storm2', group: 'expedition', link: 'defence', label: 'Survive the second storm', hint: 'A bigger storm is coming. The Observatory will warn you. Missile turrets reach farther than lasers and hit harder.' },
-  { id: 'equipment', group: 'expedition', link: 'equipment', label: 'Equip for exploration', hint: 'Build a powered lab, pay for research in Manage, and fabricate a module at home. No free stock or fuel is supplied.' },
-  { id: 'moonWork', group: 'expedition', link: 'map', label: 'Work on Nacre', hint: 'Load the rig kit from the Ship window, pick Nacre on the Map and land on its pad. Press E to unload, step out, then build a solar array and a mining rig on a marked seam.' },
-  { id: 'return', group: 'expedition', link: 'map', label: 'Return from the moon', hint: 'Board and fly home from Nacre, landing on the home pad. Press E to deliver the ore you carry.' },
-  { id: 'habitat', group: 'colony', link: 'build', label: 'Work under supplied air', hint: 'Supply and power a habitat, then spend 20 cumulative seconds inside on foot. Refine ice into oxygen. A shield supplies no air; a stopped or empty dome does not count.' },
-  { id: 'research', group: 'colony', link: 'research', label: 'Complete the research tree', hint: 'Fund and power every research project in Manage. Equipment and shield fabrication still require their own materials and energy.' },
-  { id: 'defence', group: 'colony', link: 'defence', label: 'Intercept a threat', hint: 'Save first. Supply a turret or use the ship laser to intercept an incoming meteor. Start a defence drill only when prepared; opening this panel does not start one.' },
+  { id: 'industry', group: 'expedition', link: 'build', label: 'Turn ore into metal', hint: 'Ore is piling up in the depot with nothing to turn it into metal. Press F to step out; B opens the blueprints you have.' },
+  { id: 'buoy', group: 'expedition', link: 'map', label: 'Reach the survey buoy', hint: 'A survey buoy is marked on the Map: Frost. Whoever left it may have left something to learn.' },
+  { id: 'sky', group: 'expedition', link: 'build', label: 'The sky', hint: 'The buoy data describes an instrument. The longer it watches, the more it can tell you about what is out there.' },
+  { id: 'storm', group: 'expedition', link: 'defence', label: 'Survive the storm', hint: 'Something is coming. Rocks can be broken up before they land.' },
+  { id: 'analysis', group: 'expedition', link: 'build', label: 'Learn from the storm', hint: 'Pieces of the storm lie on the ground. They are not ordinary rock.' },
+  { id: 'storm2', group: 'expedition', link: 'defence', label: 'Survive the second storm', hint: 'A bigger storm is gathering.' },
+  { id: 'equipment', group: 'expedition', link: 'equipment', label: 'Build a better ship', hint: 'The lab is running. A better ship needs parts, and parts need research and materials.' },
+  { id: 'moonWork', group: 'expedition', link: 'map', label: 'Nacre', hint: 'The Observatory has found the moon, Nacre. Its surface is marked with ore seams.' },
+  { id: 'return', group: 'expedition', link: 'map', label: 'Return from the moon', hint: 'The moon has given up its first ore. It is worth nothing until it reaches home.' },
+  { id: 'habitat', group: 'colony', link: 'build', label: 'Live under a dome', hint: 'A habitat holds air. Twenty seconds inside on foot, with the air running, makes it a place to live.' },
+  { id: 'research', group: 'colony', link: 'research', label: 'Finish all research', hint: 'Every line of research, finished.' },
+  { id: 'defence', group: 'colony', link: 'defence', label: 'Intercept a threat', hint: 'Stop a falling rock before it lands, with a turret or the ship laser.' },
 ] as const;
+/**
+ * Whether a milestone has come up yet. Milestones are revealed by what happens, so the card never lists what is
+ * ahead: it shows only the open ones whose cue has fired.
+ */
+export function objectiveCue(source: WorldState, id: ObjectiveId): boolean {
+  const w = source.rootWorld ?? source;
+  const done = w.objectives.completed;
+  const built = (kind: string) => [w.colony, ...Object.values(w.outposts).map(o => o.colony)].some(c => c.buildings.some(b => b.kind === kind));
+  switch (id) {
+    case 'delivery': return true;
+    case 'industry': return done.includes('delivery');
+    case 'buoy': return done.includes('industry');
+    case 'sky': return done.includes('buoy') || !w.system.sun;
+    case 'storm': return built('observatory') || w.storm.phase !== 'quiet' || done.includes('storm');
+    case 'analysis': return w.storm.samples.length > 0 || w.storm.held > 0 || w.storm.analysed;
+    case 'storm2': return done.includes('storm') && w.storm.wave >= 2;
+    case 'equipment': return built('researchLab') || w.colony.research.completed.length > 0;
+    case 'moonWork': return bodyKnown(w.exploration, 'moon') || done.includes('moonWork');
+    case 'return': return done.includes('moonWork');
+    case 'habitat': return built('habitatSmall') || built('habitatLarge');
+    case 'research': return built('researchLab');
+    case 'defence': return built('laser') || built('flak') || built('missile') || w.defence.intercepted > 0;
+  }
+}
 export type ObjectiveId = typeof OBJECTIVES[number]['id'];
 export interface ObjectiveState { completed: ObjectiveId[]; returnArmed: boolean; habitatSeconds: number }
 export const createObjectives = (): ObjectiveState => ({ completed: [], returnArmed: false, habitatSeconds: 0 });

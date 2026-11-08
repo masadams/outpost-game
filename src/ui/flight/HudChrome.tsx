@@ -129,17 +129,20 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           id="objectives"
           class="objective-card"
           data-complete={objective.complete}
+          data-quiet={!objective.visible}
           aria-label="Open expedition objectives"
           aria-controls="operations-dock"
           aria-expanded={state.panel === 'objectives'}
           onClick={pointerClick(on.objective)}
         >
-          <span class="objective-label">Objective · {objective.count}</span>
-          <span class="objective-title">{objective.title}</span>
-          <span class="objective-meter">
-            <i style={{ width: `${(objective.fraction * 100).toFixed(0)}%` }} />
-          </span>
-          <span class="objective-detail">{objective.detail}</span>
+          <span class="objective-label">{objective.visible ? 'Objective' : objective.count}</span>
+          {objective.visible && <span class="objective-title">{objective.title}</span>}
+          {objective.visible && (
+            <span class="objective-meter">
+              <i style={{ width: `${(objective.fraction * 100).toFixed(0)}%` }} />
+            </span>
+          )}
+          {objective.visible && <span class="objective-detail">{objective.detail}</span>}
         </button>
         {state.day && (
           <span id="flight-daylight" data-phase={state.day.phase} title={state.day.detail}>

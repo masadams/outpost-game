@@ -206,7 +206,7 @@ export function placementTip(w: WorldState, kind: BuildType, error: string | nul
     return { text: `${label} · wired to ${link.from}, ${metres} of ${link.reach} m`, ok: true };
   }
   if (!error) return { text: `${label} · click to place`, ok: true };
-  if (error === 'Insufficient fabrication materials') return { text: missingLine(w, kind) ?? 'Not enough materials', ok: false };
+  if (error === 'Not enough materials') return { text: missingLine(w, kind) ?? 'Not enough materials', ok: false };
   return { text: error, ok: false };
 }
 

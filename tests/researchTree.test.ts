@@ -56,7 +56,7 @@ describe('building upgrade tree', () => {
     expect(view.buildings.length).toBeGreaterThanOrEqual(20);
     const solar = view.buildings.find(b => b.kind === 'solar')!;
     expect(solar.tiers.map(t => t.tier)).toEqual([2, 3]);
-    expect(solar.tiers[0].needs.map(n => n.label)).toEqual(['Infrastructure retrofits']);
+    expect(solar.tiers[0].needs.map(n => n.label)).toEqual(['Infrastructure upgrades']);
     expect(solar.tiers[1].needs.map(n => n.label)).toEqual(['Advanced facility systems', 'Cell engineering']);
     expect(solar.tiers[0].effect).toMatch(/power/);
     expect(view.buildings.find(b => b.kind === 'droneBay')!.open).toBe(false);

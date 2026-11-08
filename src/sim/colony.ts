@@ -111,7 +111,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
     if (!d) return 'Place the rig on a marked ore deposit';
     if (d.remaining <= 1e-9) return 'This deposit is exhausted';
   }
-  if (!options.paid && PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Insufficient fabrication materials';
+  if (!options.paid && PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Not enough materials';
   if (!options.paid && PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Build';
   return null;
 }

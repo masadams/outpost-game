@@ -21,7 +21,7 @@ export const TECHNOLOGIES: Record<TechId, Technology> = {
   flightControl:{label:'Flight control',seconds:30,requires:['materials','propulsion'],cost:{alloy:8,wire:6,components:3}},
   navigation:{label:'Return guidance',seconds:40,requires:['flightControl','orbital'],cost:{alloy:12,wire:8,components:4}},
   autonomy:{label:'Autonomous navigation',seconds:60,requires:['navigation','precision'],cost:{alloy:18,wire:12,components:6}},
-  infrastructure:{facilityTier:2,label:'Infrastructure retrofits',seconds:35,requires:['materials','logistics'],cost:{alloy:10,wire:6,components:3}},
+  infrastructure:{facilityTier:2,label:'Infrastructure upgrades',seconds:35,requires:['materials','logistics'],cost:{alloy:10,wire:6,components:3}},
   photovoltaics:{label:'Photovoltaics',seconds:45,requires:['reactor'],cost:{alloy:12,wire:8,components:4}},
   deepStorage:{label:'Deep storage',seconds:40,requires:['lightweight'],cost:{alloy:12,wire:5,components:3}},
   labAutomation:{label:'Lab automation',seconds:50,requires:['autonomy'],cost:{alloy:14,wire:8,components:5}},

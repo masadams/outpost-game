@@ -340,3 +340,11 @@ The lander can touch down anywhere. The pad stays the easy place (descent 6 m/s,
 - **The far system has worlds you can land on.** Each world is seeded (kind, air, danger, what its ground holds). A fly-by surveys the next world; a surveyed world that is not a gas giant can be landed on, at the price of a fourth leg and ten more minutes, for a bigger haul of its own kind of ore.
 
 - **Supply lines are ore-only and reserve-driven.** One switch and a reserve per world and kind of ore; the line moves ore to whichever world is furthest short from whichever has the most spare, one pod a minute at most, counting pods already flying. It never takes a world below its own reserve, pays real fuel, and says in a line what it did or why not.
+
+- **Ship handling follows mass.** Turn rate scales with the ship's mass (a gentle 0.92 to 1.08 around the standard fuelled ship): a light ship turns a little faster, a laden one a little slower. The ship profile shows `agility` and `loadedAgility`.
+
+- **Deeper research waits for a story beat.** Seven technologies need an event as well as their prerequisites (a storm survived, a mining rig running, a base on another world, an Observatory, a Research lab, an Antenna). The research tree says so in plain words ("Not yet: live through a storm first"). The standard test layout is not gated.
+
+- **The story reveals itself.** Milestones do not list what is ahead: the objective card shows a milestone only after something has happened to bring it up (its cue), and its text describes the situation rather than giving orders. When nothing has come up the card is just "Journal · n". New blueprints are announced when they unlock ("New blueprint · Observatory") instead of being pointed at beforehand. The all-features switch still shows every milestone, for testing.
+
+- **Plain game words.** "Unreserved", "fabrication materials", "retrofits" and "in place" are gone from the live screens: "Needs more materials", "Not enough materials", "Infrastructure upgrades", "Upgrade any building from Base". Older Manage and Help text still has some of the old wording and is slated for the same pass.

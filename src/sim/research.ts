@@ -19,7 +19,7 @@ export function researchError(w: WorldState, tech: TechId): string | null {
   if (spec.requires.some(id => !r.completed.includes(id))) return 'Complete prerequisite research first';
   const story = w.system.sun ? techStoryGate(w, tech) : null;
   if (story) return story;
-  if (PRODUCTS.some(p => availableProduct(w.colony, p) + 1e-9 < (spec.cost[p] ?? 0))) return 'Needs unreserved research materials';
+  if (PRODUCTS.some(p => availableProduct(w.colony, p) + 1e-9 < (spec.cost[p] ?? 0))) return 'Needs more materials';
   return null;
 }
 export function applyResearch(w: WorldState, a: Extract<ProgressionAction, { type: 'researchStart' | 'researchControl' }>): void {

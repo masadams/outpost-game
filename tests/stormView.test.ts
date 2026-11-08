@@ -35,7 +35,7 @@ describe('storm warning', () => {
 
   it('feeds the objective card and completes the sky goal once the Observatory is running', () => {
     const w = createWorld();
-    expect(objectiveCard(w, 'sky').detail).toContain('Build an Observatory');
+    expect(objectiveCard(w, 'sky').detail).toContain('Observatory');
     const scanning = watching(10);
     observeObjectives(scanning);
     expect(scanning.objectives.completed).toContain('sky');

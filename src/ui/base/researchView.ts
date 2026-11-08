@@ -52,7 +52,7 @@ export function researchView(w: WorldState): ResearchRow[] | null {
       };
     }
     if (!f.upgrade || !part) {
-      return { ...base, line: 'Done. Upgrade any building in place from Base.', progress: null, action: null };
+      return { ...base, line: 'Done. Upgrade any building from Base.', progress: null, action: null };
     }
     if (root.ship.equipment.includes(f.upgrade)) {
       return { ...base, line: `${part.label} fitted: ${part.benefit}.`, progress: null, action: null };

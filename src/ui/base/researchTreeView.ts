@@ -125,7 +125,7 @@ function nodeLine(w: WorldState, tech: TechId, state: NodeState, error: string |
     return `Needs ${missing.join(' and ')} first.`;
   }
   if (error?.startsWith('Not yet:')) return error;
-  if (error === 'Needs unreserved research materials') return `${needText(w, tech)}.`;
+  if (error === 'Needs more materials') return `${needText(w, tech)}.`;
   if (!hasLab) return 'Build a Research lab to start it.';
   return 'Ready to research.';
 }
