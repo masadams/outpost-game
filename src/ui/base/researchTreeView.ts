@@ -124,7 +124,8 @@ function nodeLine(w: WorldState, tech: TechId, state: NodeState, error: string |
     const missing = spec.requires.filter(id => !r.completed.includes(id)).map(id => TECHNOLOGIES[id].label);
     return `Needs ${missing.join(' and ')} first.`;
   }
-  if (error === 'Needs unreserved research materials') return `${needText(w, tech)}.`;
+  if (error?.startsWith('Not yet:')) return error;
+  if (error === 'Needs more materials') return `${needText(w, tech)}.`;
   if (!hasLab) return 'Build a Research lab to start it.';
   return 'Ready to research.';
 }

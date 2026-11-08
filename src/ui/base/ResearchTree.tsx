@@ -148,7 +148,7 @@ function Parts({ view, on, paused }: { view: ResearchTreeView; on: ResearchTreeH
 function Buildings({ view }: { view: ResearchTreeView }) {
   return (
     <div class="building-tree" aria-label="Buildings and their upgrades">
-      <p class="base-note">Every building has two upgrade tiers. Tier II needs Infrastructure retrofits. Tier III needs Advanced facility systems and the technology of its family.</p>
+      <p class="base-note">Every building has two upgrade tiers. Tier II needs Infrastructure upgrades. Tier III needs Advanced facility systems and the technology of its family.</p>
       <div class="building-grid">
         {view.buildings.map(b => (
           <article class="building-card" key={b.kind} data-kind={b.kind} data-open={String(b.open)}>

@@ -7,6 +7,7 @@ import { productCapacity, type Building } from './colony';
 import { powerFraction } from './power';
 import { isFindTech, openTechs } from './finds';
 import { notify } from './messages';
+import { techStoryGate } from './storyGates';
 import type { WorldState } from './world';
 export function researchError(w: WorldState, tech: TechId): string | null {
   if (!TECH_IDS.includes(tech)) return 'Unknown technology';
@@ -16,7 +17,9 @@ export function researchError(w: WorldState, tech: TechId): string | null {
   // The seven find-linked techs open when their find is studied; the rest of the tree opens by prerequisites alone.
   if (w.system.sun && isFindTech(tech) && !openTechs(w).includes(tech)) return 'Study a find first';
   if (spec.requires.some(id => !r.completed.includes(id))) return 'Complete prerequisite research first';
-  if (PRODUCTS.some(p => availableProduct(w.colony, p) + 1e-9 < (spec.cost[p] ?? 0))) return 'Needs unreserved research materials';
+  const story = w.system.sun ? techStoryGate(w, tech) : null;
+  if (story) return story;
+  if (PRODUCTS.some(p => availableProduct(w.colony, p) + 1e-9 < (spec.cost[p] ?? 0))) return 'Needs more materials';
   return null;
 }
 export function applyResearch(w: WorldState, a: Extract<ProgressionAction, { type: 'researchStart' | 'researchControl' }>): void {

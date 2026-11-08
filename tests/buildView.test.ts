@@ -75,7 +75,7 @@ describe('build view', () => {
       ['wire', 2, true],
       ['components', 1, true],
     ]);
-    expect(placementTip(w, 'solar', 'Insufficient fabrication materials')).toEqual({
+    expect(placementTip(w, 'solar', 'Not enough materials')).toEqual({
       text: 'Needs 3 more alloy, 2 more wire, 1 more components',
       ok: false,
     });

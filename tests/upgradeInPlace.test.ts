@@ -24,7 +24,7 @@ describe('upgrading in place', () => {
     const view = upgradeView(w, battery)!;
     expect(view.effect).toBe('Stores 1800 kJ instead of 1200');
     expect(view.cost).toBe('4 alloy, 2 wire, 2 components');
-    expect(view.blocked).toBe('Research Infrastructure retrofits first.');
+    expect(view.blocked).toBe('Research Infrastructure upgrades first.');
   });
 
   it('works once the research is done, and the building gets better', () => {
