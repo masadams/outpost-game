@@ -1,3 +1,4 @@
+import { eventRigFactor } from './events';
 import {workFactor} from './facilityStats';
 import { colonyPlanet } from './localWorld';
 import { powerFraction } from './power';
@@ -21,7 +22,7 @@ export function stepMiningRig(world: WorldState, building: Building, dt: number,
   if (block) { building.status = block; return; }
   colony.energy = Math.max(0, colony.energy - RIG.power * work); building.gridPower = RIG.power * powerFraction(building) * workFactor(building); building.progress += work; building.status = 'running';
   if (building.progress + 1e-9 < RIG.seconds) return;
-  const amount = Math.min(RIG.yield, deposit.remaining, room);
+  const amount = Math.min(RIG.yield * eventRigFactor(world), deposit.remaining, room);
   building.progress = 0; deposit.remaining = Math.max(0, deposit.remaining - amount); world.depot[deposit.resource] += amount;
   if (deposit.remaining <= 1e-9) building.status = 'depleted';
 }

@@ -33,6 +33,7 @@ export interface ChromeState {
   pickups: PickupLine[];
   storm: StormView | null;
   day: DayView | null;
+  event: { label: string; detail: string; active: boolean } | null;
   wreck: WreckCard | null;
   trajectory: boolean;
   predictionPoints: number;
@@ -144,6 +145,12 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           )}
           {objective.visible && <span class="objective-detail">{objective.detail}</span>}
         </button>
+        {state.event && (
+          <span id="flight-event" data-active={state.event.active}>
+            <i aria-hidden="true" />
+            {state.event.label} · {state.event.detail}
+          </span>
+        )}
         {state.day && (
           <span id="flight-daylight" data-phase={state.day.phase} title={state.day.detail}>
             <i aria-hidden="true" />

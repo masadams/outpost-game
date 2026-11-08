@@ -1,6 +1,6 @@
 # Encounters and events: ideas to keep it exciting
 
-Status: design only, nothing built. Written to be picked from in order of payoff per effort. Every item follows the rules in
+Status: ideas 1 to 7 are built (see `src/sim/events.ts` and DECISIONS.md): flares, dust fronts, seam events (richer pocket), comets, faults, claim-jumpers and debris fields. Still design only: 8 (expedition chains), 9 (habitat life events), 10 (the rare big one). Written to be picked from in order of payoff per effort. Every item follows the rules in
 AGENTS.md: it must be caused by something the player did or a seeded schedule, show a clear warning, give a way to respond, and
 never take something from the player behind a window they cannot see past.
 
