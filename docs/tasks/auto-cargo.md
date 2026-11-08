@@ -1,4 +1,7 @@
-# Automatic cargo pods between worlds (idea, not built)
+# Automatic cargo pods between worlds
+
+**Built (first version):** Base → Overview → Supply lines, once Pod logistics is researched and two worlds have bases. Ore only. A reserve per world and kind (steps of 10 kg, up to 400); an on/off switch. Every game minute it tops up the world furthest below its reserve from the world with the most to spare, with a pod holding just that ore, counting pods already in the air, and never taking a world below its own reserve. It pays fuel like any pod and says in one line what it did or why it could not. Not built: products, priorities between worlds, a Dispatcher building.
+
 
 **Idea (from play):** a command panel that keeps worlds stocked by itself. For each world you set a minimum reserve of each resource. When a world drops below its reserve and another has more than its own reserve to spare, the system fills a cargo pod, launches it and delivers it, on a demand schedule, with no clicking.
 

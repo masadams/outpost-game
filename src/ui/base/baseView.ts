@@ -17,6 +17,7 @@ import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
 import { podError } from '../../sim/pods';
 import { signalError } from '../../sim/signal';
+import { supplyUnlocked, supplyWorlds } from '../../sim/supply';
 import { EXPEDITION, LEGS, expeditionChoices, expeditionCost, expeditionError, oddsWord } from '../../sim/expedition';
 import { farWorlds, kindWord } from '../../sim/farWorlds';
 import { inventoryMass } from '../../sim/resources';
@@ -53,6 +54,14 @@ export interface BaseView {
   pods: PodsView | null;
   /** The deep-space beacon: how to send it, how long is left, what came back. Null until it is researched. */
   signal: SignalView | null;
+  /** Automatic supply lines between worlds. Null until Pod logistics is researched and there are two worlds. */
+  supply: SupplyView | null;
+}
+
+export interface SupplyView {
+  enabled: boolean;
+  line: string;
+  worlds: Array<{ body: string; label: string; cells: Array<{ resource: string; label: string; reserve: number; have: number }> }>;
 }
 
 export interface SignalView {
@@ -389,6 +398,23 @@ function expeditionView(w: WorldState, hazard: string): ExpeditionView {
   return { state: 'plan', line, trouble: null, log: [], packs, worlds, plans, report };
 }
 
+function supplyView(w: WorldState): SupplyView | null {
+  const root = w.rootWorld ?? w;
+  if (!supplyUnlocked(root)) return null;
+  const worlds = supplyWorlds(root);
+  if (worlds.length < 2) return null;
+  const s = root.exploration.supply;
+  return {
+    enabled: s?.enabled === true,
+    line: s?.line ?? 'Off.',
+    worlds: worlds.map(body => ({
+      body,
+      label: BODIES[body].label,
+      cells: RESOURCES.map(r => ({ resource: r, label: RESOURCE_INFO[r].label, reserve: s?.reserves[body]?.[r] ?? 0, have: Math.round(colonyWorld(root, body).depot[r]) })),
+    })),
+  };
+}
+
 function signalView(w: WorldState): SignalView | null {
   const root = w.rootWorld ?? w;
   const signal = root.exploration.signal;
@@ -524,6 +550,7 @@ export function baseView(w: WorldState): BaseView {
     elsewhere: elsewhereView(w),
     pods: podsView(w),
     signal: signalView(w),
+    supply: supplyView(w),
   };
 }
 

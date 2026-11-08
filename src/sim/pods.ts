@@ -3,7 +3,7 @@ import type { Vec } from './math';
 import { bodyKnown } from './explorationConfig';
 import { colonyWorld } from './localWorld';
 import { notify } from './messages';
-import { inventoryMass, RESOURCES, emptyInventory, type Inventory } from './resources';
+import { inventoryMass, RESOURCES, emptyInventory, type Inventory, type Resource } from './resources';
 import { streamFor } from './seed';
 import { activeMassDriver, MASS_DRIVER } from './airMachines';
 import { capacityFactor } from './facilityStats';
@@ -122,7 +122,7 @@ export function podTerms(source: WorldState): { capacity: number; fuel: number; 
 }
 
 /** Why a pod cannot be sent from one world to another now, or null. */
-export function podError(w: WorldState, from: BodyId, to: BodyId): string | null {
+export function podError(w: WorldState, from: BodyId, to: BodyId, manifest?: Partial<Record<Resource, number>>): string | null {
   const root = w.rootWorld ?? w;
   if (from === to) return 'Pick another world to send it to.';
   if (!BODY_IDS.includes(from) || !BODY_IDS.includes(to)) return 'Unknown world.';
@@ -133,15 +133,17 @@ export function podError(w: WorldState, from: BodyId, to: BodyId): string | null
   if (root.exploration.pods.length >= POD.max) return 'All pods are still out.';
   if (inventoryMass(source.depot) < 1) return 'No ore in the depot there.';
   const terms = podTerms(source);
-  const fuel = terms.fuel + terms.fuelPerKg * Math.min(terms.capacity, inventoryMass(source.depot));
+  const load = manifest ? Math.min(terms.capacity, RESOURCES.reduce((n, r) => n + Math.min(source.depot[r], manifest[r] ?? 0), 0)) : Math.min(terms.capacity, inventoryMass(source.depot));
+  if (manifest && load < 1) return 'Nothing to send of that.';
+  const fuel = terms.fuel + terms.fuelPerKg * load;
   if (source.colony.products.fuel + 1e-9 < fuel) return `Needs ${Math.ceil(fuel - source.colony.products.fuel)} more fuel at the sending base.`;
   return null;
 }
 
 /** Load the biggest share of the depot a pod can take, pay its fuel, and send it. */
-export function sendPod(w: WorldState, from: BodyId, to: BodyId): void {
+export function sendPod(w: WorldState, from: BodyId, to: BodyId, manifest?: Partial<Record<Resource, number>>): void {
   const root = w.rootWorld ?? w;
-  const error = podError(root, from, to);
+  const error = podError(root, from, to, manifest);
   if (error) {
     notify(root, error);
     return;
@@ -151,7 +153,7 @@ export function sendPod(w: WorldState, from: BodyId, to: BodyId): void {
   const terms = podTerms(source);
   let room = terms.capacity;
   for (const r of RESOURCES) {
-    const take = Math.min(source.depot[r], room);
+    const take = Math.min(source.depot[r], room, manifest ? (manifest[r] ?? 0) : Infinity);
     cargo[r] = take;
     source.depot[r] -= take;
     room -= take;

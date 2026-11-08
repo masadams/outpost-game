@@ -197,6 +197,8 @@ export class Hud {
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
       expedition: (kit, target) => onColonyAction({ type: 'launchExpedition', kit, target }),
       choose: choice => onColonyAction({ type: 'expeditionChoice', choice }),
+      supplyToggle: () => onColonyAction({ type: 'supply', op: 'toggle' }),
+      supplyReserve: (body, resource, delta) => onColonyAction({ type: 'supplyReserve', body: body as never, resource: resource as never, delta }),
       send: to => onColonyAction({ type: 'sendPod', from: (this.latestWorld?.siteBody ?? 'home') as never, to: to as never }),
       research: tech => onColonyAction({ type: 'researchStart', tech: tech as never }),
       fit: upgrade => onColonyAction({ type: 'equipment', upgrade: upgrade as never, operation: 'install' }),
