@@ -72,11 +72,22 @@ export const BODIES: Record<BodyId, BodySpec> = {
 /** How often each optional world turns up in a seeded game. */
 const OPTIONAL_CHANCE: Partial<Record<BodyId, number>> = { glint: 0.4, verdant: 0.5, tide: 0.5, murk: 0.5 };
 /** Whether a body is in this system. Optional bodies are never in the standard layout and only in some seeds. */
+const existsCache = new Map<number, Partial<Record<BodyId, boolean>>>();
 export function bodyExists(id: BodyId, system: SystemFrame = STATIC_SYSTEM): boolean {
   if (!BODIES[id].optional) return true;
   const seed = system.seed ?? 0;
   if (seed === 0) return false;
-  return streamFor(seed, 'extra/' + id)() < (OPTIONAL_CHANCE[id] ?? 0.6);
+  let row = existsCache.get(seed);
+  if (!row) {
+    row = {};
+    existsCache.set(seed, row);
+  }
+  let here = row[id];
+  if (here === undefined) {
+    here = streamFor(seed, 'extra/' + id)() < (OPTIONAL_CHANCE[id] ?? 0.6);
+    row[id] = here;
+  }
+  return here;
 }
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;
@@ -100,7 +111,17 @@ export function orbitRate(id: BodyId, seed = 0): number {
  * Where a free-orbiting body circles in this seed's world. Seed 0 is the standard layout; any other seed moves it a little
  * (a bit nearer or farther, any starting phase), always within the reach of a probe and a rig kit.
  */
+const shapeCache = new Map<string, { radius: number; phase: number }>();
 export function orbitShape(id: BodyId, seed = 0): { radius: number; phase: number } {
+  // The same for a seed every time, and asked for many times a frame: work it out once.
+  const key = `${seed}/${id}`;
+  const known = shapeCache.get(key);
+  if (known) return known;
+  const shape = computeOrbitShape(id, seed);
+  shapeCache.set(key, shape);
+  return shape;
+}
+function computeOrbitShape(id: BodyId, seed: number): { radius: number; phase: number } {
   const orbit = BODIES[id].orbit;
   if (orbit.kind !== 'circle') return { radius: 0, phase: 0 };
   if (seed === 0) return { radius: orbit.radius, phase: orbit.phase };
@@ -120,7 +141,28 @@ function spinOf(id: BodyId, system: SystemFrame): { spin: number; spinRate: numb
   const rate = BODIES[id].spin === 'day' ? HOME_SPIN_RATE : system.binary ? orbitRate(id, system.seed ?? 0) : 0;
   return { spin: rate * system.time, spinRate: rate };
 }
+/**
+ * Where a body is at a moment. Everything in one step asks about the same moment many times (gravity, terrain, the
+ * nearest world, drawing), so each body remembers its last answer. Never change the answer in place.
+ */
+interface Remembered { time: number; binary: boolean; sun: boolean; seed: number; planet: Planet }
+const remembered = new Map<BodyId, [Remembered | null, Remembered | null]>();
 export function planetAt(id: BodyId, system = STATIC_SYSTEM): Planet {
+  const sun = !!system.sun;
+  const seed = system.seed ?? 0;
+  let slots = remembered.get(id);
+  if (!slots) {
+    slots = [null, null];
+    remembered.set(id, slots);
+  }
+  for (const r of slots) if (r && r.time === system.time && r.binary === system.binary && r.sun === sun && r.seed === seed) return r.planet;
+  // Collision checks ask about the start and the end of a step in turn, so keep the last two answers.
+  const planet = computePlanetAt(id, system);
+  slots[1] = slots[0];
+  slots[0] = { time: system.time, binary: system.binary, sun, seed, planet };
+  return planet;
+}
+function computePlanetAt(id: BodyId, system: SystemFrame): Planet {
   const body = BODIES[id];
   const { label, radius, mu, atmosphere } = body;
   const spec = { label, radius, mu, atmosphere };

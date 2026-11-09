@@ -64,7 +64,17 @@ export const LATER_STORM_LIMIT = 9;
  * The storm for a wave. Seed 0 is the standard storm, always the same. Any other seed adds strays from the second
  * storm on: bodies that pass by and miss, and from the third a rare big one that comes down well away from the base.
  */
+const stormCache = new Map<string, StormConfig>();
 export function stormFor(wave: number, seed = 0): StormConfig {
+  // Asked every step; the answer only depends on the wave and the seed.
+  const key = `${seed}/${wave}`;
+  const known = stormCache.get(key);
+  if (known) return known;
+  const config = computeStorm(wave, seed);
+  stormCache.set(key, config);
+  return config;
+}
+function computeStorm(wave: number, seed: number): StormConfig {
   const base = baseStormFor(wave);
   if (seed === 0 || wave < 2) return base;
   const rand = streamFor(seed, `storm-strays/${wave}`);

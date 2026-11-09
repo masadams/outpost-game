@@ -11,7 +11,7 @@ export class GameAudio {
   private effects: GainNode | null = null;
   private music: AdaptiveMusic | null = null;
   private effectsVolume = 1;
-  private musicVolume = .15;
+  private musicVolume = .35;
   private duckTime = 0;
   setMix(effects: number, music: number): void { this.effectsVolume = effects; this.musicVolume = music; if(this.effects && this.context) this.effects.gain.setTargetAtTime(effects,this.context.currentTime,.03); }
   private director = new AudioDirector();

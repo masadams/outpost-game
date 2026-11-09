@@ -27,16 +27,19 @@ function entryMeteor(id: number, angle: number, tangential: number, system: Syst
   };
 }
 
+/** Steps used while searching for the right aim: coarse is plenty to aim with, and many times cheaper. */
+const AIM_STEP = 0.1;
+
 /** Where on the planet a fall from this state ends, as a surface angle, or null if it misses. */
 function landingAngle(meteor: Meteor, system: SystemFrame): number | null {
-  const result = predictMeteor(meteor, 300, system);
+  const result = predictMeteor(meteor, 300, system, AIM_STEP);
   if (!result.impact) return null;
   const planet = planetAt('home', { ...system, time: system.time + result.seconds });
   return surfaceAngle(planet, result.impact);
 }
 
 function landing(meteor: Meteor, system: SystemFrame): { angle: number; time: number } | null {
-  const result = predictMeteor(meteor, 300, system);
+  const result = predictMeteor(meteor, 300, system, AIM_STEP);
   if (!result.impact) return null;
   const planet = planetAt('home', { ...system, time: system.time + result.seconds });
   return { angle: surfaceAngle(planet, result.impact), time: system.time + result.seconds };
@@ -100,6 +103,10 @@ function missTangential(angle: number, aimed: number, system: SystemFrame, radiu
   return aimed + 300;
 }
 
+/** Game seconds between planning one storm body and the next. Not saved: after a load planning simply carries on. */
+const PLAN_SPACING = 0.25;
+const lastPlanned = new WeakMap<WorldState, number>();
+
 export function planNextBody(world: WorldState): void {
   const storm = world.storm;
   const STORM = stormFor(storm.wave, world.seed);
@@ -154,6 +161,10 @@ export function stepStorm(world: WorldState): void {
   if (!storm.planned) {
     // Never sooner than the fixed first-storm time, and always with the full warning window ahead.
     if (storm.plan.length === 0) storm.arrival = Math.max(STORM.arrivalTime + stormShape(world.seed, storm.wave).arrival, time + STORM.lead + 30);
+    // Planning a body is heavy; space them out so no two frames in a row carry one.
+    const last = lastPlanned.get(world);
+    if (storm.plan.length > 0 && last !== undefined && time - last < PLAN_SPACING && time > last) return;
+    lastPlanned.set(world, time);
     planNextBody(world);
     if (!storm.planned) return;
   }

@@ -32,7 +32,16 @@ const PAD_CLEAR = 0.35;
 export interface Sea { angle: number; half: number }
 
 /** The seas of a world, the same every time for a seed. Never over the pad. */
+const seaCache = new Map<string, Sea[]>();
 export function seasOf(body: BodyId, seed: number): Sea[] {
+  const key = `${seed}/${body}`;
+  const known = seaCache.get(key);
+  if (known) return known;
+  const seas = computeSeas(body, seed);
+  seaCache.set(key, seas);
+  return seas;
+}
+function computeSeas(body: BodyId, seed: number): Sea[] {
   const nature = natureOf(body);
   if (nature.water <= 0) return [];
   const rand = streamFor(seed, `seas/${body}`);
@@ -55,7 +64,16 @@ export function onWater(body: BodyId, seed: number, angle: number): boolean {
 }
 
 /** Tree positions (surface angles) and heights in metres, on dry land away from the pad. */
+const treeCache = new Map<string, { angle: number; height: number }[]>();
 export function treesOf(body: BodyId, seed: number): { angle: number; height: number }[] {
+  const key = `${seed}/${body}`;
+  const known = treeCache.get(key);
+  if (known) return known;
+  const trees = computeTrees(body, seed);
+  treeCache.set(key, trees);
+  return trees;
+}
+function computeTrees(body: BodyId, seed: number): { angle: number; height: number }[] {
   const nature = natureOf(body);
   if (nature.trees <= 0) return [];
   const rand = streamFor(seed, `trees/${body}`);
