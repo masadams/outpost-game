@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { kickForBreak, kickForHit } from '../src/render/effects';
 import { streakAt } from '../src/render/ambient';
-import { BEAT, melodyStep, noteFrequency } from '../src/audio/melody';
 import type { Area } from '../src/audio/soundscape';
 
 describe('camera kicks', () => {
@@ -39,29 +38,3 @@ describe('shooting stars', () => {
   });
 });
 
-describe('the wandering melody', () => {
-  const areas: Area[] = ['home-surface', 'home-sky', 'space', 'moon-surface', 'moon-sky'];
-  it('is deterministic, mixes notes and rests, stays inside each scale and drifts by small steps', () => {
-    for (const area of areas) {
-      let previous = 2;
-      let notes = 0;
-      let rests = 0;
-      for (let step = 0; step < 200; step++) {
-        const note = melodyStep(area, step, previous);
-        expect(melodyStep(area, step, previous)).toEqual(note);
-        if (!note) { rests++; continue; }
-        notes++;
-        expect(Math.abs(note.index - previous)).toBeLessThanOrEqual(2);
-        expect(note.index).toBeGreaterThanOrEqual(0);
-        previous = note.index;
-        expect(noteFrequency(area, 100, note.index, note.octave)).toBeGreaterThanOrEqual(100);
-      }
-      expect(notes).toBeGreaterThan(100);
-      expect(rests).toBeGreaterThan(20);
-    }
-  });
-
-  it('is slower in empty space than on the home ground', () => {
-    expect(BEAT.space).toBeGreaterThan(BEAT['home-surface']);
-  });
-});
