@@ -2,7 +2,6 @@ import { bodyKnown } from '../../sim/explorationConfig';
 import { featureVisible } from '../../preferences/features';
 import { flightRegion, REGION_LABELS, type FlightRegion } from '../../sim/flightRegion';
 import { OBJECTIVES, objectiveCue, objectiveProgress, type ObjectiveId } from '../../sim/objectives';
-import { PRODUCTS } from '../../sim/colonyConfig';
 import { cargoMass } from '../../sim/shipMass';
 import type { WorldState } from '../../sim/world';
 import { stormView } from './stormView';

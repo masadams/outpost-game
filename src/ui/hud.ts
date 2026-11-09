@@ -92,7 +92,7 @@ export class Hud {
   clearBuildPointer():void{this.pointerDraft=null;this.hideBuildTip();}
   get buildPreview() { if(this.pointerBuilding&&this.pointerDraft)return this.pointerDraft; return this.dock.root.dataset.panel === 'command' ? this.command.preview ? { ...this.command.preview, body: this.command.bodyId } : null : null; }
   private dock = new OperationsDock();
-  private objectives = new Objectives((link,keyboard)=>{if(link==='research'||link==='equipment'){this.baseSection='legacy';this.dock.open('command');this.command.openSection(link,keyboard);}else{if(link==='build'){this.dock.close();this.onAction({type:'buildMode',open:true});return;}const view=({cargo:'cargo',map:'navigation',defence:'defence'} as const)[link];this.dock.open(view);}if(keyboard)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();});
+  private objectives = new Objectives((link,keyboard)=>{if((link==='research'||link==='equipment')&&!featureVisible('catalogue')){this.baseSection='research';this.dock.open('command');}else if(link==='research'||link==='equipment'){this.baseSection='legacy';this.dock.open('command');this.command.openSection(link,keyboard);}else{if(link==='build'){this.dock.close();this.onAction({type:'buildMode',open:true});return;}const view=({cargo:'cargo',map:'navigation',defence:'defence'} as const)[link];this.dock.open(view);}if(keyboard)this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();});
   destroy(): void { this.root.remove(); }
   toggleDock(view: DockView): void { this.dock.toggle(view); }
   /** Screen buttons in the flight chrome. Build toggles build mode; the others open their panel. */

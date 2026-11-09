@@ -43,7 +43,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!object(value) || !shape(template, value)) return false;
   const world = value as unknown as WorldState;
   if (remote && (Object.hasOwn(world, 'rootWorld') || Object.hasOwn(world, 'siteBody'))) return false;
-  if (!number(world.system.time, 0, 1e9) || typeof world.system.binary !== 'boolean' || (world.system.sun !== undefined && typeof world.system.sun !== 'boolean') || !PRODUCTS.every(p => number(world.ship.freight[p], 0, cargoCapacity(world.ship))) || cargoMass(world.ship) > cargoCapacity(world.ship) + 1e-6 || world.ship.ground !== undefined && !['home', 'moon'].includes(world.ship.ground)) return false;
+  if (!number(world.system.time, 0, 1e9) || typeof world.system.binary !== 'boolean' || (world.system.sun !== undefined && typeof world.system.sun !== 'boolean') || !PRODUCTS.every(p => number(world.ship.freight[p], 0, cargoCapacity(world.ship))) || cargoMass(world.ship) > cargoCapacity(world.ship) + 1e-6 || world.ship.ground !== undefined && !(BODY_IDS as readonly string[]).includes(world.ship.ground)) return false;
   if (remote) {
     const facilities = [world.colony, ...Object.values(world.outposts).map(o => o?.colony)].flatMap(c => c?.buildings ?? []);
     if (new Set(facilities.map(b => b?.id)).size !== facilities.length) return false;
@@ -88,7 +88,7 @@ function validWrecks(world: WorldState): boolean {
     typeof w.cause === 'string' && w.cause.length <= 40 && object(w.ship) && w.ship.state === 'crashed' && vec(w.ship.position) && vec(w.ship.velocity) &&
     number(w.ship.angle, -1e3, 1e3) && number(w.ship.fuel, 0, 1e4) && object(w.ship.cargo) && object(w.ship.freight) &&
     RESOURCES.every(r => number(w.ship.cargo[r], 0, 1e4)) && PRODUCTS.every(p => number(w.ship.freight[p], 0, 1e4)) &&
-    (w.ship.ground === undefined || ['home', 'moon'].includes(w.ship.ground)));
+    (w.ship.ground === undefined || (BODY_IDS as readonly string[]).includes(w.ship.ground)));
 }
 function validStorm(world: WorldState): boolean {
   const s = world.storm;

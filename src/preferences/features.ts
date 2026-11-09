@@ -120,7 +120,7 @@ export function filterActions(actions: ColonyAction[], current: FeatureMode = fe
 }
 
 /** Key bindings for hidden systems are left out of the Settings table in the focus set. */
-const FOCUS_HIDDEN_BINDINGS: readonly string[] = ['SHIFT', 'N', 'O', 'Z', 'Y', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+const FOCUS_HIDDEN_BINDINGS: readonly string[] = ['SHIFT', 'Z', 'Y', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
 
 export function bindingVisible(slot: string, current: FeatureMode = featureMode()): boolean {
   return current === 'all' || !FOCUS_HIDDEN_BINDINGS.includes(slot);
