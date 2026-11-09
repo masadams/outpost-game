@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld } from '../src/sim/world';
-import { auroraStrength } from '../src/sim/aurora';
+import { auroraFade, auroraStrength } from '../src/sim/aurora';
 import { createEvents, EVENTS, startEvent, stepEvents } from '../src/sim/events';
 
 describe('northern lights', () => {
@@ -23,5 +23,15 @@ describe('northern lights', () => {
       stepEvents(w, 1);
     }
     expect(auroraStrength(w)).toBeGreaterThan(quiet);
+  });
+
+  it('fade as you climb and are gone at the top of the air', () => {
+    expect(auroraFade(0)).toBe(1);
+    expect(auroraFade(200)).toBe(1);
+    expect(auroraFade(800)).toBeGreaterThan(0);
+    expect(auroraFade(800)).toBeLessThan(1);
+    expect(auroraFade(1200)).toBe(0);
+    expect(auroraFade(5000)).toBe(0);
+    expect(auroraFade(0, 'moon')).toBe(0);
   });
 });

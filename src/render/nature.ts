@@ -1,12 +1,13 @@
 import type Phaser from 'phaser';
 import type { Planet } from '../sim/celestial';
 import { natureOf, seasOf, treesOf } from '../sim/nature';
+import { visible, type RenderView } from './budget';
 
 /**
  * Seas and trees on a living world, drawn in the world's own turning frame. The caller has already moved the
  * graphics so world coordinates line up.
  */
-export function drawNature(g: Phaser.GameObjects.Graphics, body: Planet, seed: number): void {
+export function drawNature(g: Phaser.GameObjects.Graphics, body: Planet, seed: number, view?: RenderView): void {
   const nature = natureOf(body.id);
   if (nature.water <= 0 && nature.trees <= 0) return;
   g.save();
@@ -27,6 +28,9 @@ export function drawNature(g: Phaser.GameObjects.Graphics, body: Planet, seed: n
   }
   for (const tree of treesOf(body.id, seed)) {
     const a = tree.angle - Math.PI / 2;
+    // Skip trees off the screen (the view is in world space; the tree turns with the world).
+    const w = a + body.spin;
+    if (!visible(view, { x: body.position.x + Math.cos(w) * body.radius, y: body.position.y + Math.sin(w) * body.radius }, 30)) continue;
     const n = { x: Math.cos(a), y: Math.sin(a) };
     const t = { x: -n.y, y: n.x };
     const base = { x: n.x * body.radius, y: n.y * body.radius };

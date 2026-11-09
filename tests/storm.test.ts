@@ -46,9 +46,11 @@ describe('first storm in flight', { timeout: 60000 }, () => {
     w.storm.armed = true;
     w.system.time = STORM.arrivalTime - STORM.lead - 61;
     stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
-    // Planned one body per step, so the work is spread out.
+    // Planned one body every quarter second, so the work is spread out.
     expect(w.storm.plan).toHaveLength(1);
-    for (let i = 1; i < STORM.aim.length; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    for (let i = 1; i < 10; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(w.storm.plan).toHaveLength(1);
+    for (let i = 10; i < STORM.aim.length * 16; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.storm.planned).toBe(true);
     expect(w.storm.phase).toBe('quiet');
     for (let i = 0; i < 70 * 60; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
@@ -82,7 +84,7 @@ describe('storm arming', () => {
     const w = createWorld();
     w.system.time = 1400;
     w.colony.buildings.push({ id: 90, kind: 'observatory', angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'idle' } as never);
-    for (let i = 0; i < STORM.aim.length; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    for (let i = 0; i < STORM.aim.length * 16; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.storm.armed).toBe(true);
     expect(w.storm.arrival).toBeGreaterThanOrEqual(1400 + STORM.lead + 30);
     expect(w.storm.plan).toHaveLength(STORM.aim.length);

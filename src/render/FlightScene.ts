@@ -63,9 +63,9 @@ import { FlightTools } from '../ui/FlightTools';
 import { predictCoast, type Trajectory } from '../sim/trajectory';
 import { createAtmosphere, createHalo } from './atmosphere';
 import { drawNature } from './nature';
-import { drawAuroraSky } from './aurora';
+import { createAuroraSky, updateAuroraSky } from './aurora';
 import { CELESTIAL, type BodyId } from '../sim/celestial';
-import { auroraStrength } from '../sim/aurora';
+import { auroraFade, auroraStrength } from '../sim/aurora';
 import { createPlanet } from './planet';
 import { drawTrajectory } from './trajectory';
 
@@ -101,7 +101,7 @@ export class FlightScene extends Phaser.Scene {
   private extras: { id: BodyId; image: Phaser.GameObjects.Image; halo: Phaser.GameObjects.Image | null }[] = [];
   private planet!: Phaser.GameObjects.Image;
   private stars!: Phaser.GameObjects.Graphics;
-  private aurora!: Phaser.GameObjects.Graphics;
+  private aurora!: Phaser.GameObjects.TileSprite;
   private skyImage!: Phaser.GameObjects.Image;
   private skyTexture = '';
   private map!: Phaser.GameObjects.Graphics;
@@ -161,7 +161,7 @@ export class FlightScene extends Phaser.Scene {
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
     this.skyImage = this.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setVisible(false);
     this.stars = this.add.graphics();
-    this.aurora = this.add.graphics();
+    this.aurora = createAuroraSky(this);
     this.sky = this.add.graphics();
     this.world = this.add.container(0, 0); this.atmosphere = createAtmosphere(this);
     this.planet = createPlanet(this);
@@ -501,7 +501,9 @@ export class FlightScene extends Phaser.Scene {
     const look = skyLook(daylight);
     this.cameras.main.setBackgroundColor(look.background);
     this.stars.setAlpha(look.stars);
-    drawAuroraSky(this.aurora, width, height, this.simulation.system.time, look.stars * Math.max(0, 1 - daylight * 1.5) * auroraStrength(this.simulation, eyePlanet.id as BodyId));
+    const eyeAltitude = Math.hypot(eye.x - eyePlanet.position.x, eye.y - eyePlanet.position.y) - eyePlanet.radius;
+    const auroraLevel = look.stars * Math.max(0, 1 - daylight * 1.5) * auroraFade(eyeAltitude, eyePlanet.id as BodyId) * auroraStrength(this.simulation, eyePlanet.id as BodyId);
+    updateAuroraSky(this.aurora, width, height, this.simulation.system.time, auroraLevel);
     this.skyImage.setAlpha(look.stars);
     this.starVisibility = look.stars;
     this.drawSun(width, height, daylight);
@@ -525,7 +527,7 @@ export class FlightScene extends Phaser.Scene {
       const here = bodyExists(extra.id, this.simulation.system) && this.simulation.system.binary;
       extra.image.setVisible(here).setPosition(body.position.x - this.follow.x, body.position.y - this.follow.y);
       extra.halo?.setVisible(here).setPosition(body.position.x - this.follow.x, body.position.y - this.follow.y);
-      if (here) drawNature(g, body, this.simulation.seed);
+      if (here && visible(view, body.position, body.radius + 60)) drawNature(g, body, this.simulation.seed, view);
     }
     const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
     const padLevel = padSafety.approach ? padSafety.level : 'neutral';
