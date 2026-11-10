@@ -95,6 +95,9 @@ function validStorm(world: WorldState): boolean {
   const s = world.storm;
   if (!['quiet', 'approaching', 'over'].includes(s.phase) || typeof s.planned !== 'boolean' || typeof s.armed !== 'boolean' || !number(s.arrival, 0, 1e9) || !number(s.observed, 0, 1e9) || !Array.isArray(s.plan) || s.plan.length > 24) return false;
   if (!Array.isArray(s.samples) || s.samples.length > 32 || !Number.isInteger(s.held) || s.held < 0 || s.held > 32 || typeof s.analysed !== 'boolean' || !Number.isInteger(s.wave) || s.wave < 1 || s.wave > 99 || !number(s.endedAt, 0, 1e9)) return false;
+  const counts = (c: unknown, keys: string[]) => object(c) && keys.every(k => Number.isInteger(c[k]) && number(c[k], 0, 1e6));
+  if (s.start !== undefined && !counts(s.start, ['stopped', 'landed', 'standing', 'hurt'])) return false;
+  if (s.report !== undefined && !counts(s.report, ['wave', 'stopped', 'landed', 'damaged', 'lost'])) return false;
   if (!s.samples.every(p => object(p) && Number.isInteger(p.id) && number(p.angle, -Math.PI - 1e-6, Math.PI + 1e-6))) return false;
   if (!s.plan.every(p => object(p) && Number.isInteger(p.id) && (p.impactAngle === null || number(p.impactAngle, -Math.PI - 1e-6, Math.PI + 1e-6)) && (p.impactTime === null || number(p.impactTime, 0, 1e9)))) return false;
   if (!Array.isArray(s.far) || !Array.isArray(s.ids) || s.far.length > 24 || s.ids.length > 24) return false;
