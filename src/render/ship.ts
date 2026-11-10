@@ -1,6 +1,12 @@
 import type Phaser from 'phaser';
 import type { Ship } from '../sim/physics';
 import { heading } from '../sim/math';
+import { UPGRADES, type PartSlot } from '../sim/progressionConfig';
+
+/** Which slots have a part fitted. Each one shows on the lander. */
+export function fittedSlots(ship: Pick<Ship, 'equipment'>): Set<PartSlot> {
+  return new Set(ship.equipment.map(id => UPGRADES[id].slot));
+}
 
 /**
  * The lander, drawn in metres in ship space: +y is the nose, x is to the right.
@@ -89,6 +95,67 @@ export function drawShip(g: Phaser.GameObjects.Graphics, s: Ship, zoom: number, 
   line(-0.7, 3.8, 0.1, 3.8);
   poly([[3.3, 1.7], [4.3, 1.4], [4.3, 0.2], [3.2, 0.2]], c.stageDark, c.line, 0.3);
   poly([[-3.3, 1.7], [-4.3, 1.4], [-4.3, 0.2], [-3.2, 0.2]], c.stageDark, c.line, 0.3);
+
+  // Fitted parts: each slot with a part in it adds something you can see.
+  const fitted = fittedSlots(s);
+  const part = wrecked ? c.accent : 0xffc98a;
+  if (fitted.has('tank')) {
+    // Saddle tanks on both sides of the descent stage.
+    for (const side of [-1, 1]) {
+      poly([[side * 5.2, -1.2], [side * 6.5, -1.6], [side * 6.5, -4], [side * 5.2, -4.4]], c.stageDark, part, 0.35);
+    }
+  }
+  if (fitted.has('hold')) {
+    // A cargo rack: a frame of crates across the top of the stage.
+    for (const x of [-4.4, -3.2, 3.2, 4.4]) poly([[x - 0.5, -0.7], [x + 0.5, -0.7], [x + 0.5, 0.3], [x - 0.5, 0.3]], c.stage, part, 0.25);
+  }
+  if (fitted.has('drive')) {
+    // A longer bell with a bright rim, and a steering nozzle each side.
+    poly([[-2.3, -6.1], [2.3, -6.1], [2.9, -6.9], [-2.9, -6.9]], c.stageDark, part, 0.35);
+    g.lineStyle(0.4, part);
+    line(-3.4, -4.8, -3.9, -5.7);
+    line(3.4, -4.8, 3.9, -5.7);
+  }
+  if (fitted.has('mining')) {
+    // The mining head: a forked emitter beside the nose.
+    g.lineStyle(0.45, part);
+    line(2.1, 5.2, 3.3, 6.6);
+    line(3.3, 6.6, 3.9, 6.2);
+    line(3.3, 6.6, 3.1, 7.3);
+  }
+  if (fitted.has('tractor')) {
+    // The tractor: a small ring under the left of the stage.
+    g.lineStyle(0.4, part);
+    const ring = p(-3.3, -5.4);
+    g.strokeCircle(ring.x, ring.y, 0.8);
+  }
+  if (fitted.has('weapon')) {
+    // A barrel along the right of the cabin.
+    g.lineStyle(0.55, part);
+    line(3.6, 1.7, 3.6, 4.6);
+  }
+  if (fitted.has('cooling')) {
+    // Radiator fins angled out behind the cabin.
+    g.lineStyle(0.4, part);
+    for (const side of [-1, 1]) {
+      line(side * 3.2, 0.4, side * 5.4, 2.4);
+      line(side * 3.2, -0.2, side * 5.8, 1.6);
+    }
+  }
+  if (fitted.has('armour')) {
+    // Plating: a second skin over the cabin.
+    g.lineStyle(0.35, part, 0.9);
+    g.strokePoints([p(0, 7.4), p(2.9, 5.6), p(3.9, 2.6), p(-3.9, 2.6), p(-2.9, 5.6)], true);
+  }
+  if (fitted.has('avionics')) {
+    // An aerial with a light that blinks.
+    g.lineStyle(0.3, part);
+    line(-1.9, 5.6, -2.7, 8.2);
+    const tip = p(-2.7, 8.2);
+    const on = reduced || paused || Math.floor(time / 600) % 2 === 0;
+    g.fillStyle(on ? 0xff6b5a : c.stageDark, 1);
+    g.fillCircle(tip.x, tip.y, 0.35);
+  }
 
   // Damage.
   if (s.hull < 75) {
