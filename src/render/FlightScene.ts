@@ -160,8 +160,6 @@ export class FlightScene extends Phaser.Scene {
     document.querySelector('#hud')!.append(this.chrome.host);
     this.flightTools = new FlightTools();
     this.loadCheckpoint(false);
-    window.addEventListener('pagehide', this.saveOnLeave);
-    document.addEventListener('visibilitychange', this.saveOnLeave);
     this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.pickupFeed.reset(this.simulation);
     this.follow.viewportHeight = this.scale.height;
     this.follow.reset(this.simulation.playerMode === 'astronaut' ? this.simulation.astronaut : this.ship, this.simulation.system);
@@ -224,7 +222,6 @@ export class FlightScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility);
       this.game.canvas.removeEventListener('pointerenter',enter);this.game.canvas.removeEventListener('pointerleave',leave);this.game.canvas.removeEventListener('contextmenu',contextMenu);
-      window.removeEventListener('pagehide', this.saveOnLeave);document.removeEventListener('visibilitychange', this.saveOnLeave);
       this.menu.destroy();this.settings.destroy(); this.audio.destroy(); this.chrome.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
@@ -232,6 +229,7 @@ export class FlightScene extends Phaser.Scene {
     this.setPaused(true);this.menu.open('title');
   }
   private newGame():void{
+    this.autosaveTime = 0;
     const invalid=!this.hasRun&&this.simulation.notice.message.includes('CHECKPOINT INVALID');this.simulation=newWorld();if(invalid)notify(this.simulation,'CHECKPOINT INVALID · NEW RUNTIME STARTED · OLD SAVE KEPT');this.hasRun=true;this.menu.close();this.hud.closeDock();this.hud.clearBuildPointer();this.setPaused(false);this.follow.reset(this.ship,this.simulation.system);this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.pickupFeed.reset(this.simulation);this.prediction=null;this.threats=[];
   }
   private menuAction(action:MenuAction):void{
@@ -417,8 +415,6 @@ export class FlightScene extends Phaser.Scene {
     catch { notify(this.simulation, 'SAVE FAILED · STORAGE UNAVAILABLE'); }
   }
   private autosaveTime = 0;
-  /** Closing or hiding the tab saves too, so a refresh never loses more than a moment. */
-  private saveOnLeave = (): void => { this.saveQuietly(); };
   /** Saves quietly every two minutes of play, never while paused or with a lost lander or pilot. */
   private autosave(delta: number): void {
     if (!this.hasRun || this.halted || this.menu.isOpen) return;
@@ -433,6 +429,7 @@ export class FlightScene extends Phaser.Scene {
     try { writeCheckpoint(window.localStorage, w); if (!w.notice.message) notify(w, 'AUTOSAVED'); } catch { /* A failed autosave keeps the last good save. */ }
   }
   private loadCheckpoint(requested: boolean): boolean {
+    this.autosaveTime = 0;
     try {
       const selection = inspectCheckpoint(window.localStorage), saved = selection.world;
       if (saved) {
