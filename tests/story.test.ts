@@ -70,6 +70,13 @@ describe('the story', () => {
     expect(validStory({ memories: ['nonsense'] })).toBe(false);
   });
 
+  it('can be saved while a long memory notice is still on screen', () => {
+    const w = storyWorld();
+    w.exploration.story!.memories.push('firstOre');
+    w.notice = { message: 'MEMORY RESTORED · BATTERY', time: 7 };
+    expect(() => encodeCheckpoint(w)).not.toThrow();
+  });
+
   it('catches an older save up quietly instead of announcing everything late', () => {
     const w = createWorld(4242);
     w.system.sun = true;

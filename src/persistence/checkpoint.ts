@@ -23,6 +23,7 @@ import { BUILD_TYPES, PRODUCTS, REFINERY_RECIPES } from '../sim/colonyConfig';
 import { energyCapacity, oreCapacity, productCapacity } from '../sim/colony';
 import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
+import { NOTICE_MAX_SECONDS } from '../sim/messages';
 import { SUIT } from '../sim/astronaut';
 
 export const SAVE_VERSION=34;
@@ -79,7 +80,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!bodies.every(b => Number.isInteger(b.id) && b.id > 0 && number(b.mass, 1e-12, 1e6) && number(b.radius, 0.01, 200) && RESOURCES.includes(b.resource))) return false;
   if (new Set(bodies.map(b => b.id)).size !== bodies.length || !Number.isInteger(world.nextId) || world.nextId <= Math.max(0, ...bodies.map(b => b.id))) return false;
   if (world.beam !== null && (!object(world.beam) || !shape({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } }, world.beam))) return false;
-  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && validWrecks(world) && number(world.unloaded) && number(world.notice.time, 0, 3) && world.notice.message.length <= 500;
+  return validShields(world) && validExploration(world) && validCommand(world) && validTowing(world) && validGeology(world) && validCombat(world) && validDefence(world) && validStorm(world) && validWrecks(world) && number(world.unloaded) && number(world.notice.time, 0, NOTICE_MAX_SECONDS) && world.notice.message.length <= 500;
 }
 function validWrecks(world: WorldState): boolean {
   if (!Array.isArray(world.wrecks) || world.wrecks.length > 8) return false;
