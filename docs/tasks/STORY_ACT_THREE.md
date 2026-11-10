@@ -35,6 +35,15 @@ in the system should matter on the way there. A longer game is fine.
 2. An expedition to the far system finds the makers' relay and brings back where the living colony is.
 3. That opens the **Shipyard** blueprint and the seed ship's stages.
 
+### What broke the carrier is never explained
+Decided: the cause stays open, on purpose, to leave room for an expansion.
+- The relay's log records the break-up but not a cause: the last entries are normal, then the record stops.
+- Leave two or three details that do not add up and never resolve them. For example: the hull pieces are
+  melted from the inside; one unit's log mentions a contact on the scopes hours before; the carrier's own
+  recorder is the one part no world holds.
+- No memory states a cause, and none rules one out: a failure, something already here, or something else.
+- Do not show or name anything alien. The player should be able to wonder, not be told.
+
 ### How the player learns it
 - Already in the game: storm pieces are "worked metal, melted and flung. Something was built out there once,
   and broken." That line stays as the first hint.
