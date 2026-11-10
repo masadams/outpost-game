@@ -33,7 +33,7 @@ const object = (value: unknown): value is RecordValue => value !== null && typeo
 const number = (value: unknown, min = 0, max = 1e9): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 function shape(template: unknown, value: unknown): boolean {
   if (template === null) return true; // Nullable fields have explicit validators below.
-  if (typeof template === 'number') return number(value, -1e9);
+  if (typeof template === 'number') return number(value, -1e12, 1e12);
   if (Array.isArray(template)) return Array.isArray(value);
   if (object(template)) return object(value) && Object.keys(template).every(key => shape(template[key], value[key]));
   return typeof template === typeof value;
