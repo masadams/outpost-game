@@ -43,6 +43,16 @@ const landedOn = (w: WorldState, id: BodyId): boolean =>
 const WORLD_MEMORIES = ['cinder', 'ember', 'glint', 'verdant', 'tide', 'murk'] as const;
 /** Whether that place is a world with something to read on it. */
 export const hasWorldMemory = (id: string): boolean => (WORLD_MEMORIES as readonly string[]).includes(id);
+/** How far through the wait for the beacon's reply the game is, 0 to 1; 0 before a beacon is sent. */
+const signalShare = (w: WorldState): number => {
+  const signal = w.exploration.signal;
+  if (!signal) return 0;
+  if (signal.phase === 'heard') return 1;
+  const wait = Math.max(1, signal.hearAt - signal.sentAt);
+  return Math.min(1, Math.max(0, (w.system.time - signal.sentAt) / wait));
+};
+/** How long after the echo the second signal is picked out, with an antenna standing (game seconds). */
+export const SECOND_SIGNAL_SECONDS = 900;
 const depotShare = (w: WorldState): number => inventoryMass(w.depot) / oreCapacity(w.colony);
 const fullestProduct = (w: WorldState): number => Math.max(...PRODUCTS.map(p => w.colony.products[p])) / productCapacity(w.colony);
 
@@ -132,10 +142,36 @@ export const MEMORIES: readonly Memory[] = [
     text: '"SYSTEM READY. AWAITING ARRIVAL." The words were in the archive whole, as if kept for this.',
     when: w => !!w.exploration.signal,
   },
+  // The reply does not arrive all at once: it resolves out of the noise while the beacon is out.
+  {
+    id: 'static', title: 'Something on the antenna',
+    text: 'A pattern in the hiss, on the beacon\'s own band. Not noise. Not yet words. It repeats.',
+    when: w => signalShare(w) >= 0.33,
+  },
+  {
+    id: 'words', title: 'Three words',
+    text: 'Three words lift out of the static, far apart: "cannot". "follow". "yours". The rest is still coming.',
+    when: w => signalShare(w) >= 0.66,
+  },
   {
     id: 'echo', title: 'The echo',
     text: 'It is not a reply. It is a recording, centuries old: "To all seed units: we cannot follow. Do not wait for us. What you build is yours."',
     when: w => w.exploration.signal?.phase === 'heard',
+  },
+  // Behind the makers' recording is something newer.
+  {
+    id: 'second', title: 'A second signal',
+    text: 'Under the makers\' recording, a fainter carrier wave. Newer. Still sending. One project, at another star, worked.',
+    when: w => {
+      const signal = w.exploration.signal;
+      return signal?.phase === 'heard' && w.system.time >= signal.hearAt + SECOND_SIGNAL_SECONDS && built(w, 'antenna');
+    },
+  },
+  // The first plain sign of what the storms are.
+  {
+    id: 'oneShip', title: 'One ship',
+    text: 'The derelict\'s hull and the storm slag are the same alloy, from the same pour. They were one ship. It broke.',
+    when: w => done(w, 'analysis') && surveyed(w, 'copper'),
   },
   {
     id: 'release', title: 'Not an order',

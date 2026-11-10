@@ -23,7 +23,11 @@ export const RESTART_SECONDS = 10;
 export const START_SHARE = 0.6;
 /** Gaps shorter than this pause a running machine without showing it as out of power. */
 export const HOLD_SECONDS = 1.5;
-export const BOOT_KINDS: readonly BuildType[] = ['observatory', 'refinery', 'fuelProcessor', 'miningRig', 'researchLab'];
+/** Every machine that works only while it has power. Each warms up, rides out short gaps and waits after a shutdown. */
+export const BOOT_KINDS: readonly BuildType[] = [
+  'observatory', 'refinery', 'fuelProcessor', 'miningRig', 'researchLab',
+  'condenser', 'antenna', 'workshop', 'droneBay', 'massDriver',
+];
 
 export const needsBoot = (kind: BuildType): boolean => BOOT_KINDS.includes(kind);
 export const isOnline = (b: Building): boolean => b.boot === undefined || b.boot >= BOOT_SECONDS;

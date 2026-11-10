@@ -4,6 +4,7 @@ import { archiveReadable, memories } from '../sim/story';
 import { starterPlan } from '../sim/starterPlan';
 import type { WorldState } from '../sim/world';
 import { patchMarkup } from './dom';
+import { ago, NoticeLog } from './noticeLog';
 import { cued, shownObjectives } from './flight/chromeView';
 import { controlHint, type PresentationPreferences } from '../preferences/presentation';
 import { isolateControlKeys } from './controlKeys';
@@ -20,9 +21,20 @@ const recalled = (w: WorldState): string => {
   return `<h3 data-archive="${archiveReadable(w)}">Memory archive · ${archiveReadable(w)}% readable</h3>${rows.join('')}`;
 };
 const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+/** Notices that have been shown this session, newest first, in a section that starts closed. */
+const said = (log: NoticeLog, now: number): string => {
+  const lines = log.lines();
+  if (!lines.length) return '';
+  const rows = lines.map(l => `<p class="said" data-said><span>${escapeHtml(sentence(l.text))}</span><small>${ago(now, l.time)}</small></p>`);
+  return `<details class="said-log" data-preserve-open><summary>Notices · ${lines.length}</summary>${rows.join('')}</details>`;
+};
+/** Notices are written in capitals for the status line; in a list, sentence case reads better. */
+const sentence = (text: string): string =>
+  text === text.toUpperCase() ? text.toLowerCase().replace(/(^|· )([a-z])/g, (_, lead: string, c: string) => lead + c.toUpperCase()) : text;
 export class Objectives {
  readonly content = document.createElement('section');
  private includeRecovery=false;
+ private readonly notices = new NoticeLog();
  private tracked: ObjectiveId | 'auto' = 'auto';
  get trackedId(): ObjectiveId | 'auto' { return this.tracked; }
  constructor(navigate: (link: ObjectiveLink, keyboard: boolean) => void) {
@@ -32,6 +44,7 @@ export class Objectives {
   this.content.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('button[data-objective-link]');const link=button?.dataset.objectiveLink as ObjectiveLink|undefined;if(link&&Object.hasOwn(LINKS,link)){navigate(link,e.detail===0);if(e.detail>0)button?.blur();}});
  }
  update(w:WorldState,p:PresentationPreferences):void {
+  this.notices.observe(w.notice, w.system.time);
   const all=shownObjectives(w), done=w.objectives.completed.filter(id=>all.some(o=>o.id===id));
   const shown=all.filter(o=>done.includes(o.id)||cued(w,o.id));
   const next=this.tracked==='auto'?shown.find(o=>!done.includes(o.id)):shown.find(o=>o.id===this.tracked);
@@ -40,7 +53,7 @@ export class Objectives {
   const plan=starterPlan(w,this.includeRecovery), fmt=(n:number)=>Number(n.toFixed(2));
   patchMarkup(this.content, `<label for="tracked-objective">Following</label><select id="tracked-objective"><option value="auto" ${this.tracked==='auto'?'selected':''}>Latest</option>${shown.map(o=>`<option value="${o.id}" ${this.tracked===o.id?'selected':''}>${done.includes(o.id)?'✓ ':''}${o.label}</option>`).join('')}</select>
    ${next&&progress?`<article class="tracked-goal" data-objective="${next.id}" data-complete="${recorded}"><h3>${recorded?'✓ ':''}${next.label}</h3><label for="objective-progress">${recorded?'Recorded · ':''}${fmt(progress.value)} / ${progress.target} ${progress.unit}</label><progress id="objective-progress" max="${progress.target}" value="${progress.value}"></progress><p>${controlHint(next.hint,p)}</p><button data-objective-link="${next.link}">${(!featureVisible('catalogue') && FOCUS_LINKS[next.link]) || LINKS[next.link]}</button></article>`:'<p>Nothing pressing. Keep going at your own pace.</p>'}
-   <details data-preserve-open ${done.length || (w.exploration.events?.journal.length ?? 0) || memories(w).length ? 'open' : ''}><summary>Journal · ${done.length}</summary>${recent(w)}${recalled(w)}${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
+   <details data-preserve-open ${done.length || (w.exploration.events?.journal.length ?? 0) || memories(w).length ? 'open' : ''}><summary>Journal · ${done.length}</summary>${recent(w)}${recalled(w)}${said(this.notices, w.system.time)}${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
    ${featureVisible('starterBudget')?`<details id="starter-budget" data-preserve-open><summary>Selene starter-route budget</summary><p>Solar + refinery → lab + Applied materials → cargo rack. Missing work on Selene only; remote stock and ship freight are not pooled.</p>
    <label class="budget-spares"><input id="budget-recovery" type="checkbox" ${this.includeRecovery?'checked':''}> Include recovery parts in this budget</label><small>Planning allowance only; no stock is locked. Turret reserves can block recovery.</small><div class="route-budget">${plan.rows.map(r=>`<p data-budget="${r.product}"><b>${r.product}</b><br>Need ${fmt(r.need)} kg · usable ${fmt(r.usable)} kg<br><span ${r.shortfall>0?'class="budget-shortfall"':''}>Shortfall ${fmt(r.shortfall)} kg</span></p>`).join('')||'<p>You have the materials for this route.</p>'}</div>
    ${plan.raw.length?`<p>Refining inputs for the shortfall (whole cycles):</p>${plan.raw.map(r=>`<p data-raw-budget="${r.resource}">${r.resource}: ${fmt(r.need)} kg needed · ${fmt(r.inDepot)} kg in Selene depot · ${fmt(r.shortfall)} kg still to deliver</p>`).join('')}`:'<p>Materials covered. Feedstock, power and travel still count.</p>'}

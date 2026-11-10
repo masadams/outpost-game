@@ -20,7 +20,11 @@ test('a new game wakes with the boot log and keeps the first memory in the Journ
   // The log never takes clicks away from the game.
   expect(await boot.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
   await page.screenshot({ path: 'docs/screenshots/story-boot.png' });
+  // A notice that has flashed past can be read back in the Journal.
+  await page.keyboard.press('k');
   await page.locator('#objectives').click();
+  await page.locator('.said-log summary').click();
+  await expect(page.locator('[data-said]').first()).toContainText('Game saved');
   await expect(page.locator('[data-memory="boot"]')).toContainText('Seed unit 7');
   await expect(page.locator('[data-archive]')).toHaveAttribute('data-archive', '6');
   // Only the two starting blueprints are offered.

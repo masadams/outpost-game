@@ -69,25 +69,14 @@ export const BODIES: Record<BodyId, BodySpec> = {
     optional: true,
     hint: { at: 820, text: 'A dull ochre smudge at the very edge. Its air must be thick. Keep watching.' } },
 };
-/** How often each optional world turns up in a seeded game. */
-const OPTIONAL_CHANCE: Partial<Record<BodyId, number>> = { glint: 0.4, verdant: 0.5, tide: 0.5, murk: 0.5 };
-/** Whether a body is in this system. Optional bodies are never in the standard layout and only in some seeds. */
-const existsCache = new Map<number, Partial<Record<BodyId, boolean>>>();
+/**
+ * Whether a body is in this system. Every seeded game has all eight worlds, so the story's journey is the same
+ * in every game; where each one sits still comes from the seed. The standard layout (no seed) keeps only the
+ * original three, for the tests built on it.
+ */
 export function bodyExists(id: BodyId, system: SystemFrame = STATIC_SYSTEM): boolean {
   if (!BODIES[id].optional) return true;
-  const seed = system.seed ?? 0;
-  if (seed === 0) return false;
-  let row = existsCache.get(seed);
-  if (!row) {
-    row = {};
-    existsCache.set(seed, row);
-  }
-  let here = row[id];
-  if (here === undefined) {
-    here = streamFor(seed, 'extra/' + id)() < (OPTIONAL_CHANCE[id] ?? 0.6);
-    row[id] = here;
-  }
-  return here;
+  return (system.seed ?? 0) !== 0;
 }
 /** The size, gravity and air of each body (the older name for the catalogue's physical fields). */
 export const CELESTIAL = BODIES;
