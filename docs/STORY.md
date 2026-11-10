@@ -41,15 +41,23 @@ Later blueprints (Observatory, turrets, shields, domes and so on) keep their exi
    the makers' star. Verdant is why the system was chosen. A landing grid on Tide, never used. Unit 5 on Murk,
    still running, building and unbuilding one wall. Three of these bring back "the count": seven units were
    sent, six stopped.
-5. **The beacon.** You report "system ready". The echo is a recording, centuries old: "We cannot follow. Do not
-   wait for us. What you build is yours."
-6. **The choice.** The expedition leaves anyway, because you chose it and not because you were ordered.
+5. **The beacon.** You report "system ready". The reply resolves out of the noise while the beacon is out: a
+   pattern at a third of the wait, three words at two thirds ("cannot", "follow", "yours"), then the whole
+   recording, centuries old: "We cannot follow. Do not wait for us. What you build is yours."
+6. **The second signal.** Fifteen minutes after the echo, with an Antenna standing, a fainter and newer carrier
+   wave shows under the makers' recording: one seed project, at another star, worked.
+7. **One ship.** Once the storm slag is analysed and the derelict surveyed, they prove to be the same alloy from
+   the same pour: the seven units came on one carrier, and it broke up. What broke it is never explained.
+8. **The choice.** The expedition leaves anyway, because you chose it and not because you were ordered.
+
+The rest of the story (a keystone on every world, the seed ship, the ending you choose) is planned in
+`docs/tasks/STORY_ACT_THREE.md`.
 
 ## Voice
 Terse, plain, second person or none. A machine log that is slowly becoming a person. No jokes, no jargon.
 Each memory stays under 170 characters.
 
 ## Not yet
-- No ending screen after the expedition returns.
+- No ending yet: the seed ship and the three-way choice are planned, not built.
 - World memories are story only; they give no materials or parts.
 - The standard test layout (no day cycle) has no story and keeps the old unlock order.

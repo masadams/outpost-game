@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld } from '../src/sim/world';
-import { MEMORIES, hasMemory, memories, stepStory, validStory } from '../src/sim/story';
+import { MEMORIES, SECOND_SIGNAL_SECONDS, hasMemory, memories, stepStory, validStory } from '../src/sim/story';
+import { completedBuilding } from '../src/sim/construction';
 import { blueprintRevealed } from '../src/sim/unlocks';
 import { stepBlueprintNotices } from '../src/sim/blueprintNotice';
 import { decodeCheckpoint, encodeCheckpoint } from '../src/persistence/checkpoint';
@@ -105,6 +106,49 @@ describe('the story', () => {
     w.objectives.completed.push('delivery', 'industry');
     expect(blueprintRevealed(w, 'battery')).toBe(true);
     expect(blueprintRevealed(w, 'relay')).toBe(true);
+  });
+
+  it('brings the echo back in pieces while the beacon is out, then finds a second signal', () => {
+    const w = storyWorld();
+    w.system.time = 1000;
+    w.exploration.signal = { phase: 'sent', sentAt: 1000, hearAt: 4000, echo: null };
+    stepStory(w);
+    expect(hasMemory(w, 'beacon')).toBe(true);
+    expect(hasMemory(w, 'static')).toBe(false);
+    w.system.time = 2100;
+    stepStory(w);
+    expect(hasMemory(w, 'static')).toBe(true);
+    expect(hasMemory(w, 'words')).toBe(false);
+    w.system.time = 3100;
+    stepStory(w);
+    expect(hasMemory(w, 'words')).toBe(true);
+    expect(hasMemory(w, 'echo')).toBe(false);
+    w.system.time = 4000;
+    w.exploration.signal.phase = 'heard';
+    stepStory(w);
+    expect(hasMemory(w, 'echo')).toBe(true);
+    expect(hasMemory(w, 'second')).toBe(false);
+    // The second signal needs time and an antenna still standing.
+    w.system.time = 4000 + SECOND_SIGNAL_SECONDS;
+    stepStory(w);
+    expect(hasMemory(w, 'second')).toBe(false);
+    w.colony.buildings.push(completedBuilding(9, 'antenna', 0.2, w));
+    stepStory(w);
+    expect(hasMemory(w, 'second')).toBe(true);
+    const order = memories(w).map(m => m.id);
+    expect(order.indexOf('static')).toBeLessThan(order.indexOf('words'));
+    expect(order.indexOf('words')).toBeLessThan(order.indexOf('echo'));
+    expect(order.indexOf('echo')).toBeLessThan(order.indexOf('second'));
+  });
+
+  it('names the carrier once the slag and the derelict can be compared', () => {
+    const w = storyWorld();
+    w.objectives.completed.push('analysis');
+    stepStory(w);
+    expect(hasMemory(w, 'oneShip')).toBe(false);
+    w.exploration.surveyed.push('copper');
+    stepStory(w);
+    expect(hasMemory(w, 'oneShip')).toBe(true);
   });
 
   it('has short, unique memories', () => {
