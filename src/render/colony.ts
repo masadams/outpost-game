@@ -12,6 +12,8 @@ import { DRONE } from '../sim/droneConfig';
 import { droneSeam } from '../sim/minerDrone';
 import { linkPreview } from '../sim/grid';
 import { daylightAt } from '../sim/sun';
+import { WORLD } from '../sim/config';
+import { drawColonyLife, HAUL_KINDS, type LifeView } from './colonyLife';
 import type { WorldState } from '../sim/world';
 
 function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true, time=0, animate=false): void {
@@ -151,7 +153,25 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
   }
 }
 
+/** What the cosmetic base life needs to know, read from the simulation. */
+function lifeView(world: WorldState): LifeView {
+  const body = colonyPlanet(world);
+  const colony = world.colony;
+  return {
+    radius: body.radius,
+    buildings: colony.buildings.filter(b => operational(b) && !isHabitat(b.kind)).map(b => ({
+      angle: b.angle,
+      hauls: HAUL_KINDS.includes(b.kind) && b.enabled && (b.status === 'running' || b.kind === 'storage'),
+      lit: b.enabled,
+    })),
+    dark: 1 - daylightAt(world.system, WORLD.padAngle, body.id),
+    powered: colony.energy > 0.5,
+  };
+}
+
 export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState, selected: number | null = null, draft: { kind: BuildType; angle: number; valid: boolean } | null = null, view?:RenderView, detail=true, time=0, animate=false): void {
   const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y); g.rotateCanvas(p.spin);
-  drawColonyLocal(g, world, selected, draft, view, detail, time, animate); g.restore();
+  drawColonyLocal(g, world, selected, draft, view, detail, time, animate);
+  if (detail) drawColonyLife(g, lifeView(world), time, animate);
+  g.restore();
 }

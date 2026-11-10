@@ -1,7 +1,10 @@
 import { stormKnowledge } from '../../sim/stormKnowledge';
 import type { WorldState } from '../../sim/world';
 
-export type StormTone = 'watching' | 'warning' | 'urgent';
+export type StormTone = 'watching' | 'warning' | 'urgent' | 'clear';
+
+/** How long the summary of a storm stays on screen once it is over (game seconds). */
+const REPORT_SECONDS = 40;
 
 export interface StormView {
   tone: StormTone;
@@ -29,6 +32,18 @@ function where(corridor: number, margin: number): string {
 export function stormView(w: WorldState): StormView | null {
   const root = w.rootWorld ?? w;
   const storm = root.storm;
+  if (storm.armed && storm.phase === 'over' && storm.report && storm.report.wave === storm.wave) {
+    // The summary stays up for a short while after the sky clears.
+    if (root.system.time - storm.endedAt > REPORT_SECONDS) return null;
+    const r = storm.report;
+    const base = r.lost > 0 ? `${r.lost} lost` : r.damaged > 0 ? `${r.damaged} damaged, none lost` : 'untouched';
+    const pieces = storm.samples.length > 0 ? ' Pieces of it lie on the ground.' : '';
+    return {
+      tone: 'clear',
+      title: `Storm ${r.wave} survived`,
+      detail: `${r.stopped} stopped, ${r.landed} landed. Buildings: ${base}.${pieces}`,
+    };
+  }
   if (!storm.armed || storm.phase !== 'approaching') return null;
   const known = stormKnowledge(root);
   const falling = root.defence.meteors.length > 0;

@@ -1,11 +1,14 @@
 import { studiedFinds } from './finds';
 import type { BuildType } from './colonyConfig';
+import { hasMemory } from './story';
 import type { WorldState } from './world';
+
+const colonies = (w: WorldState) => [w.colony, ...Object.values(w.outposts).map(o => o.colony)];
 
 /** Blueprints a new player starts with. */
 const START: readonly BuildType[] = ['solar', 'refinery'];
-/** Revealed once the first industry runs. */
-const AFTER_INDUSTRY: readonly BuildType[] = ['battery', 'storage', 'fuelProcessor', 'miningRig'];
+/** Remembered one at a time after the first industry runs, each when the base meets the problem it solves. */
+const REMEMBERED: readonly BuildType[] = ['battery', 'storage', 'fuelProcessor', 'miningRig', 'relay', 'condenser'];
 
 /**
  * Whether a blueprint has been earned yet. The new-player build menu lists only these, so early play follows the
@@ -15,12 +18,14 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   const w = world.rootWorld ?? world;
   const industry = w.objectives.completed.includes('industry');
   if (START.includes(kind)) return true;
-  if (AFTER_INDUSTRY.includes(kind)) return industry;
+  if (REMEMBERED.includes(kind)) {
+    // The standard test layout (no day cycle) has no story: everything comes with the first industry.
+    if (!w.system.sun) return industry;
+    return hasMemory(w, kind) || colonies(w).some(c => c.buildings.some(b => b.kind === kind));
+  }
   if (kind === 'observatory') {
     return industry && (!w.system.sun || w.exploration.surveyed.includes('frost'));
   }
-  if (kind === 'relay') return industry;
-  if (kind === 'condenser') return industry;
   if (kind === 'geothermal') return w.colony.research.completed.includes('geoscience');
   if (kind === 'windTurbine') return w.colony.research.completed.includes('aeronautics');
   if (kind === 'massDriver') return w.colony.research.completed.includes('massDrivers');

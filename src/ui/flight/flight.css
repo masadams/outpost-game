@@ -404,3 +404,20 @@
 #hud-chrome #flight-event i { width: 10px; height: 10px; border-radius: 50%; background: #ffb347; box-shadow: 0 0 8px #ffb347; }
 #hud-chrome #flight-event[data-active=true] { background: rgba(70, 28, 12, 0.85); color: #ffd9c0; }
 #hud-chrome #flight-event[data-active=true] i { background: #ff6a3d; box-shadow: 0 0 10px #ff6a3d; }
+
+/* Rocks overhead: the edges of the screen pulse red. Never takes input. */
+#hud-chrome .storm-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 140px 30px #ff505040;
+  animation: storm-pulse 1.4s ease-in-out infinite;
+}
+@keyframes storm-pulse {
+  50% { box-shadow: inset 0 0 180px 50px #ff505070; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hud-chrome .storm-vignette { animation: none; }
+}
+#hud-chrome .storm-card[data-tone=clear] { border-color: var(--ui-green); }
+#hud-chrome .storm-card[data-tone=clear] .storm-title { color: var(--ui-green); }

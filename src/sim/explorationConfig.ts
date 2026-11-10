@@ -38,10 +38,11 @@ import type { Vec } from './math';
 import type { Probe } from './probes';
 import type { Pod, PodBeacon } from './pods';
 import type { DeepSignal } from './signal';
+import type { StoryState } from './story';
 import type { Expedition } from './expedition';
 import type { SupplyLines } from './supply';
 import type { EventsState } from './events';
-export interface ExplorationState { selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; watch: number; known: BodyId[]; hinted: BodyId[]; crystal: 'lying' | 'carried' | 'studied'; core: 'lying' | 'carried' | 'studied'; probes: Probe[]; pods: Pod[]; /** Where cargo pods came down lately. Missing in older saves. */ beacons?: PodBeacon[]; /** The one-way deep-space beacon, once sent. */ signal?: DeepSignal; /** The expedition to the far system. */ expedition?: Expedition; /** Automatic supply lines between worlds. */ supply?: SupplyLines; /** Things that happen between storms. */ events?: EventsState; mark: Vec | null }
+export interface ExplorationState { story?: StoryState; selected: Destination; sites: Site[]; surveyed: BeltId[]; salvaged: number; refuelled: number; fuelLost: number; returned: boolean; watch: number; known: BodyId[]; hinted: BodyId[]; crystal: 'lying' | 'carried' | 'studied'; core: 'lying' | 'carried' | 'studied'; probes: Probe[]; pods: Pod[]; /** Where cargo pods came down lately. Missing in older saves. */ beacons?: PodBeacon[]; /** The one-way deep-space beacon, once sent. */ signal?: DeepSignal; /** The expedition to the far system. */ expedition?: Expedition; /** Automatic supply lines between worlds. */ supply?: SupplyLines; /** Things that happen between storms. */ events?: EventsState; mark: Vec | null }
 export const createExploration = (): ExplorationState => ({ selected: 'home', sites: [], surveyed: [], salvaged: 0, refuelled: 0, fuelLost: 0, returned: false, watch: 0, known: [], hinted: [], crystal: 'lying', core: 'lying', probes: [], pods: [], mark: null });
 export type ExplorationAction = { type: 'navigate'; target: Destination } | { type: 'visitSite' } | { type: 'mark'; point: Vec };
 export const isExplorationAction = (a: { type: string }): a is ExplorationAction => a.type === 'navigate' || a.type === 'visitSite' || a.type === 'mark';

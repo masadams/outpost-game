@@ -1,5 +1,6 @@
 import { BLUEPRINTS, BUILD_TYPES, type BuildType } from './colonyConfig';
 import { notify } from './messages';
+import { blueprintMemory } from './story';
 import { blueprintRevealed } from './unlocks';
 import type { WorldState } from './world';
 
@@ -17,7 +18,11 @@ export function stepBlueprintNotices(w: WorldState): BuildType[] {
   const fresh = now.filter(kind => !known.has(kind));
   for (const kind of fresh) {
     known.add(kind);
-    notify(w, `NEW BLUEPRINT · ${BLUEPRINTS[kind].label.toUpperCase()}`);
+    const memory = blueprintMemory(kind);
+    const label = BLUEPRINTS[kind].label.toUpperCase();
+    // A remembered blueprint says why it came back; the rest are simply new.
+    if (memory) notify(w, `MEMORY RESTORED · ${label} · ${memory.text}`, 7);
+    else notify(w, `NEW BLUEPRINT · ${label}`);
   }
   return fresh;
 }

@@ -127,3 +127,22 @@ export function regionView(w: WorldState): RegionView {
   const key = flightRegion(position, w.system);
   return { key, label: REGION_LABELS[key] };
 }
+
+/** The lines the unit prints as it wakes. */
+const BOOT_LINES: readonly string[] = [
+  'SEED UNIT 7 · RESUMING',
+  'DORMANT · 412 YEARS',
+  'MEMORY ARCHIVE · 6% READABLE',
+  'STANDING ORDER · MAKE THIS SYSTEM READY FOR THOSE WHO FOLLOW',
+  'ONE LANDER. ONE PRINTED PILOT. BEGIN.',
+];
+/** How long the boot log stays up at the start of a new game (game seconds). */
+const BOOT_SECONDS = 16;
+
+/** The boot log, for the first moments of a new story game; null the rest of the time. */
+export function bootLog(source: WorldState): readonly string[] | null {
+  const w = source.rootWorld ?? source;
+  if (!w.system.sun || w.system.time > BOOT_SECONDS) return null;
+  if (w.unloaded > 0 || w.colony.buildings.length > 0) return null;
+  return BOOT_LINES;
+}

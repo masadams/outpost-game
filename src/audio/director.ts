@@ -9,7 +9,7 @@ import { habitatContains, habitatSource } from '../sim/habitats';
 import { flightSafety } from '../sim/flightSafety';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver' | 'podLaunch' | 'podLand' | 'podLost' | 'signal';
+export type Cue = 'stormSiren' | 'stormAlarm' | 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver' | 'podLaunch' | 'podLand' | 'podLost' | 'signal';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
 function snapshot(world: WorldState) {
@@ -18,7 +18,7 @@ function snapshot(world: WorldState) {
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
     crystal: world.exploration.crystal, core: world.exploration.core, held: world.storm.held,
-    scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over',
+    scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over', stormNear: world.storm.armed && world.storm.phase === 'approaching', falling: world.defence.meteors.length,
     podIds: world.exploration.pods.map(p => p.id), beacons: (world.exploration.beacons ?? []).map(b => `${b.id}:${b.kind}`),
     signal: world.exploration.signal?.phase ?? 'none', expedition: world.exploration.expedition ? `${world.exploration.expedition.count}:${world.exploration.expedition.phase}` : 'none',
     rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position, stage: b.stage }])),
@@ -47,6 +47,9 @@ export class AudioDirector {
     if (next.scanning && !prev.scanning) cues.push('scan');
     if (next.sighted && !prev.sighted) cues.push('sighting');
     if (next.stormOver && !prev.stormOver) cues.push('stormOver');
+    // The storm closing in sounds a slow siren; the first rock overhead sounds the alarm.
+    if (next.stormNear && !prev.stormNear) cues.push('stormSiren');
+    if (next.stormNear && next.falling > 0 && prev.falling === 0) cues.push('stormAlarm');
     // Cargo pods: heard when they leave or come down near you.
     for (const pod of world.exploration.pods) {
       if (!prev.podIds.includes(pod.id)) {

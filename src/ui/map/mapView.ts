@@ -15,6 +15,7 @@ import { bodyKnown, BELTS, BELT_IDS, SITE_INFO, SITE_IDS, type BeltId, type Dest
 import { destination, navigation, siteError } from '../../sim/exploration';
 import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import type { Vec } from '../../sim/math';
+import { hasMemory, hasWorldMemory } from '../../sim/story';
 import type { WorldState } from '../../sim/world';
 
 export interface PodMark {
@@ -195,6 +196,11 @@ function selectedView(w: WorldState): SelectedView {
   }
   else if (belt) body = surveyed ? beltStock(w, belt) : 'Unknown until surveyed. Survey the buoy in this arc to see what is here.';
   else if (site) body = siteLine(w, site);
+  if (w.system.sun && hasWorldMemory(id)) {
+    // Every other world holds something an earlier unit left: a reason to land there once.
+    body += hasMemory(w, id) ? ' You have read what the earlier unit left here.' : ' Old machine traces show on the surface. Land to read them.';
+    body = body.replace(' nothing is waiting there.', ' there is no base there.');
+  }
   return {
     id,
     label: n.label,
