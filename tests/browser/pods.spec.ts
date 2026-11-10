@@ -39,6 +39,7 @@ test('a pod sent from Base shows on the Map with a countdown and a lane', async 
   await enter(page, encodeCheckpoint(staged()));
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="logistics"]').click();
   await page.getByRole('button', { name: /Send ore to Nacre/ }).click();
   await expect(page.locator('.status')).toContainText('Pod launched for Nacre');
   await page.keyboard.press('Escape');
