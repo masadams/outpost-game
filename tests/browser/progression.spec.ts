@@ -11,12 +11,12 @@ test('builds a powered lab, earns research with real work and fabricates cargo e
   await page.keyboard.press('f'); await page.keyboard.down('d'); await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 12000, intervals: [100] }).toBeGreaterThan(96);
   await page.keyboard.up('d'); await page.waitForTimeout(450); await page.keyboard.press('b'); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '1');
   await page.keyboard.press('t'); await page.getByRole('navigation',{name:'Building groups',exact:true}).getByRole('button',{name:'Industry & research',exact:true}).click(); await page.locator('[data-select="researchLab"]').click(); await page.keyboard.press('Enter'); await expect(hud).toHaveAttribute('data-buildings', '2'); await page.keyboard.press('b');
-  await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Research',exact:true}).click();
+  await page.getByRole('button', { name:'Base', exact: true }).click(); await page.locator('button[data-page="research"]').click();
   const start = page.getByRole('button', { name: 'Research Applied materials', exact: true }); await start.focus(); await page.keyboard.press('Space'); await expect(hud).toHaveAttribute('data-grounded', 'true');
   const progress = console.locator('[data-project="materials"] progress'); await expect.poll(async () => Number(await progress.getAttribute('value')), { timeout: 15000 }).toBeGreaterThan(2);
   await page.keyboard.press('p'); await page.keyboard.press('k'); const save = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(save.version).toBe(34); expect(save.world.colony.products.alloy).toBe(14); expect(save.world.colony.research.queue[0].progress).toBeGreaterThan(2); expect(save.world.colony.research.completed).toEqual([]);
-  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name:'Base', exact: true }).click(); await page.getByRole('button',{name:'Research',exact:true}).click();
+  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name:'Base', exact: true }).click(); await page.locator('button[data-page="research"]').click();
   await page.keyboard.press('p');await expect(console.locator('[data-project="materials"]')).toHaveCount(0,{timeout:45000});await page.getByLabel('Research view',{exact:true}).selectOption('complete');await expect(console.locator('[data-tech="materials"]')).toHaveAttribute('data-state','complete');
   await expect(console.locator('[data-project="materials"]')).toHaveCount(0); await page.keyboard.press('Escape');
   await page.keyboard.down('a'); await expect.poll(async () => Number(await hud.getAttribute('data-surface-angle')) * WORLD.radius, { timeout: 15000, intervals: [100] }).toBeLessThan(10);

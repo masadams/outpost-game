@@ -47,6 +47,7 @@ test('the beacon can be launched from Base and shows as listening on the Map', a
   await open(page, encodeCheckpoint(staged(false)));
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="expedition"]').click();
   await page.locator('[data-beacon]').click();
   await expect(page.locator('[data-signal="waiting"]')).toContainText('Listening');
   await page.keyboard.press('Escape');
@@ -63,6 +64,7 @@ test('when the echo comes back Base and the Map name the far system', async ({ p
   await page.keyboard.press('p');
   await expect(page.locator('.status')).toContainText(/signal came back/i, { timeout: 15000 });
   await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="expedition"]').click();
   await expect(page.locator('[data-echo]')).toContainText('light-hours');
   await page.screenshot({ path: '/tmp/claude-0/-home-user-outpost-game/69b8c470-1738-5ca3-a382-1afb3ca6b07d/scratchpad/shots/signal-base.png' });
   await page.keyboard.press('Escape');
@@ -79,6 +81,7 @@ test('once the echo is in, an expedition can be packed and sent from Base', asyn
   await open(page, encodeCheckpoint(staged(false, true)));
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="expedition"]').click();
   await expect(page.locator('[data-expedition="plan"]')).toContainText('Pack for the hazard');
   await page.getByLabel(/Radiation shielding/).check();
   await expect(page.locator('[data-expedition="plan"]')).toContainText(/odds|Risky/);
@@ -107,6 +110,7 @@ test('trouble on the way waits in Base for a decision', async ({ page }) => {
   await open(page, encodeCheckpoint(w));
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="expedition"]').click();
   await expect(page.locator('[data-trouble]')).toContainText('strong radiation');
   await expect(page.locator('[data-choice="shields"]')).toHaveAttribute('data-safe', 'true');
   await page.locator('[data-choice="shields"]').click();

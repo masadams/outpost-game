@@ -147,3 +147,6 @@
 @media (prefers-reduced-motion: reduce) {
   #hud #operations-dock .dock-title::after { animation: none; }
 }
+
+/* The narrow windows keep their title short. */
+#hud #operations-dock:is([data-inspection=true], [data-expanded=false]) .dock-title::before { content: none; }
