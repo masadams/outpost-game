@@ -222,6 +222,17 @@ export class GameAudio {
     else if (cue === 'production') { this.tone(523, 523, 0.18, 0, 'sine', 0.04); this.tone(784, 784, 0.25, 0.12, 'sine', 0.035); }
     else if (cue === 'scan') { this.tone(300, 900, 0.5, 0, 'sine'); this.tone(450, 1350, 0.5, 0.35, 'sine'); this.tone(600, 1800, 0.45, 0.7, 'sine'); }
     else if (cue === 'sighting') { this.tone(520, 520, 0.12, 0, 'sine'); this.tone(780, 780, 0.2, 0.16, 'sine'); }
+    // A slow rising and falling wail, three times.
+    else if (cue === 'stormSiren') {
+      for (let i = 0; i < 3; i++) {
+        this.tone(330, 620, 0.9, i * 1.8, 'sawtooth', 0.035);
+        this.tone(620, 330, 0.9, i * 1.8 + 0.9, 'sawtooth', 0.035);
+      }
+    }
+    // Short, sharp and repeated: rocks are overhead.
+    else if (cue === 'stormAlarm') {
+      for (let i = 0; i < 6; i++) this.tone(880, 660, 0.14, i * 0.28, 'square', 0.035);
+    }
     else if (cue === 'stormOver') { this.tone(330, 440, 0.3, 0, 'sine'); this.tone(495, 660, 0.4, 0.2, 'sine'); }
     // Finished building: a soft two-note chime.
     else if (cue === 'build') { this.tone(392, 392, 0.2, 0, 'sine', 0.045); this.tone(587, 587, 0.28, 0.12, 'sine', 0.04); }

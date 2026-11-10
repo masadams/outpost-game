@@ -135,6 +135,7 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           ))}
         </div>
       )}
+      {state.storm?.tone === 'urgent' && <div class="storm-vignette" aria-hidden="true" />}
       <div class="chrome-left">
         <button
           type="button"

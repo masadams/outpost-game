@@ -6,7 +6,7 @@ import { notify } from './messages';
 import { seeded } from './random';
 import { around, streamFor } from './seed';
 import { operational } from './buildingHealth';
-import { ANALYSIS_ENERGY, GIANT, PICKUP_REACH, quietAfter, stormFor, type FarBody } from './stormConfig';
+import { ANALYSIS_ENERGY, GIANT, PICKUP_REACH, quietAfter, stormFor, type FarBody, type StormCounts, type StormReport } from './stormConfig';
 import type { Meteor } from './defenceConfig';
 import type { WorldState } from './world';
 
@@ -170,6 +170,7 @@ export function stepStorm(world: WorldState): void {
   }
   if (storm.phase === 'quiet' && time >= storm.arrival - STORM.lead) {
     storm.phase = 'approaching';
+    storm.start = stormCounts(world);
     if (storm.far.some(b => b.radius >= GIANT.radius)) notify(world, 'SOMETHING HUGE IS IN THIS STORM · LASERS WILL NOT STOP IT · MISSILES CAN');
   }
   if (storm.phase === 'quiet') return;
@@ -199,8 +200,8 @@ export function stepStorm(world: WorldState): void {
     }
     // Only the newest pieces stay on the ground, so an uncollected pile cannot grow without limit.
     storm.samples = storm.samples.slice(-32);
-    if (storm.samples.length > 0) notify(world, 'The sky is clear. Pieces of the storm are lying out on the ground.');
-    else notify(world, 'The sky is clear.');
+    storm.report = stormReport(world);
+    notify(world, `${reportLine(storm.report).toUpperCase()}${storm.samples.length > 0 ? ' · PIECES LIE ON THE GROUND' : ''}`, 8);
   }
   if (storm.phase === 'over') collectSamples(world);
   if (storm.phase === 'over' && time >= storm.endedAt + quietAfter(storm.wave)) startNextStorm(world);
@@ -264,4 +265,39 @@ function startNextStorm(world: WorldState): void {
   storm.observed = 0;
   storm.endedAt = 0;
   notify(world, storm.wave === 2 ? 'The sky is changing. Another storm is forming.' : 'The Observatory sees another storm forming.');
+}
+
+/** Rocks stopped and landed so far, and how the home base stands. */
+export function stormCounts(world: WorldState): StormCounts {
+  const working = world.colony.buildings.filter(b => b.status !== 'wrecked' && (b.health ?? 100) > 0);
+  return {
+    stopped: world.defence.intercepted,
+    landed: world.defence.impacts,
+    standing: working.length,
+    hurt: working.filter(b => (b.health ?? 100) < 100).length,
+  };
+}
+
+/** What the storm that just ended did, from the counts taken when it closed in. */
+function stormReport(world: WorldState): StormReport {
+  const now = stormCounts(world);
+  const then = world.storm.start ?? now;
+  const lost = Math.max(0, then.standing - now.standing);
+  return {
+    wave: world.storm.wave,
+    stopped: Math.max(0, now.stopped - then.stopped),
+    landed: Math.max(0, now.landed - then.landed),
+    damaged: Math.max(0, now.hurt - then.hurt),
+    lost,
+  };
+}
+
+const count = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
+
+/** "Storm 2 survived · 6 rocks stopped · 2 landed · 1 building damaged · none lost". */
+export function reportLine(r: StormReport): string {
+  const parts = [`Storm ${r.wave} survived`, `${count(r.stopped, 'rock', 'rocks')} stopped`, `${r.landed} landed`];
+  if (r.damaged > 0) parts.push(`${count(r.damaged, 'building', 'buildings')} damaged`);
+  parts.push(r.lost > 0 ? `${count(r.lost, 'building', 'buildings')} lost` : 'no buildings lost');
+  return parts.join(' · ');
 }

@@ -3,6 +3,7 @@ import { createWorld } from '../src/sim/world';
 import { buildView } from '../src/ui/build/buildView';
 import { setFeatureMode } from '../src/preferences/features';
 import { completedBuilding } from '../src/sim/construction';
+import { stepStory } from '../src/sim/story';
 
 afterEach(() => setFeatureMode(null));
 
@@ -20,7 +21,17 @@ describe('the earned sequence', () => {
     };
     expect(menu()).toEqual(['solar', 'refinery']);
 
-    w.objectives.completed.push('industry');
+    // The first metal alone brings nothing back: each early building returns when the base meets its problem.
+    stepStory(w);
+    w.objectives.completed.push('delivery', 'industry');
+    w.unloaded = 40;
+    stepStory(w);
+    expect(menu().filter(k => k !== 'battery')).toEqual(['solar', 'refinery']);
+    w.unloaded = 300;
+    stepStory(w);
+    expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig']);
+    w.colony.buildings = [1, 2, 3, 4, 5].map(i => completedBuilding(i, i === 5 ? 'fuelProcessor' : 'solar', 0.02 * i, w));
+    stepStory(w);
     expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'relay', 'condenser']);
 
     w.exploration.surveyed.push('frost');

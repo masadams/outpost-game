@@ -179,7 +179,17 @@ export interface StormState {
   wave: number;
   /** When the current storm ended (world seconds), for timing the next. */
   endedAt: number;
+  /** Counts taken when the storm closes in, to work out what it did. */
+  start?: StormCounts;
+  /** What the last storm did, for the summary once the sky clears. */
+  report?: StormReport;
 }
+
+/** Running totals at one moment: rocks stopped and landed so far, and the state of the home base. */
+export interface StormCounts { stopped: number; landed: number; standing: number; hurt: number }
+
+/** What one storm did. */
+export interface StormReport { wave: number; stopped: number; landed: number; damaged: number; lost: number }
 
 /** A piece of a storm body lying on the home planet's surface. */
 export interface StormSample { id: number; angle: number }
