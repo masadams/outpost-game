@@ -297,3 +297,33 @@
 #hud .base-supply-cell { display: inline-flex; align-items: center; gap: 4px; }
 #hud .base-supply-cell b { min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
 #hud .base-supply-cell small { color: var(--ui-muted); }
+
+/* Overview: a short dashboard. Attention first, materials and power side by side, then what is going on. */
+#hud .base-overview { display: grid; gap: 16px; align-content: start; }
+#hud .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+#hud .overview-card { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-panel-solid); }
+#hud .overview-card > h3, #hud .overview-attention > h3 { margin: 0; }
+#hud .overview-attention { display: grid; gap: 8px; }
+#hud .overview-attention .base-attention:empty { display: none; }
+#hud .overview-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--ui-line); font: 400 calc(14px * var(--scale)) / 1.4 var(--ui-body); }
+#hud .overview-line:first-of-type { border-top: 0; }
+#hud .overview-go { flex: none; padding: 6px 12px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-raised); color: var(--ui-text); font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .05em; cursor: pointer; }
+#hud .overview-go:hover { border-color: var(--ui-mint); }
+
+/* Research: what runs now, finds, what can start, then the whole tree. */
+#hud .research-hub { display: grid; gap: 16px; align-content: start; }
+#hud .research-active { display: grid; gap: 6px; }
+#hud .research-active strong { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); }
+#hud .research-active small { color: var(--ui-muted); font: 400 calc(13px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .research-ready-list { display: grid; gap: 6px; }
+#hud .research-ready-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; padding: 8px 10px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-raised); }
+#hud .research-ready-row strong { display: block; font: 600 calc(15px * var(--scale)) / 1.2 var(--ui-display); }
+#hud .research-ready-row small { color: var(--ui-muted); font: 400 calc(13px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .research-ready-row .base-why { grid-column: 1 / -1; }
+#hud .research-ready-row button { padding: 7px 16px; border: 1px solid var(--ui-mint); border-radius: var(--ui-radius); background: transparent; color: var(--ui-mint); font: 600 calc(14px * var(--scale)) / 1 var(--ui-display); cursor: pointer; }
+#hud .research-ready-row button:disabled { opacity: .45; cursor: default; }
+#hud .research-all > h3 { margin: 4px 0 8px; }
+#hud .overview-line > span { flex: 1; min-width: 0; }
+#hud .overview-line .overview-go { width: auto; }
+#hud .research-ready-row .ship-meter { margin-top: 6px; }
+#hud .research-ready-row button { width: auto; }
