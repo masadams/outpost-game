@@ -180,6 +180,9 @@ export const MEMORIES: readonly Memory[] = [
   },
 ];
 
+/** Memories recovered but not yet announced. Not saved: they are already in the Journal. */
+const queue = new WeakMap<WorldState, Memory[]>();
+
 const BY_ID = new Map(MEMORIES.map(m => [m.id, m]));
 const BY_BLUEPRINT = new Map(MEMORIES.filter(m => m.blueprint).map(m => [m.blueprint!, m]));
 
@@ -206,10 +209,13 @@ export function stepStory(source: WorldState): Memory[] {
   const fresh = MEMORIES.filter(m => !story.memories.includes(m.id) && m.when(w));
   for (const m of fresh) story.memories.push(m.id);
   if (first) return [];
-  // Blueprints are announced by the blueprint notice; the rest are announced here.
-  const told = fresh.filter(m => !m.blueprint);
-  if (told.length > 0) {
-    const m = told[told.length - 1];
+  // Blueprints are announced by the blueprint notice; the rest wait here for their turn.
+  const waiting = queue.get(w) ?? [];
+  queue.set(w, waiting);
+  waiting.push(...fresh.filter(m => !m.blueprint));
+  // A memory never talks over a notice that is still up: it is said once the line clears.
+  if (waiting.length > 0 && w.notice.time <= 0) {
+    const m = waiting.shift()!;
     notify(w, `MEMORY RESTORED · ${m.title.toUpperCase()} · SEE THE JOURNAL`, 5);
   }
   return fresh;

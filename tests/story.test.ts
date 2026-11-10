@@ -77,6 +77,18 @@ describe('the story', () => {
     expect(() => encodeCheckpoint(w)).not.toThrow();
   });
 
+  it('waits for the notice on screen to clear before announcing a memory', () => {
+    const w = storyWorld();
+    w.notice = { message: 'A SIGNAL CAME BACK', time: 3 };
+    w.objectives.completed.push('delivery');
+    stepStory(w);
+    expect(hasMemory(w, 'firstOre')).toBe(true);
+    expect(w.notice.message).toBe('A SIGNAL CAME BACK');
+    w.notice.time = 0;
+    stepStory(w);
+    expect(w.notice.message).toContain('MEMORY RESTORED · ORE IN THE DEPOT');
+  });
+
   it('catches an older save up quietly instead of announcing everything late', () => {
     const w = createWorld(4242);
     w.system.sun = true;
