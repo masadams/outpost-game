@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Destination } from '../../sim/explorationConfig';
 import type { Vec } from '../../sim/math';
 import type { MapView } from './mapView';
@@ -20,6 +20,20 @@ export interface MapState {
 
 const W = 1000;
 const H = 640;
+
+/** Chart zoom limits and the step one wheel notch, button press or key makes. */
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 8;
+export const ZOOM_STEP = 1.5;
+/** Wheel travel (pixels) that counts as one zoom step, so trackpads zoom smoothly instead of jumping. */
+const WHEEL_STEP = 100;
+/** One arrow-key press moves the chart this share of its width (Shift moves three times as far). */
+const KEY_PAN = 0.12;
+
+/** Whether a zoom step in that direction would change anything. */
+function canZoom(zoom: number, dir: 'in' | 'out'): boolean {
+  return dir === 'in' ? zoom < ZOOM_MAX - 1e-9 : zoom > ZOOM_MIN + 1e-9;
+}
 
 function click(action: () => void) {
   return (event: JSX.TargetedMouseEvent<HTMLButtonElement>) => {
@@ -78,21 +92,62 @@ function Chart({ state, on, chart, pan }: { state: MapState; on: MapHandlers; ch
     const origin = at({ x: 0, y: 0 });
     on.mark({ x: (x - origin.x) / k, y: (y - origin.y) / k });
   };
+  const wheel = useRef(0);
+  /** Zoom one step, keeping the point under the cursor (drawing units) where it is. */
+  const zoomAt = (dir: 'in' | 'out', x: number, y: number) => {
+    if (!canZoom(state.zoom, dir)) return;
+    const next = dir === 'in' ? Math.min(ZOOM_MAX, state.zoom * ZOOM_STEP) : Math.max(ZOOM_MIN, state.zoom / ZOOM_STEP);
+    const keep = 1 - state.zoom / next;
+    pan({ x: ((x - W / 2) / k) * keep, y: ((y - H / 2) / k) * keep });
+    on.zoom(dir);
+  };
+  const toChart = (event: MouseEvent) => {
+    const box = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    return { x: ((event.clientX - box.left) / box.width) * W, y: ((event.clientY - box.top) / box.height) * H };
+  };
+  const onWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    // Line-based wheels report small numbers; treat each line as about 40 pixels.
+    wheel.current += event.deltaMode === 1 ? event.deltaY * 40 : event.deltaY;
+    if (Math.abs(wheel.current) < WHEEL_STEP) return;
+    const dir = wheel.current < 0 ? 'in' : 'out';
+    wheel.current = 0;
+    const p = toChart(event);
+    zoomAt(dir, p.x, p.y);
+  };
+  const onPointerDown = (event: PointerEvent) => {
+    if (event.button !== 0) return;
+    drag.current = { x: event.clientX, y: event.clientY, moved: false };
+  };
+  const onPointerMove = (event: PointerEvent) => {
+    const d = drag.current;
+    if (!d || (event.buttons & 1) === 0) return;
+    const dx = event.clientX - d.x;
+    const dy = event.clientY - d.y;
+    if (!d.moved && Math.hypot(dx, dy) < 5) return;
+    const svg = event.currentTarget as SVGSVGElement;
+    if (!d.moved) {
+      d.moved = true;
+      // Keep the drag going when the pointer leaves the chart.
+      svg.setPointerCapture?.(event.pointerId);
+    }
+    const box = svg.getBoundingClientRect();
+    pan({ x: (-dx * W) / box.width / k, y: (-dy * H) / box.height / k });
+    d.x = event.clientX;
+    d.y = event.clientY;
+  };
   return (
-    <svg class="map-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Chart of nearby space. Click a place to select it, or empty space to mark a point." onClick={pick}
-      onPointerDown={e => { drag.current = { x: e.clientX, y: e.clientY, moved: false }; }}
-      onPointerMove={e => {
-        const d = drag.current;
-        if (!d || (e.buttons & 1) === 0) return;
-        const dx = e.clientX - d.x, dy = e.clientY - d.y;
-        if (!d.moved && Math.hypot(dx, dy) < 5) return;
-        d.moved = true;
-        const box = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
-        pan({ x: (-dx * W) / box.width / k, y: (-dy * H) / box.height / k });
-        d.x = e.clientX;
-        d.y = e.clientY;
-      }}
-      onWheel={e => { e.preventDefault(); on.zoom(e.deltaY < 0 ? 'in' : 'out'); }}>
+    <svg
+      class="map-chart"
+      data-dragging={String(!!drag.current?.moved)}
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-label="Chart of nearby space. Click a place to select it, or empty space to mark a point."
+      onClick={pick}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onWheel={onWheel}
+    >
       <defs>
         <pattern id="map-grid" width="50" height="50" patternUnits="userSpaceOnUse">
           <path d="M50 0H0V50" class="map-grid-line" />
@@ -261,14 +316,65 @@ function groupOf(kind: string): string {
   if (kind === 'Moon' || kind.endsWith('world') || kind === 'World') return 'Worlds';
   return 'Other';
 }
+/** How far (metres) one arrow-key press moves the chart. */
+function step(state: MapState, chart: ChartView, dx: number, dy: number, far: boolean): Vec {
+  const { k } = projection(state, chart);
+  const metres = (W * KEY_PAN * (far ? 3 : 1)) / k;
+  return { x: dx * metres, y: dy * metres };
+}
 const GROUP_ORDER = ['Your bases', 'Worlds', 'Ore clusters', 'Other'];
 
 export function MapWindowView({ state, on }: { state: MapState; on: MapHandlers }) {
   const [chart, setChart] = useState<ChartView>({ mode: 'home', pan: { x: 0, y: 0 } });
   const groups = GROUP_ORDER.map(g => ({ g, places: state.view.places.filter(p => groupOf(p.kind) === g) })).filter(x => x.places.length > 0);
-  const view = (mode: ChartView['mode']) => { setChart({ mode, pan: { x: 0, y: 0 } }); on.zoom('fit'); };
+  const view = (mode: ChartView['mode']) => {
+    setChart({ mode, pan: { x: 0, y: 0 } });
+    on.zoom('fit');
+  };
+  const focus = () => {
+    setChart(c => ({ ...c, pan: { x: 0, y: 0 } }));
+    on.zoom('focus');
+  };
+  const nudge = (by: Vec) => setChart(c => ({ ...c, pan: { x: c.pan.x + by.x, y: c.pan.y + by.y } }));
+  const root = useRef<HTMLDivElement>(null);
+  const latest = useRef({ state, chart, view, nudge, on });
+  latest.current = { state, chart, view, nudge, on };
+  useEffect(() => {
+    // While the Map is on screen, arrows move the chart, + and − zoom and 0 goes home.
+    // Captured before the game sees them, so the arrows never steer or launch the ship behind the window.
+    const onKey = (event: KeyboardEvent) => {
+      const el = root.current;
+      if (!el || !el.offsetParent) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, select, textarea, [contenteditable=true]')) return;
+      if (document.querySelector('dialog[open]')) return;
+      const { state: s, chart: c, view: v, nudge: n, on: o } = latest.current;
+      const keys: Record<string, () => void> = {
+        ArrowLeft: () => n(step(s, c, -1, 0, event.shiftKey)),
+        ArrowRight: () => n(step(s, c, 1, 0, event.shiftKey)),
+        ArrowUp: () => n(step(s, c, 0, -1, event.shiftKey)),
+        ArrowDown: () => n(step(s, c, 0, 1, event.shiftKey)),
+        '+': () => o.zoom('in'),
+        '=': () => o.zoom('in'),
+        '-': () => o.zoom('out'),
+        '0': () => v('home'),
+      };
+      const act = keys[event.key];
+      if (!act) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.type === 'keydown') act();
+    };
+    window.addEventListener('keydown', onKey, true);
+    window.addEventListener('keyup', onKey, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('keyup', onKey, true);
+    };
+  }, []);
   return (
-    <div class="map-window">
+    <div class="map-window" ref={root}>
       <nav class="map-places" aria-label="Places">
         {groups.map(({ g, places }) => (
           <div key={g} class="map-group">
@@ -283,15 +389,15 @@ export function MapWindowView({ state, on }: { state: MapState; on: MapHandlers 
         ))}
       </nav>
       <div class="map-chart-wrap">
-        <Chart state={state} on={on} chart={chart} pan={by => setChart(c => ({ ...c, pan: { x: c.pan.x + by.x, y: c.pan.y + by.y } }))} />
+        <Chart state={state} on={on} chart={chart} pan={nudge} />
         <div class="map-tools">
           <button type="button" aria-pressed={!state.focus && chart.mode === 'home'} onClick={click(() => view('home'))}>Home area</button>
           <button type="button" aria-pressed={!state.focus && chart.mode === 'system'} onClick={click(() => view('system'))}>Whole system</button>
-          <button type="button" aria-pressed={state.focus} onClick={click(() => on.zoom('focus'))}>Focus target</button>
+          <button type="button" aria-pressed={state.focus} onClick={click(focus)}>Focus target</button>
           <button type="button" aria-label="Zoom chart in" onClick={click(() => on.zoom('in'))}>+</button>
           <button type="button" aria-label="Zoom chart out" onClick={click(() => on.zoom('out'))}>−</button>
         </div>
-        <p class="map-hint">Scroll to zoom · drag to move · click a place to select it</p>
+        <p class="map-hint">Drag or arrow keys to move · scroll or + / − to zoom · 0 for home · click a place to select it</p>
       </div>
       <Inspector state={state} on={on} />
     </div>

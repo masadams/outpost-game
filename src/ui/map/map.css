@@ -107,3 +107,5 @@
 /* Tools sit directly under the chart, so a long place list never pushes them out of view. */
 #hud .map-chart-wrap { align-content: start; gap: 8px; }
 #hud .map-tools { position: static; flex-wrap: wrap; }
+#hud .map-chart { cursor: grab; touch-action: none; }
+#hud .map-chart[data-dragging=true] { cursor: grabbing; }
