@@ -80,7 +80,7 @@
   font: 600 calc(12px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
 }
 #hud .base-filter button[aria-pressed=true] { color: var(--ui-text); border-color: var(--ui-mint); background: var(--ui-raised); }
-#hud .base-filter small { margin-left: 4px; font-family: var(--ui-mono); color: var(--ui-muted); }
+#hud .base-filter small { display: inline; margin-left: 4px; font-family: var(--ui-mono); color: var(--ui-muted); }
 #hud .base-bulk {
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px;
   border: 1px dashed var(--ui-line); border-radius: var(--ui-radius);

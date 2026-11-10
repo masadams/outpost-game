@@ -225,7 +225,7 @@ export class FlightScene extends Phaser.Scene {
       this.menu.destroy();this.settings.destroy(); this.audio.destroy(); this.chrome.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
-    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=inspectCheckpoint(localStorage);return {hasSave:!!save.world,saveStatus:save.source==='previous'?'Previous checkpoint available · latest checkpoint missing or invalid · Continue loads the older flight paused':save.world?'Checkpoint available · Continue loads paused':'No checkpoint yet · start a new game',hasRun:this.hasRun,seed:this.simulation.seed};}catch{return {hasSave:false,saveStatus:'Checkpoint unavailable or incompatible · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
+    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=inspectCheckpoint(localStorage);return {hasSave:!!save.world,saveStatus:save.source==='previous'?'Older save found · the latest save could not be read · Continue loads the older one paused':save.world?'Save found · Continue loads it paused':'No save yet · start a new game',hasRun:this.hasRun,seed:this.simulation.seed};}catch{return {hasSave:false,saveStatus:'Your save could not be read · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
     this.setPaused(true);this.menu.open('title');
   }
   private newGame():void{
