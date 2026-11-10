@@ -1,7 +1,17 @@
-import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain script without types
 import { specsFor } from '../scripts/browser-tests.mjs';
+
+declare global {
+  interface ImportMeta {
+    /** Vite's file listing, resolved when the tests are built. */
+    glob(pattern: string): Record<string, unknown>;
+  }
+}
+
+/** Spec names on disk, and every source file, without touching the file system at run time. */
+const SPECS = Object.keys(import.meta.glob('./browser/*.spec.ts')).map(f => f.replace('./browser/', '').replace('.spec.ts', ''));
+const SOURCES = Object.keys(import.meta.glob('../src/**/*')).map(f => f.replace('../', ''));
 
 const names = (files: string[]): string[] => [...specsFor(files).specs.keys()].sort();
 
@@ -32,14 +42,14 @@ describe('choosing browser specs for a change', () => {
   });
 
   it('has a rule for every source file in the project', () => {
-    const walk = (dir: string): string[] => readdirSync(dir, { withFileTypes: true })
-      .flatMap(e => (e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]));
-    const unclassified = walk('src').filter(f => specsFor([f]).unknown.length > 0);
+    expect(SOURCES.length).toBeGreaterThan(200);
+    const unclassified = SOURCES.filter(f => specsFor([f]).unknown.length > 0);
     expect(unclassified).toEqual([]);
   });
 
   it('only names spec files that exist', () => {
-    const existing = readdirSync('tests/browser').filter(f => f.endsWith('.spec.ts')).map(f => f.replace('.spec.ts', ''));
+    const existing = SPECS;
+    expect(existing.length).toBeGreaterThan(30);
     const everySource = [
       'src/ui/map/x.ts', 'src/ui/base/x.ts', 'src/ui/build/x.ts', 'src/ui/flight/x.ts', 'src/ui/ship/x.ts', 'src/ui/GameMenu.ts',
       'src/ui/Objectives.ts', 'src/ui/console.css', 'src/ui/OperationsDock.ts', 'src/persistence/x.ts', 'src/audio/x.ts',

@@ -7,12 +7,10 @@ import { colonyWorld } from '../src/sim/localWorld';
 import { wrap } from '../src/sim/math';
 
 describe('living worlds', () => {
-  it('only some seeds have each new world, and the mix varies', () => {
-    const mixes = new Set<string>();
+  it('are in every seeded game and never in the standard layout', () => {
     for (let seed = 1; seed <= 40; seed++) {
-      mixes.add(['verdant', 'tide', 'murk'].map(id => (bodyExists(id as 'verdant', { time: 0, binary: true, seed }) ? 1 : 0)).join(''));
+      for (const id of ['verdant', 'tide', 'murk'] as const) expect(bodyExists(id, { time: 0, binary: true, seed })).toBe(true);
     }
-    expect(mixes.size).toBeGreaterThan(4);
     expect(bodyExists('verdant', { time: 0, binary: true, seed: 0 })).toBe(false);
   });
   it('have seas that cover about their share of the surface and never the pad', () => {

@@ -8,12 +8,14 @@ describe('optional world Ember', () => {
     expect(bodyExists('ember', { time: 0, binary: true })).toBe(false);
     expect(planets({ time: 0, binary: true }).some(p => p.id === 'ember')).toBe(false);
   });
-  it('is in some seeds and not others, the same way every time', () => {
+  it('gives every seeded game all eight worlds', () => {
+    for (const seed of [1, 2, 3, 42, 4242, 999_999_999, 4_294_967_295]) {
+      expect(planets(day(seed)).map(p => p.id).sort()).toEqual([...BODY_IDS].sort());
+    }
+  });
+  it('is in every seeded game', () => {
     const seeds = Array.from({ length: 60 }, (_, i) => i + 1);
-    const has = seeds.filter(s => bodyExists('ember', day(s)));
-    expect(has.length).toBeGreaterThan(10);
-    expect(has.length).toBeLessThan(55);
-    expect(seeds.filter(s => bodyExists('ember', day(s)))).toEqual(has);
+    expect(seeds.every(s => bodyExists('ember', day(s)))).toBe(true);
   });
   it('shows up in the planet list only where it exists', () => {
     const withIt = Array.from({ length: 60 }, (_, i) => i + 1).find(s => bodyExists('ember', day(s)))!;
@@ -60,7 +62,7 @@ describe('Ember is far but possible', () => {
 import { mapView } from '../src/ui/map/mapView';
 
 describe('Ember on the Map', () => {
-  const find = (has: boolean) => Array.from({ length: 200 }, (_, i) => i + 1).find(s => bodyExists('ember', day(s)) === has)!;
+  const find = (_has: true) => 7;
 
   it('is listed as a route once surveyed, in a seed that has it', () => {
     const w = createWorld(find(true));
@@ -72,8 +74,8 @@ describe('Ember on the Map', () => {
     expect(mapView(w).places.find(p => p.id === 'ember')?.label).toBe('Ember');
   });
 
-  it('never appears in a seed without it, even if marked known', () => {
-    const w = createWorld(find(false));
+  it('never appears in the standard layout, even if marked known', () => {
+    const w = createWorld();
     w.system.sun = true;
     w.system.binary = true;
     w.exploration.known.push('moon', 'cinder', 'ember');
@@ -83,11 +85,9 @@ describe('Ember on the Map', () => {
 
 describe('optional world Glint', () => {
   const seeds = Array.from({ length: 200 }, (_, i) => i + 1);
-  it('is never in the standard layout and is in some seeds', () => {
+  it('is never in the standard layout and is in every seeded game', () => {
     expect(bodyExists('glint', { time: 0, binary: true })).toBe(false);
-    const has = seeds.filter(s => bodyExists('glint', day(s)));
-    expect(has.length).toBeGreaterThan(40);
-    expect(has.length).toBeLessThan(120);
+    expect(seeds.every(s => bodyExists('glint', day(s)))).toBe(true);
   });
 
   it('is farther than Ember and takes longer to find', async () => {
