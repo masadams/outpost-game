@@ -1,7 +1,7 @@
 import { onWater } from './nature';
 import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
-import { bootStep, isOnline, needsBoot } from './boot';
+import { BOOT_SECONDS, bootStep, isOnline, needsBoot } from './boot';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -221,6 +221,8 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (!operational(building)) return researchStaffed;
   if (!building.enabled) return researchStaffed;
   if (building.kind === 'researchLab') { return stepResearch(world, building, dt, researchStaffed) || researchStaffed; }
+  // A machine from before warm-up existed (an older save) is taken as already running, so it settles like the rest.
+  if (needsBoot(building.kind) && building.boot === undefined && (world.rootWorld ?? world).system.sun) building.boot = BOOT_SECONDS;
   if (needsBoot(building.kind) && !bootStep(world, building, dt)) {
     // A running machine riding out a short gap in power keeps showing what it was doing.
     if (building.status === 'idle' && isOnline(building)) building.status = before;
