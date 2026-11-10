@@ -40,7 +40,7 @@ import { Help } from '../ui/Help';
 import { tractorStats } from '../sim/shipStats';
 import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
 import { eventChip } from '../sim/events';
-import { objectiveCard, regionView } from '../ui/flight/chromeView';
+import { bootLog, objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
 import { dayView } from '../ui/flight/dayView';
@@ -292,6 +292,7 @@ export class FlightScene extends Phaser.Scene {
       day: dayView(world),
       event: eventChip(world),
       wreck: wreckCard(world),
+      boot: bootLog(world),
       trajectory: this.flightTools.trajectory,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : this.prediction?.points.length ?? 0,
       keys: {

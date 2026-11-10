@@ -36,6 +36,8 @@ export interface ChromeState {
   day: DayView | null;
   event: { label: string; detail: string; active: boolean } | null;
   wreck: WreckCard | null;
+  /** The waking log at the very start of a new game. */
+  boot: readonly string[] | null;
   trajectory: boolean;
   predictionPoints: number;
   keys: ChromeKeys;
@@ -126,6 +128,13 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
   const { objective, keys, sound, camera } = state;
   return (
     <div class="chrome">
+      {state.boot && (
+        <div class="boot-log" role="status" aria-label="Waking log">
+          {state.boot.map((line, i) => (
+            <p key={line} style={{ animationDelay: `${i * 0.9}s` }}>{line}</p>
+          ))}
+        </div>
+      )}
       <div class="chrome-left">
         <button
           type="button"

@@ -1,5 +1,6 @@
 import { featureVisible } from '../preferences/features';
 import { OBJECTIVES, objectiveProgress, type ObjectiveId, type ObjectiveLink } from '../sim/objectives';
+import { archiveReadable, memories } from '../sim/story';
 import { starterPlan } from '../sim/starterPlan';
 import type { WorldState } from '../sim/world';
 import { patchMarkup } from './dom';
@@ -11,6 +12,14 @@ import { isolateControlKeys } from './controlKeys';
 const LINKS: Record<ObjectiveLink, string> = { cargo:'Open Ship / Cargo', build:'Open Build', equipment:'Open Manage / Ship fitting', map:'Open Map', research:'Open Manage / Research', defence:'Open Ship / Defence' };
 const FOCUS_LINKS: Partial<Record<ObjectiveLink, string>> = { equipment:'Open Base / Ship parts', research:'Open Base / Research' };
 const recent = (w: WorldState): string => { const lines = (w.rootWorld ?? w).exploration.events?.journal.slice(-5) ?? []; return lines.length ? `<h3>Recently</h3>${lines.map(l => `<p data-event-line>${l}</p>`).join('')}` : ''; };
+/** What the unit has remembered so far, newest first. */
+const recalled = (w: WorldState): string => {
+  const list = memories(w).slice().reverse();
+  if (!list.length) return '';
+  const rows = list.map(m => `<p class="memory" data-memory="${m.id}"><b>${escapeHtml(m.title)}</b><span>${escapeHtml(m.text)}</span></p>`);
+  return `<h3 data-archive="${archiveReadable(w)}">Memory archive · ${archiveReadable(w)}% readable</h3>${rows.join('')}`;
+};
+const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 export class Objectives {
  readonly content = document.createElement('section');
  private includeRecovery=false;
@@ -31,7 +40,7 @@ export class Objectives {
   const plan=starterPlan(w,this.includeRecovery), fmt=(n:number)=>Number(n.toFixed(2));
   patchMarkup(this.content, `<label for="tracked-objective">Following</label><select id="tracked-objective"><option value="auto" ${this.tracked==='auto'?'selected':''}>Latest</option>${shown.map(o=>`<option value="${o.id}" ${this.tracked===o.id?'selected':''}>${done.includes(o.id)?'✓ ':''}${o.label}</option>`).join('')}</select>
    ${next&&progress?`<article class="tracked-goal" data-objective="${next.id}" data-complete="${recorded}"><h3>${recorded?'✓ ':''}${next.label}</h3><label for="objective-progress">${recorded?'Recorded · ':''}${fmt(progress.value)} / ${progress.target} ${progress.unit}</label><progress id="objective-progress" max="${progress.target}" value="${progress.value}"></progress><p>${controlHint(next.hint,p)}</p><button data-objective-link="${next.link}">${(!featureVisible('catalogue') && FOCUS_LINKS[next.link]) || LINKS[next.link]}</button></article>`:'<p>Nothing pressing. Keep going at your own pace.</p>'}
-   <details data-preserve-open ${done.length || (w.exploration.events?.journal.length ?? 0) ? 'open' : ''}><summary>Journal · ${done.length}</summary>${recent(w)}${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
+   <details data-preserve-open ${done.length || (w.exploration.events?.journal.length ?? 0) || memories(w).length ? 'open' : ''}><summary>Journal · ${done.length}</summary>${recent(w)}${recalled(w)}${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
    ${featureVisible('starterBudget')?`<details id="starter-budget" data-preserve-open><summary>Selene starter-route budget</summary><p>Solar + refinery → lab + Applied materials → cargo rack. Missing work on Selene only; remote stock and ship freight are not pooled.</p>
    <label class="budget-spares"><input id="budget-recovery" type="checkbox" ${this.includeRecovery?'checked':''}> Include recovery parts in this budget</label><small>Planning allowance only; no stock is locked. Turret reserves can block recovery.</small><div class="route-budget">${plan.rows.map(r=>`<p data-budget="${r.product}"><b>${r.product}</b><br>Need ${fmt(r.need)} kg · usable ${fmt(r.usable)} kg<br><span ${r.shortfall>0?'class="budget-shortfall"':''}>Shortfall ${fmt(r.shortfall)} kg</span></p>`).join('')||'<p>You have the materials for this route.</p>'}</div>
    ${plan.raw.length?`<p>Refining inputs for the shortfall (whole cycles):</p>${plan.raw.map(r=>`<p data-raw-budget="${r.resource}">${r.resource}: ${fmt(r.need)} kg needed · ${fmt(r.inDepot)} kg in Selene depot · ${fmt(r.shortfall)} kg still to deliver</p>`).join('')}`:'<p>Materials covered. Feedstock, power and travel still count.</p>'}
