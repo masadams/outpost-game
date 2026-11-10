@@ -48,7 +48,7 @@ test('shows landing and fuel lights with distinct real audio, pause/mute safety 
   expect(await descent.evaluate(e => getComputedStyle(e).animationName)).toBe('none'); await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
   // Load a legitimate checkpoint in orbit for isolated fuel-tone verification, with no engine loops.
   await page.evaluate(text => localStorage.setItem('outpost.checkpoint.v1', text), checkpoint(false));
-  await page.reload(); await expect(alert).toContainText('LOW FUEL'); await expect(hud).toHaveAttribute('data-approach', 'false');
+  await page.getByRole('button',{name:'Open game menu',exact:true}).click();await page.getByRole('dialog',{name:'Outpost game menu',exact:true}).getByRole('button',{name:'Load last save',exact:true}).click();await page.getByRole('dialog',{name:'Outpost game menu',exact:true}).getByRole('button',{name:'Yes, load last save',exact:true}).click(); await expect(alert).toContainText('LOW FUEL'); await expect(hud).toHaveAttribute('data-approach', 'false');
   await page.evaluate(() => (window as unknown as { clearWarningPeak: () => void }).clearWarningPeak());
   const before = (await tones()).length; await page.keyboard.press('p');
   await expect(hud).toHaveAttribute('data-state', 'flying');

@@ -1,7 +1,7 @@
 import { onWater } from './nature';
 import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
-import { bootStep, needsBoot } from './boot';
+import { bootStep, isOnline, needsBoot } from './boot';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -55,6 +55,8 @@ export interface Building {
   island?: boolean;
   /** Seconds without power while online. */
   dark?: number;
+  /** Seconds left before a machine that shut down for lack of power may try to start again. */
+  wait?: number;
   habitat?: HabitatState;
   shield?: ShieldState;
   schedule?: RefinerySchedule;
@@ -214,11 +216,16 @@ export function recipeFor(building: Building): Recipe | null {
 function runMachine(world: WorldState, building: Building, dt: number, researchStaffed: boolean): boolean {
   const colony = world.colony;
   if (isHabitat(building.kind) || isShield(building.kind)) return researchStaffed;
+  const before = building.status;
   building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
   if (!operational(building)) return researchStaffed;
   if (!building.enabled) return researchStaffed;
   if (building.kind === 'researchLab') { return stepResearch(world, building, dt, researchStaffed) || researchStaffed; }
-  if (needsBoot(building.kind) && !bootStep(world, building, dt)) return researchStaffed;
+  if (needsBoot(building.kind) && !bootStep(world, building, dt)) {
+    // A running machine riding out a short gap in power keeps showing what it was doing.
+    if (building.status === 'idle' && isOnline(building)) building.status = before;
+    return researchStaffed;
+  }
   if (building.kind === 'observatory') { stepObservatory(world, building, dt); return researchStaffed; }
   if (building.kind === 'condenser') { stepCondenser(world, building, dt); return researchStaffed; }
   if (building.kind === 'massDriver') { stepMassDriver(world, building, dt); return researchStaffed; }
