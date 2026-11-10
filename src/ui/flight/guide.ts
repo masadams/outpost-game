@@ -1,5 +1,6 @@
 import { nearestPlanet, planetAt, surfacePosition } from '../../sim/celestial';
 import { coreAngle, crystalAngle } from '../../sim/crystal';
+import { KEYSTONE_WORLDS, keystoneAngle, keystonesOpen, keystoneState } from '../../sim/keystones';
 import type { Vec } from '../../sim/math';
 import type { WorldState } from '../../sim/world';
 
@@ -17,6 +18,12 @@ export function guideTarget(w: WorldState): Vec | null {
   }
   if (nearestPlanet(viewer, w.system).id === 'cinder' && root.exploration.core === 'lying') {
     return surfacePosition(planetAt('cinder', w.system), coreAngle(), 0);
+  }
+  // A part of the carrier on the world you are at.
+  const here = nearestPlanet(viewer, w.system).id;
+  const part = KEYSTONE_WORLDS.find(id => id === here);
+  if (part && keystonesOpen(root) && keystoneState(root, part) === 'lying') {
+    return surfacePosition(planetAt(part, w.system), keystoneAngle(part, root.seed), 0);
   }
   return null;
 }

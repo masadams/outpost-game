@@ -1,3 +1,4 @@
+import { KEYSTONE_WORLDS, KEYSTONES, keystoneCount, keystonesOpen, keystoneState } from '../../sim/keystones';
 import { WORLD } from '../../sim/config';
 import { turretRange } from '../../sim/weapons';
 import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
@@ -52,6 +53,8 @@ export interface BaseView {
   tree: ResearchTreeView | null;
   /** The other worlds with a base, so a mine far away can be checked without going there. */
   elsewhere: OutpostView[];
+  /** Carrier parts: how many are home and where the rest are. Null until the unit knows to look. */
+  carrier: CarrierView | null;
   /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
   pods: PodsView | null;
   /** The deep-space beacon: how to send it, how long is left, what came back. Null until it is researched. */
@@ -558,6 +561,7 @@ export function baseView(w: WorldState): BaseView {
     research: researchView(w),
     tree: researchView(w) !== null || featureVisible('catalogue') ? researchTreeView(w) : null,
     elsewhere: elsewhereView(w),
+    carrier: carrierView(w),
     pods: podsView(w),
     signal: signalView(w),
     supply: supplyView(w),
@@ -599,4 +603,24 @@ function stormLab(w: WorldState): StormLabView | null {
         ? 'Pieces of the storm are lying on the ground. Walk over one to pick it up.'
         : 'Nothing left to collect.';
   return { onGround: s.samples.length, held: s.held, analysed: s.analysed, line, blocked };
+}
+
+export interface CarrierView {
+  home: number;
+  total: number;
+  /** One short line per part. */
+  parts: Array<{ world: string; label: string; state: 'lying' | 'carried' | 'home'; line: string }>;
+}
+
+/** What is known of the carrier's parts, once the unit knows there was one ship. */
+export function carrierView(w: WorldState): CarrierView | null {
+  if (!keystonesOpen(w)) return null;
+  const { home, total } = keystoneCount(w);
+  const parts = KEYSTONE_WORLDS.map(id => {
+    const state = keystoneState(w, id);
+    const world = BODIES[id].label;
+    const line = state === 'home' ? 'Home' : state === 'carried' ? 'Aboard your lander' : `On ${world}`;
+    return { world, label: KEYSTONES[id].label, state, line };
+  });
+  return { home, total, parts };
 }

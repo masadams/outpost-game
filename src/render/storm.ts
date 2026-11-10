@@ -5,6 +5,7 @@ import type { WorldState } from '../sim/world';
 import type { RenderView } from './budget';
 import { visible } from './budget';
 import { coreAngle, crystalAngle } from '../sim/crystal';
+import { KEYSTONE_WORLDS, keystoneAngle, keystonesOpen, keystoneState } from '../sim/keystones';
 
 /** Pieces of the storm lying on the ground: small dark rocks with a warm glint, so they can be found. */
 export function drawStormSamples(g: Phaser.GameObjects.Graphics, w: WorldState, zoom: number, time: number, view: RenderView): void {
@@ -65,4 +66,33 @@ export function drawCore(g: Phaser.GameObjects.Graphics, w: WorldState, zoom: nu
   g.fillTriangle(at.x - side.x * 2.2, at.y - side.y * 2.2, at.x + side.x * 2.2, at.y + side.y * 2.2, at.x + up.x * 3.4, at.y + up.y * 3.4);
   g.fillStyle(0xd68a4a);
   g.fillTriangle(at.x - side.x * 0.9, at.y - side.y * 0.9, at.x + side.x * 1.1, at.y + side.y * 1.1, at.x + up.x * 2.2, at.y + up.y * 2.2);
+}
+
+/** A part of the carrier lying on its world: a pale casing with a slow beacon light, until someone picks it up. */
+export function drawKeystones(g: Phaser.GameObjects.Graphics, w: WorldState, zoom: number, time: number, view: RenderView): void {
+  if (!keystonesOpen(w)) return;
+  for (const id of KEYSTONE_WORLDS) {
+    if (keystoneState(w, id) !== 'lying') continue;
+    const body = planetAt(id, w.system);
+    const up = heading(keystoneAngle(id, w.seed) + body.spin);
+    const at = { x: body.position.x + up.x * (body.radius + 0.6), y: body.position.y + up.y * (body.radius + 0.6) };
+    if (!visible(view, at, 80)) continue;
+    const side = { x: -up.y, y: up.x };
+    const pulse = 0.5 + 0.5 * Math.sin(time * 1.3);
+    const px = 1 / zoom;
+    const p = (x: number, y: number) => ({ x: at.x + side.x * x + up.x * y, y: at.y + side.y * x + up.y * y });
+    g.fillStyle(0xffe6b0, 0.14 * pulse);
+    g.fillCircle(at.x + up.x * 2, at.y + up.y * 2, Math.max(8, 13 * px));
+    // A canted casing, half buried.
+    g.fillStyle(0xcfd8dc, 1);
+    g.fillPoints([p(-2.6, 0), p(-2, 2.4), p(1.6, 3.2), p(2.8, 0)] as Phaser.Geom.Point[], true);
+    g.lineStyle(0.4, 0x5f7a8a, 1);
+    g.strokePoints([p(-2.6, 0), p(-2, 2.4), p(1.6, 3.2), p(2.8, 0)] as Phaser.Geom.Point[], false);
+    g.lineBetween(p(-0.4, 0.2).x, p(-0.4, 0.2).y, p(-0.1, 2.8).x, p(-0.1, 2.8).y);
+    // A thin mast with a light, so it can be found from a little way off.
+    g.lineStyle(0.3, 0xcfd8dc, 1);
+    g.lineBetween(p(1.2, 3).x, p(1.2, 3).y, p(1.2, 7).x, p(1.2, 7).y);
+    g.fillStyle(0xffe6b0, 0.4 + 0.6 * pulse);
+    g.fillCircle(p(1.2, 7).x, p(1.2, 7).y, Math.max(0.6, 1.6 * px));
+  }
 }

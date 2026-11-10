@@ -19,6 +19,7 @@ import { createEvents, stepEvents } from './events';
 import { stepDrift } from './drift';
 import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStory } from './story';
+import { stepKeystones } from './keystones';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
 import { applyCommandAction } from './command';
@@ -213,6 +214,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepStorm(world);
   stepCrystal(world);
   stepCore(world);
+  stepKeystones(world);
   stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });

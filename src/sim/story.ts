@@ -173,6 +173,17 @@ export const MEMORIES: readonly Memory[] = [
     text: 'The derelict\'s hull and the storm slag are the same alloy, from the same pour. They were one ship. It broke.',
     when: w => done(w, 'analysis') && surveyed(w, 'copper'),
   },
+  // The carrier's parts, found on the other worlds.
+  {
+    id: 'longPatience', title: 'Long Patience',
+    text: 'The carrier had a name, stamped into every part of it: LONG PATIENCE. You came here aboard it. So did the storms.',
+    when: w => Object.keys(w.exploration.keystones ?? {}).length >= 1,
+  },
+  {
+    id: 'allParts', title: 'Everything that is left',
+    text: 'Seven parts, from seven worlds, in one yard. It is everything that is left of the carrier. It is enough for one ship.',
+    when: w => Object.values(w.exploration.keystones ?? {}).filter(v => v === 'home').length >= 7,
+  },
   {
     id: 'release', title: 'Not an order',
     text: 'The archive kept the order all this time. It never held the release. The expedition leaves anyway, because you chose it.',

@@ -238,6 +238,18 @@ function Overview({ view, paused, on, go }: SectionProps & { go: Go }) {
             <button type="button" class="overview-go" data-go="expedition" onClick={click(() => go('expedition'))}>Expedition</button>
           </div>
         )}
+        {view.carrier && (
+          <div class="overview-line overview-carrier" data-carrier={view.carrier.home}>
+            <span>
+              Carrier parts: {view.carrier.home} of {view.carrier.total} home.
+              <small class="carrier-parts">
+                {view.carrier.parts.map(p => (
+                  <em key={p.world} data-state={p.state}>{p.state === 'home' ? '✓' : '◇'} {p.label} · {p.line}</em>
+                ))}
+              </small>
+            </span>
+          </div>
+        )}
         {!view.tree && !view.research && !view.pods && !view.supply && !view.signal && view.elsewhere.length === 0 && (
           <p class="base-note">Just the home base for now.</p>
         )}

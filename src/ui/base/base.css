@@ -365,3 +365,9 @@
 #hud .overview-line .overview-go { width: auto; }
 #hud .research-ready-row .ship-meter { margin-top: 6px; }
 #hud .research-ready-row button { width: auto; }
+
+/* Carrier parts on the Overview: one short line each. */
+#hud .carrier-parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 14px; margin-top: 8px; }
+#hud .carrier-parts em { font-style: normal; font: 400 calc(13px * var(--scale)) / 1.35 var(--ui-body); color: var(--ui-muted); }
+#hud .carrier-parts em[data-state=home] { color: var(--ui-green); }
+#hud .carrier-parts em[data-state=carried] { color: var(--ui-amber); }

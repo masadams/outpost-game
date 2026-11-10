@@ -1,5 +1,6 @@
 import { EVENTS, EVENT_KINDS } from '../sim/events';
 import { validStory } from '../sim/story';
+import { validKeystones } from '../sim/keystones';
 import { BODY_IDS } from '../sim/celestial';
 import { BELT_IDS, SITE_IDS, DESTINATIONS, EXPLORATION } from '../sim/explorationConfig';
 import { inventoryMass, RESOURCES } from '../sim/resources';
@@ -36,6 +37,7 @@ export function validExploration(w: WorldState): boolean {
   if (e.supply !== undefined && !validSupply(e.supply)) return false;
   if (e.events !== undefined && !validEvents(e.events)) return false;
   if (e.story !== undefined && !validStory(e.story)) return false;
+  if (e.keystones !== undefined && !validKeystones(e.keystones)) return false;
   if (new Set(e.sites.map(s => s.key)).size !== e.sites.length) return false;
   if (!e.sites.every(s => !!s && SITE_IDS.includes(s.key) && Number.isInteger(s.id) && s.id > 0 && vec(s.position) && vec(s.velocity) && s.radius === EXPLORATION.siteRadius && s.resource === 'iron' && s.stage === 0 && s.maxHealth === 1 && num(s.health, 0, 1) && num(s.fuel, 0, 18) && !!s.stock && RESOURCES.every(r => num(s.stock[r], 0, 18)) && num(s.mass, EXPLORATION.dryMass, 200) && Math.abs(s.mass - EXPLORATION.dryMass - inventoryMass(s.stock) - s.fuel) < 1e-6 && (s.stock.copper <= 12 && s.stock.rareMetals <= 6 && s.stock.iron === 0 && s.stock.ice === 0 && s.stock.silicon === 0) && (s.key === 'cache' || inventoryMass(s.stock) === 0) && (s.key === 'tender' || s.fuel === 0) && (s.health > 0 || !s.fuel && !inventoryMass(s.stock)))) return false;
   const ids = [...w.asteroids, ...w.pickups, ...e.sites].map(b => b.id);
