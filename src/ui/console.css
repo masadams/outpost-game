@@ -202,3 +202,124 @@
 #objective-panel .said { display: flex; gap: 10px; justify-content: space-between; margin: 0; padding: 5px 0; border-bottom: 1px solid #22405a66; }
 #objective-panel .said span { min-width: 0; line-height: 1.4; }
 #objective-panel .said small { display: inline; flex: none; color: var(--ui-muted); font-family: var(--ui-mono); white-space: nowrap; }
+
+/* =====================================================================
+   Console look, part two: the flight HUD, the build bar and the Ship panel.
+   Same language as the windows: square corners, a brighter frame, faint
+   scanlines, prompt marks on titles and segmented meters. Sizes and
+   layout are untouched, so nothing moves.
+   ===================================================================== */
+
+/* ---------- Frames ---------- */
+#hud .cluster,
+#hud .build-bar,
+#hud .queue-card,
+#hud-chrome .objective-card,
+#hud-chrome .storm-card,
+#hud-chrome .pickup-feed {
+  border-radius: 3px;
+  border-color: #2f5a72;
+  background-image: var(--console-scan);
+}
+#hud .build-card,
+#hud .build-order,
+#hud .cursor-tip,
+#hud-chrome .screen-button,
+#hud-chrome .tool-button,
+#hud-chrome .view-tools button,
+#hud-chrome #flight-region,
+#hud-chrome #flight-daylight,
+#hud-chrome #flight-event,
+#hud-chrome .notices > * {
+  border-radius: 2px;
+}
+#hud .build-groups button,
+#hud .build-bar button,
+#hud .queue-card button,
+#hud .cluster button { border-radius: 2px; }
+#hud-chrome .screen-button:hover,
+#hud-chrome .tool-button:hover { border-color: var(--ui-mint); }
+
+/* ---------- Titles read like prompts ---------- */
+#hud .cluster .instrument-mode,
+#hud-chrome .objective-label,
+#hud .build-title,
+#hud .queue-title,
+#hud-chrome .storm-title {
+  font-family: var(--ui-mono);
+  font-weight: 500;
+}
+#hud .cluster .instrument-mode::before,
+#hud-chrome .objective-label::before,
+#hud .build-title::before,
+#hud .queue-title::before {
+  content: "> " / "";
+  color: var(--ui-muted);
+}
+#hud-chrome .objective-title { text-shadow: 0 0 10px #7fe6d326; }
+
+/* ---------- Meters: square, with ticks ---------- */
+#hud .cluster-track,
+#hud-chrome .objective-meter,
+#hud .ship-meter,
+#hud .build-order-meter {
+  border-radius: 0;
+  background: #02070c;
+  outline: 1px solid #22405a;
+}
+#hud .cluster-track i,
+#hud-chrome .objective-meter i,
+#hud .ship-meter i,
+#hud .build-order-meter i {
+  border-radius: 0;
+  background-image: repeating-linear-gradient(to right, transparent 0 6px, #02070c88 6px 8px);
+}
+
+/* ---------- Readouts glow a little ---------- */
+#hud .cluster-readout strong,
+#hud .cluster-bar strong,
+#hud .ship-cargo-head strong { text-shadow: 0 0 8px currentColor; }
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  #hud .cluster-readout strong,
+  #hud .cluster-bar strong,
+  #hud .ship-cargo-head strong { text-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent); }
+}
+#hud .att-face { fill: #050d18; }
+#hud .att-ring { stroke: #2f5a72; stroke-dasharray: 2 4; }
+
+/* ---------- Build cards ---------- */
+#hud .build-card { border-color: #22405a; background-color: #0b1b2bcc; }
+#hud .build-card:hover:not(:disabled),
+#hud .build-card[aria-pressed=true] { border-color: var(--ui-mint); }
+#hud .build-card[aria-pressed=true] { box-shadow: inset 0 -2px 0 var(--ui-mint); }
+/* Costs stay in the body font: mono is wider and would spill out of a card. */
+#hud .build-order-status { font-family: var(--ui-mono); }
+
+/* ---------- Ship panel ---------- */
+#hud .ship-cargo-head span,
+#hud .ship-target h3,
+#hud .ship-kit h3,
+#hud .surface-panel h3,
+#hud .ship-ore thead th {
+  font-family: var(--ui-mono);
+  font-weight: 500;
+  color: var(--ui-mint);
+}
+#hud .ship-cargo-head span::before,
+#hud .ship-target h3::before,
+#hud .ship-kit h3::before,
+#hud .surface-panel h3::before {
+  content: "> " / "";
+  color: var(--ui-muted);
+}
+#hud .ship-next { border-radius: 0 2px 2px 0; }
+#hud .ship-ore th, #hud .ship-ore td { border-bottom-color: #22405a; }
+#hud .ship-ore tbody tr:hover { background: #7fe6d30f; }
+
+/* ---------- Compact panels (Ship, Journal) share the window frame ---------- */
+#hud #operations-dock:not([data-expanded=true]) .dock-title { font-size: calc(17px * var(--text-scale, 1)); }
+#objective-panel h3 { font-family: var(--ui-mono); font-weight: 500; letter-spacing: .1em; color: var(--ui-mint); }
+#objective-panel h3::before { content: "> " / ""; color: var(--ui-muted); }
+#objective-panel .tracked-goal h3::before { content: none; }
+#objective-panel select,
+#objective-panel button { border-radius: 2px; }
