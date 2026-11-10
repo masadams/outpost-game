@@ -50,12 +50,50 @@
 #hud .base-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); min-height: 100%; }
 #hud .base-rows { display: grid; gap: 8px; }
 #hud .base-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
-  padding: 12px 14px; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid transparent; color: var(--ui-text);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; text-align: left;
+  padding: 12px 14px; width: 100%; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid transparent; color: var(--ui-text);
 }
 #hud .base-row[aria-pressed=true] { border-color: var(--ui-mint); }
 #hud .base-row-name { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); letter-spacing: .02em; min-width: 0; }
 #hud .base-row-name small { display: block; margin-top: 4px; font: 400 calc(13px * var(--scale)) / 1.35 var(--ui-body); color: var(--ui-muted); letter-spacing: 0; }
+#hud .base-row-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+#hud .base-row-wrap[data-checked=true] .base-row { background: var(--ui-mint-dim, #7fe6d31f); }
+#hud .base-row-check, #hud .base-bulk-all input { width: 18px; height: 18px; accent-color: var(--ui-mint); cursor: pointer; }
+#hud .base-row-meta {
+  font: 500 calc(13px * var(--scale)) / 1 var(--ui-mono); font-variant-numeric: tabular-nums; color: var(--ui-muted);
+  white-space: nowrap; text-align: right;
+}
+
+#hud .base-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+#hud .base-toolbar label {
+  display: flex; gap: 8px; align-items: center; color: var(--ui-muted);
+  font: 500 calc(13px * var(--scale)) / 1 var(--ui-body);
+}
+#hud .base-toolbar select {
+  padding: 8px 10px; border-radius: var(--ui-radius); border: 1px solid var(--ui-line);
+  background: var(--ui-raised); color: var(--ui-text); font: 500 calc(13px * var(--scale)) / 1 var(--ui-body);
+}
+#hud .base-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+#hud .base-filter button, #hud .base-bulk button {
+  width: auto; padding: 8px 11px; border-radius: var(--ui-radius); border: 1px solid var(--ui-line);
+  background: transparent; color: var(--ui-muted); white-space: nowrap;
+  font: 600 calc(12px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+#hud .base-filter button[aria-pressed=true] { color: var(--ui-text); border-color: var(--ui-mint); background: var(--ui-raised); }
+#hud .base-filter small { margin-left: 4px; font-family: var(--ui-mono); color: var(--ui-muted); }
+#hud .base-bulk {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px;
+  border: 1px dashed var(--ui-line); border-radius: var(--ui-radius);
+}
+#hud .base-bulk[data-bulk]:not([data-bulk="0"]) { border-style: solid; border-color: var(--ui-mint); }
+#hud .base-bulk-all {
+  display: flex; gap: 8px; align-items: center; margin-right: auto; color: var(--ui-text);
+  font: 500 calc(13px * var(--scale)) / 1 var(--ui-body);
+}
+#hud .base-bulk button { color: var(--ui-text); background: var(--ui-raised); }
+#hud .base-bulk button:disabled { opacity: .45; }
+#hud .base-bulk .base-bulk-danger:not(:disabled) { color: var(--ui-red); border-color: currentColor; }
+
 #hud .base-chip {
   justify-self: start; padding: 6px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
   font: 600 calc(11px * var(--scale)) / 1 var(--ui-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ui-muted);

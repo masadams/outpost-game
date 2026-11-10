@@ -437,24 +437,32 @@ function ExpeditionSection({ view, paused, on }: SectionProps) {
   );
 }
 
-function BuildingRow({ b, selected, select }: { b: BuildingView; selected: boolean; select: (id: number) => void }) {
+function pick(event: Event): string {
+  return (event.currentTarget as HTMLSelectElement).value;
+}
+
+function BuildingRow({ b, selected, checked, select, check }: { b: BuildingView; selected: boolean; checked: boolean; select: (id: number) => void; check: (id: number) => void }) {
   return (
-    <button
-      type="button"
-      class="base-row"
-      data-building={b.id}
-      aria-pressed={selected}
-      aria-label={`Select ${b.label} ${b.id}`}
-      onClick={click(() => select(b.id))}
-    >
-      <span class="base-row-name">
-        {b.label}
-        <small>{b.line}</small>
-      </span>
-      <span class="base-chip" data-tone={CHIP_TONE[b.chip]}>
-        {b.chipLabel}
-      </span>
-    </button>
+    <div class="base-row-wrap" data-checked={String(checked)}>
+      <input type="checkbox" class="base-row-check" aria-label={`Include ${b.label} ${b.id} in bulk actions`} checked={checked} onChange={() => check(b.id)} />
+      <button
+        type="button"
+        class="base-row"
+        data-building={b.id}
+        aria-pressed={selected}
+        aria-label={`Select ${b.label} ${b.id}`}
+        onClick={click(() => select(b.id))}
+      >
+        <span class="base-row-name">
+          {b.label}
+          <small>{b.line}</small>
+        </span>
+        <span class="base-row-meta">{b.position >= 0 ? `${b.position} m E` : `${-b.position} m W`}{b.power > 0 ? ` · ${b.power.toFixed(1)} kW` : ''}</span>
+        <span class="base-chip" data-tone={CHIP_TONE[b.chip]}>
+          {b.chipLabel}
+        </span>
+      </button>
+    </div>
   );
 }
 
@@ -528,19 +536,131 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
   );
 }
 
+type SortKey = 'position' | 'name' | 'kind' | 'status' | 'power';
+type StatusFilter = 'all' | 'attention' | 'running' | 'stopped' | 'off';
+const SORTS: Array<[SortKey, string]> = [['position', 'Position'], ['name', 'Name'], ['kind', 'Type'], ['status', 'Status'], ['power', 'Power use']];
+const FILTERS: Array<[StatusFilter, string]> = [['all', 'All'], ['attention', 'Needs attention'], ['running', 'Running'], ['stopped', 'Stopped'], ['off', 'Off']];
+const CHIP_ORDER: Record<Chip, number> = { wrecked: 0, stopped: 1, idle: 2, off: 3, running: 4 };
+
+function matches(b: BuildingView, filter: StatusFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'attention') return b.why !== null || b.chip === 'stopped' || b.chip === 'wrecked';
+  if (filter === 'off') return b.chip === 'off' || !b.enabled;
+  return b.chip === filter;
+}
+
+function sortBuildings(list: BuildingView[], key: SortKey): BuildingView[] {
+  const by: Record<SortKey, (a: BuildingView, b: BuildingView) => number> = {
+    position: (a, b) => a.position - b.position,
+    name: (a, b) => a.label.localeCompare(b.label) || a.position - b.position,
+    kind: (a, b) => a.kind.localeCompare(b.kind) || a.position - b.position,
+    status: (a, b) => CHIP_ORDER[a.chip] - CHIP_ORDER[b.chip] || a.label.localeCompare(b.label),
+    power: (a, b) => b.power - a.power || a.label.localeCompare(b.label),
+  };
+  return [...list].sort(by[key]);
+}
+
+/** Every building, sortable and filterable, with bulk actions for the ticked ones. */
 function Buildings({ state, on }: { state: BaseState; on: BaseHandlers }) {
   const { buildings } = state.view;
-  const selected = buildings.find(b => b.id === state.selected) ?? buildings[0] ?? null;
+  const [sort, setSort] = useState<SortKey>('position');
+  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [kind, setKind] = useState<string>('all');
+  const [ticked, setTicked] = useState<Set<number>>(new Set());
+  const [confirm, setConfirm] = useState(false);
+  const kinds = [...new Map(buildings.map(b => [b.kind, b.label])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const shown = sortBuildings(buildings.filter(b => matches(b, filter) && (kind === 'all' || b.kind === kind)), sort);
+  const chosen = buildings.filter(b => ticked.has(b.id));
+  const selected = buildings.find(b => b.id === state.selected) ?? shown[0] ?? null;
+  const tick = (id: number) => { const next = new Set(ticked); if (next.has(id)) next.delete(id); else next.add(id); setTicked(next); setConfirm(false); };
+  const allShown = shown.length > 0 && shown.every(b => ticked.has(b.id));
+  const toggleAll = () => { setTicked(allShown ? new Set() : new Set(shown.map(b => b.id))); setConfirm(false); };
+  const canOn = chosen.filter(b => b.canToggle && !b.enabled);
+  const canOff = chosen.filter(b => b.canToggle && b.enabled);
+  const canUpgrade = chosen.filter(b => b.upgrade && b.upgrade.blocked === null);
+  const canDemolish = chosen.filter(b => b.demolishBlocked === null);
+  const done = () => {
+    setTicked(new Set());
+    setConfirm(false);
+  };
+  const turnOn = () => canOn.forEach(b => on.toggle(b.id));
+  const turnOff = () => canOff.forEach(b => on.toggle(b.id));
+  const upgradeAll = () => canUpgrade.forEach(b => on.upgrade(b.id, b.upgrade!.tier));
+  const demolishAll = () => {
+    if (!confirm) {
+      setConfirm(true);
+      return;
+    }
+    canDemolish.forEach(b => on.demolish(b.id));
+    done();
+  };
   return (
     <div class="base-split" data-base-section="buildings">
       <div class="base-main">
         <h3>Buildings · {buildings.length}</h3>
-        {buildings.length ? (
-          <div class="base-rows">
-            {buildings.map(b => (
-              <BuildingRow key={b.id} b={b} selected={selected?.id === b.id} select={on.select} />
-            ))}
+        {buildings.length > 0 && (
+          <div class="base-toolbar" aria-label="Sort and filter buildings">
+            <label>
+              Sort by
+              <select data-sort value={sort} onChange={e => setSort(pick(e) as SortKey)}>
+                {SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </label>
+            <label>
+              Type
+              <select data-kind-filter value={kind} onChange={e => setKind(pick(e))}>
+                <option value="all">All types</option>
+                {kinds.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </label>
+            <div class="base-filter" role="group" aria-label="Show">
+              {FILTERS.map(([k, l]) => (
+                <button key={k} type="button" data-filter={k} aria-pressed={filter === k} onClick={click(() => setFilter(k))}>
+                  {l} <small>{buildings.filter(b => matches(b, k)).length}</small>
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+        {buildings.length > 0 && (
+          <div class="base-bulk" data-bulk={chosen.length}>
+            <label class="base-bulk-all">
+              <input type="checkbox" checked={allShown} onChange={toggleAll} aria-label="Select all shown" />
+              {chosen.length ? `${chosen.length} selected` : 'Select all shown'}
+            </label>
+            {chosen.length > 0 && (
+              <>
+                <button type="button" disabled={state.paused || !canOn.length} onClick={click(turnOn)}>
+                  Turn on {canOn.length || ''}
+                </button>
+                <button type="button" disabled={state.paused || !canOff.length} onClick={click(turnOff)}>
+                  Turn off {canOff.length || ''}
+                </button>
+                <button type="button" disabled={state.paused || !canUpgrade.length} onClick={click(upgradeAll)}>
+                  Upgrade {canUpgrade.length || ''}
+                </button>
+                <button
+                  type="button"
+                  class="base-bulk-danger"
+                  disabled={state.paused || !canDemolish.length}
+                  onClick={click(demolishAll)}
+                >
+                  {confirm ? `Yes, demolish ${canDemolish.length}` : `Demolish ${canDemolish.length || ''}`}
+                </button>
+                <button type="button" onClick={click(done)}>Clear</button>
+              </>
+            )}
+          </div>
+        )}
+        {state.paused && chosen.length > 0 && <p class="base-note">Resume the game to change buildings.</p>}
+        {buildings.length ? (
+          shown.length ? (
+            <div class="base-rows">
+              {shown.map(b => (
+                <BuildingRow key={b.id} b={b} selected={selected?.id === b.id} checked={ticked.has(b.id)} select={on.select} check={tick} />
+              ))}
+            </div>
+          ) : <p class="base-note">No buildings match.</p>
         ) : (
           <p class="base-note">No buildings yet. Press Build to place your first.</p>
         )}

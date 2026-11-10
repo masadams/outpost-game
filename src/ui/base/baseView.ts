@@ -1,3 +1,4 @@
+import { WORLD } from '../../sim/config';
 import { turretRange } from '../../sim/weapons';
 import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
 import { BATTERY_CAPACITY } from '../../sim/colony';
@@ -154,6 +155,10 @@ export type Chip = 'running' | 'idle' | 'stopped' | 'off' | 'wrecked';
 export interface BuildingView {
   id: number;
   kind: BuildType;
+  /** Metres east (+) or west (-) of the pad, for sorting by where it stands. */
+  position: number;
+  /** Rated power use (kW, 0 for generators and passive buildings), for sorting. */
+  power: number;
   label: string;
   chip: Chip;
   chipLabel: string;
@@ -303,6 +308,8 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
   return {
     id: b.id,
     kind: b.kind,
+    position: Math.round(b.angle * (w ? colonyPlanet(w).radius : WORLD.radius)),
+    power: generates || passive ? 0 : power,
     label: BLUEPRINTS[b.kind].label,
     chip: status.chip,
     chipLabel: status.label,
