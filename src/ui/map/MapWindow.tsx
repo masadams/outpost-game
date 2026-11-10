@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { useRef, useState } from 'preact/hooks';
 import type { Destination } from '../../sim/explorationConfig';
 import type { Vec } from '../../sim/math';
 import type { MapView } from './mapView';
@@ -27,13 +28,22 @@ function click(action: () => void) {
   };
 }
 
+/** How the chart is looking: the whole system or the area around home, nudged by dragging (metres). */
+export interface ChartView { mode: 'system' | 'home'; pan: Vec }
+
+/** Metres across the "Home area" view. */
+const HOME_SPAN = 16000;
+
 /** Projects world metres into the chart's 1000×640 drawing space. */
-function projection(state: MapState) {
+function projection(state: MapState, chart: ChartView = { mode: 'system', pan: { x: 0, y: 0 } }) {
   const { bounds, places } = state.view;
   const target = places.find(p => p.selected)?.at;
-  const centre = state.focus && target ? target : { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 };
-  // Metres per drawing unit: fit everything, but never zoom in closer than a 3 km square.
-  const metresPerUnit = Math.max((bounds.maxX - bounds.minX) / W, (bounds.maxY - bounds.minY) / H, 3000 / Math.min(W, H));
+  const home = state.view.pad;
+  const base = state.focus && target ? target : chart.mode === 'home' ? home : { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 };
+  const centre = { x: base.x + chart.pan.x, y: base.y + chart.pan.y };
+  // Metres per drawing unit: fit everything (or the home area), but never zoom in closer than a 3 km square.
+  const fit = chart.mode === 'home' ? HOME_SPAN / Math.min(W, H) : Math.max((bounds.maxX - bounds.minX) / W, (bounds.maxY - bounds.minY) / H);
+  const metresPerUnit = Math.max(fit, 3000 / Math.min(W, H));
   const k = (0.9 / metresPerUnit) * state.zoom;
   return {
     k,
@@ -41,14 +51,18 @@ function projection(state: MapState) {
   };
 }
 
-function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
+function Chart({ state, on, chart, pan }: { state: MapState; on: MapHandlers; chart: ChartView; pan: (by: Vec) => void }) {
   const { view } = state;
-  const { k, at } = projection(state);
+  const { k, at } = projection(state, chart);
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const ship = at(view.ship);
   const pad = at(view.pad);
   const selected = view.places.find(p => p.selected);
   const target = selected ? at(selected.at) : null;
   const pick = (event: MouseEvent) => {
+    // The end of a drag is not a click.
+    if (drag.current?.moved) { drag.current = null; return; }
+    drag.current = null;
     const svg = event.currentTarget as SVGSVGElement;
     const box = svg.getBoundingClientRect();
     const x = ((event.clientX - box.left) / box.width) * W;
@@ -65,7 +79,20 @@ function Chart({ state, on }: { state: MapState; on: MapHandlers }) {
     on.mark({ x: (x - origin.x) / k, y: (y - origin.y) / k });
   };
   return (
-    <svg class="map-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Chart of nearby space. Click a place to select it, or empty space to mark a point." onClick={pick}>
+    <svg class="map-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Chart of nearby space. Click a place to select it, or empty space to mark a point." onClick={pick}
+      onPointerDown={e => { drag.current = { x: e.clientX, y: e.clientY, moved: false }; }}
+      onPointerMove={e => {
+        const d = drag.current;
+        if (!d || (e.buttons & 1) === 0) return;
+        const dx = e.clientX - d.x, dy = e.clientY - d.y;
+        if (!d.moved && Math.hypot(dx, dy) < 5) return;
+        d.moved = true;
+        const box = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
+        pan({ x: (-dx * W) / box.width / k, y: (-dy * H) / box.height / k });
+        d.x = e.clientX;
+        d.y = e.clientY;
+      }}
+      onWheel={e => { e.preventDefault(); on.zoom(e.deltaY < 0 ? 'in' : 'out'); }}>
       <defs>
         <pattern id="map-grid" width="50" height="50" patternUnits="userSpaceOnUse">
           <path d="M50 0H0V50" class="map-grid-line" />
@@ -227,25 +254,44 @@ function Inspector({ state, on }: { state: MapState; on: MapHandlers }) {
   );
 }
 
+/** The place list, grouped so a long list stays easy to scan. */
+function groupOf(kind: string): string {
+  if (kind === 'Your outpost' || kind.startsWith('Outpost')) return 'Your bases';
+  if (kind === 'Ore cluster') return 'Ore clusters';
+  if (kind === 'Moon' || kind.endsWith('world') || kind === 'World') return 'Worlds';
+  return 'Other';
+}
+const GROUP_ORDER = ['Your bases', 'Worlds', 'Ore clusters', 'Other'];
+
 export function MapWindowView({ state, on }: { state: MapState; on: MapHandlers }) {
+  const [chart, setChart] = useState<ChartView>({ mode: 'home', pan: { x: 0, y: 0 } });
+  const groups = GROUP_ORDER.map(g => ({ g, places: state.view.places.filter(p => groupOf(p.kind) === g) })).filter(x => x.places.length > 0);
+  const view = (mode: ChartView['mode']) => { setChart({ mode, pan: { x: 0, y: 0 } }); on.zoom('fit'); };
   return (
     <div class="map-window">
       <nav class="map-places" aria-label="Places">
-        {state.view.places.map(p => (
-          <button key={p.id} type="button" data-destination={p.id} aria-label={p.label} aria-pressed={p.selected} onClick={click(() => on.select(p.id))}>
-            {p.label}
-            <small>{p.kind}</small>
-          </button>
+        {groups.map(({ g, places }) => (
+          <div key={g} class="map-group">
+            <h4>{g}</h4>
+            {places.map(p => (
+              <button key={p.id} type="button" data-destination={p.id} aria-label={p.label} aria-pressed={p.selected} onClick={click(() => on.select(p.id))}>
+                {p.label}
+                <small>{p.kind}</small>
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
       <div class="map-chart-wrap">
-        <Chart state={state} on={on} />
+        <Chart state={state} on={on} chart={chart} pan={by => setChart(c => ({ ...c, pan: { x: c.pan.x + by.x, y: c.pan.y + by.y } }))} />
         <div class="map-tools">
+          <button type="button" aria-pressed={!state.focus && chart.mode === 'home'} onClick={click(() => view('home'))}>Home area</button>
+          <button type="button" aria-pressed={!state.focus && chart.mode === 'system'} onClick={click(() => view('system'))}>Whole system</button>
+          <button type="button" aria-pressed={state.focus} onClick={click(() => on.zoom('focus'))}>Focus target</button>
           <button type="button" aria-label="Zoom chart in" onClick={click(() => on.zoom('in'))}>+</button>
           <button type="button" aria-label="Zoom chart out" onClick={click(() => on.zoom('out'))}>−</button>
-          <button type="button" aria-pressed={!state.focus && state.zoom === 1} onClick={click(() => on.zoom('fit'))}>Fit</button>
-          <button type="button" aria-pressed={state.focus} onClick={click(() => on.zoom('focus'))}>Focus target</button>
         </div>
+        <p class="map-hint">Scroll to zoom · drag to move · click a place to select it</p>
       </div>
       <Inspector state={state} on={on} />
     </div>
