@@ -69,7 +69,7 @@ test('warns of the storm, survives it with defences, picks up a piece and analys
 
   await page.getByRole('button', { name: 'Base', exact: true }).click();
   await advance(page, 300);
-  await page.getByRole('navigation', { name: 'Base sections' }).getByRole('button', { name: 'Overview' }).click();
+  await page.getByRole('navigation', { name: 'Base sections' }).getByRole('button', { name: 'Research', exact: true }).click();
   await advance(page, 300);
   await page.getByRole('button', { name: 'Analyse a piece' }).click();
   await advance(page, 300);

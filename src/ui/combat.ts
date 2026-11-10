@@ -26,6 +26,6 @@ function recoveryPanel(world: WorldState, paused: boolean): string {
     <p>Your pilots are printed at the base. ${plan.lander ? `Print a new pilot and a basic lander on the pad for ${cost}. The old lander stays where it fell, with what survived; its transponder shows it on the Map for an hour, so you can fly out and salvage it.` : `Print a new pilot at the base for ${cost}.`}</p>
     ${plan.blocked ? `<p class="why">${plan.blocked}.</p>` : ''}
     <button ${paused || plan.blocked ? 'disabled' : ''} data-colony="recoverShip">Print new pilot${plan.lander ? ' and lander' : ''} [Backspace]</button>
-    <small>Or press L to load your last save.</small>
+    <small>Or load your last save from the menu (Esc).</small>
   </div>`;
 }

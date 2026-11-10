@@ -75,6 +75,9 @@ const PAD_LAMPS = { safe: 0x73f3cf, caution: 0xffb06a, critical: 0xff6b5a, neutr
 const EXTRA_WORLDS: BodyId[] = ['verdant', 'tide', 'murk'];
 const HALO_COLOUR: Partial<Record<BodyId, string>> = { verdant: '110,190,160', tide: '90,150,230', murk: '190,150,90' };
 
+/** Milliseconds of play between autosaves. */
+const AUTOSAVE_MS = 120_000;
+
 export class FlightScene extends Phaser.Scene {
   private effects=new VisualEffects();
   private budget=new RenderBudget();
@@ -150,6 +153,7 @@ export class FlightScene extends Phaser.Scene {
       },
       help: () => this.help.toggle(),
       settings: () => this.settings.toggle(),
+      save: () => this.quickSave(),
       pause: () => this.setPaused(!this.paused),
       view: action => this.viewAction(action),
     });
@@ -221,17 +225,18 @@ export class FlightScene extends Phaser.Scene {
       this.menu.destroy();this.settings.destroy(); this.audio.destroy(); this.chrome.destroy(); this.help.destroy(); this.keys.destroy(); this.hud.destroy();
       this.flightTools.destroy(); this.game.canvas.removeEventListener('wheel', wheel);
     });
-    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=inspectCheckpoint(localStorage);return {hasSave:!!save.world,saveStatus:save.source==='previous'?'Previous checkpoint available · latest checkpoint missing or invalid · Continue loads the older flight paused':save.world?'Checkpoint available · Continue loads paused':'No checkpoint yet · start a new game',hasRun:this.hasRun,seed:this.simulation.seed};}catch{return {hasSave:false,saveStatus:'Checkpoint unavailable or incompatible · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
+    this.menu=new GameMenu(action=>this.menuAction(action),()=>{try{const save=inspectCheckpoint(localStorage);return {hasSave:!!save.world,saveStatus:save.source==='previous'?'Older save found · the latest save could not be read · Continue loads the older one paused':save.world?'Save found · Continue loads it paused':'No save yet · start a new game',hasRun:this.hasRun,seed:this.simulation.seed};}catch{return {hasSave:false,saveStatus:'Your save could not be read · New Game is available',hasRun:this.hasRun};}},()=>controlHint('P resumes',this.preferences));
     this.setPaused(true);this.menu.open('title');
   }
   private newGame():void{
+    this.autosaveTime = 0;
     const invalid=!this.hasRun&&this.simulation.notice.message.includes('CHECKPOINT INVALID');this.simulation=newWorld();if(invalid)notify(this.simulation,'CHECKPOINT INVALID · NEW RUNTIME STARTED · OLD SAVE KEPT');this.hasRun=true;this.menu.close();this.hud.closeDock();this.hud.clearBuildPointer();this.setPaused(false);this.follow.reset(this.ship,this.simulation.system);this.audio.reset(this.simulation);this.effects.reset(this.simulation);this.pickupFeed.reset(this.simulation);this.prediction=null;this.threats=[];
   }
   private menuAction(action:MenuAction):void{
     if(action==='new'){this.newGame();return;}
     if(action==='resume'){if(this.hasRun){this.menu.close();this.setPaused(false);}return;}
     if(action==='continue'){if(this.loadCheckpoint(true)){this.hasRun=true;this.menu.close();this.setPaused(true);}else this.menu.message('Cannot load this checkpoint · current runtime kept');return;}
-    if(action==='save'){if(this.hasRun){try{writeCheckpoint(localStorage,this.simulation);this.menu.message('Checkpoint saved');}catch{this.menu.message('Save failed · storage unavailable or state invalid');}}return;}
+    if(action==='save'){if(this.hasRun){try{writeCheckpoint(localStorage,this.simulation);this.menu.message('Game saved');}catch{this.menu.message('Save failed · storage unavailable or state invalid');}}return;}
     if(action==='title'){this.menu.open('title');return;}
     if(action==='settings')this.settings.toggle();
     if(action==='controls')this.help.toggle();
@@ -294,6 +299,7 @@ export class FlightScene extends Phaser.Scene {
         build: key('B'),
         mute: key('M'),
         help: key('H'),
+        save: key('K'),
         pause: key('P'),
         path: key('J'),
         zoomIn: key('PLUS'),
@@ -351,11 +357,8 @@ export class FlightScene extends Phaser.Scene {
     if (this.keys.mute()) this.audio.toggleMute();
     if (!this.settings.isOpen && (!this.menu.isOpen||this.help.isOpen) && this.keys.help()) this.help.toggle();
     if (this.keys.closePanel()) { if (this.settings.isOpen) this.settings.close(); else if (this.help.isOpen) this.help.close(); else if(!this.menu.isOpen){const local=activeWorld(this.simulation);if(local.colony.buildOpen){applyColonyAction(local,{type:'buildMode',open:false});this.hud.clearBuildPointer();}else if(this.hud.dockOpen)this.hud.closeDock();else{this.setPaused(true);this.menu.open('pause');}} }
-    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.save()) {
-      try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'CHECKPOINT SAVED · K TO UPDATE · L TO LOAD'); }
-      catch { notify(this.simulation, 'CHECKPOINT SAVE FAILED · STORAGE UNAVAILABLE OR STATE INVALID'); }
-    }
-    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.load()) this.loadCheckpoint(true);
+    if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.save()) this.quickSave();
+    this.autosave(delta);
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen && this.keys.pause()) this.setPaused(!this.paused);
     if (!this.menu.isOpen && !this.settings.isOpen && !this.help.isOpen) {
       for(const a of this.keys.planningActions()){const local=activeWorld(this.simulation);applyColonyAction(local,a);if(a.type==='toggleBuild'&&local.colony.buildOpen)this.hud.closeDock();}
@@ -405,7 +408,28 @@ export class FlightScene extends Phaser.Scene {
       root.dataset.drawSamples=String(this.budget.report('draw').samples);root.dataset.starCount=this.preferences.quality==='low'?'80':'240';root.dataset.effectCap=this.preferences.reducedMotion?'0':this.preferences.quality==='low'?'8':'24';
     }
   }
+  /** Saves now, with a short notice. Used by K and the save button. */
+  private quickSave(): void {
+    if (!this.hasRun) return;
+    try { writeCheckpoint(window.localStorage, this.simulation); notify(this.simulation, 'GAME SAVED'); }
+    catch { notify(this.simulation, 'SAVE FAILED · STORAGE UNAVAILABLE'); }
+  }
+  private autosaveTime = 0;
+  /** Saves quietly every two minutes of play, never while paused or with a lost lander or pilot. */
+  private autosave(delta: number): void {
+    if (!this.hasRun || this.halted || this.menu.isOpen) return;
+    this.autosaveTime += delta;
+    if (this.autosaveTime < AUTOSAVE_MS) return;
+    this.autosaveTime = 0;
+    this.saveQuietly();
+  }
+  private saveQuietly(): void {
+    const w = this.simulation;
+    if (!this.hasRun || w.ship.state === 'crashed' || w.astronaut.health <= 0) return;
+    try { writeCheckpoint(window.localStorage, w); if (!w.notice.message) notify(w, 'AUTOSAVED'); } catch { /* A failed autosave keeps the last good save. */ }
+  }
   private loadCheckpoint(requested: boolean): boolean {
+    this.autosaveTime = 0;
     try {
       const selection = inspectCheckpoint(window.localStorage), saved = selection.world;
       if (saved) {

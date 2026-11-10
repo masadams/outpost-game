@@ -33,6 +33,7 @@ test('supply lines can be set in Base and send a pod by themselves', async ({ pa
   await expect(menu).toBeHidden();
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
+  await page.locator('[data-base-nav="logistics"]').click();
   for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Raise Nacre Iron reserve', exact: true }).click();
   await expect(page.locator('[data-reserve-value="moon:iron"]')).toHaveText('40');
   await page.locator('[data-supply-toggle]').click();

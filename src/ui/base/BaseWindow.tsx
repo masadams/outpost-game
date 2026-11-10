@@ -5,7 +5,7 @@ import type { JSX } from 'preact';
 import type { BaseView, BuildingView, Chip, ExpeditionView } from './baseView';
 import { Demolish } from './Demolish';
 
-export type BaseSection = 'overview' | 'buildings' | 'ship' | 'research' | 'legacy';
+export type BaseSection = 'overview' | 'research' | 'buildings' | 'logistics' | 'expedition' | 'ship' | 'legacy';
 
 export interface BaseHandlers {
   section: (section: BaseSection) => void;
@@ -122,12 +122,39 @@ function Expedition({ view, paused, send, choose }: { view: ExpeditionView; paus
   );
 }
 
-function Overview({ view, open, analyse, study, studyCore, research, fit, send, beacon, expedition, choose, supply, reserve, paused }: { view: BaseView; open: (id: number) => void; analyse: () => void; study: () => void; studyCore: () => void; research: (tech: string) => void; fit: (upgrade: string) => void; send: (to: string) => void; beacon: () => void; expedition: (kit: { fuel: boolean; shielding: boolean; stores: boolean }, target: number | null) => void; choose: (key: string) => void; supply: { toggle: () => void; reserve: (body: string, resource: string, delta: number) => void }; reserve: (d: -1 | 1) => void; paused: boolean }) {
+type Go = (section: BaseSection) => void;
+interface SectionProps { view: BaseView; paused: boolean; on: BaseHandlers }
+
+/** What needs you now, what you have, and what is going on: short, so it reads at a glance. */
+function Overview({ view, paused, on, go }: SectionProps & { go: Go }) {
   const p = view.power;
   const products = view.stocks.filter(s => s.group === 'product');
   const ore = view.stocks.filter(s => s.group === 'ore');
+  const open = (id: number) => { on.select(id); go('buildings'); };
+  const reserve = on.reserve;
+  const active = view.tree?.nodes.filter(n => n.state === 'active') ?? [];
+  const waitingFinds = (view.research?.filter(r => r.action?.kind === 'research' && !r.action.reason).length ?? 0) + (view.core && !view.core.studied && !view.core.blocked ? 1 : 0) + (view.crystal && !view.crystal.studied && !view.crystal.blocked ? 1 : 0) + (view.storm && !view.storm.analysed && !view.storm.blocked ? 1 : 0);
+  const ready = view.tree?.nodes.filter(n => n.state === 'ready').length ?? 0;
   return (
-    <div class="base-main" data-base-section="overview">
+    <div class="base-main base-overview" data-base-section="overview">
+      <section class="overview-attention">
+        <h3>Needs attention</h3>
+      {view.attention.length ? (
+        <ul class="base-attention">
+          {view.attention.map(a => (
+            <li key={a.id}>
+              <button type="button" onClick={click(() => open(a.id))}>
+                {a.text}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="base-note">{view.buildings.length ? 'Everything is running.' : 'No buildings yet. Press Build to place your first.'}</p>
+      )}
+      </section>
+      <div class="overview-grid">
+        <section class="overview-card" aria-label="Materials">
       <h3>Materials</h3>
       <div class="base-stocks">
         {products.map(s => (
@@ -148,6 +175,8 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
       <p class="base-note">
         Storage holds {view.storage.ore} of ore and {view.storage.products} of each material.
       </p>
+        </section>
+        <section class="overview-card" aria-label="Power">
       <h3>Power</h3>
       <div class="base-power" data-level={p.level}>
         <div class="base-power-row">
@@ -179,6 +208,163 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
         {p.defence && <p class="base-power-summary" data-defence>{p.defence}</p>}
         {p.islands && <p class="base-power-summary" data-islands>{p.islands}</p>}
       </div>
+        </section>
+      </div>
+      <section class="overview-card overview-activity" aria-label="What is going on">
+        <h3>What is going on</h3>
+        {(view.tree || view.research) && (
+          <div class="overview-line">
+            <span>
+              {active.length ? `Researching ${active.map(n => `${n.label} (${Math.round((n.progress ?? 0) * 100)}%)`).join(', ')}.` : 'Nothing is being researched.'}
+              {waitingFinds > 0 ? ` ${waitingFinds} find${waitingFinds > 1 ? 's' : ''} waiting to be studied.` : ''}
+              {!active.length && ready > 0 ? ` ${ready} ready to start.` : ''}
+            </span>
+            <button type="button" class="overview-go" data-go="research" onClick={click(() => go('research'))}>Research</button>
+          </div>
+        )}
+        {(view.pods || view.supply || view.elsewhere.length > 0) && (
+          <div class="overview-line">
+            <span>
+              {view.elsewhere.length > 0 ? `${view.elsewhere.length} other base${view.elsewhere.length > 1 ? 's' : ''}. ` : ''}
+              {view.pods?.flying.length ? `${view.pods.flying.length} pod${view.pods.flying.length > 1 ? 's' : ''} on the way. ` : ''}
+              {view.supply ? `Supply lines ${view.supply.enabled ? 'on' : 'off'}.` : ''}
+            </span>
+            <button type="button" class="overview-go" data-go="logistics" onClick={click(() => go('logistics'))}>Logistics</button>
+          </div>
+        )}
+        {view.signal && (
+          <div class="overview-line">
+            <span>{view.signal.line}</span>
+            <button type="button" class="overview-go" data-go="expedition" onClick={click(() => go('expedition'))}>Expedition</button>
+          </div>
+        )}
+        {!view.tree && !view.research && !view.pods && !view.supply && !view.signal && view.elsewhere.length === 0 && (
+          <p class="base-note">Just the home base for now.</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+/** One place for research: what is running, finds to study, what can start now, then the whole tree. */
+function ResearchHub({ view, paused, on }: SectionProps) {
+  const analyse = on.analyse, study = on.study, studyCore = on.studyCore, research = on.research, fit = on.fit;
+  const tree = view.tree;
+  const active = tree?.nodes.filter(n => n.state === 'active') ?? [];
+  const ready = tree?.nodes.filter(n => n.state === 'ready') ?? [];
+  // Only finds you have and can act on: nothing is listed before it is found.
+  const readyIds = new Set((tree?.nodes ?? []).filter(n => n.state === 'ready').map(n => n.id as string));
+  const findRows = (view.research ?? []).filter(r => (r.action !== null && !(r.action.kind === 'research' && readyIds.has(r.action.tech))) || r.progress !== null);
+  const hasFinds = findRows.length > 0 || !!(view.storm && !view.storm.analysed) || !!(view.core && !view.core.studied) || !!(view.crystal && !view.crystal.studied);
+  return (
+    <div class="base-main research-hub" data-base-section="research">
+      {tree && (
+        <section class="overview-card research-now" aria-label="Researching now">
+          <h3>Researching now</h3>
+          {!tree.hasLab && <p class="base-why">Research needs a powered Research lab.</p>}
+          {active.length ? active.map(n => (
+            <div key={n.id} class="research-active" data-active={n.id}>
+              <strong>{n.label}</strong>
+              <span class="ship-meter" aria-hidden="true"><i style={{ width: `${Math.round((n.progress ?? 0) * 100)}%` }} /></span>
+              <small>{Math.round((n.progress ?? 0) * 100)}% · {n.line}</small>
+            </div>
+          )) : <p class="base-note">Nothing is being researched. Pick something below.</p>}
+        </section>
+      )}
+      {hasFinds && (
+        <section class="overview-card" aria-label="Finds">
+          <h3>Finds to study</h3>
+          <div class="research-ready-list">
+            {findRows.map(row => (
+              <div key={row.id} class="research-ready-row" data-find={row.id}>
+                <div>
+                  <strong>{row.find}</strong>
+                  <small>{row.line}</small>
+                  {row.progress !== null && <span class="ship-meter" aria-hidden="true"><i style={{ width: `${(row.progress * 100).toFixed(0)}%` }} /></span>}
+                </div>
+                {row.action && (
+                  <button type="button" data-research={row.action.kind} disabled={paused || row.action.reason !== null} onClick={click(() => (row.action!.kind === 'research' ? research(row.action!.tech) : fit(row.action!.upgrade ?? '')))}>
+                    {row.action.kind === 'research' ? 'Start' : 'Fit'}
+                  </button>
+                )}
+                {row.action?.reason && <small class="base-why">{row.action.reason}</small>}
+              </div>
+            ))}
+            {view.storm && !view.storm.analysed && (
+              <div class="research-ready-row" data-analysed="false" aria-label="Storm pieces">
+                <div>
+                  <strong>Storm pieces</strong>
+                  <small>{view.storm.line} On the ground: {view.storm.onGround} · Carrying: {view.storm.held}</small>
+                </div>
+                <button type="button" class="base-analyse" disabled={view.storm.blocked !== null} onClick={click(analyse)}>Analyse a piece</button>
+                {view.storm.blocked && <small class="base-why">{view.storm.blocked}</small>}
+              </div>
+            )}
+            {view.core && !view.core.studied && (
+              <div class="research-ready-row" data-studied="false" aria-label="Cinder core sample">
+                <div><strong>Cinder core sample</strong><small>{view.core.line}</small></div>
+                <button type="button" data-study-core="true" disabled={view.core.blocked !== null} onClick={click(studyCore)}>Study the core sample</button>
+                {view.core.blocked && <small class="base-why">{view.core.blocked}</small>}
+              </div>
+            )}
+            {view.crystal && !view.crystal.studied && (
+              <div class="research-ready-row" data-studied="false" aria-label="Nacre crystal">
+                <div><strong>Nacre crystal</strong><small>{view.crystal.line}</small></div>
+                <button type="button" data-study="true" disabled={view.crystal.blocked !== null} onClick={click(study)}>Study the crystal</button>
+                {view.crystal.blocked && <small class="base-why">{view.crystal.blocked}</small>}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+      {tree && (
+        <section class="overview-card research-ready" aria-label="Ready to start">
+          <h3>Ready to start</h3>
+          {ready.length ? (
+            <div class="research-ready-list">
+              {ready.map(n => (
+                <div key={n.id} class="research-ready-row" data-ready={n.id}>
+                  <div>
+                    <strong>{n.label}</strong>
+                    <small>Costs {n.cost} · {n.seconds} s{n.unlocks.length ? ` · opens ${n.unlocks.slice(0, 2).join(', ')}${n.unlocks.length > 2 ? '…' : ''}` : ''}</small>
+                  </div>
+                  <button type="button" disabled={paused || n.start?.reason != null} onClick={click(() => research(n.id))}>Start</button>
+                  {n.start?.reason && <small class="base-why">{n.start.reason}</small>}
+                </div>
+              ))}
+            </div>
+          ) : <p class="base-note">Nothing can be started right now. The tree below shows what each technology still needs.</p>}
+        </section>
+      )}
+      {tree && (
+        <section class="research-all" aria-label="All research">
+          <h3>All research</h3>
+          <ResearchView view={tree} paused={paused} on={{ start: research, fit }} />
+        </section>
+      )}
+    </div>
+  );
+}
+
+/** Moving ore between worlds: pods, supply lines, and how the other bases are doing. */
+function Logistics({ view, paused, on }: SectionProps) {
+  const send = on.send;
+  const supply = { toggle: on.supplyToggle, reserve: on.supplyReserve };
+  return (
+    <div class="base-main" data-base-section="logistics">
+      {view.elsewhere.length > 0 && (
+        <section class="base-storm base-elsewhere" aria-label="Other worlds">
+          <h3>Other worlds</h3>
+          {view.elsewhere.map(o => (
+            <div key={o.id} data-outpost={o.id} data-level={o.level}>
+              <strong>{o.label}</strong>
+              <p class="base-note">{o.power}. {o.stores}.</p>
+              {o.machines.length > 0 && <p class="base-note">{o.machines.map(m => `${m.label}: ${m.line}`).join(' · ')}</p>}
+              {o.short.map(line => <p key={line} class="base-why">{line}</p>)}
+            </div>
+          ))}
+        </section>
+      )}
       {view.pods && (
         <section class="base-storm" aria-label="Cargo pods">
           <h3>Cargo pods</h3>
@@ -219,6 +405,15 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
           <p class="base-note" data-supply-line>{view.supply.line}</p>
         </section>
       )}
+    </div>
+  );
+}
+
+/** The deep signal and the expedition to the far system. */
+function ExpeditionSection({ view, paused, on }: SectionProps) {
+  const beacon = on.beacon, expedition = on.expedition, choose = on.choose;
+  return (
+    <div class="base-main" data-base-section="expedition">
       {view.signal && (
         <section class="base-storm" aria-label="Deep signal" data-signal={view.signal.state}>
           <h3>Deep signal</h3>
@@ -238,118 +433,36 @@ function Overview({ view, open, analyse, study, studyCore, research, fit, send, 
           {view.signal.reason && <p class="base-why">{view.signal.reason}</p>}
         </section>
       )}
-      {view.elsewhere.length > 0 && (
-        <section class="base-storm base-elsewhere" aria-label="Other worlds">
-          <h3>Other worlds</h3>
-          {view.elsewhere.map(o => (
-            <div key={o.id} data-outpost={o.id} data-level={o.level}>
-              <strong>{o.label}</strong>
-              <p class="base-note">{o.power}. {o.stores}.</p>
-              {o.machines.length > 0 && <p class="base-note">{o.machines.map(m => `${m.label}: ${m.line}`).join(' · ')}</p>}
-              {o.short.map(line => <p key={line} class="base-why">{line}</p>)}
-            </div>
-          ))}
-        </section>
-      )}
-      {view.research && (
-        <section class="base-storm" aria-label="Research">
-          <h3>Research</h3>
-          {view.research.map(row => (
-            <div key={row.id} data-find={row.id}>
-              <strong>{row.find}</strong>
-              <p class="base-note">{row.line}</p>
-              {row.progress !== null && <span class="ship-meter" aria-hidden="true"><i style={{ width: `${(row.progress * 100).toFixed(0)}%` }} /></span>}
-              {row.action && (
-                <>
-                  <button
-                    type="button"
-                    class="base-analyse"
-                    data-research={row.action.kind}
-                    disabled={row.action.reason !== null}
-                    onClick={click(() => (row.action!.kind === 'research' ? research(row.action!.tech) : fit(row.action!.upgrade ?? '')))}
-                  >
-                    {row.action.label}
-                  </button>
-                  {row.action.reason && <p class="base-why">{row.action.reason}</p>}
-                </>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
-      {view.core && (
-        <section class="base-storm" aria-label="Cinder core sample" data-studied={String(view.core.studied)}>
-          <h3>Cinder core sample</h3>
-          <p class="base-note">{view.core.line}</p>
-          <button type="button" class="base-analyse" data-study-core="true" disabled={view.core.blocked !== null} onClick={click(studyCore)}>
-            Study the core sample
-          </button>
-          {view.core.blocked && <p class="base-why">{view.core.blocked}</p>}
-        </section>
-      )}
-      {view.crystal && (
-        <section class="base-storm" aria-label="Nacre crystal" data-studied={String(view.crystal.studied)}>
-          <h3>Nacre crystal</h3>
-          <p class="base-note">{view.crystal.line}</p>
-          <button type="button" class="base-analyse" data-study="true" disabled={view.crystal.blocked !== null} onClick={click(study)}>
-            Study the crystal
-          </button>
-          {view.crystal.blocked && <p class="base-why">{view.crystal.blocked}</p>}
-        </section>
-      )}
-      {view.storm && (
-        <section class="base-storm" aria-label="Storm pieces" data-analysed={String(view.storm.analysed)}>
-          <h3>Storm pieces</h3>
-          <p class="base-note">
-            {view.storm.line} On the ground: {view.storm.onGround} · Carrying: {view.storm.held}
-          </p>
-          <button
-            type="button"
-            class="base-analyse"
-            disabled={view.storm.blocked !== null}
-            onClick={click(analyse)}
-          >
-            Analyse a piece
-          </button>
-          {view.storm.blocked && <p class="base-why">{view.storm.blocked}</p>}
-        </section>
-      )}
-      <h3>Needs attention</h3>
-      {view.attention.length ? (
-        <ul class="base-attention">
-          {view.attention.map(a => (
-            <li key={a.id}>
-              <button type="button" onClick={click(() => open(a.id))}>
-                {a.text}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="base-note">{view.buildings.length ? 'Everything is running.' : 'No buildings yet. Press Build to place your first.'}</p>
-      )}
     </div>
   );
 }
 
-function BuildingRow({ b, selected, select }: { b: BuildingView; selected: boolean; select: (id: number) => void }) {
+function pick(event: Event): string {
+  return (event.currentTarget as HTMLSelectElement).value;
+}
+
+function BuildingRow({ b, selected, checked, select, check }: { b: BuildingView; selected: boolean; checked: boolean; select: (id: number) => void; check: (id: number) => void }) {
   return (
-    <button
-      type="button"
-      class="base-row"
-      data-building={b.id}
-      aria-pressed={selected}
-      aria-label={`Select ${b.label} ${b.id}`}
-      onClick={click(() => select(b.id))}
-    >
-      <span class="base-row-name">
-        {b.label}
-        <small>{b.line}</small>
-      </span>
-      <span class="base-chip" data-tone={CHIP_TONE[b.chip]}>
-        {b.chipLabel}
-      </span>
-    </button>
+    <div class="base-row-wrap" data-checked={String(checked)}>
+      <input type="checkbox" class="base-row-check" aria-label={`Include ${b.label} ${b.id} in bulk actions`} checked={checked} onChange={() => check(b.id)} />
+      <button
+        type="button"
+        class="base-row"
+        data-building={b.id}
+        aria-pressed={selected}
+        aria-label={`Select ${b.label} ${b.id}`}
+        onClick={click(() => select(b.id))}
+      >
+        <span class="base-row-name">
+          {b.label}
+          <small>{b.line}</small>
+        </span>
+        <span class="base-row-meta">{b.position >= 0 ? `${b.position} m E` : `${-b.position} m W`}{b.power > 0 ? ` · ${b.power.toFixed(1)} kW` : ''}</span>
+        <span class="base-chip" data-tone={CHIP_TONE[b.chip]}>
+          {b.chipLabel}
+        </span>
+      </button>
+    </div>
   );
 }
 
@@ -423,19 +536,131 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
   );
 }
 
+type SortKey = 'position' | 'name' | 'kind' | 'status' | 'power';
+type StatusFilter = 'all' | 'attention' | 'running' | 'stopped' | 'off';
+const SORTS: Array<[SortKey, string]> = [['position', 'Position'], ['name', 'Name'], ['kind', 'Type'], ['status', 'Status'], ['power', 'Power use']];
+const FILTERS: Array<[StatusFilter, string]> = [['all', 'All'], ['attention', 'Needs attention'], ['running', 'Running'], ['stopped', 'Stopped'], ['off', 'Off']];
+const CHIP_ORDER: Record<Chip, number> = { wrecked: 0, stopped: 1, idle: 2, off: 3, running: 4 };
+
+function matches(b: BuildingView, filter: StatusFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'attention') return b.why !== null || b.chip === 'stopped' || b.chip === 'wrecked';
+  if (filter === 'off') return b.chip === 'off' || !b.enabled;
+  return b.chip === filter;
+}
+
+function sortBuildings(list: BuildingView[], key: SortKey): BuildingView[] {
+  const by: Record<SortKey, (a: BuildingView, b: BuildingView) => number> = {
+    position: (a, b) => a.position - b.position,
+    name: (a, b) => a.label.localeCompare(b.label) || a.position - b.position,
+    kind: (a, b) => a.kind.localeCompare(b.kind) || a.position - b.position,
+    status: (a, b) => CHIP_ORDER[a.chip] - CHIP_ORDER[b.chip] || a.label.localeCompare(b.label),
+    power: (a, b) => b.power - a.power || a.label.localeCompare(b.label),
+  };
+  return [...list].sort(by[key]);
+}
+
+/** Every building, sortable and filterable, with bulk actions for the ticked ones. */
 function Buildings({ state, on }: { state: BaseState; on: BaseHandlers }) {
   const { buildings } = state.view;
-  const selected = buildings.find(b => b.id === state.selected) ?? buildings[0] ?? null;
+  const [sort, setSort] = useState<SortKey>('position');
+  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [kind, setKind] = useState<string>('all');
+  const [ticked, setTicked] = useState<Set<number>>(new Set());
+  const [confirm, setConfirm] = useState(false);
+  const kinds = [...new Map(buildings.map(b => [b.kind, b.label])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const shown = sortBuildings(buildings.filter(b => matches(b, filter) && (kind === 'all' || b.kind === kind)), sort);
+  const chosen = buildings.filter(b => ticked.has(b.id));
+  const selected = buildings.find(b => b.id === state.selected) ?? shown[0] ?? null;
+  const tick = (id: number) => { const next = new Set(ticked); if (next.has(id)) next.delete(id); else next.add(id); setTicked(next); setConfirm(false); };
+  const allShown = shown.length > 0 && shown.every(b => ticked.has(b.id));
+  const toggleAll = () => { setTicked(allShown ? new Set() : new Set(shown.map(b => b.id))); setConfirm(false); };
+  const canOn = chosen.filter(b => b.canToggle && !b.enabled);
+  const canOff = chosen.filter(b => b.canToggle && b.enabled);
+  const canUpgrade = chosen.filter(b => b.upgrade && b.upgrade.blocked === null);
+  const canDemolish = chosen.filter(b => b.demolishBlocked === null);
+  const done = () => {
+    setTicked(new Set());
+    setConfirm(false);
+  };
+  const turnOn = () => canOn.forEach(b => on.toggle(b.id));
+  const turnOff = () => canOff.forEach(b => on.toggle(b.id));
+  const upgradeAll = () => canUpgrade.forEach(b => on.upgrade(b.id, b.upgrade!.tier));
+  const demolishAll = () => {
+    if (!confirm) {
+      setConfirm(true);
+      return;
+    }
+    canDemolish.forEach(b => on.demolish(b.id));
+    done();
+  };
   return (
     <div class="base-split" data-base-section="buildings">
       <div class="base-main">
         <h3>Buildings · {buildings.length}</h3>
-        {buildings.length ? (
-          <div class="base-rows">
-            {buildings.map(b => (
-              <BuildingRow key={b.id} b={b} selected={selected?.id === b.id} select={on.select} />
-            ))}
+        {buildings.length > 0 && (
+          <div class="base-toolbar" aria-label="Sort and filter buildings">
+            <label>
+              Sort by
+              <select data-sort value={sort} onChange={e => setSort(pick(e) as SortKey)}>
+                {SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </label>
+            <label>
+              Type
+              <select data-kind-filter value={kind} onChange={e => setKind(pick(e))}>
+                <option value="all">All types</option>
+                {kinds.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </label>
+            <div class="base-filter" role="group" aria-label="Show">
+              {FILTERS.map(([k, l]) => (
+                <button key={k} type="button" data-filter={k} aria-pressed={filter === k} onClick={click(() => setFilter(k))}>
+                  {l} <small>{buildings.filter(b => matches(b, k)).length}</small>
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+        {buildings.length > 0 && (
+          <div class="base-bulk" data-bulk={chosen.length}>
+            <label class="base-bulk-all">
+              <input type="checkbox" checked={allShown} onChange={toggleAll} aria-label="Select all shown" />
+              {chosen.length ? `${chosen.length} selected` : 'Select all shown'}
+            </label>
+            {chosen.length > 0 && (
+              <>
+                <button type="button" disabled={state.paused || !canOn.length} onClick={click(turnOn)}>
+                  Turn on {canOn.length || ''}
+                </button>
+                <button type="button" disabled={state.paused || !canOff.length} onClick={click(turnOff)}>
+                  Turn off {canOff.length || ''}
+                </button>
+                <button type="button" disabled={state.paused || !canUpgrade.length} onClick={click(upgradeAll)}>
+                  Upgrade {canUpgrade.length || ''}
+                </button>
+                <button
+                  type="button"
+                  class="base-bulk-danger"
+                  disabled={state.paused || !canDemolish.length}
+                  onClick={click(demolishAll)}
+                >
+                  {confirm ? `Yes, demolish ${canDemolish.length}` : `Demolish ${canDemolish.length || ''}`}
+                </button>
+                <button type="button" onClick={click(done)}>Clear</button>
+              </>
+            )}
+          </div>
+        )}
+        {state.paused && chosen.length > 0 && <p class="base-note">Resume the game to change buildings.</p>}
+        {buildings.length ? (
+          shown.length ? (
+            <div class="base-rows">
+              {shown.map(b => (
+                <BuildingRow key={b.id} b={b} selected={selected?.id === b.id} checked={ticked.has(b.id)} select={on.select} check={tick} />
+              ))}
+            </div>
+          ) : <p class="base-note">No buildings match.</p>
         ) : (
           <p class="base-note">No buildings yet. Press Build to place your first.</p>
         )}
@@ -472,32 +697,40 @@ function Ship({ view }: { view: BaseView }) {
   );
 }
 
-const SECTIONS: Array<[BaseSection, string]> = [
-  ['overview', 'Overview'],
-  ['buildings', 'Buildings'],
-  ['ship', 'Lander'],
-];
+/** The sections that make sense now: each one only appears once there is something in it. */
+function sectionsFor(view: BaseView, legacy: boolean): Array<[BaseSection, string]> {
+  const list: Array<[BaseSection, string]> = [['overview', 'Overview']];
+  if (view.tree || view.research || view.core || view.crystal || view.storm) list.push(['research', 'Research']);
+  list.push(['buildings', 'Buildings']);
+  if (view.pods || view.supply || view.elsewhere.length > 0) list.push(['logistics', 'Logistics']);
+  if (view.signal) list.push(['expedition', 'Expedition']);
+  list.push(['ship', 'Lander']);
+  if (legacy) list.push(['legacy', 'Legacy console']);
+  return list;
+}
 
 export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on: BaseHandlers; legacyHost: (el: HTMLElement | null) => void }) {
-  const withResearch: Array<[BaseSection, string]> = state.view.tree ? [...SECTIONS, ['research', 'Research tree']] : SECTIONS;
-  const sections = state.legacy ? [...withResearch, ['legacy', 'Legacy console'] as [BaseSection, string]] : withResearch;
+  const sections = sectionsFor(state.view, state.legacy);
+  const section = sections.some(([id]) => id === state.section) ? state.section : 'overview';
   return (
-    <div class="base-window" data-section={state.section}>
+    <div class="base-window" data-section={section}>
       <nav class="base-nav" aria-label="Base sections">
         {sections.map(([id, label]) => (
-          <button key={id} type="button" data-base-nav={id} aria-pressed={state.section === id} onClick={click(() => on.section(id))}>
+          <button key={id} type="button" data-base-nav={id} aria-pressed={section === id} onClick={click(() => on.section(id))}>
             {label}
           </button>
         ))}
         {!state.legacy && <p class="base-more">More sections open as your outpost grows.</p>}
       </nav>
       <div class="base-body">
-        {state.section === 'overview' && <Overview view={state.view} open={id => { on.select(id); on.section('buildings'); }} analyse={on.analyse} study={on.study} studyCore={on.studyCore} research={on.research} fit={on.fit} send={on.send} beacon={on.beacon} expedition={on.expedition} choose={on.choose} supply={{ toggle: on.supplyToggle, reserve: on.supplyReserve }} reserve={on.reserve} paused={state.paused} />}
-        {state.section === 'buildings' && <Buildings state={state} on={on} />}
-        {state.section === 'ship' && <Ship view={state.view} />}
-        {state.section === 'research' && state.view.tree && <ResearchView view={state.view.tree} paused={state.paused} on={{ start: on.research, fit: on.fit }} />}
+        {section === 'overview' && <Overview view={state.view} paused={state.paused} on={on} go={on.section} />}
+        {section === 'research' && <ResearchHub view={state.view} paused={state.paused} on={on} />}
+        {section === 'buildings' && <Buildings state={state} on={on} />}
+        {section === 'logistics' && <Logistics view={state.view} paused={state.paused} on={on} />}
+        {section === 'expedition' && <ExpeditionSection view={state.view} paused={state.paused} on={on} />}
+        {section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}
-        <div class="base-legacy" hidden={state.section !== 'legacy'} ref={legacyHost} />
+        <div class="base-legacy" hidden={section !== 'legacy'} ref={legacyHost} />
       </div>
     </div>
   );

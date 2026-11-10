@@ -108,7 +108,7 @@ export class CommandConsole {
     this.root.addEventListener('keydown',event=>{const target=event.target as HTMLElement;if(!target.matches('.tech-node')||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();const nodes=Array.from(this.root.querySelectorAll<HTMLButtonElement>('.tech-node')),index=nodes.indexOf(target as HTMLButtonElement),next=nodes[(index+(event.key==='ArrowLeft'||event.key==='ArrowUp'?-1:1)+nodes.length)%nodes.length];next.focus();next.scrollIntoView({block:'nearest',inline:'nearest'});});
     // Editing fields and dragging cannot thrust, walk, fire or invoke build shortcuts.
     for (const name of ['keydown', 'keyup']) this.root.addEventListener(name, e => {
-      const k=e as KeyboardEvent,code=physicalKey(k.code);if(!(['ESC','P','K','L','M','H'] as const).some(slot=>(this.preferences.bindings[slot]??slot)===code))k.stopPropagation();
+      const k=e as KeyboardEvent,code=physicalKey(k.code);if(!(['ESC','P','K','M','H'] as const).some(slot=>(this.preferences.bindings[slot]??slot)===code))k.stopPropagation();
     });
   }
   private chooseSlot(slot:PartSlot):void{this.partSlot=slot;this.selectedPart=UPGRADE_IDS.find(id=>UPGRADES[id].slot===slot)!;}

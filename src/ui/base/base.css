@@ -50,12 +50,50 @@
 #hud .base-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); min-height: 100%; }
 #hud .base-rows { display: grid; gap: 8px; }
 #hud .base-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left;
-  padding: 12px 14px; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid transparent; color: var(--ui-text);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; text-align: left;
+  padding: 12px 14px; width: 100%; border-radius: var(--ui-radius); background: var(--ui-raised); border: 1px solid transparent; color: var(--ui-text);
 }
 #hud .base-row[aria-pressed=true] { border-color: var(--ui-mint); }
 #hud .base-row-name { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); letter-spacing: .02em; min-width: 0; }
 #hud .base-row-name small { display: block; margin-top: 4px; font: 400 calc(13px * var(--scale)) / 1.35 var(--ui-body); color: var(--ui-muted); letter-spacing: 0; }
+#hud .base-row-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+#hud .base-row-wrap[data-checked=true] .base-row { background: var(--ui-mint-dim, #7fe6d31f); }
+#hud .base-row-check, #hud .base-bulk-all input { width: 18px; height: 18px; accent-color: var(--ui-mint); cursor: pointer; }
+#hud .base-row-meta {
+  font: 500 calc(13px * var(--scale)) / 1 var(--ui-mono); font-variant-numeric: tabular-nums; color: var(--ui-muted);
+  white-space: nowrap; text-align: right;
+}
+
+#hud .base-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+#hud .base-toolbar label {
+  display: flex; gap: 8px; align-items: center; color: var(--ui-muted);
+  font: 500 calc(13px * var(--scale)) / 1 var(--ui-body);
+}
+#hud .base-toolbar select {
+  padding: 8px 10px; border-radius: var(--ui-radius); border: 1px solid var(--ui-line);
+  background: var(--ui-raised); color: var(--ui-text); font: 500 calc(13px * var(--scale)) / 1 var(--ui-body);
+}
+#hud .base-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+#hud .base-filter button, #hud .base-bulk button {
+  width: auto; padding: 8px 11px; border-radius: var(--ui-radius); border: 1px solid var(--ui-line);
+  background: transparent; color: var(--ui-muted); white-space: nowrap;
+  font: 600 calc(12px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+#hud .base-filter button[aria-pressed=true] { color: var(--ui-text); border-color: var(--ui-mint); background: var(--ui-raised); }
+#hud .base-filter small { display: inline; margin-left: 4px; font-family: var(--ui-mono); color: var(--ui-muted); }
+#hud .base-bulk {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px;
+  border: 1px dashed var(--ui-line); border-radius: var(--ui-radius);
+}
+#hud .base-bulk[data-bulk]:not([data-bulk="0"]) { border-style: solid; border-color: var(--ui-mint); }
+#hud .base-bulk-all {
+  display: flex; gap: 8px; align-items: center; margin-right: auto; color: var(--ui-text);
+  font: 500 calc(13px * var(--scale)) / 1 var(--ui-body);
+}
+#hud .base-bulk button { color: var(--ui-text); background: var(--ui-raised); }
+#hud .base-bulk button:disabled { opacity: .45; }
+#hud .base-bulk .base-bulk-danger:not(:disabled) { color: var(--ui-red); border-color: currentColor; }
+
 #hud .base-chip {
   justify-self: start; padding: 6px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
   font: 600 calc(11px * var(--scale)) / 1 var(--ui-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ui-muted);
@@ -297,3 +335,33 @@
 #hud .base-supply-cell { display: inline-flex; align-items: center; gap: 4px; }
 #hud .base-supply-cell b { min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
 #hud .base-supply-cell small { color: var(--ui-muted); }
+
+/* Overview: a short dashboard. Attention first, materials and power side by side, then what is going on. */
+#hud .base-overview { display: grid; gap: 16px; align-content: start; }
+#hud .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+#hud .overview-card { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-panel-solid); }
+#hud .overview-card > h3, #hud .overview-attention > h3 { margin: 0; }
+#hud .overview-attention { display: grid; gap: 8px; }
+#hud .overview-attention .base-attention:empty { display: none; }
+#hud .overview-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--ui-line); font: 400 calc(14px * var(--scale)) / 1.4 var(--ui-body); }
+#hud .overview-line:first-of-type { border-top: 0; }
+#hud .overview-go { flex: none; padding: 6px 12px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-raised); color: var(--ui-text); font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .05em; cursor: pointer; }
+#hud .overview-go:hover { border-color: var(--ui-mint); }
+
+/* Research: what runs now, finds, what can start, then the whole tree. */
+#hud .research-hub { display: grid; gap: 16px; align-content: start; }
+#hud .research-active { display: grid; gap: 6px; }
+#hud .research-active strong { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); }
+#hud .research-active small { color: var(--ui-muted); font: 400 calc(13px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .research-ready-list { display: grid; gap: 6px; }
+#hud .research-ready-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; padding: 8px 10px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-raised); }
+#hud .research-ready-row strong { display: block; font: 600 calc(15px * var(--scale)) / 1.2 var(--ui-display); }
+#hud .research-ready-row small { color: var(--ui-muted); font: 400 calc(13px * var(--scale)) / 1.3 var(--ui-body); }
+#hud .research-ready-row .base-why { grid-column: 1 / -1; }
+#hud .research-ready-row button { padding: 7px 16px; border: 1px solid var(--ui-mint); border-radius: var(--ui-radius); background: transparent; color: var(--ui-mint); font: 600 calc(14px * var(--scale)) / 1 var(--ui-display); cursor: pointer; }
+#hud .research-ready-row button:disabled { opacity: .45; cursor: default; }
+#hud .research-all > h3 { margin: 4px 0 8px; }
+#hud .overview-line > span { flex: 1; min-width: 0; }
+#hud .overview-line .overview-go { width: auto; }
+#hud .research-ready-row .ship-meter { margin-top: 6px; }
+#hud .research-ready-row button { width: auto; }

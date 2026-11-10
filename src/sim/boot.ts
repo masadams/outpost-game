@@ -1,5 +1,6 @@
 import { industrialPowerBlock } from './colonyPolicy';
 import { powerFraction, ratedPower } from './power';
+import { energyCapacity } from './colony';
 import type { Building } from './colony';
 import type { WorldState } from './world';
 import type { BuildType } from './colonyConfig';
@@ -16,6 +17,12 @@ export const BOOT_SECONDS = 8;
 export const BROWNOUT_SECONDS = 4;
 /** Warming up draws this share of the machine's normal power. */
 export const BOOT_DRAW = 0.5;
+/** After shutting down for lack of power, a machine waits this long before trying to start again. */
+export const RESTART_SECONDS = 10;
+/** A machine only starts when the store holds twice what booting takes, or is at least this full (small stores). */
+export const START_SHARE = 0.6;
+/** Gaps shorter than this pause a running machine without showing it as out of power. */
+export const HOLD_SECONDS = 1.5;
 export const BOOT_KINDS: readonly BuildType[] = ['observatory', 'refinery', 'fuelProcessor', 'miningRig', 'researchLab'];
 
 export const needsBoot = (kind: BuildType): boolean => BOOT_KINDS.includes(kind);
@@ -26,22 +33,45 @@ export function bootStep(world: WorldState, b: Building, dt: number): boolean {
   if (b.boot === undefined) return true;
   const colony = world.colony;
   const rated = ratedPower(b) * powerFraction(b);
-  const powered = rated <= 0 || industrialPowerBlock(colony, rated * BOOT_DRAW * dt) === null;
+  const draw = rated * BOOT_DRAW;
+  const powered = rated <= 0 || industrialPowerBlock(colony, draw * dt) === null;
   if (b.boot >= BOOT_SECONDS) {
-    b.dark = powered ? 0 : (b.dark ?? 0) + dt;
-    if ((b.dark ?? 0) < BROWNOUT_SECONDS) return true;
+    // Online: it needs its full power to work this step.
+    const running = rated <= 0 || industrialPowerBlock(colony, rated * dt) === null;
+    b.dark = running ? 0 : (b.dark ?? 0) + dt;
+    if (running) return true;
+    if ((b.dark ?? 0) < BROWNOUT_SECONDS) {
+      // A short gap only pauses the work; it says so only if the gap lasts.
+      if ((b.dark ?? 0) >= HOLD_SECONDS) b.status = 'no power';
+      return false;
+    }
+    // Out of power for too long: shut down and wait before trying again, so machines do not flicker on and off.
     b.boot = 0;
     b.dark = 0;
+    b.wait = RESTART_SECONDS;
   }
-  b.requestedPower = rated * BOOT_DRAW;
-  colony.demand += b.requestedPower;
-  if (powered) {
-    colony.energy = Math.max(0, colony.energy - rated * BOOT_DRAW * dt);
-    b.gridPower = rated * BOOT_DRAW;
+  b.requestedPower = draw;
+  colony.demand += draw;
+  if ((b.wait ?? 0) > 0) {
+    b.wait = Math.max(0, (b.wait ?? 0) - dt);
+    if (b.wait <= 0) b.wait = undefined;
+    b.status = 'no power';
+    return false;
+  }
+  // Starting needs power to spare: the store must be well filled (it only fills when generation beats demand).
+  // Once started, it carries on while it gets power; losing power part-way stops it and it waits.
+  const starting = b.boot > 0;
+  const spare = colony.energy >= Math.min(START_SHARE * energyCapacity(colony), 2 * draw * BOOT_SECONDS);
+  if (powered && (starting || spare || rated <= 0)) {
+    colony.energy = Math.max(0, colony.energy - draw * dt);
+    b.gridPower = draw;
     b.boot = Math.min(BOOT_SECONDS, b.boot + dt);
     b.status = 'starting';
   } else {
-    b.boot = Math.max(0, b.boot - 2 * dt);
+    if (starting) {
+      b.boot = 0;
+      b.wait = RESTART_SECONDS;
+    }
     b.status = 'no power';
   }
   return false;

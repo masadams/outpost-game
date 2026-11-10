@@ -25,14 +25,14 @@ test('builds a powered surface rig, stops and resumes extraction, and preserves 
   await expect.poll(async () => Number(await hud.getAttribute('data-depot')), { timeout: 5000 }).toBeGreaterThan(Number(stopped));
   await page.keyboard.press('p'); await expect(hud).toHaveAttribute('data-state', 'paused');
   const reserve = await page.locator('.ground-survey').getAttribute('data-remaining'), ore = await hud.getAttribute('data-depot');
-  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Checkpoint saved');
+  await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Game saved');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('outpost.checkpoint.v1')!));
   expect(saved.version).toBe(34); expect(saved.world.surfaceDeposits[0].remaining).toBeLessThan(180);
   expect(saved.world.colony.buildings[1].depositId).toBe(1);
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/planetary-mining.png' });
   await restart(page); await expect(hud).toHaveAttribute('data-buildings', '0'); await expect(hud).toHaveAttribute('data-depot', '0.00');
-  await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-buildings', '2');
+  await page.reload(); await expect(hud).toHaveAttribute('data-buildings', '2');
   await expect(hud).toHaveAttribute('data-state', 'paused'); await expect(hud).toHaveAttribute('data-depot', ore!);
   await expect(page.locator('.ground-survey')).toHaveAttribute('data-remaining', reserve!);
   await page.reload(); await expect(hud).toHaveAttribute('data-buildings', '2');

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld, type WorldState } from '../src/sim/world';
 import { completedBuilding } from '../src/sim/construction';
-import { BOOT_SECONDS, BROWNOUT_SECONDS } from '../src/sim/boot';
+import { BOOT_SECONDS, BROWNOUT_SECONDS, RESTART_SECONDS } from '../src/sim/boot';
 
 const IDLE = { thrust: false, turn: 0 };
 const run = (w: WorldState, seconds: number) => { for (let i = 0; i < Math.round(seconds * 60); i++) stepWorld(w, IDLE, 1 / 60); };
@@ -58,7 +58,10 @@ describe('boot-up', () => {
     expect(w.colony.buildings[0].boot).toBeLessThan(BOOT_SECONDS);
     w.colony.buildings.push(completedBuilding(w.colony.nextId++, 'solar', 0.13, w));
     w.colony.energy = 40;
+    // It waits a while after shutting down, then boots again.
     run(w, 1);
+    expect(w.colony.buildings[0].status).toBe('no power');
+    run(w, RESTART_SECONDS);
     expect(w.colony.buildings[0].status).toBe('starting');
   });
 
