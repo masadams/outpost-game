@@ -2,7 +2,7 @@ import { h, render } from 'preact';
 import type { ColonyAction } from '../sim/colony';
 import { navigation } from '../sim/exploration';
 import type { WorldState } from '../sim/world';
-import { MapWindowView, type MapHandlers } from './map/MapWindow';
+import { MapWindowView, ZOOM_MAX, ZOOM_MIN, ZOOM_STEP, type MapHandlers } from './map/MapWindow';
 import { mapView } from './map/mapView';
 
 const fmt = (n: number) => n.toFixed(1);
@@ -26,8 +26,8 @@ export class NavigationPanel {
       mark: point => issue({ type: 'mark', point }),
       visit: () => { if (!this.paused) issue({ type: 'visitSite' }); },
       zoom: action => {
-        if (action === 'in') this.zoom = Math.min(8, this.zoom * 1.5);
-        if (action === 'out') this.zoom = Math.max(0.5, this.zoom / 1.5);
+        if (action === 'in') this.zoom = Math.min(ZOOM_MAX, this.zoom * ZOOM_STEP);
+        if (action === 'out') this.zoom = Math.max(ZOOM_MIN, this.zoom / ZOOM_STEP);
         if (action === 'fit') { this.zoom = 1; this.focus = false; }
         if (action === 'focus') { this.zoom = 2; this.focus = true; }
         if (this.latest) this.render(this.latest);
