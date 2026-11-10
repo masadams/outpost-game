@@ -103,3 +103,7 @@
 #hud .map-tools button { width: auto; white-space: nowrap; padding-left: 12px; padding-right: 12px; }
 #hud .map-chart-wrap { position: relative; }
 #hud .map-hint { position: absolute; top: 10px; left: 14px; pointer-events: none; }
+
+/* Tools sit directly under the chart, so a long place list never pushes them out of view. */
+#hud .map-chart-wrap { align-content: start; gap: 8px; }
+#hud .map-tools { position: static; flex-wrap: wrap; }
