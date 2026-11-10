@@ -30,7 +30,12 @@ TypeScript, Vite, Phaser 3 for world rendering/input, custom fixed-timestep simu
 - Camera follows smoothly and reorients to local up near surfaces; no scene transitions.
 - Procedural/vector art only until core gameplay is proven.
 - Unit-test physics invariants, landing classification and resource conservation.
-- npm scripts: `dev`, `build`, `test`, `typecheck`, `test:browser`.
+- npm scripts: `dev`, `build`, `test`, `typecheck`, `test:browser`, `test:browser:changed`, `test:browser:smoke`.
+- **Which tests to run.** Always: `typecheck` and `test` (unit tests, about two minutes). For the browser, run
+  `npm run test:browser:changed`: it picks the specs that cover the files changed since `main`, plus the smoke
+  spec (`--list` shows the choice and why). Run the whole browser suite (about 50 minutes) only when that script
+  says the change is central, or before a release. A new source file needs a rule in `scripts/browser-tests.mjs`;
+  a unit test fails until it has one.
 - Saves: current version only. No legacy-save migrations until the game is close to complete; old saves may be reset.
 - Never claim tests passed unless you ran them. Report what you actually ran.
 - Do not merge PRs automatically. Keep code free of personal names/identifiers.

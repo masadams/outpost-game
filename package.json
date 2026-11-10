@@ -12,6 +12,8 @@
     "bot": "vitest run --config vitest.bot.config.ts",
     "benchmark": "vitest bench --run",
     "test:browser": "playwright test",
+    "test:browser:changed": "node scripts/browser-tests.mjs",
+    "test:browser:smoke": "playwright test tests/browser/smoke.spec.ts",
     "test:preview": "playwright test --config playwright.preview.config.ts"
   },
   "dependencies": {
