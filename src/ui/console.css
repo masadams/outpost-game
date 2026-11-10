@@ -154,10 +154,10 @@
 /* ---------- Waking log at the start of a new game ---------- */
 #hud-chrome .boot-log {
   position: fixed;
-  left: 50%;
-  top: 24%;
-  transform: translateX(-50%);
-  width: min(620px, calc(100vw - 48px));
+  /* Top right, under the screen buttons: clear of the lander and the objective card. */
+  right: 24px;
+  top: 118px;
+  width: min(460px, calc(100vw - 48px));
   padding: 16px 20px;
   display: grid;
   gap: 6px;
@@ -170,8 +170,8 @@
 }
 #hud-chrome .boot-log p {
   margin: 0;
-  font: 500 calc(15px * var(--text-scale, 1)) / 1.4 var(--ui-mono);
-  letter-spacing: .08em;
+  font: 500 calc(13px * var(--text-scale, 1)) / 1.4 var(--ui-mono);
+  letter-spacing: .06em;
   color: var(--ui-mint);
   text-shadow: var(--console-glow);
   opacity: 0;
