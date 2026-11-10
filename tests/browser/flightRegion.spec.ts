@@ -22,7 +22,7 @@ test('identifies thin air, space exit and atmospheric return at the physical bou
     expect(fits).toBe(true);
   }
   await page.setViewportSize({ width: 1280, height: 800 }); await page.screenshot({ path: 'docs/screenshots/atmosphere-space.png' });
-  await page.evaluate(text => localStorage.setItem('outpost.checkpoint.v1', text), fixture(true)); await page.keyboard.press('l');
+  await page.evaluate(text => localStorage.setItem('outpost.checkpoint.v1', text), fixture(true)); await page.reload();
   await expect(badge).toHaveText('SPACE · VACUUM'); await page.keyboard.press('p');
   await expect(badge).toHaveText('THIN AIR', { timeout: 6000 }); await expect(status).toHaveAttribute('data-regime', 'atmosphere');
   expect(errors).toEqual([]);

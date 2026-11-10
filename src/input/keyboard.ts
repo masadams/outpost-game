@@ -21,7 +21,7 @@ export class Keyboard {
     this.release(); this.scene.input.keyboard!.removeAllKeys(true);
     this.keys = Object.fromEntries(BINDING_SLOTS.map(slot => [slot, this.scene.input.keyboard!.addKey(bindings[slot] ?? slot, false)]));
     // Phaser clears JustDown on keyup; retain taps that begin/end between simulation steps.
-    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'G', 'U', 'Q', 'T', 'ENTER', 'V', 'K', 'L', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC', 'Y']) {
+    for (const name of ['F', 'E', 'SPACE', 'W', 'UP', 'P', 'B', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'G', 'U', 'Q', 'T', 'ENTER', 'V', 'K', 'M', 'H', 'J', 'MINUS', 'PLUS', 'ZERO', 'Z', 'SHIFT', 'BACKSPACE', 'I', 'ESC', 'Y']) {
       this.keys[name].on('down', (_key: Phaser.Input.Keyboard.Key, event: KeyboardEvent) => {
         if(name==='ESC'&&event.key==='Escape'&&event.target instanceof HTMLElement&&event.target.closest('dialog'))return;
         if (!(this.gameplayFocus() && ['W','UP','SPACE','SHIFT','C'].includes(name)) && !this.typing() && !event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey) this.pending.add(name);
@@ -54,7 +54,6 @@ export class Keyboard {
   closePanel(): boolean { return this.pending.delete('ESC'); }
   pause(): boolean { return this.pending.delete('P'); }
   save(): boolean { return this.pending.delete('K'); }
-  load(): boolean { return this.pending.delete('L'); }
   mute(): boolean { return this.pending.delete('M'); }
   help(): boolean { return this.pending.delete('H'); }
   trajectory(): boolean { return this.pending.delete('J'); }

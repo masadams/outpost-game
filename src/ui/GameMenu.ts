@@ -24,15 +24,28 @@ export class GameMenu {
     });
     this.dialog.addEventListener('click', e => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-menu]');
-      if (button && !button.disabled) this.action(button.dataset.menu as MenuAction);
+      if (!button || button.disabled) return;
+      const action = button.dataset.menu as MenuAction;
+      // Loading mid-game throws away what has happened since the last save: ask first.
+      if (action === 'continue' && this.mode === 'pause' && !this.confirmLoad) {
+        this.confirmLoad = true;
+        this.message('Load the last save? Anything since then will be lost.');
+        return;
+      }
+      this.confirmLoad = false;
+      this.action(action);
     });
   }
+
+  /** True after one press of Load in the pause menu: the next press loads. */
+  private confirmLoad = false;
 
   get isOpen(): boolean { return this.dialog.open; }
 
   open(mode: 'title' | 'pause' = 'pause'): void {
     this.mode = mode;
     this.status = '';
+    this.confirmLoad = false;
     this.render();
     if (!this.dialog.open) this.dialog.showModal();
     this.dialog.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
@@ -56,8 +69,8 @@ export class GameMenu {
     if (this.mode === 'pause') {
       return [
         { action: 'resume', label: 'Resume', primary: true },
-        { action: 'save', label: 'Save checkpoint' },
-        { action: 'continue', label: 'Load checkpoint', disabled: !info.hasSave },
+        { action: 'save', label: 'Save game' },
+        { action: 'continue', label: this.confirmLoad ? 'Yes, load last save' : 'Load last save', disabled: !info.hasSave },
         ...common,
         { action: 'title', label: 'Return to title' },
       ];

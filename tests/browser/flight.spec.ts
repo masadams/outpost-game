@@ -114,7 +114,7 @@ test('constructs a powered production line and preserves its world checkpoint ac
   await page.keyboard.press('k');
   await expect.poll(async () => page.evaluate(() => localStorage.getItem('outpost.checkpoint.v1'))).not.toBeNull();
   await restart(page); await expect(hud).toHaveAttribute('data-buildings', '0');
-  await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-buildings', '3');
+  await page.reload(); await expect(hud).toHaveAttribute('data-buildings', '3');
   await expect(hud).toHaveAttribute('data-fuel-stock', fuel!); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.reload(); await expect(hud).toHaveAttribute('data-buildings', '3');
   await expect(hud).toHaveAttribute('data-mode', 'astronaut'); await expect(hud).toHaveAttribute('data-state', 'paused');

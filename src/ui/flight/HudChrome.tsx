@@ -16,6 +16,7 @@ export interface ChromeKeys {
   build: string;
   mute: string;
   help: string;
+  save: string;
   pause: string;
   path: string;
   zoomIn: string;
@@ -48,6 +49,7 @@ export interface ChromeHandlers {
   sound: () => void;
   help: () => void;
   settings: () => void;
+  save: () => void;
   pause: () => void;
   view: (action: ViewAction) => void;
 }
@@ -205,6 +207,7 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
             onClick={on.sound}
           />
           <ToolButton icon="help" label="Open quick-start guide" hint={`How to play · ${keys.help}`} onClick={on.help} />
+          <ToolButton icon="save" label="Quick save" hint={`Quick save · ${keys.save}`} onClick={on.save} />
           <ToolButton icon="settings" label="Open settings" hint="Settings" onClick={on.settings} />
           <ToolButton
             icon={state.paused ? 'play' : 'pause'}

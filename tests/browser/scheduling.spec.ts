@@ -58,7 +58,7 @@ test('automatically refines rig ore to stock targets, supports native controls a
   expect(factory.progress).toBeGreaterThan(0); expect(factory.progress).toBeLessThan(2);
   await page.screenshot({ path: 'docs/screenshots/production-scheduling.png' });
   await page.keyboard.press('Escape');
-  await restart(page); await expect(hud).toHaveAttribute('data-buildings', '0'); await page.keyboard.press('l');
+  await restart(page); await expect(hud).toHaveAttribute('data-buildings', '0'); await page.reload();
   await expect(hud).toHaveAttribute('data-buildings', '4'); await openRefinery();
   await expect(auto).toHaveAttribute('data-auto', 'true');
   await expect(page.locator('[data-target-value="alloy"]')).toHaveText('15');

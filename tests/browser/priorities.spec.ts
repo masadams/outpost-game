@@ -46,7 +46,7 @@ test('manages reserves from ship and surface, protects production/storage/materi
   await page.locator('#operations-dock').evaluate(e => { e.scrollTop = 0; });
   await page.screenshot({ path: 'docs/screenshots/colony-priorities.png' });
   await restart(page); await page.getByRole('button', { name: 'Base', exact: true }).click(); await page.getByRole('button', { name: 'Economy', exact: true }).click(); await expect(page.locator('[data-policy-value="deliveryReserve"]:visible')).toHaveText('0'); await page.keyboard.press('Escape');
-  await page.keyboard.press('l'); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Base', exact: true }).click(); await page.getByRole('button', { name: 'Economy', exact: true }).click();
+  await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused'); await page.getByRole('button', { name: 'Base', exact: true }).click(); await page.getByRole('button', { name: 'Economy', exact: true }).click();
   await expect(page.locator('[data-policy-value="deliveryReserve"]:visible')).toHaveText('400'); await expect(hud).toHaveAttribute('data-depot', ore!);
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused');
   await page.getByRole('button', { name: 'Base', exact: true }).click(); await page.getByRole('button', { name: 'Economy', exact: true }).click();
