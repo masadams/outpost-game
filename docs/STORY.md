@@ -58,6 +58,6 @@ Terse, plain, second person or none. A machine log that is slowly becoming a per
 Each memory stays under 170 characters.
 
 ## Not yet
-- No ending yet: the seed ship and the three-way choice are planned, not built.
+- After "To the living colony", Begin again starts a new system as the copy that went with the ship: a different boot log, a memory of the systems made before, and the same journey. The old game stays saved until saved over.
 - World memories are story only; they give no materials or parts.
 - The standard test layout (no day cycle) has no story and keeps the old unlock order.

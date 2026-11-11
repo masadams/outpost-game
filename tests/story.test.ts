@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld } from '../src/sim/world';
-import { MEMORIES, SECOND_SIGNAL_SECONDS, hasMemory, memories, stepStory, validStory } from '../src/sim/story';
+import { bootLog } from '../src/ui/flight/chromeView';
+import { carriedStory, MEMORIES, SECOND_SIGNAL_SECONDS, hasMemory, memories, stepStory, validStory } from '../src/sim/story';
 import { completedBuilding } from '../src/sim/construction';
 import { blueprintRevealed } from '../src/sim/unlocks';
 import { stepBlueprintNotices } from '../src/sim/blueprintNotice';
@@ -149,6 +150,17 @@ describe('the story', () => {
     w.exploration.surveyed.push('copper');
     stepStory(w);
     expect(hasMemory(w, 'oneShip')).toBe(true);
+  });
+
+  it('begins again remembering how many systems it has made', () => {
+    const w = createWorld(7);
+    w.system.sun = true;
+    w.exploration.story = carriedStory(1);
+    stepStory(w);
+    expect(hasMemory(w, 'inherited')).toBe(true);
+    expect(validStory(w.exploration.story)).toBe(true);
+    expect(validStory({ memories: [], lives: -1 })).toBe(false);
+    expect(bootLog(w)![0]).toContain('COPY 2');
   });
 
   it('has short, unique memories', () => {

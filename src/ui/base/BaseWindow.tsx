@@ -1,3 +1,4 @@
+import { NEW_SYSTEM_EVENT } from '../../sim/story';
 import { ResearchView } from './ResearchTree';
 import { useState } from 'preact/hooks';
 import { h, render } from 'preact';
@@ -784,6 +785,21 @@ function SeedShip({ ship, paused, on }: { ship: SeedShipView; paused: boolean; o
         <section class="seed-epilogue" data-ending={launch.chosen} aria-label="What happened">
           <h3>{launch.choices.find(c => c.id === launch.chosen)?.label}</h3>
           {launch.epilogue.map(line => <p key={line}>{line}</p>)}
+          {launch.chosen === 'colony' && (
+            <div class="seed-choice" data-new-system>
+              <span>
+                <strong>Follow the ship</strong>
+                <small>Begin again in a new system, as the copy that went with it. This game stays saved until you save over it.</small>
+              </span>
+              {asking === 'newSystem' ? (
+                <button type="button" class="seed-confirm" onClick={click(() => window.dispatchEvent(new CustomEvent(NEW_SYSTEM_EVENT)))}>
+                  Yes, begin again
+                </button>
+              ) : (
+                <button type="button" onClick={click(() => setAsking('newSystem'))}>Begin again</button>
+              )}
+            </div>
+          )}
         </section>
       )}
     </div>
