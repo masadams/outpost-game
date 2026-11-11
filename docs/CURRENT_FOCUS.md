@@ -1,11 +1,15 @@
 # Current Focus
 
-**Updated:** 2026-11-08 · **Milestone:** content complete for a long hands-on playtest
+**Updated:** 2026-11-11 · **Milestone:** content complete for a long hands-on playtest
 
 ## Now
 A long playtest of a fresh seeded game, start to expedition. Since the last update: story reveals (milestones and blueprints appear as things happen, research waits for story beats), events between storms, rocks drifting in, the deep signal and expedition with wrecks to salvage, supply lines, three optional living worlds (Verdant, Tide, Murk), northern lights, giant storm rocks with a missile/laser split, turret range by tier, and a balance pass checked by an economy bot (`npm run bot`). See [DECISIONS.md](DECISIONS.md) and the [playtest report](playtests/2026-11-08.md). The defence drill and hostile patrols are gone from play.
 
 What to watch in the playtest: pacing from first sortie to the first storm, whether the story cues feel discovered rather than instructed, power at night, the giant storm, and landing and building on the new worlds.
+
+Added since (2026-11-09 to 11): a Headquarters with levels that open the worker bay and shipyard, outpost cores, the power-grid overhaul and visible power lines, graded seams that must be surveyed and a ground scan (R), ore piling at far mines, the tug bay and worker bay (a drone that builds and repairs), weather on Ember, Cinder and Tide with a sea wall and weatherproofing, an outpost kit, save slots, a sound for each world, the deep-space finds, keystones, the seed ship and its endings, and a pacing pass checked by a 15-day pacing bot (`tests/bot/pacing.test.ts`). Research is still fast; it is noted in [BEFORE_RELEASE](tasks/BEFORE_RELEASE.md) to slow it before a release.
+
+What to watch now, on top of the list above: whether the Headquarters levels pace the mid-game, whether far worlds feel worth settling (weather, outpost kit, worker drones), and the seed ship as an end goal.
 
 ## Why
 The alpha has a strong simulation core (fixed-step physics, landing, resource accounting, 538 passing unit tests) but grew wide before it got good. Seventeen task specs added research, 25 ship parts, combat, drones, shields, towing, autopilot tiers, facility upgrades, freight, scheduling and colony policy. Meanwhile the first minute of play is unclear and the interface reads like a web dashboard. The bible's own rule is depth before breadth, so we are returning to it.
