@@ -233,6 +233,7 @@ const STATUS: Record<string, { chip: Chip; label: string }> = {
   depleted: { chip: 'stopped', label: 'Used up' },
   'no fuel': { chip: 'stopped', label: 'No fuel' },
   'worn out': { chip: 'stopped', label: 'Worn out' },
+  flooded: { chip: 'stopped', label: 'Flooded' },
   'power reserved': { chip: 'stopped', label: 'Power held back' },
   'delivery reserved': { chip: 'stopped', label: 'Room held back' },
   disabled: { chip: 'off', label: 'Off' },
@@ -275,6 +276,8 @@ export function whyStopped(b: Building): string | null {
       return 'Wrecked. Walk up to it and repair it (U).';
     case 'depleted':
       return 'The deposit under it is used up.';
+    case 'flooded':
+      return 'High tide covers it. It starts again when the water goes out.';
     case 'no deposit':
       return b.kind === 'droneBay' ? 'No ore seam within 300 m. Build it closer to one.' : 'It is not on a surface deposit.';
     case 'no fuel':

@@ -73,7 +73,7 @@ export interface Building {
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached' | 'no fuel' | 'worn out';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached' | 'no fuel' | 'worn out' | 'flooded';
 }
 export interface Colony {
   shielding: ShieldLedger;

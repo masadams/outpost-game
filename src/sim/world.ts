@@ -21,6 +21,7 @@ import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStory } from './story';
 import { stepKeystones } from './keystones';
 import { stepSurvey } from './survey';
+import { stepWeather } from './weather';
 import { stepDeepSpace } from './deepSpace';
 import { ensureHq, isHqAction, upgradeHq } from './headquarters';
 import { isPileAction, loadPiles } from './stockpile';
@@ -239,6 +240,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepCore(world);
   stepKeystones(world);
   stepSurvey(world);
+  stepWeather(world);
   stepDeepSpace(world);
   stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);

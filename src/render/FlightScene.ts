@@ -46,6 +46,7 @@ import { Help } from '../ui/Help';
 import { tractorStats } from '../sim/shipStats';
 import { FlightChrome, type ViewAction } from '../ui/flight/HudChrome';
 import { eventChip } from '../sim/events';
+import { weatherChip } from '../sim/weather';
 import { bootLog, objectiveCard, regionView } from '../ui/flight/chromeView';
 import { PickupFeed } from '../ui/flight/pickupFeed';
 import { stormView } from '../ui/flight/stormView';
@@ -69,6 +70,7 @@ import { FlightTools } from '../ui/FlightTools';
 import { predictCoast, type Trajectory } from '../sim/trajectory';
 import { createAtmosphere, createHalo } from './atmosphere';
 import { drawNature } from './nature';
+import { drawHaze, drawTide } from './weather';
 import { createAuroraSky, updateAuroraSky } from './aurora';
 import { CELESTIAL, type BodyId } from '../sim/celestial';
 import { auroraFade, auroraStrength } from '../sim/aurora';
@@ -133,6 +135,8 @@ export class FlightScene extends Phaser.Scene {
   private chrome!: FlightChrome;
   private pickupFeed = new PickupFeed();
   private sky!: Phaser.GameObjects.Graphics;
+  /** Dust or ash over the screen, above the world. */
+  private haze!: Phaser.GameObjects.Graphics;
   private starVisibility = 1;
   private soundEnabling = false;
   private help!: Help;
@@ -252,6 +256,7 @@ export class FlightScene extends Phaser.Scene {
       ...this.extras.map((e) => e.image),
       this.art,
     ]);
+    this.haze = this.add.graphics();
     this.map = this.add.graphics();
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (this.menu?.isOpen || this.help.isOpen || this.settings.isOpen || pointer.event.target !== this.game.canvas)
@@ -524,7 +529,7 @@ export class FlightScene extends Phaser.Scene {
       pickups: this.pickupFeed.lines(),
       storm: stormView(world),
       day: dayView(world),
-      event: eventChip(world),
+      event: eventChip(world) ?? weatherChip(world),
       wreck: wreckCard(world),
       boot: bootLog(world),
       trajectory: this.flightTools.trajectory,
@@ -966,6 +971,7 @@ export class FlightScene extends Phaser.Scene {
     this.skyImage.setAlpha(look.stars);
     this.starVisibility = look.stars;
     this.drawSun(width, height, daylight);
+    drawHaze(this.haze, width, height, this.simulation, this.time.now / 1000, !this.preferences.reducedMotion);
     const home = planetAt('home', this.simulation.system),
       moon = planetAt('moon', this.simulation.system);
     this.atmosphere.setAlpha(look.atmosphere);
@@ -991,7 +997,10 @@ export class FlightScene extends Phaser.Scene {
       const here = bodyExists(extra.id, this.simulation.system) && this.simulation.system.binary;
       extra.image.setVisible(here).setPosition(body.position.x - this.follow.x, body.position.y - this.follow.y);
       extra.halo?.setVisible(here).setPosition(body.position.x - this.follow.x, body.position.y - this.follow.y);
-      if (here && visible(view, body.position, body.radius + 60)) drawNature(g, body, this.simulation.seed, view);
+      if (here && visible(view, body.position, body.radius + 60)) {
+        drawNature(g, body, this.simulation.seed, view);
+        drawTide(g, body, this.simulation, this.time.now / 1000);
+      }
     }
     const padSafety = flightSafety(this.simulation.ship, this.simulation.system);
     const padLevel = padSafety.approach ? padSafety.level : 'neutral';

@@ -1,6 +1,7 @@
 import { BODIES, nearestPlanet, type BodyId } from '../sim/celestial';
 import { airFraction } from '../sim/environment';
 import { flightRegion } from '../sim/flightRegion';
+import { weatherOn } from '../sim/weather';
 import type { WorldState } from '../sim/world';
 
 export type Area = 'home-surface' | 'home-sky' | 'space' | 'moon-surface' | 'moon-sky';
@@ -77,6 +78,12 @@ export function soundscape(w: WorldState): Soundscape {
   else if (area === 'home-sky') ambience = { ...voice, frequency: voice.frequency * 1.5, level: 0.02 * air, swell: { rate: voice.swell.rate, depth: voice.swell.depth * 0.5 } };
   else if (area === 'space') ambience = { frequency: 90, level: 0.004, q: 0.7, ...STEADY };
   else ambience = { frequency: onFoot ? 2800 : 140, level: onFoot ? 0.0015 : 0.003, q: 0.7, ...STEADY };
+  // A dust storm rises from a hiss to a gusting roar on the ground.
+  const weather = weatherOn(w, body);
+  if (weather && weather.spec.kind === 'dust' && weather.strength > 0 && area !== 'space') {
+    const s = weather.strength;
+    ambience = { ...ambience, frequency: ambience.frequency * (1 - 0.6 * s), level: ambience.level + 0.03 * s * Math.max(air, 0.3), swell: { rate: 0.17, depth: 0.6 } };
+  }
   const key = area === 'space' ? 1 : (KEY[body] ?? 1);
   const music = { ...MUSIC[area], root: MUSIC[area].root * key };
   return { area, air, body, ambience, music };
