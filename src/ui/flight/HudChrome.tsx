@@ -8,7 +8,7 @@ import type { DayView } from './dayView';
 import type { WreckCard } from './wreckView';
 
 export type ScreenPanel = 'cargo' | 'colony' | 'command' | 'navigation';
-export type ViewAction = 'grid' | 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
+export type ViewAction = 'scan' | 'grid' | 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
 export type SoundStatus = 'locked' | 'on' | 'muted' | 'unavailable';
 
 export interface ChromeKeys {
@@ -22,6 +22,7 @@ export interface ChromeKeys {
   zoomIn: string;
   zoomOut: string;
   autoZoom: string;
+  scan: string;
 }
 
 export interface ChromeState {
@@ -41,6 +42,8 @@ export interface ChromeState {
   trajectory: boolean;
   /** Whether the power lines are drawn over the base. */
   grid: boolean;
+  /** The ground scan button; null hides it. */
+  scan: { block: string | null; unknown: number } | null;
   predictionPoints: number;
   keys: ChromeKeys;
 }
@@ -257,6 +260,15 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           pressed={state.trajectory}
           onClick={() => on.view('trajectory')}
         />
+        {state.scan && (
+          <ToolButton
+            icon="scan"
+            label="Ground scan"
+            hint={state.scan.block ?? `Scan the ground for ore seams · ${keys.scan} · ${state.scan.unknown} not found yet`}
+            pressed={false}
+            onClick={() => on.view('scan')}
+          />
+        )}
         <ToolButton
           icon="grid"
           label="Power lines"

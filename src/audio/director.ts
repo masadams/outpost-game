@@ -1,3 +1,4 @@
+import { scanPulse } from '../sim/prospect';
 import { beaconPosition, podLane } from '../sim/pods';
 import { SIGHTING_SECONDS } from '../sim/stormKnowledge';
 import { nearestPlanet, relative, relativeVelocity } from '../sim/celestial';
@@ -28,6 +29,7 @@ function storyMarks(world: WorldState) {
   return {
     memoryCount: root.exploration.story?.memories.length ?? 0,
     surveyedSeams: seams.flat().filter(d => d.surveyed === true).length,
+    prospects: scanPulse(root).count,
     deepCount: root.exploration.deep?.length ?? 0,
     keystoneCount: Object.keys(root.exploration.keystones ?? {}).length,
     hq: root.colony.buildings.find(b => b.kind === 'headquarters')?.hqLevel ?? 0,
@@ -78,7 +80,11 @@ export class AudioDirector {
     if (rose(prev.deepCount, next.deepCount)) cues.push('deepFind');
     else if (rose(prev.keystoneCount, next.keystoneCount)) cues.push('keystone');
     else if (rose(prev.memoryCount, next.memoryCount)) cues.push('memory');
-    if (rose(prev.surveyedSeams, next.surveyedSeams)) cues.push('survey');
+    const scanned = next.prospects > prev.prospects;
+    if (scanned) cues.push('scan');
+    if (rose(prev.surveyedSeams, next.surveyedSeams) || (scanned && next.surveyedSeams > prev.surveyedSeams)) {
+      cues.push('survey');
+    }
     if (rose(prev.hq, next.hq) && prev.hq > 0) cues.push('hqUpgrade');
     if (rose(prev.seedStages, next.seedStages)) cues.push('seedStage');
     // A tug finishing its trip: its work drops back to nothing.

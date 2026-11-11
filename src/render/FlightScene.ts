@@ -11,6 +11,8 @@ import { decorateShortcuts } from '../ui/shortcuts';
 import { RenderBudget, visible } from './budget';
 import { drawShip, entryHeat } from './ship';
 import { drawGridLines } from './gridLines';
+import { scanButton } from '../sim/prospect';
+import { drawScanPulse } from './scanPulse';
 import { flightRegion } from '../sim/flightRegion';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
@@ -458,7 +460,9 @@ export class FlightScene extends Phaser.Scene {
   }
   private viewAction(action: ViewAction): void {
     if (this.menu?.isOpen || this.help.isOpen || this.settings.isOpen) return;
-    if (action === 'grid') {
+    if (action === 'scan') {
+      if (!this.halted) this.colonyActions.push({ type: 'prospect' });
+    } else if (action === 'grid') {
       this.showGrid = !this.showGrid;
     } else if (action === 'trajectory') {
       this.flightTools.trajectory = !this.flightTools.trajectory;
@@ -523,6 +527,7 @@ export class FlightScene extends Phaser.Scene {
       boot: bootLog(world),
       trajectory: this.flightTools.trajectory,
       grid: this.showGrid,
+      scan: scanButton(world),
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : (this.prediction?.points.length ?? 0),
       keys: {
         ship: key('I'),
@@ -535,6 +540,7 @@ export class FlightScene extends Phaser.Scene {
         zoomIn: key('PLUS'),
         zoomOut: key('MINUS'),
         autoZoom: key('ZERO'),
+        scan: key('R'),
       },
     });
     this.chrome.adoptNotices(this.hud.noticeElements);
@@ -1006,6 +1012,7 @@ export class FlightScene extends Phaser.Scene {
     drawCore(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawKeystones(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawDeepSpace(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
+    drawScanPulse(g, this.simulation);
     for (const probe of this.simulation.exploration.probes) {
       g.fillStyle(0x9fe4ff, 0.25);
       g.fillCircle(probe.position.x, probe.position.y, Math.max(6, 10 / this.follow.zoom));

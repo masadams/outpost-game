@@ -24,6 +24,7 @@ import { stepSurvey } from './survey';
 import { stepDeepSpace } from './deepSpace';
 import { ensureHq, isHqAction, upgradeHq } from './headquarters';
 import { isPileAction, loadPiles } from './stockpile';
+import { isProspectAction, prospect } from './prospect';
 import { applySeedShipAction, isSeedShipAction } from './seedShip';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
@@ -134,6 +135,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isCoreAction(action)){applyCoreAction(world);continue;}
     if (isPileAction(action)) {
       loadPiles(world);
+      continue;
+    }
+    if (isProspectAction(action)) {
+      prospect(world);
       continue;
     }
     if (isHqAction(action)) {
