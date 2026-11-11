@@ -1,5 +1,5 @@
 import { pileMass } from '../../sim/stockpile';
-import { HQ, buildingLimit, headquarters, hqLevel, hqUpgradeBlock, type HqLevel } from '../../sim/headquarters';
+import { buildingLimit, centreName, headquarters, hqLevel, hqUpgradeBlock, levelsFor, type HqLevel } from '../../sim/headquarters';
 import { gridsView, type GridsView } from './gridsView';
 import {
   ENDING_IDS, ENDINGS, SEED_SHIP, SEED_STAGES, costLine, hasShipyard, seedEnding, seedShipComplete, seedStageBlock,
@@ -685,6 +685,8 @@ export function seedShipView(w: WorldState): SeedShipView | null {
 }
 
 export interface HqView {
+  /** "Headquarters" at home, "Outpost core" on another world. */
+  name: string;
   level: number;
   buildings: number;
   limit: number;
@@ -703,10 +705,12 @@ function pileNote(b: Building): string {
 export function hqView(w: WorldState): HqView | null {
   if (!headquarters(w.colony)) return null;
   const level = hqLevel(w.colony);
+  const table = levelsFor(w.colony);
   const nextLevel = level < 4 ? ((level + 1) as HqLevel) : null;
-  const next = nextLevel ? HQ[nextLevel] : null;
-  const now = HQ[level];
+  const next = nextLevel ? table[nextLevel] : null;
+  const now = table[level];
   return {
+    name: centreName(w.colony),
     level,
     buildings: w.colony.buildings.length,
     limit: buildingLimit(w.colony),

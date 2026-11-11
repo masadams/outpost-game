@@ -48,6 +48,8 @@ export interface Building {
   stock?: Partial<Record<Resource, number>>;
   /** The rock a tug bay's tug is working. Only on a tug bay. */
   target?: number;
+  /** True on an outpost core: the smaller centre of a base on another world. */
+  core?: boolean;
   /** The Headquarters' own level, 1 to 4. Only on the HQ. */
   hqLevel?: number;
   dispatch?: { rank: number; limit: number };

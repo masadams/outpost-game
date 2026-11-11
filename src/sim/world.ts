@@ -137,7 +137,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
       continue;
     }
     if (isHqAction(action)) {
-      upgradeHq(world);
+      upgradeHq(action.body && action.body !== 'home' ? colonyWorld(world, action.body) : world);
       continue;
     }
     if (isSeedShipAction(action)) {

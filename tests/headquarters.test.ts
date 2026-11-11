@@ -63,3 +63,32 @@ describe('the Headquarters', () => {
     expect(placementError(w, 'solar', 2, { remote: true })).toContain('Upgrade the Headquarters');
   });
 });
+
+describe('outpost cores', () => {
+  it('arrive with the first building on another world, with a smaller limit and their own upgrades', async () => {
+    const { colonyWorld } = await import('../src/sim/localWorld');
+    const { CORE, centreName } = await import('../src/sim/headquarters');
+    const w = game();
+    const moon = colonyWorld(w, 'moon');
+    expect(headquarters(moon.colony)).toBeUndefined();
+    moon.colony.buildings.push(completedBuilding(500, 'solar', 0.2, moon));
+    moon.colony.nextId = 501;
+    w.colony.nextId = Math.max(w.colony.nextId, 501);
+    stepWorld(w, idle, 1 / 60);
+    const core = headquarters(w.outposts.moon.colony)!;
+    expect(core.core).toBe(true);
+    expect(centreName(w.outposts.moon.colony)).toBe('Outpost core');
+    expect(buildingLimit(w.outposts.moon.colony)).toBe(CORE[1].buildings);
+    expect(buildingLimit(w.colony)).toBe(HQ[1].buildings);
+    const m = colonyWorld(w, 'moon');
+    m.colony.products = { ...m.colony.products, alloy: 50, wire: 50, components: 50 };
+    m.colony.buildings.push(completedBuilding(502, 'battery', 0.25, m));
+    m.colony.nextId = 503;
+    w.colony.nextId = Math.max(w.colony.nextId, 503);
+    m.colony.energy = 200;
+    stepWorld(w, { ...idle, colonyActions: [{ type: 'upgradeHq', body: 'moon' }] }, 1 / 60);
+    expect(hqLevel(w.outposts.moon.colony)).toBe(2);
+    expect(hqLevel(w.colony)).toBe(1);
+    expect(() => encodeCheckpoint(w)).not.toThrow();
+  });
+});

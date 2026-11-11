@@ -69,6 +69,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
   if (!colony.buildings.every(b => b.hqLevel === undefined || (b.kind === 'headquarters' && Number.isInteger(b.hqLevel) && b.hqLevel >= 1 && b.hqLevel <= 4))) return false;
   if (colony.buildings.filter(b => b.kind === 'headquarters').length > 1) return false;
+  if (!colony.buildings.every(b => b.core === undefined || (b.kind === 'headquarters' && b.core === true))) return false;
   if (!colony.buildings.every(b => b.stock === undefined || (object(b.stock) && Object.entries(b.stock).every(([r, v]) => RESOURCES.includes(r as never) && number(v, 0, STOCKPILE + 1))))) return false;
   if (!colony.buildings.every(b => b.target === undefined || (b.kind === 'tugBay' && Number.isInteger(b.target) && b.target > 0))) return false;
   if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)) && (b.wait === undefined || number(b.wait, 0, 60)) && (b.linked === undefined || b.linked === false) && (b.feed === undefined || number(b.feed, 0, 1)) && (b.charge === undefined || number(b.charge, 0, 1e6)) && (b.island === undefined || typeof b.island === 'boolean'))) return false;
