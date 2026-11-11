@@ -25,3 +25,29 @@ test('opens settings and controls from the title and keeps the native menu usabl
  for(const [width,height]of [[900,600],[1280,800],[1920,1080]]){await page.setViewportSize({width,height});const b=await menu.boundingBox();expect(b!.x).toBeGreaterThanOrEqual(0);expect(b!.y).toBeGreaterThanOrEqual(0);expect(b!.x+b!.width).toBeLessThanOrEqual(width);expect(b!.y+b!.height).toBeLessThanOrEqual(height);expect(await menu.evaluate(e=>e.scrollWidth>e.clientWidth+1)).toBe(false);await page.screenshot({path:`docs/screenshots/start-menu-${width}.png`});}
  await menu.getByRole('button',{name:'New Game',exact:true}).click();await page.keyboard.press('Escape');await expect(menu.getByRole('button',{name:'Resume',exact:true})).toBeVisible();await page.keyboard.press('Escape');await expect(menu).toBeHidden();await expect(page.locator('#hud')).toHaveAttribute('data-state','landed');
 });
+
+test('saves to a chosen slot, lists it, and loads it back after a reload', async ({ page }) => {
+  await page.goto('/');
+  const menu = page.getByRole('dialog', { name: 'Outpost game menu', exact: true });
+  const hud = page.locator('#hud');
+  await menu.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: 'Open game menu', exact: true }).click();
+  await menu.getByRole('button', { name: 'Saves', exact: true }).click();
+  await menu.locator('[data-slot-op="save"][data-slot="2"]').click();
+  await expect(menu.locator('.menu-status')).toHaveText('Saved to save 2.');
+  await expect(menu.locator('[data-slot-row="2"]')).toContainText('Selene');
+  await expect(menu.locator('[data-slot-row="1"]')).toContainText('Empty');
+  expect(await page.evaluate(() => localStorage.getItem('outpost.checkpoint.v1'))).toBeNull();
+  await page.reload();
+  await menu.getByRole('button', { name: 'Load a save', exact: true }).click();
+  await expect(menu.locator('[data-slot-op="save"][data-slot="1"]')).toBeDisabled();
+  await menu.locator('[data-slot-op="load"][data-slot="2"]').click();
+  await expect(menu).toBeHidden();
+  await expect(hud).toHaveAttribute('data-state', 'paused');
+  await page.getByRole('button', { name: 'Open game menu', exact: true }).click();
+  await menu.getByRole('button', { name: 'Saves', exact: true }).click();
+  await menu.locator('[data-slot-op="delete"][data-slot="2"]').click();
+  await expect(menu.locator('.menu-status')).toContainText('Press Delete again');
+  await menu.locator('[data-slot-op="delete"][data-slot="2"]').click();
+  await expect(menu.locator('[data-slot-row="2"]')).toContainText('Empty');
+});

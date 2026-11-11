@@ -162,6 +162,7 @@ const EARNED: Record<BuildType, string> = {
   shipyard: 'After an expedition finds the relay',
   headquarters: 'Stands from the start',
   tugBay: 'After a drone bay',
+  workerBay: 'After a workshop or a drone bay',
   droneBay: 'Research Precision extraction',
   service: 'Not offered yet',
   flak: 'Not offered yet',

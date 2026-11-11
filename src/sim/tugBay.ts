@@ -17,9 +17,9 @@ import type { WorldState } from './world';
 export const TUG = {
   power: 5,
   /** Seconds of powered work per round trip. */
-  seconds: 75,
+  seconds: 90,
   /** Most it brings back per trip, kg. */
-  load: 18,
+  load: 15,
   /** Highest a rock may circle (m above the ground) for the tug to reach it. */
   reach: 3200,
   fuel: 1.2,

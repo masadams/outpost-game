@@ -25,14 +25,14 @@ export interface SeedStageSpec {
 }
 
 export const SEED_SHIP: Record<SeedStage, SeedStageSpec> = {
-  frame: { label: 'Frame', line: 'The keel and ribs, laid down in the yard.', needs: null, cost: { alloy: 60, wire: 20, components: 10 }, energy: 200 },
-  plating: { label: 'Hull plating', line: 'Skin grown on the Nacre lattice.', needs: 'moon', cost: { alloy: 50, wire: 10, components: 8 }, energy: 200 },
-  archive: { label: 'Archive core', line: 'What the ship will remember.', needs: 'cinder', cost: { alloy: 15, wire: 30, components: 25 }, energy: 300 },
-  drive: { label: 'Long-burn drive', line: 'An engine for a voyage of centuries.', needs: 'ember', cost: { alloy: 40, wire: 25, components: 20, fuel: 60 }, energy: 300 },
-  navigation: { label: 'Navigation', line: 'A mirror that can hold one star.', needs: 'glint', cost: { alloy: 10, wire: 25, components: 20 }, energy: 200 },
-  seedBank: { label: 'Seed bank', line: 'What the carrier was for.', needs: 'verdant', cost: { alloy: 20, wire: 10, components: 15, water: 40, oxygen: 30 }, energy: 300 },
-  gear: { label: 'Landing gear', line: 'Legs for a ship this size.', needs: 'tide', cost: { alloy: 45, wire: 10, components: 12 }, energy: 200 },
-  mind: { label: 'A second mind', line: 'Unit 5, awake, for the long watch.', needs: 'murk', cost: { alloy: 10, wire: 30, components: 30 }, energy: 400 },
+  frame: { label: 'Frame', line: 'The keel and ribs, laid down in the yard.', needs: null, cost: { alloy: 90, wire: 30, components: 15 }, energy: 200 },
+  plating: { label: 'Hull plating', line: 'Skin grown on the Nacre lattice.', needs: 'moon', cost: { alloy: 75, wire: 15, components: 10 }, energy: 200 },
+  archive: { label: 'Archive core', line: 'What the ship will remember.', needs: 'cinder', cost: { alloy: 20, wire: 45, components: 40 }, energy: 300 },
+  drive: { label: 'Long-burn drive', line: 'An engine for a voyage of centuries.', needs: 'ember', cost: { alloy: 60, wire: 40, components: 30, fuel: 60 }, energy: 300 },
+  navigation: { label: 'Navigation', line: 'A mirror that can hold one star.', needs: 'glint', cost: { alloy: 15, wire: 40, components: 30 }, energy: 200 },
+  seedBank: { label: 'Seed bank', line: 'What the carrier was for.', needs: 'verdant', cost: { alloy: 30, wire: 15, components: 20, water: 40, oxygen: 30 }, energy: 300 },
+  gear: { label: 'Landing gear', line: 'Legs for a ship this size.', needs: 'tide', cost: { alloy: 70, wire: 15, components: 20 }, energy: 200 },
+  mind: { label: 'A second mind', line: 'Unit 5, awake, for the long watch.', needs: 'murk', cost: { alloy: 15, wire: 45, components: 45 }, energy: 400 },
 };
 
 export interface SeedShipState {

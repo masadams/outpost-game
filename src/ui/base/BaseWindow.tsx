@@ -216,8 +216,8 @@ function Overview({ view, paused, on, go }: SectionProps & { go: Go }) {
         </section>
       </div>
       {view.hq && (
-        <section class="overview-card overview-hq" aria-label="Headquarters" data-hq-level={view.hq.level}>
-          <h3>Headquarters · level {view.hq.level}</h3>
+        <section class="overview-card overview-hq" aria-label={view.hq.name} data-hq-level={view.hq.level}>
+          <h3>{view.hq.name} · level {view.hq.level}</h3>
           <p class="base-note">{view.hq.buildings} of {view.hq.limit} buildings.</p>
           {view.hq.next ? (
             <div class="overview-line">

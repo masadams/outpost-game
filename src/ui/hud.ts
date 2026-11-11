@@ -309,7 +309,7 @@ export class Hud {
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
       seedStage: (stage) => onColonyAction({ type: 'seedStage', stage: stage as SeedStage }),
-      upgradeHq: () => onColonyAction({ type: 'upgradeHq' }),
+      upgradeHq: () => onColonyAction({ type: 'upgradeHq', body: body() }),
       seedLaunch: (ending) => onColonyAction({ type: 'seedLaunch', ending: ending as EndingId }),
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
       expedition: (kit, target) => onColonyAction({ type: 'launchExpedition', kit, target }),
@@ -392,6 +392,8 @@ export class Hud {
       if (button && !button.disabled) this.onAction({ type: 'loadManifest', manifest: 'nacreKit' });
       const haul = target.closest<HTMLButtonElement>('button[data-haul="load"]');
       if (haul && !haul.disabled) this.onAction({ type: 'loadAllOre' });
+      const piles = target.closest<HTMLButtonElement>('button[data-piles="load"]');
+      if (piles && !piles.disabled) this.onAction({ type: 'loadPiles' });
     });
     this.shipExtras.className = 'ship-extras';
     this.mining.append(this.shipHost, this.shipExtras);

@@ -35,6 +35,16 @@ export function ShipPanelContent({ view }: { view: ShipPanelView }) {
           )}
         </section>
       )}
+      {view.piles && (
+        <section class="ship-kit" aria-label="Ore at the mine">
+          <h3>Ore at the mine</h3>
+          <p>{view.piles.text}</p>
+          <button type="button" data-piles="load" disabled={!view.piles.enabled}>
+            Load ore
+          </button>
+          <small>{view.piles.reason}</small>
+        </section>
+      )}
       {view.haul && (
         <section class="ship-kit" aria-label="Haul ore home">
           <h3>Haul ore home</h3>

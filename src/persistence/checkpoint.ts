@@ -24,6 +24,7 @@ import { energyCapacity, MAX_BUILDINGS, oreCapacity, productCapacity } from '../
 import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { NOTICE_MAX_SECONDS } from '../sim/messages';
+import { STOCKPILE } from '../sim/stockpile';
 import { SUIT } from '../sim/astronaut';
 
 export const SAVE_VERSION=34;
@@ -64,11 +65,14 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (colony.buildings.length > MAX_BUILDINGS || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
-    number(b.progress, 0, 200) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached', 'no fuel', 'worn out'].includes(b.status))) return false;
+    number(b.progress, 0, 200) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached', 'no fuel', 'worn out', 'flooded'].includes(b.status))) return false;
   if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
   if (!colony.buildings.every(b => b.hqLevel === undefined || (b.kind === 'headquarters' && Number.isInteger(b.hqLevel) && b.hqLevel >= 1 && b.hqLevel <= 4))) return false;
   if (colony.buildings.filter(b => b.kind === 'headquarters').length > 1) return false;
+  if (!colony.buildings.every(b => b.core === undefined || (b.kind === 'headquarters' && b.core === true))) return false;
+  if (!colony.buildings.every(b => b.stock === undefined || (object(b.stock) && Object.entries(b.stock).every(([r, v]) => RESOURCES.includes(r as never) && number(v, 0, STOCKPILE + 1))))) return false;
   if (!colony.buildings.every(b => b.target === undefined || (b.kind === 'tugBay' && Number.isInteger(b.target) && b.target > 0))) return false;
+  if (!colony.buildings.every(b => b.job === undefined || (b.kind === 'workerBay' && validJob(b.job)))) return false;
   if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)) && (b.wait === undefined || number(b.wait, 0, 60)) && (b.linked === undefined || b.linked === false) && (b.feed === undefined || number(b.feed, 0, 1)) && (b.charge === undefined || number(b.charge, 0, 1e6)) && (b.island === undefined || typeof b.island === 'boolean'))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, airCapacity(b)) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
@@ -161,6 +165,14 @@ export function saveProblem(world: WorldState): string {
     }
   }
   return 'unknown';
+}
+
+/** A worker bay's job: what it is doing, to what, and where. */
+function validJob(job: unknown): boolean {
+  const j = job as { kind?: unknown; target?: unknown; leg?: unknown; t?: unknown; angle?: unknown };
+  return !!j && (j.kind === 'build' || j.kind === 'repair') && Number.isInteger(j.target) && (j.target as number) > 0
+    && (j.leg === 'out' || j.leg === 'work' || j.leg === 'back') && Number.isFinite(j.t) && (j.t as number) >= 0
+    && (j.t as number) < 1e5 && Number.isFinite(j.angle) && Math.abs(j.angle as number) <= 2 * Math.PI;
 }
 
 export function encodeCheckpoint(world: WorldState): string {

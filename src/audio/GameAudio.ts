@@ -1,5 +1,5 @@
 import { AdaptiveMusic } from './AdaptiveMusic';
-import { soundscape, engineVoice } from './soundscape';
+import { soundscape, engineVoice, swellAt } from './soundscape';
 import { AudioDirector, type Cue, type SoundFrame } from './director';
 import { AUDIO_KEY, parsePreferences, type AudioPreferences } from './preferences';
 import type { WorldState } from '../sim/world';
@@ -22,7 +22,8 @@ export class GameAudio {
   private disposed = false;
   private engineRumble: AudioBufferSourceNode | null = null;
   private engineFilters: { tone: BiquadFilterNode; rumble: BiquadFilterNode } | null = null;
-  private ambience: { filter: BiquadFilterNode; gain: GainNode } | null = null;
+  private ambience: { filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode } | null = null;
+  private ambienceClock = 0;
   private pickupRun = 0;
   private lastPickup = -10;
   private frame: SoundFrame = { cues: [], engine: false, mining: false, tractor: false, machinery: false };
@@ -117,7 +118,15 @@ export class GameAudio {
         filter.connect(gain);
         gain.connect(this.effects!);
         source.start();
-        this.ambience = { filter, gain };
+        // A low hum under the noise, for worlds whose air drones (silent elsewhere).
+        const hum = this.context.createOscillator();
+        const humGain = this.context.createGain();
+        hum.type = 'sine';
+        humGain.gain.value = 0;
+        hum.connect(humGain);
+        humGain.connect(this.effects!);
+        hum.start();
+        this.ambience = { filter, gain, hum, humGain };
       }
       if (this.context.state === 'suspended') void this.context.resume().catch(() => { /* Retry on the next user gesture. */ });
     } catch { this.failed = true; }
@@ -151,8 +160,13 @@ export class GameAudio {
     this.engineFilters?.tone.frequency.setTargetAtTime(engine.toneCutoff, now, 0.3);
     this.engineFilters?.rumble.frequency.setTargetAtTime(engine.rumbleCutoff, now, 0.3);
     if (this.ambience) {
-      this.ambience.filter.frequency.setTargetAtTime(scape.ambience.frequency, now, 0.8);
-      this.ambience.gain.gain.setTargetAtTime(paused ? 0 : scape.ambience.level, now, 0.8);
+      const a = scape.ambience;
+      if (!paused) this.ambienceClock += seconds;
+      this.ambience.filter.frequency.setTargetAtTime(a.frequency, now, 0.8);
+      this.ambience.filter.Q.setTargetAtTime(a.q, now, 0.8);
+      this.ambience.gain.gain.setTargetAtTime(paused ? 0 : a.level * swellAt(a.swell, this.ambienceClock), now, 0.35);
+      if (a.hum.frequency > 0) this.ambience.hum.frequency.setTargetAtTime(a.hum.frequency, now, 0.8);
+      this.ambience.humGain.gain.setTargetAtTime(paused ? 0 : a.hum.level, now, 1.2);
     }
     for (const [name, loop] of this.loops) {
       const enabled = !paused && frame[name];
@@ -269,6 +283,7 @@ export class GameAudio {
     document.removeEventListener('keydown', this.unlock); document.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('blur', this.silence); document.removeEventListener('visibilitychange', this.visibility);
     for (const loop of this.loops.values()) loop.oscillator.stop();
+    try { this.ambience?.hum.stop(); } catch { /* Already stopped. */ }
     this.engineRumble?.stop();
     this.music?.destroy(); this.loops.clear(); if (this.context) void this.context.close().catch(() => {});
   }

@@ -21,8 +21,11 @@ import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStory } from './story';
 import { stepKeystones } from './keystones';
 import { stepSurvey } from './survey';
+import { stepWeather } from './weather';
 import { stepDeepSpace } from './deepSpace';
 import { ensureHq, isHqAction, upgradeHq } from './headquarters';
+import { isPileAction, loadPiles } from './stockpile';
+import { isProspectAction, prospect } from './prospect';
 import { applySeedShipAction, isSeedShipAction } from './seedShip';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
@@ -131,8 +134,16 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isStormAction(action)){applyStormAction(world,action);continue;}
     if(isCrystalAction(action)){applyCrystalAction(world);continue;}
     if(isCoreAction(action)){applyCoreAction(world);continue;}
+    if (isPileAction(action)) {
+      loadPiles(world);
+      continue;
+    }
+    if (isProspectAction(action)) {
+      prospect(world);
+      continue;
+    }
     if (isHqAction(action)) {
-      upgradeHq(world);
+      upgradeHq(action.body && action.body !== 'home' ? colonyWorld(world, action.body) : world);
       continue;
     }
     if (isSeedShipAction(action)) {
@@ -229,6 +240,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepCore(world);
   stepKeystones(world);
   stepSurvey(world);
+  stepWeather(world);
   stepDeepSpace(world);
   stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);

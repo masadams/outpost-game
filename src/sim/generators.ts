@@ -1,5 +1,6 @@
 import { natureOf } from './nature';
 import { eventSolarFactor } from './events';
+import { flooded, weatherSolar } from './weather';
 import { capacityFactor } from './facilityStats';
 import { colonyPlanet } from './localWorld';
 import { powerFraction } from './power';
@@ -20,9 +21,11 @@ export const isGenerator = (kind: BuildType): boolean => kind === 'solar' || kin
 
 /** What one generator makes right now, in kW, before it travels over any relay. */
 export function generatorOutput(world: WorldState, b: Building): number {
+  // Under high water nothing on the shore makes power.
+  if (flooded(world, b.angle)) return 0;
   const base = capacityFactor(b) * powerFraction(b);
   if (b.kind === 'geothermal') return GEOTHERMAL.power * base;
   if (b.kind === 'windTurbine') return WIND.power * base * Math.min(1.5, surfaceAir(world) / WIND.referenceDensity);
   const gain = world.colony.research.completed.includes('photovoltaics') ? PHOTOVOLTAIC_GAIN : 1;
-  return 8 * base * gain * solarFactor(world.system, b.angle, colonyPlanet(world).id) * eventSolarFactor(world) * natureOf(colonyPlanet(world).id).haze;
+  return 8 * base * gain * solarFactor(world.system, b.angle, colonyPlanet(world).id) * eventSolarFactor(world) * weatherSolar(world) * natureOf(colonyPlanet(world).id).haze;
 }

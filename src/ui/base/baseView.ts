@@ -1,4 +1,5 @@
-import { HQ, buildingLimit, headquarters, hqLevel, hqUpgradeBlock, type HqLevel } from '../../sim/headquarters';
+import { pileMass } from '../../sim/stockpile';
+import { buildingLimit, centreName, headquarters, hqLevel, hqUpgradeBlock, levelsFor, type HqLevel } from '../../sim/headquarters';
 import { gridsView, type GridsView } from './gridsView';
 import {
   ENDING_IDS, ENDINGS, SEED_SHIP, SEED_STAGES, costLine, hasShipyard, seedEnding, seedShipComplete, seedStageBlock,
@@ -232,6 +233,7 @@ const STATUS: Record<string, { chip: Chip; label: string }> = {
   depleted: { chip: 'stopped', label: 'Used up' },
   'no fuel': { chip: 'stopped', label: 'No fuel' },
   'worn out': { chip: 'stopped', label: 'Worn out' },
+  flooded: { chip: 'stopped', label: 'Flooded' },
   'power reserved': { chip: 'stopped', label: 'Power held back' },
   'delivery reserved': { chip: 'stopped', label: 'Room held back' },
   disabled: { chip: 'off', label: 'Off' },
@@ -274,6 +276,8 @@ export function whyStopped(b: Building): string | null {
       return 'Wrecked. Walk up to it and repair it (U).';
     case 'depleted':
       return 'The deposit under it is used up.';
+    case 'flooded':
+      return 'High tide covers it. It starts again when the water goes out.';
     case 'no deposit':
       return b.kind === 'droneBay' ? 'No ore seam within 300 m. Build it closer to one.' : 'It is not on a surface deposit.';
     case 'no fuel':
@@ -331,7 +335,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     label: BLUEPRINTS[b.kind].label,
     chip: status.chip,
     chipLabel: status.label,
-    line: why ?? (recipe && status.chip === 'running' ? recipe.label : status.label),
+    line: (why ?? (recipe && status.chip === 'running' ? recipe.label : status.label)) + pileNote(b),
     why,
     facts,
     canToggle: b.kind !== 'storage' && b.kind !== 'battery' && health > 0,
@@ -684,6 +688,8 @@ export function seedShipView(w: WorldState): SeedShipView | null {
 }
 
 export interface HqView {
+  /** "Headquarters" at home, "Outpost core" on another world. */
+  name: string;
   level: number;
   buildings: number;
   limit: number;
@@ -692,13 +698,22 @@ export interface HqView {
   blocked: string | null;
 }
 
+/** A mine off the base grid keeps its ore beside it: say how much, and what to do. */
+function pileNote(b: Building): string {
+  const kg = pileMass(b);
+  if (kg < 0.5) return '';
+  return ` · ${Math.round(kg)} kg piled here: not on the base grid. Land beside it to load, or run a relay line to it.`;
+}
+
 export function hqView(w: WorldState): HqView | null {
   if (!headquarters(w.colony)) return null;
   const level = hqLevel(w.colony);
+  const table = levelsFor(w.colony);
   const nextLevel = level < 4 ? ((level + 1) as HqLevel) : null;
-  const next = nextLevel ? HQ[nextLevel] : null;
-  const now = HQ[level];
+  const next = nextLevel ? table[nextLevel] : null;
+  const now = table[level];
   return {
+    name: centreName(w.colony),
     level,
     buildings: w.colony.buildings.length,
     limit: buildingLimit(w.colony),

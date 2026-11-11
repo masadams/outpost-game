@@ -7,7 +7,7 @@ import { colonyWorld } from './localWorld';
 import type { WorldState } from './world';
 
 /** Where the seams of the world under you are kept: home's on the world itself, others' on their outpost. */
-function depositsUnder(world: WorldState, at: { x: number; y: number }) {
+export function depositsUnder(world: WorldState, at: { x: number; y: number }) {
   const planet = nearestPlanet(at, world.system);
   if (planet.id === 'home') return { planet, deposits: world.surfaceDeposits };
   const outpost = world.outposts[planet.id as keyof typeof world.outposts];

@@ -8,7 +8,7 @@ import type { DayView } from './dayView';
 import type { WreckCard } from './wreckView';
 
 export type ScreenPanel = 'cargo' | 'colony' | 'command' | 'navigation';
-export type ViewAction = 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
+export type ViewAction = 'scan' | 'grid' | 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
 export type SoundStatus = 'locked' | 'on' | 'muted' | 'unavailable';
 
 export interface ChromeKeys {
@@ -22,6 +22,7 @@ export interface ChromeKeys {
   zoomIn: string;
   zoomOut: string;
   autoZoom: string;
+  scan: string;
 }
 
 export interface ChromeState {
@@ -39,6 +40,10 @@ export interface ChromeState {
   /** The waking log at the very start of a new game. */
   boot: readonly string[] | null;
   trajectory: boolean;
+  /** Whether the power lines are drawn over the base. */
+  grid: boolean;
+  /** The ground scan button; null hides it. */
+  scan: { block: string | null; unknown: number } | null;
   predictionPoints: number;
   keys: ChromeKeys;
 }
@@ -220,6 +225,13 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           <ToolButton icon="save" label="Quick save" hint={`Quick save · ${keys.save}`} onClick={on.save} />
           <ToolButton icon="settings" label="Open settings" hint="Settings" onClick={on.settings} />
           <ToolButton
+            icon="grid"
+            label="Power lines"
+            hint={`Power lines ${state.grid ? 'on' : 'off'}`}
+            pressed={state.grid}
+            onClick={() => on.view('grid')}
+          />
+          <ToolButton
             icon={state.paused ? 'play' : 'pause'}
             label="Pause or resume game"
             hint={`${state.paused ? 'Resume' : 'Pause'} · ${keys.pause}`}
@@ -255,6 +267,15 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           pressed={state.trajectory}
           onClick={() => on.view('trajectory')}
         />
+        {state.scan && (
+          <ToolButton
+            icon="scan"
+            label="Ground scan"
+            hint={state.scan.block ?? `Scan the ground for ore seams · ${keys.scan} · ${state.scan.unknown} not found yet`}
+            pressed={false}
+            onClick={() => on.view('scan')}
+          />
+        )}
         <ToolButton icon="zoomOut" label="Zoom out" hint={`Zoom out · ${keys.zoomOut}`} onClick={() => on.view('zoomOut')} />
         <ToolButton icon="zoomIn" label="Zoom in" hint={`Zoom in · ${keys.zoomIn}`} onClick={() => on.view('zoomIn')} />
         <ToolButton

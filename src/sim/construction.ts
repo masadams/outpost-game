@@ -1,3 +1,4 @@
+import { WORKER, droneBuilding } from './workerBay';
 import { createSchedule } from './scheduling';
 import { nearestPlanet, relativeVelocity } from './celestial';
 import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
@@ -40,8 +41,14 @@ export function stepConstruction(w: WorldState, dt: number): void {
   if (!o) return;
   const error = orderError(w, o.kind, o.angle, o.id); if (error) { o.status = error; return; }
   const suit = w.astronaut;
-  if (nearestPlanet(suit.position, w.system).id !== colonyPlanet(w).id || w.playerMode !== 'astronaut' || !suit.grounded || suit.health <= 0 || length(relativeVelocity(suit.velocity, colonyPlanet(w), suit.position)) > .5 || Math.abs(wrap(o.angle - localAngleAt(w, suit.position))) * colonyPlanet(w).radius > 96) { o.status = 'waiting for stationary crew within 96 m'; return; }
-  o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt); o.status = 'crew building';
+  const crew = nearestPlanet(suit.position, w.system).id === colonyPlanet(w).id && w.playerMode === 'astronaut' && suit.grounded && suit.health > 0
+    && length(relativeVelocity(suit.velocity, colonyPlanet(w), suit.position)) <= .5
+    && Math.abs(wrap(o.angle - localAngleAt(w, suit.position))) * colonyPlanet(w).radius <= 96;
+  // A worker drone at the site builds too, more slowly; the pilot on the spot builds at full speed.
+  const drone = !crew && droneBuilding(w, o.id);
+  if (!crew && !drone) { o.status = 'waiting for stationary crew within 96 m'; return; }
+  o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt * (crew ? 1 : WORKER.build));
+  o.status = crew ? 'crew building' : 'drone building';
   if (o.progress + 1e-9 < CONSTRUCTION_SECONDS) return;
   const finished = completedBuilding(allocateBuildingId(w), o.kind, o.angle, w);
   // A freshly built machine has to warm up before it works.

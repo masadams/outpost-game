@@ -14,6 +14,7 @@ import { linkPreview } from '../sim/grid';
 import { daylightAt } from '../sim/sun';
 import { WORLD } from '../sim/config';
 import { TUG, tugTarget } from '../sim/tugBay';
+import { workerPosition } from '../sim/workerBay';
 import { ENDINGS, SEED_STAGES, seedEnding, seedStagesDone } from '../sim/seedShip';
 import { drawColonyLife, HAUL_KINDS, type LifeView } from './colonyLife';
 import type { WorldState } from '../sim/world';
@@ -82,6 +83,30 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     g.lineBetween(from.x, from.y, at.x, at.y);
     g.fillStyle(0xb6f0ff, 0.95);
     g.fillCircle(at.x, at.y, 2.4);
+  }
+  // A worker drone flies an arc to its job, and while there it hovers with a welding spark under it.
+  for (const b of colony.buildings) {
+    if (b.kind !== 'workerBay') continue;
+    const at = workerPosition(world, b);
+    if (!at) continue;
+    const r = colonyPlanet(world).radius + at.height;
+    const n = heading(at.angle);
+    // Body, a ring of rotor wash and two little arms.
+    const side = { x: -n.y, y: n.x };
+    g.fillStyle(0xffd98a, 1);
+    g.fillCircle(n.x * r, n.y * r, 3.4);
+    g.lineStyle(1.4, 0xffd98a, 0.9);
+    g.lineBetween(n.x * r - side.x * 7, n.y * r - side.y * 7, n.x * r + side.x * 7, n.y * r + side.y * 7);
+    g.lineStyle(1, 0xffe6b0, 0.45);
+    g.strokeCircle(n.x * r, n.y * r, 7);
+    if (b.job?.leg === 'work' && b.status === 'running') {
+      const flicker = 0.5 + 0.5 * Math.sin(world.system.time * 31 + b.id);
+      const ground = colonyPlanet(world).radius + 6;
+      g.lineStyle(1.6, 0xfff1c2, 0.4 + 0.5 * flicker);
+      g.lineBetween(n.x * (r - 3), n.y * (r - 3), n.x * ground, n.y * ground);
+      g.fillStyle(0xffffff, 0.8 * flicker);
+      g.fillCircle(n.x * ground, n.y * ground, 2.6);
+    }
   }
   // A building out of reach of the base's power wears an amber diamond.
   for (const b of colony.buildings) {
@@ -163,6 +188,17 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
       for (let i = 0; i < levels; i++) {
         const a = p(-10, 5 + i * 4), b = p(10, 5 + i * 4);
         g.lineBetween(a.x, a.y, b.x, b.y);
+      }
+    } else if (entry.kind === 'workerBay') {
+      // A landing pad on a short post, with the drone sitting on it when it is home.
+      const left = p(-6, 18), right = p(6, 18), post = p(0, 13);
+      g.lineBetween(left.x, left.y, right.x, right.y);
+      g.lineBetween(post.x, post.y, p(0, 18).x, p(0, 18).y);
+      const home = world.colony.buildings.find(b => b.angle === entry.angle && b.kind === 'workerBay');
+      if (home && !home.job) {
+        const seat = p(0, 21);
+        g.fillStyle(0xffd98a, 0.9);
+        g.fillCircle(seat.x, seat.y, 2.2);
       }
     } else if (entry.kind === 'tugBay') {
       // A launch cradle: two rails angled up, with the tug sitting in it when it is home.

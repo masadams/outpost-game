@@ -54,7 +54,7 @@ describe('the seed ship', () => {
   it('says what is missing in plain words', () => {
     const w = yard();
     w.colony.products.alloy = 12;
-    expect(seedStageBlock(w, 'frame')).toBe('Needs 60 alloy (you have 12).');
+    expect(seedStageBlock(w, 'frame')).toBe('Needs 90 alloy (you have 12).');
     build(w, 'frame');
     expect(seedStagesDone(w)).toEqual([]);
   });

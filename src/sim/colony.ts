@@ -3,6 +3,8 @@ import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid'
 import { stepObservatory } from './observatory';
 import { BOOT_SECONDS, bootStep, isOnline, needsBoot } from './boot';
 import { stepTugBay } from './tugBay';
+import { stepWorkerBay } from './workerBay';
+import { drainPiles } from './stockpile';
 import { buildingLimit, headquarters, hqLevel, hqStorage, isHq, MOST_BUILDINGS } from './headquarters';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
@@ -43,8 +45,14 @@ import type { WorldState } from './world';
 
 export interface Building {
   level?:1|2|3;
+  /** Ore piled beside a mine that is off the base grid, waiting to be loaded or joined up. */
+  stock?: Partial<Record<Resource, number>>;
   /** The rock a tug bay's tug is working. Only on a tug bay. */
   target?: number;
+  /** A worker bay's current job. */
+  job?: import('./workerBay').WorkerJob;
+  /** True on an outpost core: the smaller centre of a base on another world. */
+  core?: boolean;
   /** The Headquarters' own level, 1 to 4. Only on the HQ. */
   hqLevel?: number;
   dispatch?: { rank: number; limit: number };
@@ -68,7 +76,7 @@ export interface Building {
   schedule?: RefinerySchedule;
   depositId?: number; health?: number; turret?: { aim: number; cooldown: number; automatic: boolean };
   id: number; kind: BuildType; angle: number; enabled: boolean; progress: number; recipe: number;
-  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached' | 'no fuel' | 'worn out';
+  status: 'idle' | 'running' | 'no power' | 'no feedstock' | 'output full' | 'disabled' | 'wrecked' | 'no deposit' | 'depleted' | 'target met' | 'power reserved' | 'delivery reserved' | 'pressurizing' | 'air low' | 'breathable' | 'power limited' | 'starting' | 'research staffed' | 'shield active' | 'shield charging' | 'shield breached' | 'no fuel' | 'worn out' | 'flooded';
 }
 export interface Colony {
   shielding: ShieldLedger;
@@ -79,7 +87,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | import('./seedShip').SeedShipAction | import('./headquarters').HqAction | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | import('./seedShip').SeedShipAction | import('./headquarters').HqAction | import('./stockpile').PileAction | import('./prospect').ProspectAction | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -285,6 +293,7 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (building.kind === 'workshop') { stepWorkshop(world, building, dt); return researchStaffed; }
   if (building.kind === 'antenna') { stepAntenna(world, building, dt); return researchStaffed; }
   if (building.kind === 'tugBay') { stepTugBay(world, building, dt, oreCapacity(colony)); return researchStaffed; }
+  if (building.kind === 'workerBay') { stepWorkerBay(world, building, dt); return researchStaffed; }
   if (building.kind === 'droneBay') { stepMinerDrone(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) return researchStaffed;
@@ -340,6 +349,8 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
   const colony = world.colony;
   for (const b of colony.buildings) { b.gridPower = 0; b.requestedPower = 0; }
   const wired = linkedBuildings(world);
+  // Piles at far mines flow into the depot once the mine is joined to the base grid (settled below, after links).
+  const drainLater = true;
   // A battery cut off from the base takes its share of the stored power with it; one that rejoins brings its charge back.
   const capBefore = energyCapacity(colony);
   for (const b of colony.buildings) {
@@ -352,6 +363,7 @@ export function stepColony(world: WorldState, dt: number, researchStaffed = fals
     b.linked = now;
     b.island = undefined;
   }
+  if (drainLater) drainPiles(world, oreCapacity(colony));
   for (const b of colony.buildings) {
     if (b.kind !== 'battery' || b.linked === false || !b.charge) continue;
     const room = Math.max(0, energyCapacity(colony) - colony.energy);
