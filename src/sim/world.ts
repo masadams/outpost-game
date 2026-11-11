@@ -20,6 +20,7 @@ import { stepDrift } from './drift';
 import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStory } from './story';
 import { stepKeystones } from './keystones';
+import { applySeedShipAction, isSeedShipAction } from './seedShip';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
 import { applyCommandAction } from './command';
@@ -127,6 +128,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isStormAction(action)){applyStormAction(world,action);continue;}
     if(isCrystalAction(action)){applyCrystalAction(world);continue;}
     if(isCoreAction(action)){applyCoreAction(world);continue;}
+    if (isSeedShipAction(action)) {
+      applySeedShipAction(world, action);
+      continue;
+    }
     if(isPodAction(action)){sendPod(world,action.from,action.to);continue;}
     if(isSignalAction(action)){launchBeacon(world);continue;}
     if(isSupplyAction(action)){applySupplyAction(world,action);continue;}

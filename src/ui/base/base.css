@@ -371,3 +371,35 @@
 #hud .carrier-parts em { font-style: normal; font: 400 calc(13px * var(--scale)) / 1.35 var(--ui-body); color: var(--ui-muted); }
 #hud .carrier-parts em[data-state=home] { color: var(--ui-green); }
 #hud .carrier-parts em[data-state=carried] { color: var(--ui-amber); }
+
+/* Seed ship: stages to build, then the choice. */
+#hud .seed-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+#hud .seed-stage {
+  display: grid; gap: 6px; align-content: start; padding: 12px 14px;
+  border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-raised);
+}
+#hud .seed-stage[data-done=true] { border-color: var(--ui-green); }
+#hud .seed-stage[data-done=true] strong { color: var(--ui-green); }
+#hud .seed-stage header { display: grid; gap: 3px; }
+#hud .seed-stage strong { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); }
+#hud .seed-stage small { display: block; font: 400 calc(13px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-muted); }
+#hud .seed-stage small.base-why { color: var(--ui-text); }
+#hud .seed-stage button, #hud .seed-choice button {
+  width: auto; justify-self: start; padding: 9px 14px; border-radius: var(--ui-radius);
+  border: 1px solid var(--ui-line); background: var(--ui-panel-solid); color: var(--ui-text);
+  font: 600 calc(13px * var(--scale)) / 1 var(--ui-display); letter-spacing: .08em; text-transform: uppercase;
+}
+#hud .seed-stage button:disabled, #hud .seed-choice button:disabled { opacity: .45; }
+#hud .seed-launch, #hud .seed-epilogue {
+  display: grid; gap: 10px; margin-top: 8px; padding: 16px; border: 1px solid var(--ui-mint);
+  border-radius: var(--ui-radius); background: var(--ui-panel-solid);
+}
+#hud .seed-choice {
+  display: flex; gap: 14px; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-top: 1px solid var(--ui-line);
+}
+#hud .seed-choice span { display: grid; gap: 3px; min-width: 0; }
+#hud .seed-choice strong { font: 600 calc(16px * var(--scale)) / 1.2 var(--ui-display); }
+#hud .seed-choice small { font: 400 calc(13px * var(--scale)) / 1.4 var(--ui-body); color: var(--ui-muted); }
+#hud .seed-choice .seed-confirm { border-color: var(--ui-amber); color: var(--ui-amber); white-space: nowrap; }
+#hud .seed-epilogue p { margin: 0; max-width: 62ch; font: 400 calc(15px * var(--scale)) / 1.6 var(--ui-body); }

@@ -1,3 +1,4 @@
+import type { EndingId, SeedStage } from '../sim/seedShip';
 import { BuildingLabels } from './BuildingLabels';
 import { autopilotPanel } from './autopilot';
 import { UPGRADE_IDS, type UpgradeId } from '../sim/progressionConfig';
@@ -301,6 +302,8 @@ export class Hud {
       analyse: () => onColonyAction({ type: 'analyseSample' }),
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
+      seedStage: (stage) => onColonyAction({ type: 'seedStage', stage: stage as SeedStage }),
+      seedLaunch: (ending) => onColonyAction({ type: 'seedLaunch', ending: ending as EndingId }),
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
       expedition: (kit, target) => onColonyAction({ type: 'launchExpedition', kit, target }),
       choose: (choice) => onColonyAction({ type: 'expeditionChoice', choice }),

@@ -1,3 +1,8 @@
+import {
+  ENDING_IDS, ENDINGS, SEED_SHIP, SEED_STAGES, costLine, hasShipyard, seedEnding, seedShipComplete, seedStageBlock,
+  seedStagesDone, type EndingId, type SeedStage,
+} from '../../sim/seedShip';
+import { hasMemory } from '../../sim/story';
 import { KEYSTONE_WORLDS, KEYSTONES, keystoneCount, keystonesOpen, keystoneState } from '../../sim/keystones';
 import { WORLD } from '../../sim/config';
 import { turretRange } from '../../sim/weapons';
@@ -55,6 +60,8 @@ export interface BaseView {
   elsewhere: OutpostView[];
   /** Carrier parts: how many are home and where the rest are. Null until the unit knows to look. */
   carrier: CarrierView | null;
+  /** The seed ship project. Null until a Shipyard can be built. */
+  seedShip: SeedShipView | null;
   /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
   pods: PodsView | null;
   /** The deep-space beacon: how to send it, how long is left, what came back. Null until it is researched. */
@@ -562,6 +569,7 @@ export function baseView(w: WorldState): BaseView {
     tree: researchView(w) !== null || featureVisible('catalogue') ? researchTreeView(w) : null,
     elsewhere: elsewhereView(w),
     carrier: carrierView(w),
+    seedShip: seedShipView(w),
     pods: podsView(w),
     signal: signalView(w),
     supply: supplyView(w),
@@ -623,4 +631,42 @@ export function carrierView(w: WorldState): CarrierView | null {
     return { world, label: KEYSTONES[id].label, state, line };
   });
   return { home, total, parts };
+}
+
+export interface SeedShipView {
+  /** Whether home has a Shipyard yet. */
+  yard: boolean;
+  done: number;
+  total: number;
+  stages: Array<{ id: SeedStage; label: string; line: string; cost: string; done: boolean; blocked: string | null }>;
+  /** Null until the ship is finished; then the choices, or what was chosen. */
+  launch: { chosen: EndingId | null; choices: Array<{ id: EndingId; label: string; line: string }>; epilogue: string[] } | null;
+}
+
+/** The seed ship, once the Shipyard blueprint has come back or a yard already stands. */
+export function seedShipView(w: WorldState): SeedShipView | null {
+  const root = w.rootWorld ?? w;
+  if (!hasShipyard(root) && !hasMemory(root, 'relay')) return null;
+  const done = seedStagesDone(root);
+  const chosen = seedEnding(root);
+  return {
+    yard: hasShipyard(root),
+    done: done.length,
+    total: SEED_STAGES.length,
+    stages: SEED_STAGES.map(id => ({
+      id,
+      label: SEED_SHIP[id].label,
+      line: SEED_SHIP[id].line,
+      cost: `${costLine(SEED_SHIP[id].cost)}, ${SEED_SHIP[id].energy} kJ`,
+      done: done.includes(id),
+      blocked: done.includes(id) ? null : seedStageBlock(root, id),
+    })),
+    launch: seedShipComplete(root)
+      ? {
+        chosen,
+        choices: ENDING_IDS.map(id => ({ id, label: ENDINGS[id].label, line: ENDINGS[id].line })),
+        epilogue: chosen ? ENDINGS[chosen].epilogue : [],
+      }
+      : null,
+  };
 }

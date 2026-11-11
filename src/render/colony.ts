@@ -13,6 +13,7 @@ import { droneSeam } from '../sim/minerDrone';
 import { linkPreview } from '../sim/grid';
 import { daylightAt } from '../sim/sun';
 import { WORLD } from '../sim/config';
+import { ENDINGS, SEED_STAGES, seedEnding, seedStagesDone } from '../sim/seedShip';
 import { drawColonyLife, HAUL_KINDS, type LifeView } from './colonyLife';
 import type { WorldState } from '../sim/world';
 
@@ -126,6 +127,14 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     } else if (entry.kind === 'antenna') {
       const mast = p(0, 13), top = p(0, 30), left = p(-6, 27), right = p(6, 27);
       g.lineBetween(mast.x, mast.y, top.x, top.y); g.lineBetween(left.x, left.y, top.x, top.y); g.lineBetween(top.x, top.y, right.x, right.y);
+    } else if (entry.kind === 'shipyard') {
+      // A gantry: two legs, a beam across, and a hook.
+      const left = p(-width + 2, 13), right = p(width - 2, 13), topLeft = p(-width + 2, 40), topRight = p(width - 2, 40);
+      g.lineBetween(left.x, left.y, topLeft.x, topLeft.y);
+      g.lineBetween(right.x, right.y, topRight.x, topRight.y);
+      g.lineBetween(topLeft.x, topLeft.y, topRight.x, topRight.y);
+      const hookTop = p(4, 40), hook = p(4, 33);
+      g.lineBetween(hookTop.x, hookTop.y, hook.x, hook.y);
     } else if (entry.kind === 'workshop') {
       const roof = [p(-width + 2, 13), p(0, 22), p(width - 2, 13)];
       g.strokePoints(roof, false);
@@ -153,6 +162,41 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
   }
 }
 
+/** The seed ship standing under the Shipyard's gantry: an outline once the frame is laid, filling in stage by stage. */
+function drawSeedShip(g: Phaser.GameObjects.Graphics, world: WorldState, time: number): void {
+  const done = seedStagesDone(world).length;
+  const ending = seedEnding(world);
+  if (done === 0 || (ending && ENDINGS[ending].departs)) return;
+  const yard = world.colony.buildings.find(b => b.kind === 'shipyard');
+  if (!yard) return;
+  const radius = colonyPlanet(world).radius;
+  const n = heading(yard.angle);
+  const tangent = { x: -n.y, y: n.x };
+  const p = (x: number, height: number) => new Phaser.Geom.Point(n.x * (radius + height) + tangent.x * x, n.y * (radius + height) + tangent.y * x);
+  // Hull outline, nose up, standing on the pad of the yard.
+  const hull: Array<[number, number]> = [[-7, 14], [-8, 22], [-6, 30], [-2.5, 36], [0, 38], [2.5, 36], [6, 30], [8, 22], [7, 14]];
+  g.lineStyle(0.8, 0xffe6b0, 0.9);
+  g.strokePoints(hull.map(([x, y]) => p(x, y)), true);
+  // Filled from the bottom, one band per finished stage after the frame.
+  const share = (done - 1) / (SEED_STAGES.length - 1);
+  const top = 14 + 24 * share;
+  if (share > 0) {
+    const half = (y: number) => (y <= 22 ? 7 + (y - 14) / 8 : y <= 30 ? 8 - ((y - 22) * 2) / 8 : Math.max(0, 6 - ((y - 30) * 6) / 8));
+    const band: Phaser.Geom.Point[] = [];
+    for (let y = 14; y <= top + 1e-6; y += 2) band.push(p(-half(y), y));
+    for (let y = top; y >= 14 - 1e-6; y -= 2) band.push(p(half(y), y));
+    g.fillStyle(0xcfd8dc, 0.9);
+    g.fillPoints(band, true);
+  }
+  // Finished: running lights.
+  if (done === SEED_STAGES.length) {
+    const blink = 0.5 + 0.5 * Math.sin(time * 2);
+    const tip = p(0, 39);
+    g.fillStyle(0x7fe6d3, 0.4 + 0.6 * blink);
+    g.fillCircle(tip.x, tip.y, 1.2);
+  }
+}
+
 /** What the cosmetic base life needs to know, read from the simulation. */
 function lifeView(world: WorldState): LifeView {
   const body = colonyPlanet(world);
@@ -173,5 +217,6 @@ export function drawColony(g: Phaser.GameObjects.Graphics, world: WorldState, se
   const p = colonyPlanet(world); g.save(); g.translateCanvas(p.position.x, p.position.y); g.rotateCanvas(p.spin);
   drawColonyLocal(g, world, selected, draft, view, detail, time, animate);
   if (detail) drawColonyLife(g, lifeView(world), time, animate);
+  drawSeedShip(g, world, time);
   g.restore();
 }
