@@ -1,5 +1,5 @@
 import { pileMass } from '../../sim/stockpile';
-import { buildingLimit, centreName, headquarters, hqLevel, hqUpgradeBlock, levelsFor, type HqLevel } from '../../sim/headquarters';
+import { buildingLimit, centreName, headquarters, hqLevel, hqUpgradeBlock, HQ_UNLOCKS, levelsFor, type HqLevel } from '../../sim/headquarters';
 import { gridsView, type GridsView } from './gridsView';
 import {
   ENDING_IDS, ENDINGS, SEED_SHIP, SEED_STAGES, costLine, hasShipyard, seedEnding, seedShipComplete, seedStageBlock,
@@ -705,6 +705,13 @@ function pileNote(b: Building): string {
   return ` · ${Math.round(kg)} kg piled here: not on the base grid. Land beside it to load, or run a relay line to it.`;
 }
 
+/** What the next level opens, for the home Headquarters (an outpost core opens nothing new). */
+function opens(w: WorldState, level: HqLevel): string {
+  if (w.siteBody && w.siteBody !== 'home') return '';
+  const unlock = HQ_UNLOCKS[level];
+  return unlock ? `. Opens ${unlock}` : '';
+}
+
 export function hqView(w: WorldState): HqView | null {
   if (!headquarters(w.colony)) return null;
   const level = hqLevel(w.colony);
@@ -720,7 +727,7 @@ export function hqView(w: WorldState): HqView | null {
     next: next && nextLevel ? {
       level: nextLevel,
       cost: `${costLine(next.cost)}, ${next.upgradeEnergy} kJ`,
-      adds: `Room for ${next.buildings} buildings, +${next.ore - now.ore} kg ore, +${next.materials - now.materials} of each material, +${next.energy - now.energy} kJ stored`,
+      adds: `Room for ${next.buildings} buildings, +${next.ore - now.ore} kg ore, +${next.materials - now.materials} of each material, +${next.energy - now.energy} kJ stored${opens(w, nextLevel)}`,
     } : null,
     blocked: hqUpgradeBlock(w),
   };

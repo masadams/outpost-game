@@ -120,6 +120,21 @@ export function hqUpgradeBlock(world: WorldState): string | null {
   return null;
 }
 
+/** What each Headquarters level opens, beyond room and storage. */
+export const HQ_UNLOCKS: Record<HqLevel, string | null> = {
+  1: null,
+  2: 'the worker bay',
+  3: 'the shipyard',
+  4: 'worker drones that reach 900 m and work half again as fast',
+};
+
+/** Whether the home Headquarters has reached a level. Games without one (no day cycle) count as having it. */
+export function homeHqAtLeast(world: WorldState, level: HqLevel): boolean {
+  const root = world.rootWorld ?? world;
+  if (!headquarters(root.colony)) return true;
+  return hqLevel(root.colony) >= level;
+}
+
 export type HqAction = { type: 'upgradeHq'; body?: BodyId };
 export const isHqAction = (a: { type: string }): a is HqAction => a.type === 'upgradeHq';
 

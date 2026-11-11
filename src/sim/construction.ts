@@ -1,4 +1,4 @@
-import { WORKER, droneBuilding } from './workerBay';
+import { droneBuildRate, droneBuilding } from './workerBay';
 import { createSchedule } from './scheduling';
 import { nearestPlanet, relativeVelocity } from './celestial';
 import { allocateBuildingId, colonyPlanet, localAngleAt } from './localWorld';
@@ -47,7 +47,7 @@ export function stepConstruction(w: WorldState, dt: number): void {
   // A worker drone at the site builds too, more slowly; the pilot on the spot builds at full speed.
   const drone = !crew && droneBuilding(w, o.id);
   if (!crew && !drone) { o.status = 'waiting for stationary crew within 96 m'; return; }
-  o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt * (crew ? 1 : WORKER.build));
+  o.progress = Math.min(CONSTRUCTION_SECONDS, o.progress + dt * (crew ? 1 : droneBuildRate(w)));
   o.status = crew ? 'crew building' : 'drone building';
   if (o.progress + 1e-9 < CONSTRUCTION_SECONDS) return;
   const finished = completedBuilding(allocateBuildingId(w), o.kind, o.angle, w);

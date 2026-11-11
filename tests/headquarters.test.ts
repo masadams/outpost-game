@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld } from '../src/sim/world';
 import { completedBuilding } from '../src/sim/construction';
 import { demolishError, energyCapacity, oreCapacity, placementError, productCapacity } from '../src/sim/colony';
+import { HQ_UNLOCKS } from '../src/sim/headquarters';
+import { blueprintRevealed } from '../src/sim/unlocks';
+import { hqView } from '../src/ui/base/baseView';
+import { workerReach, WORKER } from '../src/sim/workerBay';
 import { HQ, buildingLimit, headquarters, hqLevel, hqUpgradeBlock, upgradeHq } from '../src/sim/headquarters';
 import { linkTree } from '../src/sim/grid';
 import { decodeCheckpoint, encodeCheckpoint } from '../src/persistence/checkpoint';
@@ -90,5 +94,27 @@ describe('outpost cores', () => {
     expect(hqLevel(w.outposts.moon.colony)).toBe(2);
     expect(hqLevel(w.colony)).toBe(1);
     expect(() => encodeCheckpoint(w)).not.toThrow();
+  });
+});
+
+describe('what each Headquarters level opens', () => {
+  it('opens the worker bay at level 2 and the shipyard at level 3, and says so before the upgrade', () => {
+    const w = game();
+    w.exploration.story = { memories: ['makersRelay'] } as never;
+    expect(blueprintRevealed(w, 'workerBay')).toBe(false);
+    expect(blueprintRevealed(w, 'shipyard')).toBe(false);
+    expect(hqView(w)!.next!.adds).toContain(`Opens ${HQ_UNLOCKS[2]}`);
+    headquarters(w.colony)!.hqLevel = 2;
+    expect(blueprintRevealed(w, 'workerBay')).toBe(true);
+    expect(blueprintRevealed(w, 'shipyard')).toBe(false);
+    headquarters(w.colony)!.hqLevel = 3;
+    expect(blueprintRevealed(w, 'shipyard')).toBe(true);
+  });
+
+  it('sends worker drones farther at level 4', () => {
+    const w = game();
+    expect(workerReach(w)).toBe(WORKER.reach);
+    headquarters(w.colony)!.hqLevel = 4;
+    expect(workerReach(w)).toBe(WORKER.reach * 1.5);
   });
 });
