@@ -1,3 +1,4 @@
+import { weatherForecast } from '../../sim/weather';
 import { DEEP, DEEP_IDS, deepFound, deepHeard, deepPosition } from '../../sim/deepSpace';
 import { natureOf } from '../../sim/nature';
 import { courseTo } from '../../sim/intercept';
@@ -205,6 +206,8 @@ function selectedView(w: WorldState): SelectedView {
     body += hasMemory(w, id) ? ' You have read what the earlier unit left here.' : ' Old machine traces show on the surface. Land to read them.';
     body = body.replace(' nothing is waiting there.', ' there is no base there.');
   }
+  const forecast = (BODY_IDS as readonly string[]).includes(id) ? weatherForecast(w, id as BodyId) : null;
+  if (forecast) body += ` ${forecast}`;
   const part = KEYSTONE_WORLDS.find(k => k === id);
   if (part && keystonesOpen(w)) {
     const state = keystoneState(w, part);

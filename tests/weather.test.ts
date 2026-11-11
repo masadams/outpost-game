@@ -3,6 +3,7 @@ import { createWorld } from '../src/sim/world';
 import { BODIES, planetAt, surfacePosition, type BodyId } from '../src/sim/celestial';
 import { colonyWorld } from '../src/sim/localWorld';
 import { seasOf } from '../src/sim/nature';
+import { weatherForecast } from '../src/sim/weather';
 import { SEA_WALL_REACH, WEATHER, flooded, stepWeather, weatherChip, weatherOn, weatherSolar } from '../src/sim/weather';
 import { completedBuilding } from '../src/sim/construction';
 import { generatorOutput } from '../src/sim/generators';
@@ -115,5 +116,16 @@ describe('Weatherproofing research', () => {
     const bare = 1 - weatherSolar(colonyWorld(w, 'ember'), 0.5);
     w.colony.research.completed.push('weatherproofing');
     expect(1 - weatherSolar(colonyWorld(w, 'ember'), 0.5)).toBeCloseTo(bare * 0.6);
+  });
+});
+
+describe('the weather forecast on the Map', () => {
+  it('says what is happening now, or when it comes next', () => {
+    const w = createWorld(4242);
+    timeWhen(w, 'ember', s => s >= 1);
+    expect(weatherForecast(w, 'ember')).toMatch(/^Dust storm now · .* left\. Solar panels dim\.$/);
+    timeWhen(w, 'tide', (s, startsIn) => s === 0 && startsIn > 120);
+    expect(weatherForecast(w, 'tide')).toMatch(/^Next high tide in \d+ min/);
+    expect(weatherForecast(w, 'home')).toBeNull();
   });
 });
