@@ -1,3 +1,4 @@
+import { nearbyPiles, pileMass } from '../../sim/stockpile';
 import { GRADE_LABEL, seamGrade, seamKnown } from '../../sim/geology';
 import { BODY_IDS } from '../../sim/celestial';
 import { liftoffWarning } from '../../sim/preflight';
@@ -31,6 +32,8 @@ export interface ShipPanelView {
   kit: KitView | null;
   /** Ore waiting in the depot of another world, ready to haul home. */
   haul: { text: string; enabled: boolean; reason: string } | null;
+  /** Ore piled beside a mine that is off the base grid, next to the landed lander. */
+  piles: { text: string; enabled: boolean; reason: string } | null;
 }
 
 export interface KitView {
@@ -177,6 +180,19 @@ function kit(w: WorldState): KitView | null {
   return { text: 'A rig, a solar array, a battery, a power relay and a refinery for another world: 24 alloy, 12 wire, 6 components. Refine ore there and carry home the lighter materials. Nights there are long; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
 }
 
+/** Ore piled at mines beside the landed lander, out of reach of the base grid. */
+function piles(w: WorldState): ShipPanelView['piles'] {
+  const near = nearbyPiles(w);
+  if (near.length === 0) return null;
+  const kg = near.reduce((sum, b) => sum + pileMass(b), 0);
+  const room = Math.max(0, cargoCapacity(w.ship) - cargoMass(w.ship));
+  return {
+    text: `${kg.toFixed(0)} kg of ore is piled at the mine here. It is not on the base grid, so it waits for you. Your hold takes ${room.toFixed(0)} kg.`,
+    enabled: room > 0.5,
+    reason: room > 0.5 ? 'Load it, fly home and press E on the pad. A relay line to the base would send it in by itself.' : 'Your hold is full.',
+  };
+}
+
 /** Carrying a remote depot's ore home. Shown on another world whenever its depot has ore, in the lander or on foot. */
 function haul(w: WorldState): ShipPanelView['haul'] {
   if ((w.siteBody ?? 'home') === 'home') return null;
@@ -216,5 +232,6 @@ export function shipPanelView(w: WorldState): ShipPanelView {
     foot: w.playerMode === 'astronaut' ? foot(w) : null,
     kit: kit(w),
     haul: haul(w),
+    piles: piles(w),
   };
 }

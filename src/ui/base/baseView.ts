@@ -1,3 +1,4 @@
+import { pileMass } from '../../sim/stockpile';
 import { HQ, buildingLimit, headquarters, hqLevel, hqUpgradeBlock, type HqLevel } from '../../sim/headquarters';
 import { gridsView, type GridsView } from './gridsView';
 import {
@@ -331,7 +332,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     label: BLUEPRINTS[b.kind].label,
     chip: status.chip,
     chipLabel: status.label,
-    line: why ?? (recipe && status.chip === 'running' ? recipe.label : status.label),
+    line: (why ?? (recipe && status.chip === 'running' ? recipe.label : status.label)) + pileNote(b),
     why,
     facts,
     canToggle: b.kind !== 'storage' && b.kind !== 'battery' && health > 0,
@@ -690,6 +691,13 @@ export interface HqView {
   /** The next level and what it brings; null at the top. */
   next: { level: number; cost: string; adds: string } | null;
   blocked: string | null;
+}
+
+/** A mine off the base grid keeps its ore beside it: say how much, and what to do. */
+function pileNote(b: Building): string {
+  const kg = pileMass(b);
+  if (kg < 0.5) return '';
+  return ` · ${Math.round(kg)} kg piled here: not on the base grid. Land beside it to load, or run a relay line to it.`;
 }
 
 export function hqView(w: WorldState): HqView | null {

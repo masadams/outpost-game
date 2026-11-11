@@ -23,6 +23,7 @@ import { stepKeystones } from './keystones';
 import { stepSurvey } from './survey';
 import { stepDeepSpace } from './deepSpace';
 import { ensureHq, isHqAction, upgradeHq } from './headquarters';
+import { isPileAction, loadPiles } from './stockpile';
 import { applySeedShipAction, isSeedShipAction } from './seedShip';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
@@ -131,6 +132,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isStormAction(action)){applyStormAction(world,action);continue;}
     if(isCrystalAction(action)){applyCrystalAction(world);continue;}
     if(isCoreAction(action)){applyCoreAction(world);continue;}
+    if (isPileAction(action)) {
+      loadPiles(world);
+      continue;
+    }
     if (isHqAction(action)) {
       upgradeHq(world);
       continue;

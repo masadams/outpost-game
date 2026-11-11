@@ -392,6 +392,8 @@ export class Hud {
       if (button && !button.disabled) this.onAction({ type: 'loadManifest', manifest: 'nacreKit' });
       const haul = target.closest<HTMLButtonElement>('button[data-haul="load"]');
       if (haul && !haul.disabled) this.onAction({ type: 'loadAllOre' });
+      const piles = target.closest<HTMLButtonElement>('button[data-piles="load"]');
+      if (piles && !piles.disabled) this.onAction({ type: 'loadPiles' });
     });
     this.shipExtras.className = 'ship-extras';
     this.mining.append(this.shipHost, this.shipExtras);

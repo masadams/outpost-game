@@ -1,3 +1,4 @@
+import { deliverOre, mineRoom, pileFull } from './stockpile';
 import { workFactor } from './facilityStats';
 import { colonyPlanet } from './localWorld';
 import { powerFraction } from './power';
@@ -37,9 +38,8 @@ export function stepMinerDrone(world: WorldState, bay: Building, dt: number, cap
     bay.status = 'worn out';
     return;
   }
-  const physicalRoom = capacity - inventoryMass(world.depot);
-  if (physicalRoom - policyFor(colony).deliveryReserve <= 1e-9) {
-    bay.status = physicalRoom <= 1e-9 ? 'output full' : 'delivery reserved';
+  if (mineRoom(world, bay, capacity) <= 1e-9) {
+    bay.status = pileFull(bay) || capacity - inventoryMass(world.depot) <= 1e-9 ? 'output full' : 'delivery reserved';
     return;
   }
   if (bay.progress < 1e-9 && colony.products.fuel + 1e-9 < DRONE.fuel) {
@@ -65,10 +65,9 @@ export function stepMinerDrone(world: WorldState, bay: Building, dt: number, cap
   bay.progress += work;
   bay.status = 'running';
   if (bay.progress + 1e-9 < DRONE.seconds) return;
-  const room = physicalRoom - policyFor(colony).deliveryReserve;
-  const amount = Math.min(DRONE.yield, seam.remaining, room);
+  const amount = Math.min(DRONE.yield, seam.remaining, mineRoom(world, bay, capacity));
   bay.progress = 0;
   seam.remaining = Math.max(0, seam.remaining - amount);
-  world.depot[seam.resource] += amount;
+  deliverOre(world, bay, seam.resource, amount);
   bay.health = Math.max(0, buildingHealth(bay) - DRONE.wear);
 }
