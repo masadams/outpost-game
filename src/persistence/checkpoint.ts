@@ -72,6 +72,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!colony.buildings.every(b => b.core === undefined || (b.kind === 'headquarters' && b.core === true))) return false;
   if (!colony.buildings.every(b => b.stock === undefined || (object(b.stock) && Object.entries(b.stock).every(([r, v]) => RESOURCES.includes(r as never) && number(v, 0, STOCKPILE + 1))))) return false;
   if (!colony.buildings.every(b => b.target === undefined || (b.kind === 'tugBay' && Number.isInteger(b.target) && b.target > 0))) return false;
+  if (!colony.buildings.every(b => b.job === undefined || (b.kind === 'workerBay' && validJob(b.job)))) return false;
   if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)) && (b.wait === undefined || number(b.wait, 0, 60)) && (b.linked === undefined || b.linked === false) && (b.feed === undefined || number(b.feed, 0, 1)) && (b.charge === undefined || number(b.charge, 0, 1e6)) && (b.island === undefined || typeof b.island === 'boolean'))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, airCapacity(b)) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
@@ -164,6 +165,14 @@ export function saveProblem(world: WorldState): string {
     }
   }
   return 'unknown';
+}
+
+/** A worker bay's job: what it is doing, to what, and where. */
+function validJob(job: unknown): boolean {
+  const j = job as { kind?: unknown; target?: unknown; leg?: unknown; t?: unknown; angle?: unknown };
+  return !!j && (j.kind === 'build' || j.kind === 'repair') && Number.isInteger(j.target) && (j.target as number) > 0
+    && (j.leg === 'out' || j.leg === 'work' || j.leg === 'back') && Number.isFinite(j.t) && (j.t as number) >= 0
+    && (j.t as number) < 1e5 && Number.isFinite(j.angle) && Math.abs(j.angle as number) <= 2 * Math.PI;
 }
 
 export function encodeCheckpoint(world: WorldState): string {

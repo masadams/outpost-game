@@ -80,6 +80,7 @@ export const PURPOSE: Record<BuildType, string> = {
   workshop: 'Lets you fit ship parts away from home',
   shipyard: 'Where the seed ship is put together',
   headquarters: 'The centre of the base',
+  workerBay: 'A drone that builds queued orders and repairs damage within 600 m',
   tugBay: 'Sends a tug up to bring down ore from rocks circling home',
   geothermal: 'Steady power from heat underground',
   windTurbine: 'Power from moving air',
@@ -244,8 +245,11 @@ export function queueView(w: WorldState): QueueView | null {
   const active = orders.some(o => !o.paused);
   const root = w.rootWorld ?? w;
   const working = root.crewOrder?.type === 'build';
+  const drone = w.colony.command.queue.find(o => o.status === 'drone building');
   const hint = working
     ? crewLine(w) ?? 'Astronaut working'
+    : drone
+      ? `A worker drone is building ${BLUEPRINTS[drone.kind].label}.`
     : w.playerMode === 'ship'
       ? 'Step out (F) and your astronaut builds these.'
       : active

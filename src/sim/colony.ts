@@ -3,6 +3,7 @@ import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid'
 import { stepObservatory } from './observatory';
 import { BOOT_SECONDS, bootStep, isOnline, needsBoot } from './boot';
 import { stepTugBay } from './tugBay';
+import { stepWorkerBay } from './workerBay';
 import { drainPiles } from './stockpile';
 import { buildingLimit, headquarters, hqLevel, hqStorage, isHq, MOST_BUILDINGS } from './headquarters';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
@@ -48,6 +49,8 @@ export interface Building {
   stock?: Partial<Record<Resource, number>>;
   /** The rock a tug bay's tug is working. Only on a tug bay. */
   target?: number;
+  /** A worker bay's current job. */
+  job?: import('./workerBay').WorkerJob;
   /** True on an outpost core: the smaller centre of a base on another world. */
   core?: boolean;
   /** The Headquarters' own level, 1 to 4. Only on the HQ. */
@@ -290,6 +293,7 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (building.kind === 'workshop') { stepWorkshop(world, building, dt); return researchStaffed; }
   if (building.kind === 'antenna') { stepAntenna(world, building, dt); return researchStaffed; }
   if (building.kind === 'tugBay') { stepTugBay(world, building, dt, oreCapacity(colony)); return researchStaffed; }
+  if (building.kind === 'workerBay') { stepWorkerBay(world, building, dt); return researchStaffed; }
   if (building.kind === 'droneBay') { stepMinerDrone(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) return researchStaffed;

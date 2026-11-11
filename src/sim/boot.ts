@@ -26,7 +26,7 @@ export const HOLD_SECONDS = 1.5;
 /** Every machine that works only while it has power. Each warms up, rides out short gaps and waits after a shutdown. */
 export const BOOT_KINDS: readonly BuildType[] = [
   'observatory', 'refinery', 'fuelProcessor', 'miningRig', 'researchLab',
-  'condenser', 'antenna', 'workshop', 'droneBay', 'massDriver', 'tugBay',
+  'condenser', 'antenna', 'workshop', 'droneBay', 'massDriver', 'tugBay', 'workerBay',
 ];
 
 export const needsBoot = (kind: BuildType): boolean => BOOT_KINDS.includes(kind);

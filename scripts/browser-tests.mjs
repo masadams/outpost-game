@@ -69,7 +69,7 @@ const RULES = [
   [/^src\/sim\/(events|weather)/, ['events', 'worlds']],
   [/^src\/sim\/(exploration|probes|drift|crystal|deepSpace)/, ['exploration']],
   [/^src\/sim\/(flight|handling|trajectory|environment|preflight|readiness)/, ['flight', 'flightRegion', 'flightWarnings', 'rotation', 'atmosphere', 'readiness']],
-  [/^src\/sim\/(mining|surface|geology|survey|minerDrone|tugBay|stockpile|prospect|nacreSurvey)/, ['surfaceMining']],
+  [/^src\/sim\/(mining|surface|geology|survey|minerDrone|tugBay|workerBay|stockpile|prospect|nacreSurvey)/, ['surfaceMining']],
   [/^src\/sim\/(celestial|nature|star|sun|aurora)/, ['worlds', 'rotation', 'atmosphere']],
   [/^src\/sim\/(combat|weapons|command|drones)/, ['defence', 'command']],
   [/^src\/sim\/(building|colonyPlacement|colonyService|headquarters)/, ['base', 'directControls', 'contextMenu', 'defence']],
