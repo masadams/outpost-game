@@ -127,6 +127,23 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     } else if (entry.kind === 'antenna') {
       const mast = p(0, 13), top = p(0, 30), left = p(-6, 27), right = p(6, 27);
       g.lineBetween(mast.x, mast.y, top.x, top.y); g.lineBetween(left.x, left.y, top.x, top.y); g.lineBetween(top.x, top.y, right.x, right.y);
+    } else if (entry.kind === 'headquarters') {
+      // A taller block with a dome and a mast: the seed unit's housing. Wider than its footprint by a little.
+      const block = [p(-14, 0), p(-14, 20), p(-6, 24), p(6, 24), p(14, 20), p(14, 0)];
+      g.fillStyle(0x203749, 0.95);
+      g.fillPoints(block, true);
+      g.lineStyle(1.2, color, entry.active ? 1 : 0.5);
+      g.strokePoints(block, true);
+      const dome = p(0, 24);
+      g.strokeCircle(dome.x, dome.y, 5);
+      const mastTop = p(0, 38);
+      g.lineBetween(dome.x, dome.y, mastTop.x, mastTop.y);
+      // A window band for each level the HQ has reached.
+      const levels = world.colony.buildings.find(b => b.kind === 'headquarters')?.hqLevel ?? 1;
+      for (let i = 0; i < levels; i++) {
+        const a = p(-10, 5 + i * 4), b = p(10, 5 + i * 4);
+        g.lineBetween(a.x, a.y, b.x, b.y);
+      }
     } else if (entry.kind === 'shipyard') {
       // A gantry: two legs, a beam across, and a hook.
       const left = p(-width + 2, 13), right = p(width - 2, 13), topLeft = p(-width + 2, 40), topRight = p(width - 2, 40);

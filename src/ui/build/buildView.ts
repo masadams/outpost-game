@@ -75,6 +75,7 @@ export const PURPOSE: Record<BuildType, string> = {
   condenser: 'Draws water and oxygen out of the air',
   workshop: 'Lets you fit ship parts away from home',
   shipyard: 'Where the seed ship is put together',
+  headquarters: 'The centre of the base',
   geothermal: 'Steady power from heat underground',
   windTurbine: 'Power from moving air',
   massDriver: 'Sends cargo pods on less fuel, with more in them',

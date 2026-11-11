@@ -8,6 +8,8 @@ import type { WorldState } from '../sim/world';
 export function drawSurface(g: Phaser.GameObjects.Graphics, world: WorldState, time = 0): void {
   const body = colonyPlanet(world);
   for (const station of (world.siteBody === 'moon' ? STATIONS.filter(s => s.kind === 'depot').map(s => ({ ...s, angle: 54 / body.radius })) : STATIONS)) {
+    // At home the Headquarters stands on the service terminal and is drawn with the base.
+    if (station.kind === 'service' && !world.siteBody && world.colony.buildings.some(b => b.kind === 'headquarters')) continue;
     const n = heading(station.angle + body.spin), tangent = { x: -n.y, y: n.x };
     const p = (x: number, height: number) => new Phaser.Geom.Point(body.position.x + n.x * (body.radius + height) + tangent.x * x, body.position.y + n.y * (body.radius + height) + tangent.y * x);
     g.fillStyle(0x203749); g.lineStyle(1, station.color);

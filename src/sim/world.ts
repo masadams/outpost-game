@@ -20,6 +20,7 @@ import { stepDrift } from './drift';
 import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStory } from './story';
 import { stepKeystones } from './keystones';
+import { ensureHq, isHqAction, upgradeHq } from './headquarters';
 import { applySeedShipAction, isSeedShipAction } from './seedShip';
 import { stepStarHeat } from './starHazard';
 import { seedNeighborhood, stepSites, resolveSites, applyExplorationAction } from './exploration';
@@ -128,6 +129,10 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
     if(isStormAction(action)){applyStormAction(world,action);continue;}
     if(isCrystalAction(action)){applyCrystalAction(world);continue;}
     if(isCoreAction(action)){applyCoreAction(world);continue;}
+    if (isHqAction(action)) {
+      upgradeHq(world);
+      continue;
+    }
     if (isSeedShipAction(action)) {
       applySeedShipAction(world, action);
       continue;
@@ -188,6 +193,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepProbes(world, dt);
   stepPods(world);
   stepBeacons(world);
+  ensureHq(world);
   stepStory(world);
   stepBlueprintNotices(world);
   stepEvents(world, dt);

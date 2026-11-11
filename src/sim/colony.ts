@@ -2,6 +2,7 @@ import { onWater } from './nature';
 import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
 import { BOOT_SECONDS, bootStep, isOnline, needsBoot } from './boot';
+import { buildingLimit, headquarters, hqLevel, hqStorage, isHq, MOST_BUILDINGS } from './headquarters';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -41,6 +42,8 @@ import type { WorldState } from './world';
 
 export interface Building {
   level?:1|2|3;
+  /** The Headquarters' own level, 1 to 4. Only on the HQ. */
+  hqLevel?: number;
   dispatch?: { rank: number; limit: number };
   gridPower?: number; requestedPower?: number;
   /** Seconds of steady power so far while starting up (see boot.ts); undefined means always online. */
@@ -73,7 +76,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | import('./seedShip').SeedShipAction | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | import('./seedShip').SeedShipAction | import('./headquarters').HqAction | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -81,11 +84,11 @@ export function createColony(): Colony {
     energy: 0, generation: 0, demand: 0, buildOpen: false, selected: 'solar', offset: 24, nextId: 1 };
 }
 const deepStore = (colony: Colony): number => colony.research.completed.includes('deepStorage') ? 1.25 : 1;
-export const oreCapacity = (colony: Colony): number => 400 + deepStore(colony) * colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
-export const productCapacity = (colony: Colony): number => 100 + deepStore(colony) * colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
+export const oreCapacity = (colony: Colony): number => 400 + hqStorage(colony).ore + deepStore(colony) * colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+200*capacityFactor(b),0);
+export const productCapacity = (colony: Colony): number => 100 + hqStorage(colony).materials + deepStore(colony) * colony.buildings.filter(b => b.kind === 'storage' && operational(b)).reduce((sum,b)=>sum+100*capacityFactor(b),0);
 /** A battery holds enough to carry a small base through much of a night. */
 export const BATTERY_CAPACITY = 1200;
-export const energyCapacity = (colony: Colony): number => 20 + colony.buildings.filter(b => b.kind === 'battery' && operational(b) && b.linked !== false).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
+export const energyCapacity = (colony: Colony): number => 20 + hqStorage(colony).energy + colony.buildings.filter(b => b.kind === 'battery' && operational(b) && b.linked !== false).reduce((sum,b)=>sum+BATTERY_CAPACITY*capacityFactor(b),0);
 export const previewAngle = (world: WorldState): number => wrap(localAngleAt(world, world.astronaut.position) + world.colony.offset / colonyPlanet(world).radius);
 /** Why a blueprint cannot be used yet, or null. The Observatory is earned from the Frost survey buoy (day-cycle games only). */
 export function blueprintLock(world: WorldState, kind: BuildType): string | null {
@@ -97,8 +100,11 @@ export function blueprintLock(world: WorldState, kind: BuildType): string | null
 
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
   if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
-  if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= MAX_BUILDINGS) {
-    return `This base is at its limit of ${MAX_BUILDINGS} buildings.`;
+  const limit = buildingLimit(world.colony);
+  if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= limit) {
+    return headquarters(world.colony) && hqLevel(world.colony) < 4
+      ? `This base is at its limit of ${limit} buildings. Upgrade the Headquarters for more room.`
+      : `This base is at its limit of ${limit} buildings.`;
   }
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
   if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
@@ -176,14 +182,11 @@ export function salvageOf(building: Building): Partial<ProductInventory> {
 
 /** Why a building cannot be taken down right now, or null. */
 /** Nothing stops a building coming down. Kept so callers have one place to ask; see `demolishLoss` for the warning. */
-/**
- * The most buildings one base can hold. A stop-gap until a headquarters building sets the limit by its level
- * (see docs/tasks/BASE_AND_POWER.md).
- */
-export const MAX_BUILDINGS = 96;
+/** The most buildings any base can hold (the top Headquarters level). Saves are checked against it. */
+export const MAX_BUILDINGS = MOST_BUILDINGS;
 
-export function demolishError(_world: WorldState, _building: Building): string | null {
-  return null;
+export function demolishError(_world: WorldState, building: Building): string | null {
+  return isHq(building) ? 'The Headquarters cannot be taken down.' : null;
 }
 
 /** What would not fit in the stores that are left if this building came down: materials by name, and ore in kg. */
@@ -243,6 +246,7 @@ export function applyFacilityAction(world: WorldState, building: Building, actio
     building.recipe = (building.recipe + 1) % REFINERY_RECIPES.length; building.progress = 0;
     notify(world, REFINERY_RECIPES[building.recipe].label);
   } else if (action.type === 'toggleMachine') {
+    if (isHq(building)) { notify(world, 'THE HEADQUARTERS STAYS ON'); return; }
     if (building.kind === 'storage' || building.kind === 'battery') { notify(world, 'PASSIVE CAPACITY · NO POWER SWITCH'); return; }
     building.enabled = !building.enabled; notify(world, building.enabled ? 'FACILITY ENABLED' : 'FACILITY DISABLED');
   }
@@ -254,6 +258,11 @@ export function recipeFor(building: Building): Recipe | null {
 function runMachine(world: WorldState, building: Building, dt: number, researchStaffed: boolean): boolean {
   const colony = world.colony;
   if (isHabitat(building.kind) || isShield(building.kind)) return researchStaffed;
+  // The Headquarters is not a machine: it stands, holds, and is the base's centre.
+  if (isHq(building)) {
+    building.status = operational(building) ? 'running' : 'wrecked';
+    return researchStaffed;
+  }
   const before = building.status;
   building.status = !operational(building) ? 'wrecked' : building.enabled ? 'idle' : 'disabled';
   if (!operational(building)) return researchStaffed;

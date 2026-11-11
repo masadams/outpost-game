@@ -20,7 +20,8 @@ it('gates each tier on research, full repair, local unreserved materials and gri
  const before=structuredClone(w.colony);applyBuildingUpgrade(w,{type:'upgradeBuilding',id:1,level:2});expect(w.colony).toEqual(before);w.colony.energy=20;applyBuildingUpgrade(w,{type:'upgradeBuilding',id:1,level:2});expect(b.level).toBe(2);expect(w.colony.energy).toBe(0);expect(w.colony.products).toMatchObject({alloy:76,wire:78,components:79});
  w.colony.research.completed=w.colony.research.completed.filter(t=>t!=='industrialSystems');expect(buildingUpgradeError(w,b)).toContain('Advanced');w.colony.research.completed=[...TECH_IDS];w.colony.energy=40;applyBuildingUpgrade(w,{type:'upgradeBuilding',id:1,level:3});expect(b.level).toBe(3);expect(w.colony.products).toMatchObject({alloy:68,wire:74,components:77});const after=structuredClone(w.colony);applyBuildingUpgrade(w,{type:'upgradeBuilding',id:1,level:2});expect(w.colony).toEqual(after);
 });
-it.each(BUILD_TYPES)('upgrades %s in place, preserving every existing field and real contents',kind=>{
+// The Headquarters has its own levels, raised from the Base Overview (tests/headquarters.test.ts).
+it.each(BUILD_TYPES.filter(k=>k!=='headquarters'))('upgrades %s in place, preserving every existing field and real contents',kind=>{
  const {w,b}=fixture(kind);b.progress=.7;b.enabled=false;b.dispatch={rank:4,limit:50};const before=structuredClone(b),products={...w.colony.products},depot={...w.depot};applyBuildingUpgrade(w,{type:'upgradeBuilding',id:1,level:2});expect(b).toEqual({...before,level:2});expect(w.depot).toEqual(depot);for(const p of PRODUCTS)expect(w.colony.products[p]).toBeLessThanOrEqual(products[p]);expect(w.colony.energy).toBe(0);
 });
 it('expands storage/battery capacity empty, increases paid generation, and removes wrecked capacity',()=>{

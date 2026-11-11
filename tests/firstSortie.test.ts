@@ -34,8 +34,9 @@ describe('after the first delivery: build, survey, watch, storm', () => {
     expect(w.playerMode).toBe('astronaut');
     stepWorld(w, { thrust: false, turn: 0, colonyActions: [{ type: 'queueBuild', kind: 'solar', angle: 0.06 }, { type: 'queueBuild', kind: 'refinery', angle: -0.06 }] }, 1 / 60);
     stepWorld(w, { thrust: false, turn: 0, colonyActions: [{ type: 'crewOrder', operation: 'build' }] }, 1 / 60);
-    for (let i = 0; i < 60 * 240 && w.colony.buildings.length < 2; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
-    expect(w.colony.buildings.map(b => b.kind).sort()).toEqual(['refinery', 'solar']);
+    const built = () => w.colony.buildings.filter(b => b.kind !== 'headquarters').length;
+    for (let i = 0; i < 60 * 240 && built() < 2; i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
+    expect(w.colony.buildings.map(b => b.kind).filter(k => k !== 'headquarters').sort()).toEqual(['refinery', 'solar']);
     // The refinery turns the delivered ore into products while the sun is up, and industry counts as running.
     for (let i = 0; i < 60 * 60 && !w.objectives.completed.includes('industry'); i++) stepWorld(w, { thrust: false, turn: 0 }, 1 / 60);
     expect(w.objectives.completed).toContain('industry');

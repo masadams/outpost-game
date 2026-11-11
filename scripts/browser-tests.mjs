@@ -72,7 +72,7 @@ const RULES = [
   [/^src\/sim\/(mining|surface|geology|minerDrone|nacreSurvey)/, ['surfaceMining']],
   [/^src\/sim\/(celestial|nature|star|sun|aurora)/, ['worlds', 'rotation', 'atmosphere']],
   [/^src\/sim\/(combat|weapons|command|drones)/, ['defence', 'command']],
-  [/^src\/sim\/(building|colonyPlacement|colonyService)/, ['base', 'directControls', 'contextMenu', 'defence']],
+  [/^src\/sim\/(building|colonyPlacement|colonyService|headquarters)/, ['base', 'directControls', 'contextMenu', 'defence']],
   [/^src\/sim\/(cargo|resources|shipMass|tripFuel|bodies)/, ['flight', 'overhaul', 'readiness', 'surfaceMining']],
   [/^src\/sim\/messages/, ['story', 'storm', 'menu']],
   // Constants and helpers used across the whole simulation.
