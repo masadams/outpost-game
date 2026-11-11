@@ -1,6 +1,6 @@
 import type { BodyId } from './celestial';
 import type { ProductInventory } from './colonyConfig';
-export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems', 'photovoltaics', 'deepStorage', 'labAutomation', 'fieldRepair', 'surveyOptics', 'geoscience', 'aeronautics', 'massDrivers', 'podLogistics', 'deepSignal'] as const;
+export const TECH_IDS = ['materials', 'propulsion', 'extraction', 'combat', 'orbital', 'logistics', 'precision', 'thermal', 'ballistics', 'composites', 'ionics', 'lightweight', 'industrial', 'reactor', 'flightControl', 'navigation', 'autonomy', 'infrastructure', 'industrialSystems', 'photovoltaics', 'deepStorage', 'labAutomation', 'fieldRepair', 'surveyOptics', 'geoscience', 'aeronautics', 'massDrivers', 'podLogistics', 'deepSignal', 'groundSurvey', 'droneCrews', 'weatherproofing'] as const;
 export type TechId = typeof TECH_IDS[number];
 export interface Technology { facilityTier?: 2|3; label: string; seconds: number; requires: TechId[]; cost: Partial<ProductInventory> }
 const RAW_TECHNOLOGIES: Record<TechId, Technology> = {
@@ -27,6 +27,9 @@ const RAW_TECHNOLOGIES: Record<TechId, Technology> = {
   labAutomation:{label:'Lab automation',seconds:50,requires:['autonomy'],cost:{alloy:14,wire:8,components:5}},
   fieldRepair:{label:'Field repair',seconds:35,requires:['ballistics'],cost:{alloy:10,wire:5,components:3}},
   podLogistics:{label:'Pod logistics',seconds:45,requires:['massDrivers','navigation'],cost:{alloy:14,wire:7,components:4}},
+  groundSurvey:{label:'Ground survey',seconds:35,requires:['precision'],cost:{alloy:10,wire:6,components:4}},
+  droneCrews:{label:'Drone crews',seconds:45,requires:['autonomy'],cost:{alloy:14,wire:8,components:6}},
+  weatherproofing:{label:'Weatherproofing',seconds:40,requires:['photovoltaics'],cost:{alloy:12,wire:6,components:4}},
   surveyOptics:{label:'Survey optics',seconds:40,requires:['ionics'],cost:{alloy:12,wire:6,components:4}},
   geoscience:{label:'Geoscience',seconds:45,requires:['industrial','thermal'],cost:{alloy:14,wire:7,components:4}},
   aeronautics:{label:'Aeronautics',seconds:35,requires:['flightControl','materials'],cost:{alloy:10,wire:6,components:3}},

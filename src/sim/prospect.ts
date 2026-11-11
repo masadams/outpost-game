@@ -15,6 +15,12 @@ export const PROSPECT = {
   cooldown: 40,
 } as const;
 
+const surveyed = (world: WorldState): boolean => rootOf(world).colony.research.completed.includes('groundSurvey');
+/** How far the scan reaches along the ground, in metres: farther with Ground survey. */
+export const scanReach = (world: WorldState): number => (surveyed(world) ? 2500 : PROSPECT.reach);
+/** Seconds the scanner takes to recharge: shorter with Ground survey. */
+export const scanCooldown = (world: WorldState): number => (surveyed(world) ? 25 : PROSPECT.cooldown);
+
 export type ProspectAction = { type: 'prospect' };
 export const isProspectAction = (a: { type: string }): a is ProspectAction => a.type === 'prospect';
 
@@ -66,7 +72,7 @@ export function prospect(source: WorldState): number | null {
   const { planet, deposits } = found;
   const angle = surfaceAngle(planet, world.ship.position);
   const state = scanState(world);
-  state.readyAt = world.system.time + PROSPECT.cooldown;
+  state.readyAt = world.system.time + scanCooldown(world);
   const offset = relative(world.ship.position, planet);
   const height = Math.hypot(offset.x, offset.y) - planet.radius;
   state.pulse = { angle, height, at: world.system.time, body: planet.id as BodyId };
@@ -74,7 +80,7 @@ export function prospect(source: WorldState): number | null {
   const fresh = deposits.filter(d => {
     if (seamKnown(d)) return false;
     const gap = Math.abs(wrap(angle - d.angle)) * planet.radius - d.halfWidth;
-    return gap <= PROSPECT.reach;
+    return gap <= scanReach(world);
   });
   for (const d of fresh) d.surveyed = true;
   if (fresh.length === 0) {

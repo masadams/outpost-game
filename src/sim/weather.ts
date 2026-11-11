@@ -108,7 +108,8 @@ function swept(world: WorldState, angle: number): boolean {
 export function weatherSolar(world: WorldState, angle?: number): number {
   const now = weatherOn(world, colonyPlanet(world).id);
   if (!now || now.strength <= 0) return 1;
-  const loss = (1 - now.spec.solar) * now.strength;
+  const proofed = (world.rootWorld ?? world).colony.research.completed.includes('weatherproofing');
+  const loss = (1 - now.spec.solar) * now.strength * (proofed ? 0.6 : 1);
   return 1 - (angle !== undefined && swept(world, angle) ? loss / 2 : loss);
 }
 

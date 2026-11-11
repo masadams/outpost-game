@@ -107,3 +107,13 @@ describe('answers to the weather', () => {
     expect(1 - swept).toBeCloseTo((1 - bare) / 2);
   });
 });
+
+describe('Weatherproofing research', () => {
+  it('takes 40% off what dust takes from panels', () => {
+    const w = createWorld(4242);
+    timeWhen(w, 'ember', s => s >= 1);
+    const bare = 1 - weatherSolar(colonyWorld(w, 'ember'), 0.5);
+    w.colony.research.completed.push('weatherproofing');
+    expect(1 - weatherSolar(colonyWorld(w, 'ember'), 0.5)).toBeCloseTo(bare * 0.6);
+  });
+});

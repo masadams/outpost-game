@@ -43,7 +43,8 @@ export const TIER_REACH = 150;
 /** How far a bay's drone flies: more with each tier, half as far again with a level-4 centre. */
 export const workerReach = (world: WorldState, bay?: Building): number =>
   (WORKER.reach + TIER_REACH * (facilityLevel(bay ?? ({} as Building)) - 1)) * (boosted(world) ? 1.5 : 1);
-const workerPace = (world: WorldState): number => (boosted(world) ? 1.5 : 1);
+const crews = (world: WorldState): boolean => (world.rootWorld ?? world).colony.research.completed.includes('droneCrews');
+const workerPace = (world: WorldState): number => (boosted(world) ? 1.5 : 1) * (crews(world) ? 1.25 : 1);
 
 const bays = (world: WorldState): Building[] => world.colony.buildings.filter(b => b.kind === 'workerBay');
 

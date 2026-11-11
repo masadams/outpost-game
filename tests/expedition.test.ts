@@ -12,7 +12,7 @@ import { TECH_IDS } from '../src/sim/progressionConfig';
 function heard(seed = 7): WorldState {
   const w = createWorld(seed);
   w.system.sun = true;
-  w.colony.research.completed.push(...TECH_IDS.filter(t => t !== 'photovoltaics' && t !== 'labAutomation'));
+  w.colony.research.completed.push(...TECH_IDS.filter(t => t !== 'photovoltaics' && t !== 'weatherproofing' && t !== 'labAutomation'));
   w.colony.products = { ...w.colony.products, fuel: 90, alloy: 90, wire: 90, components: 90, water: 60, oxygen: 40 };
   w.colony.buildings.push(
     completedBuilding(1, 'solar', 0.12, w), completedBuilding(2, 'battery', 0.14, w),
