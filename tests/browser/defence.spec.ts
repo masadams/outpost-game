@@ -30,7 +30,10 @@ test('builds and controls a turret, sets it to automatic and saves', async ({ pa
   await expect.poll(async () => Number(await panel.getAttribute('data-shots'))).toBeGreaterThan(0);
   await page.keyboard.up('Space'); await expect(panel).toHaveAttribute('data-controlled', '2'); expect(await hud.getAttribute('data-surface-angle')).toBe(position);
   await expect(hud).toHaveAttribute('data-grounded', 'true');
+  // A built turret starts on automatic: G switches it off, and again back on.
   await page.keyboard.press('g'); await page.keyboard.press('e'); await expect(panel).toHaveAttribute('data-controlled', '');
+  await expect(page.locator('.nearby-card').getByRole('button', { name: /Auto defence: off/ })).toBeAttached();
+  await page.locator('.nearby-card').getByRole('button', { name: /Auto defence: off/ }).click();
   await expect(page.locator('.nearby-card').getByRole('button', { name: /Auto defence: on/ })).toBeAttached();
   await page.keyboard.press('k'); await expect(page.locator('.status')).toContainText('Game saved');
   await page.reload(); await expect(hud).toHaveAttribute('data-state', 'paused');
