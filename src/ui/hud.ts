@@ -392,6 +392,8 @@ export class Hud {
       if (button && !button.disabled) this.onAction({ type: 'loadManifest', manifest: 'nacreKit' });
       const haul = target.closest<HTMLButtonElement>('button[data-haul="load"]');
       if (haul && !haul.disabled) this.onAction({ type: 'loadAllOre' });
+      const outpost = target.closest<HTMLButtonElement>('button[data-outpost-kit="load"]');
+      if (outpost && !outpost.disabled) this.onAction({ type: 'loadManifest', manifest: 'outpostKit' });
       const piles = target.closest<HTMLButtonElement>('button[data-piles="load"]');
       if (piles && !piles.disabled) this.onAction({ type: 'loadPiles' });
     });

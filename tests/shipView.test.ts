@@ -44,3 +44,24 @@ describe('ship panel view', () => {
     expect(JSON.stringify(view)).not.toMatch(/SUIT LOST|SURFACE OPERATIONS|unreserved/);
   });
 });
+
+describe('the outpost kit', () => {
+  it('is offered at home once the worker bay is open and an outpost stands, and loads its materials', async () => {
+    const { createWorld } = await import('../src/sim/world');
+    const { completedBuilding } = await import('../src/sim/construction');
+    const { colonyWorld } = await import('../src/sim/localWorld');
+    const { shipPanelView } = await import('../src/ui/ship/shipView');
+    const { loadManifest, MANIFESTS } = await import('../src/sim/manifests');
+    const w = createWorld(4242);
+    expect(shipPanelView(w).outpostKit).toBeNull();
+    w.colony.buildings.push(completedBuilding(40, 'workshop', 0.3, w));
+    const ember = colonyWorld(w, 'ember');
+    ember.colony.buildings.push(completedBuilding(2001, 'solar', 0.2, ember));
+    Object.assign(w.colony.products, { alloy: 40, wire: 30, components: 20 });
+    const view = shipPanelView(w).outpostKit!;
+    expect(view.enabled).toBe(true);
+    loadManifest(w, 'outpostKit');
+    expect(w.ship.freight.alloy).toBe(MANIFESTS.outpostKit.stock.alloy);
+    expect(shipPanelView(w).outpostKit).toBeNull();
+  });
+});
