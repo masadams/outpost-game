@@ -3,6 +3,7 @@ import { featureVisible } from '../../preferences/features';
 import { flightRegion, REGION_LABELS, type FlightRegion } from '../../sim/flightRegion';
 import { OBJECTIVES, objectiveCue, objectiveProgress, type ObjectiveId } from '../../sim/objectives';
 import { cargoMass } from '../../sim/shipMass';
+import { RESOURCES } from '../../sim/resources';
 import type { WorldState } from '../../sim/world';
 import { stormView } from './stormView';
 import { coach, DEFAULT_COACH_KEYS, type CoachKeys } from './coach';
@@ -81,21 +82,48 @@ function detailFor(w: WorldState, id: ObjectiveId, keys: CoachKeys): string {
     return 'Another storm is forming.';
   }
   if (id === 'moonWork') return moonWorkLine(w);
-  if (id === 'return') {
-    return w.ship.cargo.iron + w.ship.cargo.copper + w.ship.cargo.ice + w.ship.cargo.silicon + w.ship.cargo.rareMetals > 0
-      ? 'Nacre ore in the hold. It is worth nothing until it is home.'
-      : 'The hold is empty.';
-  }
+  if (id === 'return') return returnLine(w);
   return '';
 }
 
+/** What to do next to get a rig working on Nacre, one step at a time. */
 function moonWorkLine(w: WorldState): string {
   if (!bodyKnown(w.exploration, 'moon')) return 'The Observatory is looking at the moon.';
-  const kitBuilt = w.outposts.moon.colony.buildings.some(b => b.kind === 'miningRig');
+  const moon = w.outposts.moon;
+  const onMoon = w.siteBody === 'moon';
+  const rig = moon.colony.buildings.find(b => b.kind === 'miningRig');
   const crystal = w.exploration.crystal === 'lying' ? ' A blue crystal glows about 240 m east of the pad.' : '';
-  if (kitBuilt) return `The rig is on Nacre.${crystal}`;
-  if (w.siteBody === 'moon') return `Ore seams are marked on the surface.${crystal}`;
-  return 'Nacre is on the Map. Its surface has ore seams.';
+  if (rig) {
+    if (rig.status === 'running') return `The rig is digging. Stay on Nacre, on foot, until ore comes up.${crystal}`;
+    if (rig.status === 'no deposit') return 'The rig is not on an ore seam. Take it down and build it on a marked seam.';
+    const powered = moon.colony.buildings.some(b => b.kind === 'solar');
+    if (!powered) return 'The rig has no power. Build the solar array from the kit beside it.';
+    return `The rig is waiting for power. It runs when the sun is up or the battery is charged.${crystal}`;
+  }
+  const aboard = w.ship.freight.alloy + w.ship.freight.wire + w.ship.freight.components > 0;
+  const kitDown = moon.colony.products.alloy + moon.colony.products.wire + moon.colony.products.components > 0;
+  if (onMoon && aboard) return 'Land on the Nacre pad and press E to unload the rig kit.';
+  if (onMoon && kitDown) return `Step out (F) and build the mining rig on a marked ore seam. B opens the blueprints.${crystal}`;
+  if (aboard) return 'Rig kit aboard. Fly to Nacre and land on its pad.';
+  if (onMoon) return `A rig kit is needed to mine here. Load one at home: Ship panel, Load rig kit.${crystal}`;
+  return 'To mine Nacre, load a rig kit on the home pad (Ship panel, Load rig kit), then fly there.';
+}
+
+/** What to do next to bring Nacre's ore home. */
+function returnLine(w: WorldState): string {
+  const root = w.rootWorld ?? w;
+  const cargo = RESOURCES.reduce((sum, r) => sum + w.ship.cargo[r], 0);
+  const waiting = RESOURCES.reduce((sum, r) => sum + root.outposts.moon.depot[r], 0);
+  const onMoon = w.siteBody === 'moon';
+  if (cargo > 0) {
+    return onMoon
+      ? `${cargo.toFixed(0)} kg in the hold. Fly home, land on the pad and press E.`
+      : `${cargo.toFixed(0)} kg of Nacre ore in the hold. Land on the home pad and press E.`;
+  }
+  if (waiting < 1) return 'The Nacre depot is empty. Let the rig dig, then come back for the ore.';
+  if (!onMoon) return `${waiting.toFixed(0)} kg of ore waits on Nacre. Land on its pad to load it.`;
+  if (w.playerMode !== 'ship') return `${waiting.toFixed(0)} kg in the depot here. Board the lander on the pad (F), then Ship panel, Load ore.`;
+  return `${waiting.toFixed(0)} kg in the depot here. On the pad, open the Ship panel and press Load ore, then fly home.`;
 }
 
 /** The objective card follows the tracked goal, or the next unfinished one. */
