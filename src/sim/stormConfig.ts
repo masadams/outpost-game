@@ -185,7 +185,10 @@ export interface StormState {
   report?: StormReport;
 }
 
-/** Running totals at one moment: rocks stopped and landed so far, and the state of the home base. */
+/**
+ * Running totals at one moment: rocks stopped and landed so far, and the state of the home base.
+ * `standing` is the number of wrecked buildings (the field keeps its saved name).
+ */
 export interface StormCounts { stopped: number; landed: number; standing: number; hurt: number }
 
 /** What one storm did. */

@@ -2,6 +2,8 @@ import { expect } from '@playwright/test';
 import { test } from './game';
 import { createWorld } from '../../src/sim/world';
 import { applyColonyAction } from '../../src/sim/colony';
+import { airCapacity } from '../../src/sim/habitats';
+import { HABITAT } from '../../src/sim/habitatConfig';
 import { WORLD } from '../../src/sim/config';
 import { encodeCheckpoint } from '../../src/persistence/checkpoint';
 
@@ -37,7 +39,8 @@ test('builds a solar-powered large dome over home, holds suit air, disables safe
 
 test('warns during charged backup and resumes suit consumption when life support loses power', async ({ page }) => {
   const w = createWorld(); w.playerMode = 'astronaut'; w.colony.buildOpen = true; w.colony.offset = 0; w.colony.selected = 'habitatLarge';
-  applyColonyAction(w, { type: 'place' }); const b = w.colony.buildings[0]; b.habitat = { oxygen: 1, energy: 4, powered: true, backup: true }; b.status = 'air low';
+  applyColonyAction(w, { type: 'place' }); const b = w.colony.buildings[0]; // Just over the dome's minimum, so there is air to breathe but none to spare for refilling the suit.
+  b.habitat = { oxygen: airCapacity(b) * HABITAT.minimumFraction + 0.002, energy: 4, powered: true, backup: true }; b.status = 'air low';
   w.colony.products.oxygen = 0; w.astronaut.oxygen = 20; w.colony.buildOpen = false;
   await page.addInitScript(text => localStorage.setItem('outpost.checkpoint.v1', text), encodeCheckpoint(w)); await page.goto('/');
   const hud = page.locator('#hud'), oxygen = page.locator('[data-instrument="oxygen"]');

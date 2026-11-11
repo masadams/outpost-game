@@ -16,6 +16,7 @@ import { destination, navigation, siteError } from '../../sim/exploration';
 import { inventoryMass, RESOURCES, RESOURCE_INFO } from '../../sim/resources';
 import type { Vec } from '../../sim/math';
 import { hasMemory, hasWorldMemory } from '../../sim/story';
+import { KEYSTONE_WORLDS, KEYSTONES, keystoneAngle, keystonesOpen, keystoneState } from '../../sim/keystones';
 import type { WorldState } from '../../sim/world';
 
 export interface PodMark {
@@ -200,6 +201,16 @@ function selectedView(w: WorldState): SelectedView {
     // Every other world holds something an earlier unit left: a reason to land there once.
     body += hasMemory(w, id) ? ' You have read what the earlier unit left here.' : ' Old machine traces show on the surface. Land to read them.';
     body = body.replace(' nothing is waiting there.', ' there is no base there.');
+  }
+  const part = KEYSTONE_WORLDS.find(k => k === id);
+  if (part && keystonesOpen(w)) {
+    const state = keystoneState(w, part);
+    const metres = Math.round((keystoneAngle(part, (w.rootWorld ?? w).seed) * BODIES[part].radius) / 10) * 10;
+    const where = `${Math.abs(metres)} m ${metres >= 0 ? 'east' : 'west'} of the pad`;
+    const name = KEYSTONES[part].label;
+    if (state === 'lying') body += ` Carrier part: ${name}, ${where}. Walk to it and carry it home.`;
+    else if (state === 'carried') body += ` Carrier part: ${name}, aboard your lander. Land at home to bring it in.`;
+    else body += ` Carrier part: ${name}, brought home.`;
   }
   return {
     id,

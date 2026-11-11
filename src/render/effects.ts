@@ -1,3 +1,4 @@
+import { flightRegion, type FlightRegion } from '../sim/flightRegion';
 import type Phaser from 'phaser';
 import type { WorldState } from '../sim/world';
 import type { Vec } from '../sim/math';
@@ -18,6 +19,8 @@ interface Puff { x: number; y: number; vx: number; vy: number; size: number; gro
 interface Signal { x: number; y: number; age: number; life: number; color: number; rings: number; reach: number }
 interface RockRecord { position: Vec; velocity: Vec; radius: number; stage: number; resource: Resource }
 
+/** The jolt of the engines lifting the lander off the ground. */
+const LIFT_OFF_KICK = { strength: 0.7, seconds: 0.3 } as const;
 const BURST_LIFE = 0.4;
 
 /** Camera shake (0 to 1) for a rock of this radius breaking this far from the ship. */
@@ -47,6 +50,11 @@ export class VisualEffects {
   private seen = new Set<string>();
   private ran = new Set<string>();
   private landings = 0;
+  /** The ship's state and the air around it last frame, to notice lift-off and crossing the edge of the air. */
+  private lastState: string | null = null;
+  private lastRegion: FlightRegion | null = null;
+  /** A full-screen tint asked for since the last call: crossing into space or back into the air. */
+  private flashes: Array<{ color: number; seconds: number }> = [];
   private dustClock = 0;
   /** What happened this frame, for the camera: a rock broke close by, the hull took a knock. Read and cleared each frame. */
   private kicks: Array<{ strength: number; seconds: number }> = [];
@@ -69,6 +77,15 @@ export class VisualEffects {
     this.noteBuildings(w, false, 0);
     this.landings = w.ship.landings;
     this.dustClock = 0;
+    this.lastState = w.ship.state;
+    this.lastRegion = flightRegion(w.ship.position, w.system);
+  }
+
+  /** Screen tints asked for since the last call. */
+  takeFlashes(): Array<{ color: number; seconds: number }> {
+    const out = this.flashes;
+    this.flashes = [];
+    return out;
   }
 
   private snapshotRocks(w: WorldState): Map<number, RockRecord> {
@@ -127,9 +144,33 @@ export class VisualEffects {
       }
     }
 
+    this.liftOffAndAir(w);
     this.rocks = this.snapshotRocks(w);
     this.cargo = this.snapshotCargo(w);
     this.hull = w.ship.hull;
+  }
+
+  /** A jolt as the lander leaves the ground, a shudder and a tint as it crosses the edge of the air either way. */
+  private liftOffAndAir(w: WorldState): void {
+    const flying = w.playerMode === 'ship' && w.ship.state === 'flying';
+    if (this.lastState === 'landed' && w.ship.state === 'flying') this.kicks.push(LIFT_OFF_KICK);
+    const region = flightRegion(w.ship.position, w.system);
+    if (flying && this.lastRegion !== null && region !== this.lastRegion) {
+      const leaving = region === 'space' && this.lastRegion === 'thin-air';
+      const entering = region === 'thin-air' && this.lastRegion === 'space';
+      if (leaving) {
+        // The last of the air lets go: a short shudder, then the dark comes up.
+        this.kicks.push({ strength: 0.5, seconds: 0.35 });
+        this.flashes.push({ color: 0x02060d, seconds: 0.6 });
+      } else if (entering) {
+        // Hitting the top of the air: a harder buffet and a warm glow, stronger the faster the lander is going.
+        const speed = Math.hypot(w.ship.velocity.x, w.ship.velocity.y);
+        this.kicks.push({ strength: Math.min(1.6, 0.6 + speed / 120), seconds: 0.45 });
+        this.flashes.push({ color: 0xffa45c, seconds: 0.5 });
+      }
+    }
+    this.lastState = w.ship.state;
+    this.lastRegion = region;
   }
 
   /** A rock breaking near the ship thuds in the camera: more for a big rock, nothing for one far away. */

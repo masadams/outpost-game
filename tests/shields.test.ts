@@ -1,6 +1,6 @@
 import { applyTowAction } from '../src/sim/towing';
 import { fireLaser } from '../src/sim/mining';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, afterAll, beforeAll } from 'vitest';
 import { createWorld, stepWorld } from '../src/sim/world';
 import { applyColonyAction, placementError, stepColony, type Building } from '../src/sim/colony';
 import { completedBuilding } from '../src/sim/construction';
@@ -35,6 +35,18 @@ function bullet(w: ReturnType<typeof createWorld>, owner: 'ship' | 'enemy' = 'en
   w.combat.projectiles.push({ id: w.nextId++, owner, kind: 'cannon', position: { x: 0, y: -WORLD.radius - altitude }, velocity: { x: 0, y: speed }, life: 5, targetId: null });
 }
 const projectiles = (w: ReturnType<typeof createWorld>, dt = .1) => stepCombatProjectiles(w, dt, { ship: { ...w.ship.position }, suit: { ...w.astronaut.position }, rocks: new Map(), meteors: new Map(), enemies: new Map() });
+
+// These cases are laid out around 60 m and 120 m domes (heights, distances, overlaps). They check how a dome
+// intercepts, not how wide it is, so they pin those sizes; the shipped sizes have their own test.
+const shipped = { small: SHIELDS.shieldSmall.radius, large: SHIELDS.shieldLarge.radius };
+beforeAll(() => {
+  (SHIELDS.shieldSmall as { radius: number }).radius = 60;
+  (SHIELDS.shieldLarge as { radius: number }).radius = 120;
+});
+afterAll(() => {
+  (SHIELDS.shieldSmall as { radius: number }).radius = shipped.small;
+  (SHIELDS.shieldLarge as { radius: number }).radius = shipped.large;
+});
 
 describe('supplied shield domes', () => {
   it('gates both emitters behind Combat engineering and charges actual build stocks', () => {

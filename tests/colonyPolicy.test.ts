@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld, type WorldState } from '../src/sim/world';
-import { applyColonyAction, placementError, stepColony, type Building } from '../src/sim/colony';
+import { applyColonyAction, energyCapacity, placementError, stepColony, type Building } from '../src/sim/colony';
 import { createPolicy, availableProduct, MAX_RESERVE, policyFor } from '../src/sim/colonyPolicy';
 import { STEP, WORLD } from '../src/sim/config';
 import { stationPosition } from '../src/sim/stations';
@@ -115,7 +115,7 @@ describe('reserve controls, persistence and simulation', () => {
     const w = createWorld(), stock = { ...w.colony.products }; w.ship.state = 'flying';
     applyColonyAction(w, { type: 'adjustPolicy', field: 'energyReserve', direction: 1 }); expect(w.colony.policy!.energyReserve).toBe(5);
     applyColonyAction(w, { type: 'adjustPolicy', field: 'deliveryReserve', direction: 1 }); expect(w.colony.policy!.deliveryReserve).toBe(25);
-    w.colony.policy!.energyReserve = MAX_RESERVE; applyColonyAction(w, { type: 'adjustPolicy', field: 'energyReserve', direction: 1 }); expect(w.colony.policy!.energyReserve).toBe(MAX_RESERVE);
+    w.colony.policy!.energyReserve = energyCapacity(w.colony); applyColonyAction(w, { type: 'adjustPolicy', field: 'energyReserve', direction: 1 }); expect(w.colony.policy!.energyReserve).toBe(energyCapacity(w.colony));
     applyColonyAction(w, { type: 'adjustPolicy', field: 'alloyReserve', direction: -1 }); expect(w.colony.policy!.alloyReserve).toBe(0);
     expect(w.colony.products).toEqual(stock); expect(w.colony.energy).toBe(0);
   });

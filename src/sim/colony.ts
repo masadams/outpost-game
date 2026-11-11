@@ -34,7 +34,7 @@ import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, type Product, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
 import { clamp, wrap } from './math';
-import { inventoryMass, type Resource } from './resources';
+import { inventoryMass, RESOURCES, type Resource } from './resources';
 import { STATIONS } from './stations';
 import { notify } from './messages';
 import type { WorldState } from './world';
@@ -73,7 +73,7 @@ export interface Colony {
   buildings: Building[]; products: ProductInventory; energy: number; generation: number; demand: number;
   buildOpen: boolean; selected: BuildType; offset: number; nextId: number;
 }
-export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
+export type ColonyAction = (AutopilotAction | { type: 'analyseSample' } | { type: 'studyCrystal' } | { type: 'studyCore' } | import('./seedShip').SeedShipAction | { type: 'sendPod'; from: BodyId; to: BodyId } | { type: 'launchBeacon' } | { type: 'supply'; op: 'toggle' } | { type: 'supplyReserve'; body: BodyId; resource: Resource; delta: number } | { type: 'launchExpedition'; kit: { fuel: boolean; shielding: boolean; stores: boolean }; target?: number | null } | { type: 'expeditionChoice'; choice: string } | { type: 'salvageWreck' } | BuildingUpgradeAction | CrewAction | { type: 'loadManifest'; manifest: ManifestId } | { type: 'loadOre'; resource: keyof WorldState['depot'] } | { type: 'loadAllOre' } | { type: 'freight'; product: Product; delta: number } | ProgressionAction | ExplorationAction | CommandAction | TowAction | PolicyAction | SchedulingAction | CombatAction | DefenceAction | { type: 'buildMode'; open:boolean } | { type: 'toggleBuild' } | { type: 'select'; kind: BuildType } |
   { type: 'shift'; delta: number } | { type: 'place' } | { type: 'demolish' } | { type: 'cycleRecipe' } | { type: 'toggleMachine' }) & { body?: BodyId };
 export function createColony(): Colony {
   // A finite fabrication kit starts construction without granting raw ore or recurring income.
@@ -97,7 +97,9 @@ export function blueprintLock(world: WorldState, kind: BuildType): string | null
 
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
   if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
-  if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= 48) return 'Colony limit: 48 facilities';
+  if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= MAX_BUILDINGS) {
+    return `This base is at its limit of ${MAX_BUILDINGS} buildings.`;
+  }
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
   if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
   const lock = blueprintLock(world, kind);
@@ -134,7 +136,9 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     if (!POLICY_FIELDS.includes(action.field) || (action.direction !== -1 && action.direction !== 1)) return;
     const policy = world.colony.policy ??= createPolicy();
     const step = Number.isFinite(action.step) && action.step! > 0 && action.step! <= 200 ? action.step! : POLICY_INFO[action.field].step;
-    policy[action.field] = clamp(policy[action.field] + action.direction * step, 0, MAX_RESERVE);
+    // Power kept back can be anything up to what the batteries hold; other reserves have a generous ceiling.
+    const ceiling = action.field === 'energyReserve' ? Math.max(energyCapacity(world.colony), POLICY_INFO.energyReserve.step) : MAX_RESERVE;
+    policy[action.field] = clamp(policy[action.field] + action.direction * step, 0, ceiling);
     return;
   }
   if(action.type==='buildMode'){if(typeof action.open==='boolean')world.colony.buildOpen=action.open;return;}
@@ -171,26 +175,60 @@ export function salvageOf(building: Building): Partial<ProductInventory> {
 }
 
 /** Why a building cannot be taken down right now, or null. */
-export function demolishError(world: WorldState, building: Building): string | null {
+/** Nothing stops a building coming down. Kept so callers have one place to ask; see `demolishLoss` for the warning. */
+/**
+ * The most buildings one base can hold. A stop-gap until a headquarters building sets the limit by its level
+ * (see docs/tasks/BASE_AND_POWER.md).
+ */
+export const MAX_BUILDINGS = 96;
+
+export function demolishError(_world: WorldState, _building: Building): string | null {
+  return null;
+}
+
+/** What would not fit in the stores that are left if this building came down: materials by name, and ore in kg. */
+export function demolishOverflow(world: WorldState, building: Building): { products: Partial<Record<Product, number>>; ore: number } {
   const colony = world.colony;
   const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
   const salvage = salvageOf(building);
-  const tooMuchOre = inventoryMass(world.depot) > oreCapacity(remaining);
-  const tooMuchStock = PRODUCTS.some(p => colony.products[p] + (salvage[p] ?? 0) > productCapacity(remaining));
-  return tooMuchOre || tooMuchStock ? 'Not enough storage left to take it down.' : null;
+  const cap = productCapacity(remaining);
+  const products: Partial<Record<Product, number>> = {};
+  for (const p of PRODUCTS) {
+    // Stock already above the stores (from an earlier loss) is not this building's doing.
+    const before = Math.min(colony.products[p], Math.max(cap, productCapacity(colony)));
+    const over = before + (salvage[p] ?? 0) - Math.max(cap, 0);
+    if (over > 1e-6 && productCapacity(colony) > cap - 1e-9) products[p] = over;
+  }
+  const ore = Math.max(0, inventoryMass(world.depot) - oreCapacity(remaining));
+  return { products, ore: oreCapacity(colony) > oreCapacity(remaining) ? ore : 0 };
 }
 
-/** Takes a building down and returns the salvage. Callers check `demolishError` first. */
+/** The warning to show before demolishing, in one line, or null when nothing would be lost. */
+export function demolishLoss(world: WorldState, building: Building): string | null {
+  const { products, ore } = demolishOverflow(world, building);
+  const parts = PRODUCTS.filter(p => (products[p] ?? 0) >= 0.5).map(p => `${Math.round(products[p]!)} ${p}`);
+  if (ore >= 0.5) parts.push(`${Math.round(ore)} kg of ore`);
+  return parts.length ? `Not enough storage without it: ${parts.join(', ')} will be lost.` : null;
+}
+
+/** Takes a building down and returns the salvage. Whatever no longer fits in the stores is lost. */
 export function demolishBuilding(world: WorldState, building: Building): void {
   const colony = world.colony;
   const salvage = salvageOf(building);
+  const loss = demolishLoss(world, building);
+  const { products, ore } = demolishOverflow(world, building);
   ventHabitat(world, building);
   drainShield(world, building);
   colony.buildings = colony.buildings.filter(b => b.id !== building.id);
   if (world.defence.controlled === building.id) world.defence.controlled = null;
-  for (const p of PRODUCTS) colony.products[p] += salvage[p] ?? 0;
+  for (const p of PRODUCTS) colony.products[p] = Math.max(0, colony.products[p] + (salvage[p] ?? 0) - (products[p] ?? 0));
+  if (ore > 0) {
+    // Ore is lost evenly across what is in the depot.
+    const keep = Math.max(0, 1 - ore / inventoryMass(world.depot));
+    for (const r of RESOURCES) world.depot[r] *= keep;
+  }
   colony.energy = Math.min(colony.energy, energyCapacity(colony));
-  notify(world, 'Building demolished. You got part of the materials back.');
+  notify(world, loss ? `Building demolished. ${loss.replace('will be lost', 'lost')}` : 'Building demolished. You got part of the materials back.', loss ? 6 : 3);
 }
 export function applyFacilityAction(world: WorldState, building: Building, action: ColonyAction): void {
   if (!operational(building)) { notify(world, 'FACILITY WRECKED · U TO REPAIR');

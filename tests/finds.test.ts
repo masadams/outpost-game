@@ -45,7 +45,8 @@ describe('research from finds', () => {
 
   it('the new-player set may start only find research', () => {
     expect(actionAllowed({ type: 'researchStart', tech: 'materials' }, 'focus')).toBe(true);
-    expect(actionAllowed({ type: 'researchStart', tech: 'thermal' }, 'focus')).toBe(false);
+    // Any research the tree offers can be started; the simulation checks what it needs.
+    expect(actionAllowed({ type: 'researchStart', tech: 'thermal' }, 'focus')).toBe(true);
     expect(actionAllowed({ type: 'equipment', upgrade: 'armour', operation: 'install' }, 'focus')).toBe(true);
     expect(actionAllowed({ type: 'equipment', upgrade: 'coil', operation: 'install' }, 'focus')).toBe(false);
   });

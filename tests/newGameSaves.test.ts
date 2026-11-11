@@ -15,3 +15,35 @@ describe('a new game', () => {
     });
   }
 });
+
+describe('saving a base whose stores have shrunk', () => {
+  it('still saves when materials, ore and power sit above what the stores now hold', async () => {
+    const { createWorld: make } = await import('../src/sim/world');
+    const { encodeCheckpoint: encode, decodeCheckpoint: decode, saveProblem } = await import('../src/persistence/checkpoint');
+    const w = make(4242);
+    // As after a storage building and a battery were demolished or cut off from the grid.
+    w.colony.products.alloy = 260;
+    w.depot.iron = 900;
+    w.colony.energy = 5000;
+    const loaded = decode(encode(w));
+    expect(loaded.colony.products.alloy).toBe(260);
+    expect(loaded.depot.iron).toBe(900);
+    // Power is settled to what the store holds; it would be on the next step anyway.
+    expect(loaded.colony.energy).toBeLessThanOrEqual(5000);
+    expect(saveProblem(w)).toBeDefined();
+  });
+
+  it('names the part of the game that stops a save', async () => {
+    const { createWorld: make } = await import('../src/sim/world');
+    const { encodeCheckpoint: encode, SaveRefused } = await import('../src/persistence/checkpoint');
+    const w = make(4242);
+    w.colony.products.alloy = Number.NaN;
+    let area = '';
+    try {
+      encode(w);
+    } catch (error) {
+      area = error instanceof SaveRefused ? error.area : 'not refused';
+    }
+    expect(area).toBe('stored materials');
+  });
+});

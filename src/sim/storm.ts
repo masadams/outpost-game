@@ -269,12 +269,14 @@ function startNextStorm(world: WorldState): void {
 
 /** Rocks stopped and landed so far, and how the home base stands. */
 export function stormCounts(world: WorldState): StormCounts {
-  const working = world.colony.buildings.filter(b => b.status !== 'wrecked' && (b.health ?? 100) > 0);
+  const buildings = world.colony.buildings;
+  const wrecked = buildings.filter(b => b.status === 'wrecked' || (b.health ?? 100) <= 0);
   return {
     stopped: world.defence.intercepted,
     landed: world.defence.impacts,
-    standing: working.length,
-    hurt: working.filter(b => (b.health ?? 100) < 100).length,
+    // Counted as wrecks, not as buildings standing, so one you demolish yourself is never called lost.
+    standing: wrecked.length,
+    hurt: buildings.filter(b => (b.health ?? 100) < 100 && (b.health ?? 100) > 0 && b.status !== 'wrecked').length,
   };
 }
 
@@ -282,13 +284,13 @@ export function stormCounts(world: WorldState): StormCounts {
 function stormReport(world: WorldState): StormReport {
   const now = stormCounts(world);
   const then = world.storm.start ?? now;
-  const lost = Math.max(0, then.standing - now.standing);
   return {
     wave: world.storm.wave,
     stopped: Math.max(0, now.stopped - then.stopped),
     landed: Math.max(0, now.landed - then.landed),
     damaged: Math.max(0, now.hurt - then.hurt),
-    lost,
+    // `standing` holds the number of wrecks: more of them now means buildings were lost to the storm.
+    lost: Math.max(0, now.standing - then.standing),
   };
 }
 

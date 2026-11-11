@@ -58,7 +58,7 @@ const RULES = [
   [/^src\/sim\/(storm|meteor|rockFall|defence|intercept|observatory)/, ['storm', 'defence']],
   [/^src\/sim\/(signal|expedition|farWorlds)/, ['signal']],
   [/^src\/sim\/(pods|supply|freight|manifests)/, ['pods', 'supply', 'overhaul']],
-  [/^src\/sim\/(story|unlocks|objectives|blueprintNotice|storyGates|finds)/, ['story', 'focusMode', 'milestones', 'progression']],
+  [/^src\/sim\/(story|keystones|seedShip|unlocks|objectives|blueprintNotice|storyGates|finds)/, ['story', 'focusMode', 'milestones', 'progression']],
   [/^src\/sim\/(boot|power|grid|generators|scheduling|colonyPolicy|construction|facilityStats|tiers)/, ['base', 'scheduling', 'priorities', 'facilityMoon', 'directControls']],
   [/^src\/sim\/(habitat|airMachines)/, ['habitats']],
   [/^src\/sim\/shield/, ['shields']],

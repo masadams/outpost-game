@@ -1,5 +1,5 @@
 import { BODY_IDS } from '../sim/celestial';
-import { FINDS } from '../sim/finds';
+import { UPGRADES, type PartSlot } from '../sim/progressionConfig';
 import type { BuildType } from '../sim/colonyConfig';
 import type { ColonyAction } from '../sim/colony';
 
@@ -34,7 +34,7 @@ export type Feature =
   | 'catalogue';
 
 /** Buildings a new player can place. The first five match number keys 1–5; the rest are mouse-only. */
-export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'droneBay', 'condenser', 'antenna', 'workshop', 'geothermal', 'windTurbine', 'massDriver', 'researchLab', 'observatory', 'laser', 'missile', 'relay', 'shieldSmall', 'shieldLarge', 'habitatSmall', 'habitatLarge'];
+export const FOCUS_BLUEPRINTS: readonly BuildType[] = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'droneBay', 'condenser', 'antenna', 'workshop', 'geothermal', 'windTurbine', 'massDriver', 'shipyard', 'researchLab', 'observatory', 'laser', 'missile', 'relay', 'shieldSmall', 'shieldLarge', 'habitatSmall', 'habitatLarge'];
 
 export const FEATURE_STORAGE_KEY = 'outpost.features';
 
@@ -94,6 +94,16 @@ const ACTION_FEATURES: Partial<Record<string, Feature>> = {
   startWave: 'defence',
 };
 
+/** Ship part slots that belong to systems a new player does not have yet: the cannon and its cooling, flight computers. */
+const HIDDEN_SLOTS: Partial<Record<PartSlot, Feature>> = { weapon: 'combat', cooling: 'combat', avionics: 'autopilot' };
+
+/** Whether the parts for a slot are shown and can be fitted. */
+export function partSlotVisible(slot: PartSlot | undefined, current: FeatureMode = featureMode()): boolean {
+  if (!slot) return false;
+  const feature = HIDDEN_SLOTS[slot];
+  return !feature || featureVisible(feature, current);
+}
+
 /** Whether an action from the keyboard or interface may reach the simulation. */
 export function actionAllowed(action: ColonyAction, current: FeatureMode = featureMode(), known: readonly string[] = []): boolean {
   if (current === 'all') return true;
@@ -105,8 +115,10 @@ export function actionAllowed(action: ColonyAction, current: FeatureMode = featu
   // Carrying ore home from another world is part of the loop, not a hidden system.
   if (action.type === 'loadAllOre') return true;
   if (action.type === 'upgradeBuilding') return action.level === 2;
-  if (action.type === 'researchStart') return FINDS.some(f => f.tech === action.tech);
-  if (action.type === 'equipment') return FINDS.some(f => f.upgrade === action.upgrade);
+  // Any research the tree offers can be started, and any part it lists can be fitted: the simulation checks
+  // prerequisites, story beats and cost. Offering something here that the gate then ignores is a dead button.
+  if (action.type === 'researchStart') return true;
+  if (action.type === 'equipment') return partSlotVisible(UPGRADES[action.upgrade]?.slot, current);
   const feature = ACTION_FEATURES[action.type];
   if (feature) return featureVisible(feature, current);
   if (action.type === 'select' || action.type === 'queueBuild') return blueprintVisible(action.kind, current);

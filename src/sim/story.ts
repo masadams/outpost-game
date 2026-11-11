@@ -167,11 +167,44 @@ export const MEMORIES: readonly Memory[] = [
       return signal?.phase === 'heard' && w.system.time >= signal.hearAt + SECOND_SIGNAL_SECONDS && built(w, 'antenna');
     },
   },
+  // An expedition that goes out after the second signal and comes home finds the makers' relay.
+  {
+    id: 'makersRelay', title: 'The relay',
+    text: 'The makers\' relay still turns in the far system. Its log holds a heading to the living colony, and the carrier\'s last hour. No cause.',
+    when: w => {
+      const trip = w.exploration.expedition;
+      const signal = w.exploration.signal;
+      if (!hasMemory(w, 'second') || !signal || !trip || trip.phase !== 'back' || !trip.report) return false;
+      // Only a trip that left after the second signal was heard knows to look for it.
+      return trip.report.result !== 'lost' && trip.launchedAt >= signal.hearAt + SECOND_SIGNAL_SECONDS;
+    },
+  },
   // The first plain sign of what the storms are.
   {
     id: 'oneShip', title: 'One ship',
     text: 'The derelict\'s hull and the storm slag are the same alloy, from the same pour. They were one ship. It broke.',
     when: w => done(w, 'analysis') && surveyed(w, 'copper'),
+  },
+  // The carrier's parts, found on the other worlds.
+  {
+    id: 'longPatience', title: 'Long Patience',
+    text: 'The carrier had a name, stamped into every part of it: LONG PATIENCE. You came here aboard it. So did the storms.',
+    when: w => Object.keys(w.exploration.keystones ?? {}).length >= 1,
+  },
+  {
+    id: 'allParts', title: 'Everything that is left',
+    text: 'Seven parts, from seven worlds, in one yard. It is everything that is left of the carrier. It is enough for one ship.',
+    when: w => Object.values(w.exploration.keystones ?? {}).filter(v => v === 'home').length >= 7,
+  },
+  {
+    id: 'shipDone', title: 'One ship',
+    text: 'It stands in the yard, whole. The carrier brought seven of you here to build a world. You built a ship out of the carrier.',
+    when: w => (w.exploration.seedShip?.stages.length ?? 0) >= 8,
+  },
+  {
+    id: 'decided', title: 'Your own order',
+    text: 'For 412 years the only order was theirs. This one is yours. The archive files it first, above the other.',
+    when: w => !!w.exploration.seedShip?.ending,
   },
   {
     id: 'release', title: 'Not an order',

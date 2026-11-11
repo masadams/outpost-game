@@ -51,7 +51,7 @@ describe('focus feature set', () => {
       { type: 'toggleTow' },
       { type: 'autopilot', operation: 'cancel' },
       { type: 'upgradeBuilding', id: 1, level: 3 },
-      { type: 'researchStart', tech: 'thermal' },
+      { type: 'equipment', upgrade: 'coil', operation: 'install' },
       { type: 'toggleSchedule' },
       { type: 'select', kind: 'flak' },
       { type: 'queueBuild', kind: 'flak', angle: 0 },

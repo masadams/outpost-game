@@ -2,10 +2,10 @@ import { ResearchView } from './ResearchTree';
 import { useState } from 'preact/hooks';
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
-import type { BaseView, BuildingView, Chip, ExpeditionView } from './baseView';
+import type { BaseView, BuildingView, Chip, ExpeditionView, SeedShipView } from './baseView';
 import { Demolish } from './Demolish';
 
-export type BaseSection = 'overview' | 'research' | 'buildings' | 'logistics' | 'expedition' | 'ship' | 'legacy';
+export type BaseSection = 'overview' | 'research' | 'buildings' | 'logistics' | 'expedition' | 'seedship' | 'ship' | 'legacy';
 
 export interface BaseHandlers {
   section: (section: BaseSection) => void;
@@ -18,6 +18,8 @@ export interface BaseHandlers {
   analyse: () => void;
   study: () => void;
   studyCore: () => void;
+  seedStage: (stage: string) => void;
+  seedLaunch: (ending: string) => void;
   research: (tech: string) => void;
   fit: (upgrade: string) => void;
   send: (to: string) => void;
@@ -236,6 +238,18 @@ function Overview({ view, paused, on, go }: SectionProps & { go: Go }) {
           <div class="overview-line">
             <span>{view.signal.line}</span>
             <button type="button" class="overview-go" data-go="expedition" onClick={click(() => go('expedition'))}>Expedition</button>
+          </div>
+        )}
+        {view.carrier && (
+          <div class="overview-line overview-carrier" data-carrier={view.carrier.home}>
+            <span>
+              Carrier parts: {view.carrier.home} of {view.carrier.total} home.
+              <small class="carrier-parts">
+                {view.carrier.parts.map(p => (
+                  <em key={p.world} data-state={p.state}>{p.state === 'home' ? '✓' : '◇'} {p.label} · {p.line}</em>
+                ))}
+              </small>
+            </span>
           </div>
         )}
         {!view.tree && !view.research && !view.pods && !view.supply && !view.signal && view.elsewhere.length === 0 && (
@@ -531,6 +545,7 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
         />
       </div>
       {b.demolishBlocked && <p class="base-why">{b.demolishBlocked}</p>}
+      {b.demolishWarning && <p class="base-why" data-demolish-warning>{b.demolishWarning}</p>}
       {paused && <p class="base-note">Resume the game to change buildings.</p>}
     </aside>
   );
@@ -698,12 +713,70 @@ function Ship({ view }: { view: BaseView }) {
 }
 
 /** The sections that make sense now: each one only appears once there is something in it. */
+/** The last project: stages to build at the Shipyard, then the choice of where the ship goes. */
+function SeedShip({ ship, paused, on }: { ship: SeedShipView; paused: boolean; on: BaseHandlers }) {
+  const [asking, setAsking] = useState<string | null>(null);
+  const launch = ship.launch;
+  return (
+    <div class="base-main seed-ship" data-base-section="seedship" data-stages={ship.done}>
+      <h3>Seed ship · {ship.done} of {ship.total}</h3>
+      {!ship.yard && <p class="base-why">Build a Shipyard at home to begin. It is in the Build menu under Industry.</p>}
+      {paused && <p class="base-note">Resume the game to work on the ship.</p>}
+      <div class="seed-stages">
+        {ship.stages.map(stage => (
+          <article class="seed-stage" key={stage.id} data-stage={stage.id} data-done={String(stage.done)}>
+            <header>
+              <strong>{stage.done ? '✓ ' : ''}{stage.label}</strong>
+              <small>{stage.line}</small>
+            </header>
+            {!stage.done && <small class="seed-cost">Costs {stage.cost}</small>}
+            {!stage.done && (
+              <button type="button" disabled={paused || stage.blocked !== null} onClick={click(() => on.seedStage(stage.id))}>
+                Build
+              </button>
+            )}
+            {!stage.done && stage.blocked && <small class="base-why">{stage.blocked}</small>}
+          </article>
+        ))}
+      </div>
+      {launch && launch.chosen === null && (
+        <section class="seed-launch" aria-label="Where the ship goes">
+          <h3>The ship is ready</h3>
+          <p class="base-note">Where it goes is yours to decide. It cannot be undone. You keep playing here whatever you choose.</p>
+          {launch.choices.map(choice => (
+            <div class="seed-choice" key={choice.id} data-ending={choice.id}>
+              <span>
+                <strong>{choice.label}</strong>
+                <small>{choice.line}</small>
+              </span>
+              {asking === choice.id ? (
+                <button type="button" class="seed-confirm" disabled={paused} onClick={click(() => on.seedLaunch(choice.id))}>
+                  Yes, {choice.label.toLowerCase()}
+                </button>
+              ) : (
+                <button type="button" disabled={paused} onClick={click(() => setAsking(choice.id))}>Choose</button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+      {launch && launch.chosen !== null && (
+        <section class="seed-epilogue" data-ending={launch.chosen} aria-label="What happened">
+          <h3>{launch.choices.find(c => c.id === launch.chosen)?.label}</h3>
+          {launch.epilogue.map(line => <p key={line}>{line}</p>)}
+        </section>
+      )}
+    </div>
+  );
+}
+
 function sectionsFor(view: BaseView, legacy: boolean): Array<[BaseSection, string]> {
   const list: Array<[BaseSection, string]> = [['overview', 'Overview']];
   if (view.tree || view.research || view.core || view.crystal || view.storm) list.push(['research', 'Research']);
   list.push(['buildings', 'Buildings']);
   if (view.pods || view.supply || view.elsewhere.length > 0) list.push(['logistics', 'Logistics']);
   if (view.signal) list.push(['expedition', 'Expedition']);
+  if (view.seedShip) list.push(['seedship', 'Seed ship']);
   list.push(['ship', 'Lander']);
   if (legacy) list.push(['legacy', 'Legacy console']);
   return list;
@@ -728,6 +801,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {section === 'buildings' && <Buildings state={state} on={on} />}
         {section === 'logistics' && <Logistics view={state.view} paused={state.paused} on={on} />}
         {section === 'expedition' && <ExpeditionSection view={state.view} paused={state.paused} on={on} />}
+        {section === 'seedship' && state.view.seedShip && <SeedShip ship={state.view.seedShip} paused={state.paused} on={on} />}
         {section === 'ship' && <Ship view={state.view} />}
         {/* The old console is mounted here by the HUD; Preact never touches its contents. */}
         <div class="base-legacy" hidden={section !== 'legacy'} ref={legacyHost} />

@@ -1,3 +1,4 @@
+import type { EndingId, SeedStage } from '../sim/seedShip';
 import { BuildingLabels } from './BuildingLabels';
 import { autopilotPanel } from './autopilot';
 import { UPGRADE_IDS, type UpgradeId } from '../sim/progressionConfig';
@@ -147,8 +148,14 @@ export class Hud {
         this.onAction({ type: 'buildMode', open: true });
         return;
       }
-      const view = ({ cargo: 'cargo', map: 'navigation', defence: 'defence' } as const)[link];
-      this.dock.open(view);
+      // A new player has no separate Defence panel: turrets are buildings, managed in Base.
+      if (link === 'defence' && !featureVisible('defence')) {
+        this.baseSection = 'buildings';
+        this.dock.open('command');
+      } else {
+        const view = ({ cargo: 'cargo', map: 'navigation', defence: 'defence' } as const)[link];
+        this.dock.open(view);
+      }
     }
     if (keyboard) this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();
   });
@@ -301,6 +308,8 @@ export class Hud {
       analyse: () => onColonyAction({ type: 'analyseSample' }),
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
+      seedStage: (stage) => onColonyAction({ type: 'seedStage', stage: stage as SeedStage }),
+      seedLaunch: (ending) => onColonyAction({ type: 'seedLaunch', ending: ending as EndingId }),
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
       expedition: (kit, target) => onColonyAction({ type: 'launchExpedition', kit, target }),
       choose: (choice) => onColonyAction({ type: 'expeditionChoice', choice }),

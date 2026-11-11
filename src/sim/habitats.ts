@@ -31,8 +31,18 @@ export function consumeHabitatAir(w: WorldState, dt: number): number {
   const available = Math.max(0, b.habitat.oxygen - airCapacity(b) * HABITAT.minimumFraction);
   const used = Math.min(available, HABITAT.crewRate * dt);
   b.habitat.oxygen = Math.max(0, b.habitat.oxygen - used); w.colony.oxygenUsed += used;
+  // Breathing dome air also tops the suit back up, quickly, paid from the same air.
+  const suitRoom = Math.max(0, SUIT.oxygen - w.astronaut.oxygen);
+  const refill = Math.min(suitRoom, SUIT_REFILL_RATE * dt, (available - used) / HABITAT.crewRate);
+  if (refill > 0) {
+    w.astronaut.oxygen += refill;
+    b.habitat.oxygen = Math.max(0, b.habitat.oxygen - refill * HABITAT.crewRate);
+    w.colony.oxygenUsed += refill * HABITAT.crewRate;
+  }
   return used / HABITAT.crewRate;
 }
+/** Seconds of suit air restored per second spent inside a breathable dome. */
+export const SUIT_REFILL_RATE = 20;
 export function ventHabitat(w: WorldState, b: Building): void {
   if (!b.habitat) return;
   w.colony.oxygenUsed += b.habitat.oxygen;

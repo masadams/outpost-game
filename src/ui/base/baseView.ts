@@ -1,3 +1,9 @@
+import {
+  ENDING_IDS, ENDINGS, SEED_SHIP, SEED_STAGES, costLine, hasShipyard, seedEnding, seedShipComplete, seedStageBlock,
+  seedStagesDone, type EndingId, type SeedStage,
+} from '../../sim/seedShip';
+import { hasMemory } from '../../sim/story';
+import { KEYSTONE_WORLDS, KEYSTONES, keystoneCount, keystonesOpen, keystoneState } from '../../sim/keystones';
 import { WORLD } from '../../sim/config';
 import { turretRange } from '../../sim/weapons';
 import { RELAY_CAPACITY, islandGroups } from '../../sim/grid';
@@ -13,7 +19,7 @@ import { researchTreeView, type ResearchTreeView } from './researchTreeView';
 import { coreBlock, crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
-import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
+import { demolishError, demolishLoss, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
 import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
@@ -52,6 +58,10 @@ export interface BaseView {
   tree: ResearchTreeView | null;
   /** The other worlds with a base, so a mine far away can be checked without going there. */
   elsewhere: OutpostView[];
+  /** Carrier parts: how many are home and where the rest are. Null until the unit knows to look. */
+  carrier: CarrierView | null;
+  /** The seed ship project. Null until a Shipyard can be built. */
+  seedShip: SeedShipView | null;
   /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
   pods: PodsView | null;
   /** The deep-space beacon: how to send it, how long is left, what came back. Null until it is researched. */
@@ -182,6 +192,8 @@ export interface BuildingView {
   salvage: string;
   /** Why it cannot be demolished right now, or null. */
   demolishBlocked: string | null;
+  /** What would be lost for lack of storage if it came down; a warning, not a block. */
+  demolishWarning: string | null;
 }
 
 export interface AttentionView {
@@ -325,6 +337,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     upgrade: w && health > 0 ? upgradeView(w, b) : null,
     salvage: salvageText(b),
     demolishBlocked: w ? demolishError(w, b) : null,
+    demolishWarning: w ? demolishLoss(w, b) : null,
   };
 }
 
@@ -333,7 +346,8 @@ function powerSummary(w: WorldState): string {
   const panels = c.buildings.some(b => b.kind === 'solar');
   const dark = !!w.system.sun && panels && c.generation <= 1e-6;
   if (dark) {
-    const lasts = c.demand > 0 ? ` Stored power lasts about ${Math.floor(c.energy / c.demand)} s at this load.` : '';
+    // Minutes and seconds, like the day clock beside it.
+    const lasts = c.demand > 0 ? ` Stored power lasts about ${duration(c.energy / c.demand)} at this load.` : '';
     return `Night: solar panels are off.${lasts}`;
   }
   if (c.generation <= 0 && c.demand <= 0) return 'No power yet. Build a solar array.';
@@ -558,6 +572,8 @@ export function baseView(w: WorldState): BaseView {
     research: researchView(w),
     tree: researchView(w) !== null || featureVisible('catalogue') ? researchTreeView(w) : null,
     elsewhere: elsewhereView(w),
+    carrier: carrierView(w),
+    seedShip: seedShipView(w),
     pods: podsView(w),
     signal: signalView(w),
     supply: supplyView(w),
@@ -599,4 +615,62 @@ function stormLab(w: WorldState): StormLabView | null {
         ? 'Pieces of the storm are lying on the ground. Walk over one to pick it up.'
         : 'Nothing left to collect.';
   return { onGround: s.samples.length, held: s.held, analysed: s.analysed, line, blocked };
+}
+
+export interface CarrierView {
+  home: number;
+  total: number;
+  /** One short line per part. */
+  parts: Array<{ world: string; label: string; state: 'lying' | 'carried' | 'home'; line: string }>;
+}
+
+/** What is known of the carrier's parts, once the unit knows there was one ship. */
+export function carrierView(w: WorldState): CarrierView | null {
+  if (!keystonesOpen(w)) return null;
+  const { home, total } = keystoneCount(w);
+  const parts = KEYSTONE_WORLDS.map(id => {
+    const state = keystoneState(w, id);
+    const world = BODIES[id].label;
+    const line = state === 'home' ? 'Home' : state === 'carried' ? 'Aboard your lander' : `On ${world}`;
+    return { world, label: KEYSTONES[id].label, state, line };
+  });
+  return { home, total, parts };
+}
+
+export interface SeedShipView {
+  /** Whether home has a Shipyard yet. */
+  yard: boolean;
+  done: number;
+  total: number;
+  stages: Array<{ id: SeedStage; label: string; line: string; cost: string; done: boolean; blocked: string | null }>;
+  /** Null until the ship is finished; then the choices, or what was chosen. */
+  launch: { chosen: EndingId | null; choices: Array<{ id: EndingId; label: string; line: string }>; epilogue: string[] } | null;
+}
+
+/** The seed ship, once the Shipyard blueprint has come back or a yard already stands. */
+export function seedShipView(w: WorldState): SeedShipView | null {
+  const root = w.rootWorld ?? w;
+  if (!hasShipyard(root) && !hasMemory(root, 'makersRelay')) return null;
+  const done = seedStagesDone(root);
+  const chosen = seedEnding(root);
+  return {
+    yard: hasShipyard(root),
+    done: done.length,
+    total: SEED_STAGES.length,
+    stages: SEED_STAGES.map(id => ({
+      id,
+      label: SEED_SHIP[id].label,
+      line: SEED_SHIP[id].line,
+      cost: `${costLine(SEED_SHIP[id].cost)}, ${SEED_SHIP[id].energy} kJ`,
+      done: done.includes(id),
+      blocked: done.includes(id) ? null : seedStageBlock(root, id),
+    })),
+    launch: seedShipComplete(root)
+      ? {
+        chosen,
+        choices: ENDING_IDS.map(id => ({ id, label: ENDINGS[id].label, line: ENDINGS[id].line })),
+        epilogue: chosen ? ENDINGS[chosen].epilogue : [],
+      }
+      : null,
+  };
 }

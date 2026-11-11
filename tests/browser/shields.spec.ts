@@ -33,7 +33,7 @@ test('intercepts a real fast meteor, displays breach recovery and fits supported
   const w = createWorld(); w.asteroids = []; w.exploration.sites = []; w.colony.research.completed = [...TECH_IDS];
   const b = completedBuilding(1, 'shieldSmall', 0, w); Object.assign(b.shield!, { charge: 15, ready: true, powered: true, delay: 2 });
   w.colony.buildings = [b, completedBuilding(2, 'solar', .1, w)]; w.colony.nextId = 3;
-  w.defence.meteors.push({ id: w.nextId++, position: { x: 0, y: -WORLD.radius - 100 }, velocity: { x: 0, y: 500 }, mass: 1200, radius: 2, stage: 1, resource: 'iron', health: .55, maxHealth: .55, impactBudget: 15 });
+  w.defence.meteors.push({ id: w.nextId++, position: { x: 0, y: -WORLD.radius - 200 }, velocity: { x: 0, y: 500 }, mass: 1200, radius: 2, stage: 1, resource: 'iron', health: .55, maxHealth: .55, impactBudget: 15 });
   await page.addInitScript(text => localStorage.setItem('outpost.checkpoint.v1', text), encodeCheckpoint(w)); await page.emulateMedia({ reducedMotion: 'reduce' }); await page.goto('/');
   await page.getByRole('button', { name:'Base', exact: true }).click(); const console = page.locator('#command-console'); await page.getByRole('button',{name:'Shields',exact:true}).click();
   const accents = page.getByRole('checkbox', { name: 'Shield hit colour accents' }); await expect(accents).not.toBeChecked();
