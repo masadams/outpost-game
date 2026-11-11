@@ -174,7 +174,7 @@ function kit(w: WorldState): KitView | null {
   const reason = plan.error === null ? 'Ready to load.'
     : short.length ? `Needs ${short.join(', ')}`
       : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
-  return { text: 'A rig, a solar array, a battery and a power relay for another world: 18 alloy, 10 wire, 5 components. Nights there are long; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
+  return { text: 'A rig, a solar array, a battery, a power relay and a refinery for another world: 24 alloy, 12 wire, 6 components. Refine ore there and carry home the lighter materials. Nights there are long; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
 }
 
 /** Carrying a remote depot's ore home. Shown on another world whenever its depot has ore, in the lander or on foot. */
