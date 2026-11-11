@@ -12,29 +12,67 @@ export const RELAY_RANGE = 600;
 
 const reach = (b: Building): number => (b.kind === 'relay' ? RELAY_RANGE * capacityFactor(b) : LINK_RANGE);
 
+/** A building's place in the grid: what it hangs from, how many relays lie between it and the base, and how far. */
+interface GridNode { parent: number; relays: number; metres: number }
+
 /**
- * Which buildings are wired to the base. The base starts at the landing pad; a building joins when it is within
- * reach of one that has already joined (the longer of the two reaches counts). Only in games with the day cycle:
- * without it the whole colony is one grid, as before. Returns null when everything is connected.
+ * Which building each linked building hangs from (0 is the base at the pad). Null when the whole colony is one grid.
+ *
+ * Each building takes the route back to the base with the fewest relays on it, and of those the shortest. A relay
+ * therefore only carries power between buildings that cannot reach each other any other way: a building near the
+ * base links straight to it even with a relay beside it, and a far building hangs from the nearest relay that is
+ * itself connected, not from whichever one happened to be found first.
  */
-/** Which building each linked building hangs from (0 is the pad). Null when the whole colony is one grid. */
 export function linkTree(world: WorldState): Map<number, number> | null {
+  const nodes = gridNodes(world);
+  if (nodes === null) return null;
+  return new Map([...nodes].map(([id, n]) => [id, n.parent]));
+}
+
+/** The full route information behind `linkTree`. */
+export function gridNodes(world: WorldState): Map<number, GridNode> | null {
   if (!world.system.sun) return null;
   const planet = colonyPlanet(world);
   const metres = (a: number, b: number): number => Math.abs(wrap(a - b)) * planet.radius;
-  const tree = new Map<number, number>();
-  const frontier: Array<{ id: number; angle: number; range: number }> = [{ id: 0, angle: 0, range: LINK_RANGE }];
   const rest = world.colony.buildings.filter(b => b.health === undefined || b.health > 0);
-  while (frontier.length > 0) {
-    const node = frontier.pop()!;
+  const byId = new Map(rest.map(b => [b.id, b]));
+  const root = { id: 0, angle: gridRootAngle(world), range: LINK_RANGE };
+  const placed = new Map<number, GridNode & { angle: number; range: number }>();
+  placed.set(0, { parent: -1, relays: 0, metres: 0, angle: root.angle, range: root.range });
+  // Settle buildings one at a time, cheapest route first (fewest relays, then shortest), like a shortest-path search.
+  const best = new Map<number, GridNode>();
+  const offer = (from: number) => {
+    const node = placed.get(from)!;
+    const passes = from !== 0 && byId.get(from)?.kind === 'relay' ? 1 : 0;
     for (const b of rest) {
-      if (tree.has(b.id)) continue;
-      if (metres(node.angle, b.angle) > Math.max(node.range, reach(b)) + 1e-6) continue;
-      tree.set(b.id, node.id);
-      frontier.push({ id: b.id, angle: b.angle, range: reach(b) });
+      if (placed.has(b.id)) continue;
+      const gap = metres(node.angle, b.angle);
+      if (gap > Math.max(node.range, reach(b)) + 1e-6) continue;
+      const candidate = { parent: from, relays: node.relays + passes, metres: node.metres + gap };
+      const current = best.get(b.id);
+      if (!current || cheaper(candidate, current)) best.set(b.id, candidate);
     }
+  };
+  offer(0);
+  while (best.size > 0) {
+    let pick: number | null = null;
+    for (const [id, n] of best) if (pick === null || cheaper(n, best.get(pick)!) || (same(n, best.get(pick)!) && id < pick)) pick = id;
+    const chosen = best.get(pick!)!;
+    best.delete(pick!);
+    const b = byId.get(pick!)!;
+    placed.set(pick!, { ...chosen, angle: b.angle, range: reach(b) });
+    offer(pick!);
   }
-  return tree;
+  placed.delete(0);
+  return new Map([...placed].map(([id, n]) => [id, { parent: n.parent, relays: n.relays, metres: n.metres }]));
+}
+
+const cheaper = (a: GridNode, b: GridNode): boolean => a.relays < b.relays || (a.relays === b.relays && a.metres < b.metres - 1e-6);
+const same = (a: GridNode, b: GridNode): boolean => a.relays === b.relays && Math.abs(a.metres - b.metres) <= 1e-6;
+
+/** Where the base's grid starts: the landing pad. The Headquarters stands beside it and links straight to it. */
+export function gridRootAngle(_world: WorldState): number {
+  return 0;
 }
 
 /**
@@ -181,29 +219,37 @@ export interface LinkPreview {
 }
 
 /**
- * The link a new building would make: to whichever wired node it has the most slack to (a relay far off beats a
- * plain building near). Null in games without the day cycle, where everything is one grid.
+ * The link a new building would make, by the same rule the grid uses: the connected node it can reach with the
+ * fewest relays behind it, and of those the nearest. When nothing is in reach, the nearest connected node, so the
+ * player can see how far short it falls. Null in games without the day cycle, where everything is one grid.
  */
 export function linkPreview(world: WorldState, kind: Building['kind'], angle: number): LinkPreview | null {
-  const tree = linkTree(world);
-  if (tree === null) return null;
+  const nodes = gridNodes(world);
+  if (nodes === null) return null;
   const radius = colonyPlanet(world).radius;
   const own = kind === 'relay' ? RELAY_RANGE : LINK_RANGE;
-  const nodes: Array<{ angle: number; range: number; from: LinkPreview['from'] }> = [{ angle: 0, range: LINK_RANGE, from: 'the pad' }];
-  for (const b of world.colony.buildings) {
-    if (!tree.has(b.id)) continue;
-    nodes.push({ angle: b.angle, range: reach(b), from: b.kind === 'relay' ? 'a relay' : 'a building' });
+  const byId = new Map(world.colony.buildings.map(b => [b.id, b]));
+  const options: Array<{ angle: number; range: number; from: LinkPreview['from']; relays: number }> = [
+    { angle: gridRootAngle(world), range: LINK_RANGE, from: 'the pad', relays: 0 },
+  ];
+  for (const [id, n] of nodes) {
+    const b = byId.get(id)!;
+    const relays = n.relays + (b.kind === 'relay' ? 1 : 0);
+    options.push({ angle: b.angle, range: reach(b), from: b.kind === 'relay' ? 'a relay' : 'a building', relays });
   }
-  let best: LinkPreview | null = null;
-  let bestSlack = -Infinity;
-  for (const n of nodes) {
-    const metres = Math.abs(wrap(angle - n.angle)) * radius;
-    const allowed = Math.max(n.range, own);
-    const slack = allowed - metres;
-    if (slack > bestSlack) {
-      bestSlack = slack;
-      best = { fromAngle: n.angle, from: n.from, metres, reach: allowed, connected: slack >= -1e-6 };
-    }
+  let best: (LinkPreview & { relays: number }) | null = null;
+  for (const o of options) {
+    const metres = Math.abs(wrap(angle - o.angle)) * radius;
+    const allowed = Math.max(o.range, own);
+    const connected = metres <= allowed + 1e-6;
+    const view = { fromAngle: o.angle, from: o.from, metres, reach: allowed, connected, relays: o.relays };
+    const better = best === null
+      || (connected && !best.connected)
+      || (connected === best.connected && connected && (o.relays < best.relays || (o.relays === best.relays && metres < best.metres)))
+      || (connected === best.connected && !connected && metres - allowed < best.metres - best.reach);
+    if (better) best = view;
   }
-  return best;
+  if (!best) return null;
+  const { relays: _relays, ...preview } = best;
+  return preview;
 }

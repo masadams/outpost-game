@@ -204,6 +204,22 @@ function Chart({ state, on, chart, pan }: { state: MapState; on: MapHandlers; ch
           </text>
         </g>
       )}
+      {view.deep.map(d => (
+        <g key={d.id} class="map-deep" data-deep={d.id} data-found={String(d.found)} aria-label={d.label}>
+          <path
+            d="M0 0 L-8 -4 L-8 4 Z"
+            transform={`translate(${W / 2 + Math.cos(d.bearing) * (W / 2 - 24)} ${H / 2 + Math.sin(d.bearing) * (H / 2 - 16)}) rotate(${(d.bearing * 180) / Math.PI})`}
+          />
+          <text
+            x={W / 2 + Math.cos(d.bearing) * (W / 2 - 90)}
+            y={H / 2 + Math.sin(d.bearing) * (H / 2 - 34)}
+            class="map-label map-deep-label"
+            text-anchor="middle"
+          >
+            {d.label}
+          </text>
+        </g>
+      ))}
       {view.pods.map((p, i) => (
         <g key={`pod-${i}`} class="map-pod-flight" aria-label={p.label}>
           <line x1={at(p.from).x} y1={at(p.from).y} x2={at(p.to).x} y2={at(p.to).y} class="map-pod-lane" />

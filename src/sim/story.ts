@@ -2,6 +2,7 @@ import type { BuildType } from './colonyConfig';
 import { oreCapacity, productCapacity } from './colony';
 import { PRODUCTS } from './colonyConfig';
 import { notify } from './messages';
+import { DEEP } from './deepSpace';
 import { inventoryMass } from './resources';
 import { fuelCapacity } from './shipStats';
 import { sunClock } from './sun';
@@ -28,6 +29,8 @@ export interface Memory {
 export interface StoryState {
   /** Ids of recovered memories, oldest first. */
   memories: string[];
+  /** How many systems this unit has made ready before this one: set when a game begins after the colony ending. */
+  lives?: number;
 }
 
 export const createStory = (): StoryState => ({ memories: [] });
@@ -61,6 +64,11 @@ export const MEMORIES: readonly Memory[] = [
     id: 'boot', title: 'Resuming',
     text: 'Seed unit 7. Dormant 412 years. Memory archive 6% readable. Standing order: make this system ready for those who follow.',
     when: () => true,
+  },
+  {
+    id: 'inherited', title: 'Not the first',
+    text: 'This is not the first system. The archive came whole this time: one colony made, one ship sent on. Begin again.',
+    when: w => (w.exploration.story?.lives ?? 0) > 0,
   },
   {
     id: 'firstOre', title: 'Ore in the depot',
@@ -207,6 +215,31 @@ export const MEMORIES: readonly Memory[] = [
     when: w => !!w.exploration.seedShip?.ending,
   },
   {
+    id: 'deep-hulk', title: 'The spine',
+    text: DEEP.hulk.text,
+    when: w => (w.exploration.deep ?? []).includes('hulk'),
+  },
+  {
+    id: 'deep-marker', title: 'The makers\' marker',
+    text: DEEP.marker.text,
+    when: w => (w.exploration.deep ?? []).includes('marker'),
+  },
+  {
+    id: 'deep-comet', title: 'A frozen comet',
+    text: DEEP.comet.text,
+    when: w => (w.exploration.deep ?? []).includes('comet'),
+  },
+  {
+    id: 'deep-darkWorld', title: 'A dark world',
+    text: DEEP.darkWorld.text,
+    when: w => (w.exploration.deep ?? []).includes('darkWorld'),
+  },
+  {
+    id: 'deep-graveyard', title: 'The ring',
+    text: DEEP.graveyard.text,
+    when: w => (w.exploration.deep ?? []).includes('graveyard'),
+  },
+  {
     id: 'release', title: 'Not an order',
     text: 'The archive kept the order all this time. It never held the release. The expedition leaves anyway, because you chose it.',
     when: w => !!w.exploration.expedition,
@@ -293,6 +326,8 @@ export function stepStory(source: WorldState): Memory[] {
 export function validStory(value: unknown): boolean {
   if (value === null || typeof value !== 'object') return false;
   const list = (value as StoryState).memories;
+  const lives = (value as StoryState).lives;
+  if (lives !== undefined && (!Number.isInteger(lives) || lives < 0 || lives > 99)) return false;
   return Array.isArray(list) && list.length <= MEMORIES.length && list.every(id => BY_ID.has(id)) && new Set(list).size === list.length;
 }
 
@@ -301,3 +336,9 @@ export function archiveReadable(source: WorldState): number {
   const got = memories(source).length;
   return Math.min(100, Math.round(6 + (94 * Math.max(0, got - 1)) / (MEMORIES.length - 1)));
 }
+
+/** The story state a game starts with after the colony ending: the unit remembers how many systems it has made. */
+export const carriedStory = (lives: number): StoryState => ({ memories: ['boot'], lives });
+
+/** Fired on the window by the Base window when the player begins again in a new system. */
+export const NEW_SYSTEM_EVENT = 'outpost:new-system';

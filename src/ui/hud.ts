@@ -309,6 +309,7 @@ export class Hud {
       study: () => onColonyAction({ type: 'studyCrystal' }),
       studyCore: () => onColonyAction({ type: 'studyCore' }),
       seedStage: (stage) => onColonyAction({ type: 'seedStage', stage: stage as SeedStage }),
+      upgradeHq: () => onColonyAction({ type: 'upgradeHq' }),
       seedLaunch: (ending) => onColonyAction({ type: 'seedLaunch', ending: ending as EndingId }),
       beacon: () => onColonyAction({ type: 'launchBeacon' }),
       expedition: (kit, target) => onColonyAction({ type: 'launchExpedition', kit, target }),

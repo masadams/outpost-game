@@ -10,6 +10,7 @@ import type {Building} from './colony';
 export type BuildingUpgradeAction={type:'upgradeBuilding';id:number;level:2|3};
 export function buildingUpgradeError(w:WorldState,b:Building):string|null{
  if(w.playerMode==='ship'?w.ship.state==='crashed':w.astronaut.health<=0)return 'Recover before issuing upgrade orders';
+ if(b.kind==='headquarters')return 'Upgrade the Headquarters from the Base Overview';
  const level=facilityLevel(b);if(level===3)return 'Maximum facility tier';
  const missing=tierTechs(b.kind,level===1?2:3).find(t=>!w.colony.research.completed.includes(t));if(missing)return `Research ${TECHNOLOGIES[missing].label}`;
  if(buildingHealth(b)<100-1e-9)return 'Repair facility fully before upgrading';

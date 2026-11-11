@@ -5,6 +5,7 @@ import type { WorldState } from '../sim/world';
 import type { RenderView } from './budget';
 import { visible } from './budget';
 import { coreAngle, crystalAngle } from '../sim/crystal';
+import { DEEP, DEEP_IDS, deepPosition } from '../sim/deepSpace';
 import { KEYSTONE_WORLDS, keystoneAngle, keystonesOpen, keystoneState } from '../sim/keystones';
 
 /** Pieces of the storm lying on the ground: small dark rocks with a warm glint, so they can be found. */
@@ -94,5 +95,46 @@ export function drawKeystones(g: Phaser.GameObjects.Graphics, w: WorldState, zoo
     g.lineBetween(p(1.2, 3).x, p(1.2, 3).y, p(1.2, 7).x, p(1.2, 7).y);
     g.fillStyle(0xffe6b0, 0.4 + 0.6 * pulse);
     g.fillCircle(p(1.2, 7).x, p(1.2, 7).y, Math.max(0.6, 1.6 * px));
+  }
+}
+
+/** Things drifting in deep space, drawn when on screen: a hulk, a marker light, a comet, a dark world, a ring of landers. */
+export function drawDeepSpace(g: Phaser.GameObjects.Graphics, w: WorldState, zoom: number, time: number, view: RenderView): void {
+  if (!w.system.sun) return;
+  const px = 1 / zoom;
+  for (const id of DEEP_IDS) {
+    const find = DEEP[id];
+    const at = deepPosition(id, w.seed);
+    if (!visible(view, at, find.size * 1.5 + 40 * px)) continue;
+    const pulse = 0.5 + 0.5 * Math.sin(time * 1.4);
+    if (find.look === 'dark') {
+      g.fillStyle(0x05080d, 1);
+      g.fillCircle(at.x, at.y, find.size);
+      g.lineStyle(Math.max(1.5 * px, 2), 0x3a4b5c, 0.8);
+      g.strokeCircle(at.x, at.y, find.size);
+    } else if (find.look === 'comet') {
+      g.fillStyle(0xcfe9ff, 0.12);
+      g.fillTriangle(at.x, at.y - find.size * 0.4, at.x, at.y + find.size * 0.4, at.x + find.size * 4, at.y);
+      g.fillStyle(0xe6f4ff, 1);
+      g.fillCircle(at.x, at.y, find.size * 0.35);
+    } else if (find.look === 'hulk') {
+      g.lineStyle(Math.max(1 * px, 1.5), 0xcfd8dc, 0.9);
+      g.fillStyle(0x2c3a46, 1);
+      const s = find.size;
+      g.fillRect(at.x - s / 2, at.y - s / 10, s, s / 5);
+      g.strokeRect(at.x - s / 2, at.y - s / 10, s, s / 5);
+      for (let i = 1; i < 6; i++) g.lineBetween(at.x - s / 2 + (s * i) / 6, at.y - s / 10, at.x - s / 2 + (s * i) / 6, at.y + s / 10);
+    } else if (find.look === 'ring') {
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        g.fillStyle(0x9aa9b5, 0.9);
+        g.fillCircle(at.x + Math.cos(a) * find.size, at.y + Math.sin(a) * find.size, 7);
+      }
+    } else {
+      g.fillStyle(0xffe6b0, 0.25 * pulse);
+      g.fillCircle(at.x, at.y, Math.max(find.size, 14 * px));
+      g.fillStyle(0xffe6b0, 0.5 + 0.5 * pulse);
+      g.fillCircle(at.x, at.y, Math.max(4, 3 * px));
+    }
   }
 }

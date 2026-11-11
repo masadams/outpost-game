@@ -1,11 +1,13 @@
+import { NEW_SYSTEM_EVENT } from '../../sim/story';
 import { ResearchView } from './ResearchTree';
 import { useState } from 'preact/hooks';
 import { h, render } from 'preact';
 import type { JSX } from 'preact';
 import type { BaseView, BuildingView, Chip, ExpeditionView, SeedShipView } from './baseView';
+import type { GridsView } from './gridsView';
 import { Demolish } from './Demolish';
 
-export type BaseSection = 'overview' | 'research' | 'buildings' | 'logistics' | 'expedition' | 'seedship' | 'ship' | 'legacy';
+export type BaseSection = 'overview' | 'research' | 'buildings' | 'grids' | 'logistics' | 'expedition' | 'seedship' | 'ship' | 'legacy';
 
 export interface BaseHandlers {
   section: (section: BaseSection) => void;
@@ -19,6 +21,7 @@ export interface BaseHandlers {
   study: () => void;
   studyCore: () => void;
   seedStage: (stage: string) => void;
+  upgradeHq: () => void;
   seedLaunch: (ending: string) => void;
   research: (tech: string) => void;
   fit: (upgrade: string) => void;
@@ -212,6 +215,24 @@ function Overview({ view, paused, on, go }: SectionProps & { go: Go }) {
       </div>
         </section>
       </div>
+      {view.hq && (
+        <section class="overview-card overview-hq" aria-label="Headquarters" data-hq-level={view.hq.level}>
+          <h3>Headquarters · level {view.hq.level}</h3>
+          <p class="base-note">{view.hq.buildings} of {view.hq.limit} buildings.</p>
+          {view.hq.next ? (
+            <div class="overview-line">
+              <span>
+                Level {view.hq.next.level}: {view.hq.next.adds}.
+                <small class="hq-cost">Costs {view.hq.next.cost}</small>
+              </span>
+              <button type="button" class="overview-go" data-hq-upgrade disabled={paused || view.hq.blocked !== null} onClick={click(on.upgradeHq)}>
+                Upgrade
+              </button>
+            </div>
+          ) : <p class="base-note">At its highest level.</p>}
+          {view.hq.next && view.hq.blocked && <p class="base-why">{view.hq.blocked}</p>}
+        </section>
+      )}
       <section class="overview-card overview-activity" aria-label="What is going on">
         <h3>What is going on</h3>
         {(view.tree || view.research) && (
@@ -764,6 +785,54 @@ function SeedShip({ ship, paused, on }: { ship: SeedShipView; paused: boolean; o
         <section class="seed-epilogue" data-ending={launch.chosen} aria-label="What happened">
           <h3>{launch.choices.find(c => c.id === launch.chosen)?.label}</h3>
           {launch.epilogue.map(line => <p key={line}>{line}</p>)}
+          {launch.chosen === 'colony' && (
+            <div class="seed-choice" data-new-system>
+              <span>
+                <strong>Follow the ship</strong>
+                <small>Begin again in a new system, as the copy that went with it. This game stays saved until you save over it.</small>
+              </span>
+              {asking === 'newSystem' ? (
+                <button type="button" class="seed-confirm" onClick={click(() => window.dispatchEvent(new CustomEvent(NEW_SYSTEM_EVENT)))}>
+                  Yes, begin again
+                </button>
+              ) : (
+                <button type="button" onClick={click(() => setAsking('newSystem'))}>Begin again</button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+/** Each power grid at the base, side by side, and anything cut off from all of them. */
+function Grids({ grids }: { grids: GridsView }) {
+  return (
+    <div class="base-main" data-base-section="grids">
+      <h3>Power grids · {grids.grids.length}</h3>
+      <p class="base-note">Buildings link to the nearest one within reach. Relays carry power farther, losing a little at each one.</p>
+      <div class="grid-cards">
+        {grids.grids.map(g => (
+          <section class="grid-card" key={g.id} data-grid={g.id}>
+            <header>
+              <strong>{g.name}</strong>
+              <small>{g.where} · {g.buildings} buildings{g.relays ? ` · ${g.relays} relays` : ''}</small>
+            </header>
+            <dl class="base-facts">
+              <div><dt>Makes</dt><dd>{g.makes.toFixed(1)} kW</dd></div>
+              <div><dt>Uses</dt><dd>{g.uses.toFixed(1)} kW</dd></div>
+              <div><dt>Stored</dt><dd>{Math.round(g.stored)} / {Math.round(g.capacity)} kJ</dd></div>
+            </dl>
+            {g.notes.map(n => <p class="base-note" key={n}>{n}</p>)}
+          </section>
+        ))}
+      </div>
+      {grids.cut.length > 0 && (
+        <section class="grid-cut" data-grid-cut={grids.cut.length}>
+          <h3>Cut off · {grids.cut.length}</h3>
+          <p class="base-why">These have no power: out of reach of any grid, with no panels or battery of their own. Build a relay or a building between.</p>
+          <ul>{grids.cut.map(b => <li key={b.id}>{b.label} · {b.where} of the pad</li>)}</ul>
         </section>
       )}
     </div>
@@ -774,6 +843,9 @@ function sectionsFor(view: BaseView, legacy: boolean): Array<[BaseSection, strin
   const list: Array<[BaseSection, string]> = [['overview', 'Overview']];
   if (view.tree || view.research || view.core || view.crystal || view.storm) list.push(['research', 'Research']);
   list.push(['buildings', 'Buildings']);
+  // Power grids get their own page once there is more than one, or relays, or a building cut off.
+  const g = view.grids;
+  if (g && (g.grids.length > 1 || g.cut.length > 0 || g.grids[0].relays > 0)) list.push(['grids', 'Power grids']);
   if (view.pods || view.supply || view.elsewhere.length > 0) list.push(['logistics', 'Logistics']);
   if (view.signal) list.push(['expedition', 'Expedition']);
   if (view.seedShip) list.push(['seedship', 'Seed ship']);
@@ -799,6 +871,7 @@ export function BaseWindowView({ state, on, legacyHost }: { state: BaseState; on
         {section === 'overview' && <Overview view={state.view} paused={state.paused} on={on} go={on.section} />}
         {section === 'research' && <ResearchHub view={state.view} paused={state.paused} on={on} />}
         {section === 'buildings' && <Buildings state={state} on={on} />}
+        {section === 'grids' && state.view.grids && <Grids grids={state.view.grids} />}
         {section === 'logistics' && <Logistics view={state.view} paused={state.paused} on={on} />}
         {section === 'expedition' && <ExpeditionSection view={state.view} paused={state.paused} on={on} />}
         {section === 'seedship' && state.view.seedShip && <SeedShip ship={state.view.seedShip} paused={state.paused} on={on} />}

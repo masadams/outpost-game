@@ -13,6 +13,7 @@ import { droneSeam } from '../sim/minerDrone';
 import { linkPreview } from '../sim/grid';
 import { daylightAt } from '../sim/sun';
 import { WORLD } from '../sim/config';
+import { TUG, tugTarget } from '../sim/tugBay';
 import { ENDINGS, SEED_STAGES, seedEnding, seedStagesDone } from '../sim/seedShip';
 import { drawColonyLife, HAUL_KINDS, type LifeView } from './colonyLife';
 import type { WorldState } from '../sim/world';
@@ -62,6 +63,25 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     g.fillCircle(at.x * height, at.y * height, 2);
     g.lineStyle(1, 0x9be8a8, 0.35);
     g.strokeCircle(at.x * height, at.y * height, 4);
+  }
+  // A working tug bay's tug flies up to its rock and back over one trip, with a faint tether line.
+  for (const b of colony.buildings) {
+    if (b.kind !== 'tugBay' || b.status !== 'running') continue;
+    const rock = tugTarget(world, b);
+    if (!rock) continue;
+    const body = colonyPlanet(world);
+    const rel = { x: rock.position.x - body.position.x, y: rock.position.y - body.position.y };
+    const c = Math.cos(-body.spin), sn = Math.sin(-body.spin);
+    const to = { x: rel.x * c - rel.y * sn, y: rel.x * sn + rel.y * c };
+    const n = heading(b.angle);
+    const from = { x: n.x * (body.radius + 20), y: n.y * (body.radius + 20) };
+    const trip = Math.min(1, b.progress / TUG.seconds);
+    const out = trip < 0.5 ? trip * 2 : (1 - trip) * 2;
+    const at = { x: from.x + (to.x - from.x) * out, y: from.y + (to.y - from.y) * out };
+    g.lineStyle(0.6, 0xb6f0ff, 0.25);
+    g.lineBetween(from.x, from.y, at.x, at.y);
+    g.fillStyle(0xb6f0ff, 0.95);
+    g.fillCircle(at.x, at.y, 2.4);
   }
   // A building out of reach of the base's power wears an amber diamond.
   for (const b of colony.buildings) {
@@ -127,6 +147,28 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
     } else if (entry.kind === 'antenna') {
       const mast = p(0, 13), top = p(0, 30), left = p(-6, 27), right = p(6, 27);
       g.lineBetween(mast.x, mast.y, top.x, top.y); g.lineBetween(left.x, left.y, top.x, top.y); g.lineBetween(top.x, top.y, right.x, right.y);
+    } else if (entry.kind === 'headquarters') {
+      // A taller block with a dome and a mast: the seed unit's housing. Wider than its footprint by a little.
+      const block = [p(-14, 0), p(-14, 20), p(-6, 24), p(6, 24), p(14, 20), p(14, 0)];
+      g.fillStyle(0x203749, 0.95);
+      g.fillPoints(block, true);
+      g.lineStyle(1.2, color, entry.active ? 1 : 0.5);
+      g.strokePoints(block, true);
+      const dome = p(0, 24);
+      g.strokeCircle(dome.x, dome.y, 5);
+      const mastTop = p(0, 38);
+      g.lineBetween(dome.x, dome.y, mastTop.x, mastTop.y);
+      // A window band for each level the HQ has reached.
+      const levels = world.colony.buildings.find(b => b.kind === 'headquarters')?.hqLevel ?? 1;
+      for (let i = 0; i < levels; i++) {
+        const a = p(-10, 5 + i * 4), b = p(10, 5 + i * 4);
+        g.lineBetween(a.x, a.y, b.x, b.y);
+      }
+    } else if (entry.kind === 'tugBay') {
+      // A launch cradle: two rails angled up, with the tug sitting in it when it is home.
+      const a = p(-6, 13), b = p(-2, 26), c = p(6, 13), d = p(2, 26);
+      g.lineBetween(a.x, a.y, b.x, b.y);
+      g.lineBetween(c.x, c.y, d.x, d.y);
     } else if (entry.kind === 'shipyard') {
       // A gantry: two legs, a beam across, and a hook.
       const left = p(-width + 2, 13), right = p(width - 2, 13), topLeft = p(-width + 2, 40), topRight = p(width - 2, 40);

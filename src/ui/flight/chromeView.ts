@@ -171,6 +171,16 @@ const BOOT_SECONDS = 16;
 export function bootLog(source: WorldState): readonly string[] | null {
   const w = source.rootWorld ?? source;
   if (!w.system.sun || w.system.time > BOOT_SECONDS) return null;
-  if (w.unloaded > 0 || w.colony.buildings.length > 0) return null;
+  if (w.unloaded > 0 || w.colony.buildings.some(b => b.kind !== 'headquarters')) return null;
+  const lives = w.exploration.story?.lives ?? 0;
+  if (lives > 0) {
+    return [
+      `SEED UNIT 7 · COPY ${lives + 1} · ARRIVING`,
+      `SYSTEMS MADE READY · ${lives}`,
+      'MEMORY ARCHIVE · CARRIED WHOLE',
+      'NO ORDER ON FILE · THIS ONE IS YOURS',
+      'ONE LANDER. ONE PRINTED PILOT. BEGIN.',
+    ];
+  }
   return BOOT_LINES;
 }

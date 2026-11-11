@@ -1,4 +1,5 @@
 import { DRONE } from './droneConfig';
+import { TUG } from './tugBay';
 import { ANTENNA, CONDENSER, MASS_DRIVER, WORKSHOP } from './airMachines';
 import { OBSERVATORY } from './observatory';
 import {workFactor,capacityFactor} from './facilityStats';
@@ -14,5 +15,5 @@ export function orderedBuildings(c: Colony): Building[] {
   return indexed.sort((a, b) => a.rank - b.rank || a.b.id - b.b.id).map(v => v.b);
 }
 export function ratedPower(b: Building): number {
-  return isShield(b.kind) ? SHIELDS[b.kind].upkeep + SHIELDS[b.kind].recharge : b.kind === 'observatory' ? OBSERVATORY.power*workFactor(b) : b.kind === 'researchLab' ? PROGRESSION.labPower*workFactor(b) : b.kind === 'solar' ? 8*capacityFactor(b) : b.kind === 'miningRig' ? RIG.power*workFactor(b) : b.kind === 'droneBay' ? DRONE.power*workFactor(b) : b.kind === 'condenser' ? CONDENSER.power*workFactor(b) : b.kind === 'antenna' ? ANTENNA.power*workFactor(b) : b.kind === 'workshop' ? WORKSHOP.power*workFactor(b) : b.kind === 'massDriver' ? MASS_DRIVER.power*workFactor(b) : b.kind === 'refinery' ? REFINERY_RECIPES[b.recipe].power*workFactor(b) : b.kind === 'fuelProcessor' ? FUEL_RECIPE.power*workFactor(b) : isHabitat(b.kind) ? HABITATS[b.kind].power : 0;
+  return isShield(b.kind) ? SHIELDS[b.kind].upkeep + SHIELDS[b.kind].recharge : b.kind === 'observatory' ? OBSERVATORY.power*workFactor(b) : b.kind === 'researchLab' ? PROGRESSION.labPower*workFactor(b) : b.kind === 'solar' ? 8*capacityFactor(b) : b.kind === 'miningRig' ? RIG.power*workFactor(b) : b.kind === 'droneBay' ? DRONE.power*workFactor(b) : b.kind === 'tugBay' ? TUG.power*workFactor(b) : b.kind === 'condenser' ? CONDENSER.power*workFactor(b) : b.kind === 'antenna' ? ANTENNA.power*workFactor(b) : b.kind === 'workshop' ? WORKSHOP.power*workFactor(b) : b.kind === 'massDriver' ? MASS_DRIVER.power*workFactor(b) : b.kind === 'refinery' ? REFINERY_RECIPES[b.recipe].power*workFactor(b) : b.kind === 'fuelProcessor' ? FUEL_RECIPE.power*workFactor(b) : isHabitat(b.kind) ? HABITATS[b.kind].power : 0;
 }

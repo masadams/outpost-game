@@ -160,6 +160,8 @@ const EARNED: Record<BuildType, string> = {
   habitatLarge: 'After a small habitat',
   workshop: 'After a base on another world',
   shipyard: 'After an expedition finds the relay',
+  headquarters: 'Stands from the start',
+  tugBay: 'After a drone bay',
   droneBay: 'Research Precision extraction',
   service: 'Not offered yet',
   flak: 'Not offered yet',

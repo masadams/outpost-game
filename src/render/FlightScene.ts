@@ -1,5 +1,6 @@
 import { keyLabel, type BindingSlot } from '../preferences/presentation';
 import { blueprintRevealed } from '../sim/unlocks';
+import { carriedStory, NEW_SYSTEM_EVENT } from '../sim/story';
 import { actionAllowed, featureVisible, filterActions } from '../preferences/features';
 import { applyAutopilotAction } from '../sim/autopilot';
 import { GameMenu, type MenuAction } from '../ui/GameMenu';
@@ -51,7 +52,7 @@ import { buildSky, drawSky } from './skyBackdrop';
 import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
-import { drawStormSamples, drawCrystal, drawCore, drawKeystones } from './storm';
+import { drawStormSamples, drawCrystal, drawCore, drawKeystones, drawDeepSpace } from './storm';
 import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
@@ -332,6 +333,9 @@ export class FlightScene extends Phaser.Scene {
       visibility = () => {
         if (document.hidden) this.setPaused(true);
       };
+    const newSystem = () => this.newGame((this.simulation.exploration.story?.lives ?? 0) + 1);
+    window.addEventListener(NEW_SYSTEM_EVENT, newSystem);
+    this.events.once('shutdown', () => window.removeEventListener(NEW_SYSTEM_EVENT, newSystem));
     window.addEventListener('blur', blur);
     document.addEventListener('visibilitychange', visibility);
     const wheel = (event: WheelEvent) => {
@@ -385,10 +389,12 @@ export class FlightScene extends Phaser.Scene {
     this.setPaused(true);
     this.menu.open('title');
   }
-  private newGame(): void {
+  private newGame(lives = 0): void {
     this.autosaveTime = 0;
     const invalid = !this.hasRun && this.simulation.notice.message.includes('CHECKPOINT INVALID');
     this.simulation = newWorld();
+    // After the colony ending the unit begins again, remembering how many systems it has made ready.
+    if (lives > 0) this.simulation.exploration.story = carriedStory(lives);
     if (invalid) notify(this.simulation, 'CHECKPOINT INVALID · NEW RUNTIME STARTED · OLD SAVE KEPT');
     this.hasRun = true;
     this.menu.close();
@@ -992,6 +998,7 @@ export class FlightScene extends Phaser.Scene {
     drawCrystal(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawCore(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawKeystones(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
+    drawDeepSpace(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     for (const probe of this.simulation.exploration.probes) {
       g.fillStyle(0x9fe4ff, 0.25);
       g.fillCircle(probe.position.x, probe.position.y, Math.max(6, 10 / this.follow.zoom));

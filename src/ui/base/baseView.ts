@@ -1,3 +1,5 @@
+import { HQ, buildingLimit, headquarters, hqLevel, hqUpgradeBlock, type HqLevel } from '../../sim/headquarters';
+import { gridsView, type GridsView } from './gridsView';
 import {
   ENDING_IDS, ENDINGS, SEED_SHIP, SEED_STAGES, costLine, hasShipyard, seedEnding, seedShipComplete, seedStageBlock,
   seedStagesDone, type EndingId, type SeedStage,
@@ -60,6 +62,10 @@ export interface BaseView {
   elsewhere: OutpostView[];
   /** Carrier parts: how many are home and where the rest are. Null until the unit knows to look. */
   carrier: CarrierView | null;
+  /** The Headquarters: its level, the room left, and the next upgrade. Null at a base without one. */
+  hq: HqView | null;
+  /** Every power grid at this base. Null where the whole base is one grid (no day cycle). */
+  grids: GridsView | null;
   /** The seed ship project. Null until a Shipyard can be built. */
   seedShip: SeedShipView | null;
   /** Cargo pods: where this base can send ore, and what is on its way. Null when there is nothing to show. */
@@ -573,6 +579,8 @@ export function baseView(w: WorldState): BaseView {
     tree: researchView(w) !== null || featureVisible('catalogue') ? researchTreeView(w) : null,
     elsewhere: elsewhereView(w),
     carrier: carrierView(w),
+    hq: hqView(w),
+    grids: gridsView(w),
     seedShip: seedShipView(w),
     pods: podsView(w),
     signal: signalView(w),
@@ -672,5 +680,33 @@ export function seedShipView(w: WorldState): SeedShipView | null {
         epilogue: chosen ? ENDINGS[chosen].epilogue : [],
       }
       : null,
+  };
+}
+
+export interface HqView {
+  level: number;
+  buildings: number;
+  limit: number;
+  /** The next level and what it brings; null at the top. */
+  next: { level: number; cost: string; adds: string } | null;
+  blocked: string | null;
+}
+
+export function hqView(w: WorldState): HqView | null {
+  if (!headquarters(w.colony)) return null;
+  const level = hqLevel(w.colony);
+  const nextLevel = level < 4 ? ((level + 1) as HqLevel) : null;
+  const next = nextLevel ? HQ[nextLevel] : null;
+  const now = HQ[level];
+  return {
+    level,
+    buildings: w.colony.buildings.length,
+    limit: buildingLimit(w.colony),
+    next: next && nextLevel ? {
+      level: nextLevel,
+      cost: `${costLine(next.cost)}, ${next.upgradeEnergy} kJ`,
+      adds: `Room for ${next.buildings} buildings, +${next.ore - now.ore} kg ore, +${next.materials - now.materials} of each material, +${next.energy - now.energy} kJ stored`,
+    } : null,
+    blocked: hqUpgradeBlock(w),
   };
 }
