@@ -97,3 +97,21 @@ a fully built base runs to several thousand kg.
 * Rare metal surplus could feed a late sink (for instance Tier III shields) so it is worth carrying.
 * Starting fuel is 0 in the depot; ice → fuel is the first real production line and could use one more tutorial nudge.
 * The right answer to all of these is a bot-run "economy soak" that plays a fixed build order and reports the day each stage lands.
+
+## Pacing pass (late game)
+
+Measured with the pacing bot (`npm run bot`, `tests/bot/pacing.test.ts`): the economy bot's build order run for 15 days, with
+the drone, worker and tug bays added, Headquarters upgrades whenever affordable, and the pilot repairing storm damage.
+
+* **What a base makes.** About 400 kg of materials a day while Selene's seams near the rigs last (days 1–3), then 100–200 a
+  day once they run dry. Ore, not machines, is the limit after day 4: the push to other worlds is working.
+* **Storms** come about every 1.3 days and cost about 30 alloy a day in repairs by day 15 (460 over the run).
+* **Headquarters was far too cheap**: level 1 to 4 in half a day. Costs now 60/30/20, 150/70/50 and 260/120/90 (alloy, wire,
+  components), and outpost cores 35/18/10, 80/40/28, 150/70/55. The bot now reaches level 4 on day 7.6. A cost above what
+  storage holds says "Build Storage first".
+* **Seed ship stages cost 1.5× more** (about 375 alloy, 245 wire, 210 components in all), so finishing it is a real last
+  spend; the carrier parts from seven worlds remain the main gate.
+* **Tug**: 15 kg every 90 s (was 18 kg every 75 s), about 170 kg a day, two thirds of a rig, so it does not strip the sky the
+  pilot also mines.
+* **Research** still finishes everything reachable in about two days of lab time. Left as is for now; it is noted in
+  `docs/tasks/BEFORE_RELEASE.md` to slow it before a release.

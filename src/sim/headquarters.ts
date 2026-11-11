@@ -3,7 +3,7 @@ import { availableProduct } from './colonyPolicy';
 import { WORLD } from './config';
 import { CELESTIAL, type BodyId } from './celestial';
 import { notify } from './messages';
-import type { Building, Colony } from './colony';
+import { productCapacity, type Building, type Colony } from './colony';
 import type { WorldState } from './world';
 
 /**
@@ -28,9 +28,9 @@ export interface HqLevelSpec {
 
 export const HQ: Record<HqLevel, HqLevelSpec> = {
   1: { buildings: 48, ore: 0, materials: 0, energy: 0, cost: {}, upgradeEnergy: 0 },
-  2: { buildings: 72, ore: 200, materials: 60, energy: 200, cost: { alloy: 30, wire: 15, components: 10 }, upgradeEnergy: 100 },
-  3: { buildings: 100, ore: 450, materials: 140, energy: 500, cost: { alloy: 60, wire: 30, components: 25 }, upgradeEnergy: 250 },
-  4: { buildings: 140, ore: 800, materials: 250, energy: 1000, cost: { alloy: 110, wire: 55, components: 45 }, upgradeEnergy: 500 },
+  2: { buildings: 72, ore: 200, materials: 60, energy: 200, cost: { alloy: 60, wire: 30, components: 20 }, upgradeEnergy: 100 },
+  3: { buildings: 100, ore: 450, materials: 140, energy: 500, cost: { alloy: 150, wire: 70, components: 50 }, upgradeEnergy: 250 },
+  4: { buildings: 140, ore: 800, materials: 250, energy: 1000, cost: { alloy: 260, wire: 120, components: 90 }, upgradeEnergy: 500 },
 };
 
 /**
@@ -39,9 +39,9 @@ export const HQ: Record<HqLevel, HqLevelSpec> = {
  */
 export const CORE: Record<HqLevel, HqLevelSpec> = {
   1: { buildings: 24, ore: 0, materials: 0, energy: 0, cost: {}, upgradeEnergy: 0 },
-  2: { buildings: 36, ore: 150, materials: 40, energy: 150, cost: { alloy: 20, wire: 10, components: 6 }, upgradeEnergy: 80 },
-  3: { buildings: 50, ore: 300, materials: 90, energy: 350, cost: { alloy: 40, wire: 20, components: 15 }, upgradeEnergy: 180 },
-  4: { buildings: 70, ore: 500, materials: 160, energy: 700, cost: { alloy: 70, wire: 35, components: 30 }, upgradeEnergy: 350 },
+  2: { buildings: 36, ore: 150, materials: 40, energy: 150, cost: { alloy: 35, wire: 18, components: 10 }, upgradeEnergy: 80 },
+  3: { buildings: 50, ore: 300, materials: 90, energy: 350, cost: { alloy: 80, wire: 40, components: 28 }, upgradeEnergy: 180 },
+  4: { buildings: 70, ore: 500, materials: 160, energy: 700, cost: { alloy: 150, wire: 70, components: 55 }, upgradeEnergy: 350 },
 };
 
 /** The level table for this base's centre: the Headquarters at home, a core elsewhere. */
@@ -107,6 +107,9 @@ export function hqUpgradeBlock(world: WorldState): string | null {
   const level = hqLevel(world.colony);
   if (level >= 4) return 'Already at its highest level.';
   const next = levelsFor(world.colony)[(level + 1) as HqLevel];
+  const room = productCapacity(world.colony);
+  const tooBig = PRODUCTS.find(p => (next.cost[p] ?? 0) > room);
+  if (tooBig) return `Needs ${next.cost[tooBig]} ${tooBig}, but storage holds ${room}. Build Storage first.`;
   const short = PRODUCTS.filter(p => availableProduct(world.colony, p) + 1e-9 < (next.cost[p] ?? 0));
   if (short.length > 0) {
     return `Needs ${short.map(p => `${next.cost[p]} ${p} (you have ${Math.floor(availableProduct(world.colony, p))})`).join(', ')}.`;
