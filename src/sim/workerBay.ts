@@ -1,5 +1,4 @@
 import { buildingHealth, operational } from './buildingHealth';
-import { headquarters, hqLevel } from './headquarters';
 import { availableProduct, industrialPowerBlock } from './colonyPolicy';
 import { facilityLevel, workFactor } from './facilityStats';
 import { colonyPlanet } from './localWorld';
@@ -37,7 +36,9 @@ export type WorkerJob = {
 };
 
 /** A level-4 Headquarters (or outpost core) sends its worker drones farther and faster. */
-const boosted = (world: WorldState): boolean => !!headquarters(world.colony) && hqLevel(world.colony) >= 4;
+// Read straight off the building: importing the Headquarters module here would make a load-order cycle with colony.
+const boosted = (world: WorldState): boolean =>
+  (world.colony.buildings.find(b => b.kind === 'headquarters')?.hqLevel ?? 1) >= 4;
 /** Extra metres of reach for each tier of the bay above the first. */
 export const TIER_REACH = 150;
 /** How far a bay's drone flies: more with each tier, half as far again with a level-4 centre. */

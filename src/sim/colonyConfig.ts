@@ -4,6 +4,9 @@ import { HABITATS, HABITAT } from './habitatConfig';
 export const PRODUCTS = ['alloy', 'wire', 'components', 'water', 'oxygen', 'fuel'] as const;
 export type Product = typeof PRODUCTS[number];
 export type ProductInventory = Record<Product, number>;
+/** The most buildings any base can hold (a level-4 Headquarters). Kept here so it is ready before anything else loads. */
+export const MOST_BUILDINGS = 140;
+
 export const BUILD_TYPES = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'service', 'laser', 'flak', 'missile', 'miningRig', 'habitatSmall', 'habitatLarge', 'researchLab', 'observatory', 'shieldSmall', 'shieldLarge', 'relay', 'droneBay', 'condenser', 'antenna', 'workshop', 'geothermal', 'windTurbine', 'massDriver', 'shipyard', 'headquarters', 'tugBay', 'workerBay', 'seaWall'] as const;
 export type BuildType = typeof BUILD_TYPES[number];
 export interface Blueprint { label: string; cost: Partial<ProductInventory>; halfWidth: number; color: number }

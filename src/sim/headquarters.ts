@@ -1,4 +1,4 @@
-import { PRODUCTS, type ProductInventory } from './colonyConfig';
+import { MOST_BUILDINGS, PRODUCTS, type ProductInventory } from './colonyConfig';
 import { availableProduct } from './colonyPolicy';
 import { WORLD } from './config';
 import { CELESTIAL, type BodyId } from './celestial';
@@ -30,7 +30,7 @@ export const HQ: Record<HqLevel, HqLevelSpec> = {
   1: { buildings: 48, ore: 0, materials: 0, energy: 0, cost: {}, upgradeEnergy: 0 },
   2: { buildings: 72, ore: 200, materials: 60, energy: 200, cost: { alloy: 60, wire: 30, components: 20 }, upgradeEnergy: 100 },
   3: { buildings: 100, ore: 450, materials: 140, energy: 500, cost: { alloy: 150, wire: 70, components: 50 }, upgradeEnergy: 250 },
-  4: { buildings: 140, ore: 800, materials: 250, energy: 1000, cost: { alloy: 260, wire: 120, components: 90 }, upgradeEnergy: 500 },
+  4: { buildings: MOST_BUILDINGS, ore: 800, materials: 250, energy: 1000, cost: { alloy: 260, wire: 120, components: 90 }, upgradeEnergy: 500 },
 };
 
 /**
@@ -50,7 +50,7 @@ export const levelsFor = (colony: Colony): Record<HqLevel, HqLevelSpec> => (head
 export const centreName = (colony: Colony): string => (headquarters(colony)?.core ? 'Outpost core' : 'Headquarters');
 
 /** The most buildings any base can ever hold: the top HQ level. Saves are checked against it. */
-export const MOST_BUILDINGS = HQ[4].buildings;
+export { MOST_BUILDINGS };
 
 /**
  * Metres west of the pad where the HQ stands: on the suit service terminal, which it takes over. The ground there
