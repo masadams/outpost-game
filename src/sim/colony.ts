@@ -97,7 +97,9 @@ export function blueprintLock(world: WorldState, kind: BuildType): string | null
 
 export function placementError(world: WorldState, kind = world.colony.selected, angle = previewAngle(world), options: { remote?: boolean; paid?: boolean; reservations?: Building[] } = {}): string | null {
   if (!options.remote && (nearestPlanet(world.astronaut.position, world.system).id !== colonyPlanet(world).id || world.playerMode !== 'astronaut' || !world.astronaut.grounded || world.astronaut.health <= 0)) return 'Stand on the surface to build';
-  if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= 48) return 'Colony limit: 48 facilities';
+  if (world.colony.buildings.length + (options.reservations?.length ?? world.colony.command.queue.length) >= MAX_BUILDINGS) {
+    return `This base is at its limit of ${MAX_BUILDINGS} buildings.`;
+  }
   if (!Number.isFinite(angle) || angle < -Math.PI || angle > Math.PI) return 'Invalid site angle';
   if (!options.remote && Math.abs(wrap(angle - localAngleAt(world, world.astronaut.position))) * colonyPlanet(world).radius > 97) return 'Build within 96 m of the astronaut';
   const lock = blueprintLock(world, kind);
@@ -174,6 +176,12 @@ export function salvageOf(building: Building): Partial<ProductInventory> {
 
 /** Why a building cannot be taken down right now, or null. */
 /** Nothing stops a building coming down. Kept so callers have one place to ask; see `demolishLoss` for the warning. */
+/**
+ * The most buildings one base can hold. A stop-gap until a headquarters building sets the limit by its level
+ * (see docs/tasks/BASE_AND_POWER.md).
+ */
+export const MAX_BUILDINGS = 96;
+
 export function demolishError(_world: WorldState, _building: Building): string | null {
   return null;
 }

@@ -680,7 +680,13 @@ export class FlightScene extends Phaser.Scene {
     if (!this.preferences.reducedMotion) {
       for (const k of this.effects.takeKicks())
         this.cameras.main.shake(Math.round(k.seconds * 1000), 0.0035 * k.strength);
-    } else this.effects.takeKicks();
+      for (const f of this.effects.takeFlashes()) {
+        this.cameras.main.flash(Math.round(f.seconds * 1000), (f.color >> 16) & 255, (f.color >> 8) & 255, f.color & 255);
+      }
+    } else {
+      this.effects.takeKicks();
+      this.effects.takeFlashes();
+    }
     const drawKey = [
       this.scale.width,
       this.scale.height,

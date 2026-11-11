@@ -20,7 +20,7 @@ import { validDefence } from './validateDefence';
 import { airCapacity } from '../sim/habitats';
 import { createWorld, shareResearch, type OutpostId, type WorldState } from '../sim/world';
 import { BUILD_TYPES, PRODUCTS, REFINERY_RECIPES } from '../sim/colonyConfig';
-import { energyCapacity, oreCapacity, productCapacity } from '../sim/colony';
+import { energyCapacity, MAX_BUILDINGS, oreCapacity, productCapacity } from '../sim/colony';
 import { inventoryMass, RESOURCES } from '../sim/resources';
 import { WORLD } from '../sim/config';
 import { NOTICE_MAX_SECONDS } from '../sim/messages';
@@ -61,7 +61,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!RESOURCES.every(r => number(world.depot[r]) && number(world.ship.cargo[r])) || inventoryMass(world.ship.cargo) > cargoCapacity(world.ship) + 1e-6) return false;
   const colony = world.colony;
   if (colony.policy !== undefined && !validPolicy(colony.policy)) return false;
-  if (colony.buildings.length > 48 || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
+  if (colony.buildings.length > MAX_BUILDINGS || !BUILD_TYPES.includes(colony.selected) || !number(colony.offset, -96, 96)) return false;
   const buildingShape = { id: 1, kind: '', angle: 0, enabled: true, progress: 0, recipe: 0, status: '' };
   if (!colony.buildings.every(b => shape(buildingShape, b) && Number.isInteger(b.id) && b.id > 0 && BUILD_TYPES.includes(b.kind) && number(b.angle, -Math.PI, Math.PI) &&
     number(b.progress, 0, 200) && Number.isInteger(b.recipe) && b.recipe >= 0 && b.recipe < REFINERY_RECIPES.length && ['idle', 'running', 'no power', 'no feedstock', 'output full', 'disabled', 'wrecked', 'no deposit', 'depleted', 'target met', 'power reserved', 'delivery reserved', 'pressurizing', 'air low', 'breathable', 'power limited', 'starting', 'research staffed', 'shield active', 'shield charging', 'shield breached', 'no fuel', 'worn out'].includes(b.status))) return false;
