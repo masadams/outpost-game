@@ -61,9 +61,17 @@ export function drawShip(g: Phaser.GameObjects.Graphics, s: Ship, zoom: number, 
       g.fillStyle(color, Math.max(0, alpha + flicker * alpha));
       g.fillCircle(s.position.x + ahead.x * along, s.position.y + ahead.y * along, r);
     };
-    glow(16, 4, 0xff6a2a, 0.18 * heat);
-    glow(11, 6, 0xffa45c, 0.3 * heat);
-    glow(7, 7, 0xfff0c8, 0.35 * heat);
+    // A trail of hot air streaming behind, longer the hotter it is.
+    const trail = 6 + Math.round(10 * heat);
+    for (let i = trail; i >= 1; i--) {
+      const fade = 1 - i / (trail + 1);
+      glow(Math.max(3, 12 * fade + 4 / zoom), -i * 7, 0xff6a2a, 0.12 * heat * fade);
+    }
+    // Never smaller on screen than a few pixels, so it reads when zoomed out.
+    const floor = 6 / zoom;
+    glow(Math.max(22, floor * 3), 4, 0xff6a2a, 0.2 * heat);
+    glow(Math.max(14, floor * 2), 6, 0xffa45c, 0.32 * heat);
+    glow(Math.max(8, floor), 7, 0xfff0c8, 0.4 * heat);
   }
   // Engine flame is drawn first, so the hull sits in front of it.
   if (s.thrusting && !paused) {
