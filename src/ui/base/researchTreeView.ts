@@ -3,7 +3,7 @@ import type { Building } from '../../sim/colony';
 import { facilityLevel } from '../../sim/facilityStats';
 import { tierTechs } from '../../sim/tiers';
 import { blueprintRevealed } from '../../sim/unlocks';
-import { featureVisible } from '../../preferences/features';
+import { featureVisible, partSlotVisible } from '../../preferences/features';
 import { PURPOSE } from '../build/buildView';
 import { tierEffect } from './upgradeView';
 import { equipmentError } from '../../sim/equipment';
@@ -216,7 +216,8 @@ export function researchTreeView(w: WorldState): ResearchTreeView {
     };
   });
   const edges: TreeEdge[] = TECH_IDS.flatMap(to => TECHNOLOGIES[to].requires.map(from => ({ from, to, done: r.completed.includes(from) })));
-  const slots = PART_SLOTS.map(slot => {
+  // Slots for systems a new player does not have are left out, so nothing is listed that cannot be fitted.
+  const slots = PART_SLOTS.filter(slot => partSlotVisible(slot)).map(slot => {
     const fittedId = root.ship.equipment.find(id => UPGRADES[id].slot === slot) ?? null;
     const parts: PartRow[] = UPGRADE_IDS.filter(id => UPGRADES[id].slot === slot).map(id => {
       const spec = UPGRADES[id];
