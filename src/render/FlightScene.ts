@@ -34,7 +34,7 @@ import { drawSurface } from './surface';
 import { drawColony } from './colony';
 import { applyColonyAction, type ColonyAction } from '../sim/colony';
 import { notify } from '../sim/messages';
-import { inspectCheckpoint, writeCheckpoint } from '../persistence/checkpoint';
+import { inspectCheckpoint, SaveRefused, writeCheckpoint } from '../persistence/checkpoint';
 import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
 import { tractorStats } from '../sim/shipStats';
@@ -76,6 +76,13 @@ const EXTRA_WORLDS: BodyId[] = ['verdant', 'tide', 'murk'];
 const HALO_COLOUR: Partial<Record<BodyId, string>> = { verdant: '110,190,160', tide: '90,150,230', murk: '190,150,90' };
 
 /** Milliseconds of play between autosaves. */
+/** What to tell the player when a save does not go through, and a fuller note in the console for a bug report. */
+function saveFailure(error: unknown): string {
+  console.warn('Save failed', error);
+  if (error instanceof SaveRefused) return `SAVE FAILED · A PROBLEM WITH ${error.area.toUpperCase()} · PLEASE REPORT THIS`;
+  return 'SAVE FAILED · THE BROWSER WOULD NOT STORE IT (STORAGE FULL OR BLOCKED)';
+}
+
 const AUTOSAVE_MS = 120_000;
 
 export class FlightScene extends Phaser.Scene {
@@ -420,8 +427,9 @@ export class FlightScene extends Phaser.Scene {
         try {
           writeCheckpoint(localStorage, this.simulation);
           this.menu.message('Game saved');
-        } catch {
-          this.menu.message('Save failed · storage unavailable or state invalid');
+        } catch (error) {
+          const text = saveFailure(error);
+          this.menu.message(text.charAt(0) + text.slice(1).toLowerCase());
         }
       }
       return;
@@ -719,8 +727,8 @@ export class FlightScene extends Phaser.Scene {
     try {
       writeCheckpoint(window.localStorage, this.simulation);
       notify(this.simulation, 'GAME SAVED');
-    } catch {
-      notify(this.simulation, 'SAVE FAILED · STORAGE UNAVAILABLE');
+    } catch (error) {
+      notify(this.simulation, saveFailure(error), 8);
     }
   }
   private autosaveTime = 0;
@@ -738,8 +746,9 @@ export class FlightScene extends Phaser.Scene {
     try {
       writeCheckpoint(window.localStorage, w);
       if (!w.notice.message) notify(w, 'AUTOSAVED');
-    } catch {
-      /* A failed autosave keeps the last good save. */
+    } catch (error) {
+      // A failed autosave keeps the last good save, and says so: silence would hide lost progress.
+      notify(w, saveFailure(error).replace('SAVE FAILED', 'AUTOSAVE FAILED'), 8);
     }
   }
   private loadCheckpoint(requested: boolean): boolean {

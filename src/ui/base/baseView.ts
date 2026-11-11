@@ -646,7 +646,7 @@ export interface SeedShipView {
 /** The seed ship, once the Shipyard blueprint has come back or a yard already stands. */
 export function seedShipView(w: WorldState): SeedShipView | null {
   const root = w.rootWorld ?? w;
-  if (!hasShipyard(root) && !hasMemory(root, 'relay')) return null;
+  if (!hasShipyard(root) && !hasMemory(root, 'makersRelay')) return null;
   const done = seedStagesDone(root);
   const chosen = seedEnding(root);
   return {

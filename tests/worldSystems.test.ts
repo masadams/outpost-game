@@ -146,7 +146,7 @@ describe('remote operations and scarcity', () => {
     if (field === 'body') data.world.ship.ground = 'unknown';
     if (field === 'freight') data.world.ship.freight.alloy = -1;
     if (field === 'capacity') { data.world.ship.freight.alloy = 100; data.world.ship.cargo.iron = 100; }
-    if (field === 'moon stocks') data.world.outposts.moon.colony.products.alloy = 101;
+    if (field === 'moon stocks') data.world.outposts.moon.colony.products.alloy = 100_001;
     if (field === 'moon seam') data.world.outposts.moon.surfaceDeposits[0].remaining = 181;
     if (field === 'research') data.world.outposts.moon.colony.research.completed = ['materials'];
     if (field === 'missile frame') { data.world.combat.projectiles = [{ id: data.world.nextId++, owner: 'ship', kind: 'missile', position: data.world.ship.position, velocity: data.world.ship.velocity, life: 12, targetId: null, frameVelocity: { x: null, y: 0 } }]; }

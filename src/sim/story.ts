@@ -169,7 +169,7 @@ export const MEMORIES: readonly Memory[] = [
   },
   // An expedition that goes out after the second signal and comes home finds the makers' relay.
   {
-    id: 'relay', title: 'The relay',
+    id: 'makersRelay', title: 'The relay',
     text: 'The makers\' relay still turns in the far system. Its log holds a heading to the living colony, and the carrier\'s last hour. No cause.',
     when: w => {
       const trip = w.exploration.expedition;

@@ -113,7 +113,7 @@ describe('the seed ship', () => {
     stepStory(w);
     expect(blueprintRevealed(w, 'shipyard')).toBe(false);
     expect(seedShipView(w)).toBeNull();
-    w.exploration.story!.memories.push('relay');
+    w.exploration.story!.memories.push('makersRelay');
     expect(blueprintRevealed(w, 'shipyard')).toBe(true);
     expect(seedShipView(w)!.yard).toBe(false);
   });
