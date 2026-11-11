@@ -63,9 +63,10 @@ describe('oxygen habitats', () => {
     stepAstronaut(w.astronaut, { move: 0, jump: false }, 1, consumeHabitatAir(w, 1));
     expect(h.oxygen).toBeCloseTo(.15); expect(w.astronaut.oxygen).toBeCloseTo(SUIT.oxygen - .75); expect(habitatSource(w)).toBeUndefined();
   });
-  it('holds an empty suit alive without refilling or healing, and never revives a dead crew member', () => {
-    const { w } = fixture(); w.astronaut.oxygen = 0; w.astronaut.health = 42;
-    stepWorld(w, { thrust: false, turn: 0 }, STEP); expect(w.astronaut.health).toBe(42); expect(w.astronaut.oxygen).toBe(0);
+  it('refills an empty suit from dome air without healing, and never revives a dead crew member', () => {
+    const { w, h } = fixture(); w.astronaut.oxygen = 0; w.astronaut.health = 42; const air = h.oxygen;
+    stepWorld(w, { thrust: false, turn: 0 }, STEP); expect(w.astronaut.health).toBe(42);
+    expect(w.astronaut.oxygen).toBeGreaterThan(0); expect(h.oxygen).toBeLessThan(air);
     w.astronaut.health = 0; expect(consumeHabitatAir(w, 1)).toBe(0); stepWorld(w, { thrust: false, turn: 0 }, STEP); expect(w.astronaut.health).toBe(0);
   });
   it('keeps leaking while disabled, with a higher rate through damaged seals', () => {

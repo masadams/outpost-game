@@ -10,7 +10,8 @@ export const POLICY_INFO: Record<PolicyField, { label: string; step: number; uni
   alloyReserve: { label: 'Turret alloy', step: 5, unit: 'kg' },
   componentsReserve: { label: 'Turret components', step: 1, unit: 'kg' },
 };
-export const MAX_RESERVE = 1000;
+/** The most any reserve can be set to. Power is also held to what the batteries can store (see colony.ts). */
+export const MAX_RESERVE = 1_000_000;
 export const createPolicy = (): ColonyPolicy => ({ energyReserve: 0, deliveryReserve: 0, alloyReserve: 0, componentsReserve: 0 });
 const DEFAULT_POLICY: Readonly<ColonyPolicy> = Object.freeze(createPolicy());
 export const policyFor = (colony: Colony): Readonly<ColonyPolicy> => colony.policy ?? DEFAULT_POLICY;

@@ -134,7 +134,9 @@ export function applyColonyAction(world: WorldState, action: ColonyAction): void
     if (!POLICY_FIELDS.includes(action.field) || (action.direction !== -1 && action.direction !== 1)) return;
     const policy = world.colony.policy ??= createPolicy();
     const step = Number.isFinite(action.step) && action.step! > 0 && action.step! <= 200 ? action.step! : POLICY_INFO[action.field].step;
-    policy[action.field] = clamp(policy[action.field] + action.direction * step, 0, MAX_RESERVE);
+    // Power kept back can be anything up to what the batteries hold; other reserves have a generous ceiling.
+    const ceiling = action.field === 'energyReserve' ? Math.max(energyCapacity(world.colony), POLICY_INFO.energyReserve.step) : MAX_RESERVE;
+    policy[action.field] = clamp(policy[action.field] + action.direction * step, 0, ceiling);
     return;
   }
   if(action.type==='buildMode'){if(typeof action.open==='boolean')world.colony.buildOpen=action.open;return;}
