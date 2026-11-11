@@ -53,7 +53,7 @@ const RULES = [
   [/^src\/persistence\//, ['menu', 'checkpointRecovery', 'flight', 'story']],
   [/^src\/audio\//, ['audio', 'flightWarnings']],
   [/^src\/(input|preferences)\//, ['presentation', 'directControls', 'focusMode', 'menu']],
-  [/^src\/render\//, ['rotation', 'atmosphere', 'flight']],
+  [/^src\/render\//, ['rotation', 'atmosphere', 'flight', 'base']],
   // Simulation, by subject. Unit tests cover the rules; these check the screens that show them.
   [/^src\/sim\/(storm|meteor|rockFall|defence|intercept|observatory)/, ['storm', 'defence']],
   [/^src\/sim\/(signal|expedition|farWorlds)/, ['signal']],

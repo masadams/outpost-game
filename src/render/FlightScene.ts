@@ -10,6 +10,7 @@ import { VisualEffects } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
 import { RenderBudget, visible } from './budget';
 import { drawShip, entryHeat } from './ship';
+import { drawGridLines } from './gridLines';
 import { flightRegion } from '../sim/flightRegion';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
@@ -134,6 +135,8 @@ export class FlightScene extends Phaser.Scene {
   private help!: Help;
   private pausedBeforeHelp = false;
   private flightTools!: FlightTools;
+  /** Power lines drawn over the base: toggled from the view tools, always on while building. */
+  private showGrid = false;
   private prediction: Trajectory | null = null;
   private predictionTime = 0;
   private threats: ThreatPrediction[] = [];
@@ -455,7 +458,9 @@ export class FlightScene extends Phaser.Scene {
   }
   private viewAction(action: ViewAction): void {
     if (this.menu?.isOpen || this.help.isOpen || this.settings.isOpen) return;
-    if (action === 'trajectory') {
+    if (action === 'grid') {
+      this.showGrid = !this.showGrid;
+    } else if (action === 'trajectory') {
       this.flightTools.trajectory = !this.flightTools.trajectory;
       this.prediction = null;
       this.threats = [];
@@ -517,6 +522,7 @@ export class FlightScene extends Phaser.Scene {
       wreck: wreckCard(world),
       boot: bootLog(world),
       trajectory: this.flightTools.trajectory,
+      grid: this.showGrid,
       predictionPoints: this.simulation.towing.targetId !== null ? 0 : (this.prediction?.points.length ?? 0),
       keys: {
         ship: key('I'),
@@ -1011,6 +1017,7 @@ export class FlightScene extends Phaser.Scene {
     for (const site of allColonies(this.simulation)) {
       drawGeology(g, site, this.follow.zoom);
       drawShields(g, site, this.hud.shieldAccents && !this.preferences.reducedMotion);
+      if (this.showGrid || this.simulation.colony.buildOpen) drawGridLines(g, site);
       drawColony(
         g,
         site,

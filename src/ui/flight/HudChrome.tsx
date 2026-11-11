@@ -8,7 +8,7 @@ import type { DayView } from './dayView';
 import type { WreckCard } from './wreckView';
 
 export type ScreenPanel = 'cargo' | 'colony' | 'command' | 'navigation';
-export type ViewAction = 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
+export type ViewAction = 'grid' | 'trajectory' | 'zoomIn' | 'zoomOut' | 'autoZoom';
 export type SoundStatus = 'locked' | 'on' | 'muted' | 'unavailable';
 
 export interface ChromeKeys {
@@ -39,6 +39,8 @@ export interface ChromeState {
   /** The waking log at the very start of a new game. */
   boot: readonly string[] | null;
   trajectory: boolean;
+  /** Whether the power lines are drawn over the base. */
+  grid: boolean;
   predictionPoints: number;
   keys: ChromeKeys;
 }
@@ -254,6 +256,13 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           hint={`Coast path ${state.trajectory ? 'on' : 'off'} · ${keys.path}`}
           pressed={state.trajectory}
           onClick={() => on.view('trajectory')}
+        />
+        <ToolButton
+          icon="grid"
+          label="Power lines"
+          hint={`Power lines ${state.grid ? 'on' : 'off'}`}
+          pressed={state.grid}
+          onClick={() => on.view('grid')}
         />
         <ToolButton icon="zoomOut" label="Zoom out" hint={`Zoom out · ${keys.zoomOut}`} onClick={() => on.view('zoomOut')} />
         <ToolButton icon="zoomIn" label="Zoom in" hint={`Zoom in · ${keys.zoomIn}`} onClick={() => on.view('zoomIn')} />
