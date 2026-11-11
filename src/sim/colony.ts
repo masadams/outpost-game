@@ -2,6 +2,7 @@ import { onWater } from './nature';
 import { deliverPower, feedLimits, islandGroups, linkedBuildings } from './grid';
 import { stepObservatory } from './observatory';
 import { BOOT_SECONDS, bootStep, isOnline, needsBoot } from './boot';
+import { stepTugBay } from './tugBay';
 import { buildingLimit, headquarters, hqLevel, hqStorage, isHq, MOST_BUILDINGS } from './headquarters';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
@@ -42,6 +43,8 @@ import type { WorldState } from './world';
 
 export interface Building {
   level?:1|2|3;
+  /** The rock a tug bay's tug is working. Only on a tug bay. */
+  target?: number;
   /** The Headquarters' own level, 1 to 4. Only on the HQ. */
   hqLevel?: number;
   dispatch?: { rank: number; limit: number };
@@ -281,6 +284,7 @@ function runMachine(world: WorldState, building: Building, dt: number, researchS
   if (building.kind === 'massDriver') { stepMassDriver(world, building, dt); return researchStaffed; }
   if (building.kind === 'workshop') { stepWorkshop(world, building, dt); return researchStaffed; }
   if (building.kind === 'antenna') { stepAntenna(world, building, dt); return researchStaffed; }
+  if (building.kind === 'tugBay') { stepTugBay(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'droneBay') { stepMinerDrone(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'miningRig') { stepMiningRig(world, building, dt, oreCapacity(colony)); return researchStaffed; }
   if (building.kind === 'refinery' && !selectScheduledRecipe(world, building, productCapacity(colony))) return researchStaffed;

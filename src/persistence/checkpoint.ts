@@ -68,6 +68,7 @@ function validWorld(value: unknown, remote = true): value is WorldState {
   if (!colony.buildings.every(b=>validBuildingUpgrade(world,b)))return false;
   if (!colony.buildings.every(b => b.hqLevel === undefined || (b.kind === 'headquarters' && Number.isInteger(b.hqLevel) && b.hqLevel >= 1 && b.hqLevel <= 4))) return false;
   if (colony.buildings.filter(b => b.kind === 'headquarters').length > 1) return false;
+  if (!colony.buildings.every(b => b.target === undefined || (b.kind === 'tugBay' && Number.isInteger(b.target) && b.target > 0))) return false;
   if (!colony.buildings.every(b => (b.boot === undefined || number(b.boot, 0, 60)) && (b.dark === undefined || number(b.dark, 0, 600)) && (b.wait === undefined || number(b.wait, 0, 60)) && (b.linked === undefined || b.linked === false) && (b.feed === undefined || number(b.feed, 0, 1)) && (b.charge === undefined || number(b.charge, 0, 1e6)) && (b.island === undefined || typeof b.island === 'boolean'))) return false;
   if (!number(colony.oxygenUsed) || !colony.buildings.every(b => isHabitat(b.kind) ? !!b.habitat && number(b.habitat.oxygen, 0, airCapacity(b)) && number(b.habitat.energy, 0, HABITATS[b.kind].power * HABITAT.backupSeconds) && typeof b.habitat.powered === 'boolean' && typeof b.habitat.backup === 'boolean' : b.habitat === undefined)) return false;
   if (!colony.buildings.every(b => b.schedule === undefined || b.kind === 'refinery' && validSchedule(b.schedule))) return false;
