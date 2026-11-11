@@ -1,4 +1,4 @@
-import { WEATHER } from '../../sim/weather';
+import { WEATHER, walled } from '../../sim/weather';
 import { seasOf } from '../../sim/nature';
 import { colonyPlanet } from '../../sim/localWorld';
 import { wrap } from '../../sim/math';
@@ -80,6 +80,7 @@ export const PURPOSE: Record<BuildType, string> = {
   workshop: 'Lets you fit ship parts away from home',
   shipyard: 'Where the seed ship is put together',
   headquarters: 'The centre of the base',
+  seaWall: 'Keeps the shore dry at high tide for 150 m either side',
   workerBay: 'A drone that builds queued orders and repairs damage within 600 m',
   tugBay: 'Sends a tug up to bring down ore from rocks circling home',
   geothermal: 'Steady power from heat underground',
@@ -217,7 +218,7 @@ function floodsAt(w: WorldState, angle: number): boolean {
 export function placementTip(w: WorldState, kind: BuildType, error: string | null, angle?: number): { text: string; ok: boolean } {
   const label = BLUEPRINTS[kind].label;
   const link = angle === undefined ? null : linkPreview(w, kind, angle);
-  const tide = angle !== undefined && floodsAt(w, angle) ? ' · floods at high tide' : '';
+  const tide = angle !== undefined && kind !== 'seaWall' && floodsAt(w, angle) && !walled(w, angle) ? ' · floods at high tide' : '';
   if (!error && link) {
     const metres = Math.round(link.metres);
     if (!link.connected) return { text: `${label} · ${metres} m from ${link.from}, too far (max ${link.reach} m). It would sit unwired.`, ok: false };

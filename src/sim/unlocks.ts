@@ -1,3 +1,4 @@
+import { homeHqAtLeast } from './headquarters';
 import { studiedFinds } from './finds';
 import type { BuildType } from './colonyConfig';
 import { hasMemory } from './story';
@@ -29,11 +30,16 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   if (kind === 'geothermal') return w.colony.research.completed.includes('geoscience');
   if (kind === 'windTurbine') return w.colony.research.completed.includes('aeronautics');
   if (kind === 'massDriver') return w.colony.research.completed.includes('massDrivers');
-  if (kind === 'shipyard') return hasMemory(w, 'makersRelay');
+  if (kind === 'shipyard') return hasMemory(w, 'makersRelay') && homeHqAtLeast(w, 3);
   if (kind === 'workshop') return Object.values(w.outposts).some(o => o.colony.buildings.length > 0);
   if (kind === 'antenna') return [w.colony, ...Object.values(w.outposts).map(o => o.colony)].some(c => c.buildings.some(b => b.kind === 'observatory'));
   // The tug bay follows the drone bay: once one is working, the next step is the rocks overhead.
-  if (kind === 'workerBay') return colonies(w).some(c => c.buildings.some(b => b.kind === 'workshop' || b.kind === 'droneBay'));
+  // A Headquarters at level 2 opens the worker bay; without one (no day cycle) a workshop or drone bay does.
+  if (kind === 'workerBay') {
+    if (w.colony.buildings.some(b => b.kind === 'headquarters')) return homeHqAtLeast(w, 2);
+    return colonies(w).some(c => c.buildings.some(b => b.kind === 'workshop' || b.kind === 'droneBay'));
+  }
+  if (kind === 'seaWall') return (w.outposts.tide?.colony.buildings.length ?? 0) > 0;
   if (kind === 'tugBay') return colonies(w).some(c => c.buildings.some(b => b.kind === 'droneBay'));
   if (kind === 'droneBay') return w.colony.research.completed.includes('precision');
   // Shields come after the second storm has been survived; domes once there is a base on another world.

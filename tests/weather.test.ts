@@ -3,7 +3,7 @@ import { createWorld } from '../src/sim/world';
 import { BODIES, planetAt, surfacePosition, type BodyId } from '../src/sim/celestial';
 import { colonyWorld } from '../src/sim/localWorld';
 import { seasOf } from '../src/sim/nature';
-import { WEATHER, flooded, stepWeather, weatherChip, weatherOn, weatherSolar } from '../src/sim/weather';
+import { SEA_WALL_REACH, WEATHER, flooded, stepWeather, weatherChip, weatherOn, weatherSolar } from '../src/sim/weather';
 import { completedBuilding } from '../src/sim/construction';
 import { generatorOutput } from '../src/sim/generators';
 
@@ -79,5 +79,41 @@ describe('weather on the far worlds', () => {
     stepWeather(w);
     expect(w.notice.message).toMatch(/^DUST STORM ON EMBER · PANELS DIM/);
     expect(weatherChip(w)).toMatchObject({ label: 'Dust storm', active: true });
+  });
+});
+
+describe('answers to the weather', () => {
+  it('a sea wall keeps its stretch of shore dry at high tide', () => {
+    const w = createWorld(4242);
+    const tide = colonyWorld(w, 'tide');
+    const sea = seasOf('tide', w.seed ?? 0)[0];
+    const shore = sea.angle + sea.half + 30 / BODIES.tide.radius;
+    timeWhen(w, 'tide', s => s >= 1);
+    expect(flooded(tide, shore)).toBe(true);
+    tide.colony.buildings.push(completedBuilding(2001, 'seaWall', shore + 40 / BODIES.tide.radius, tide));
+    expect(flooded(tide, shore)).toBe(false);
+    // The far shore of the same sea has no wall, and floods.
+    expect(SEA_WALL_REACH).toBeLessThan(sea.half * BODIES.tide.radius);
+    expect(flooded(tide, sea.angle - sea.half - 30 / BODIES.tide.radius)).toBe(true);
+  });
+
+  it('a worker drone sweeping the panels halves what a dust storm takes', () => {
+    const w = createWorld(4242);
+    timeWhen(w, 'ember', s => s >= 1);
+    const ember = colonyWorld(w, 'ember');
+    const bare = weatherSolar(ember, 0.5);
+    ember.colony.buildings.push(completedBuilding(2002, 'workerBay', 0.5, ember));
+    const swept = weatherSolar(ember, 0.5);
+    expect(1 - swept).toBeCloseTo((1 - bare) / 2);
+  });
+});
+
+describe('Weatherproofing research', () => {
+  it('takes 40% off what dust takes from panels', () => {
+    const w = createWorld(4242);
+    timeWhen(w, 'ember', s => s >= 1);
+    const bare = 1 - weatherSolar(colonyWorld(w, 'ember'), 0.5);
+    w.colony.research.completed.push('weatherproofing');
+    expect(1 - weatherSolar(colonyWorld(w, 'ember'), 0.5)).toBeCloseTo(bare * 0.6);
   });
 });

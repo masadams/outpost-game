@@ -5,7 +5,7 @@ import { BOOT_SECONDS, bootStep, isOnline, needsBoot } from './boot';
 import { stepTugBay } from './tugBay';
 import { stepWorkerBay } from './workerBay';
 import { drainPiles } from './stockpile';
-import { buildingLimit, headquarters, hqLevel, hqStorage, isHq, MOST_BUILDINGS } from './headquarters';
+import { buildingLimit, headquarters, hqLevel, hqStorage, isHq } from './headquarters';
 import {capacityFactor,workFactor,buildingCost} from './facilityStats';
 import type {BuildingUpgradeAction} from './buildingUpgrades';
 import type {AutopilotAction} from './autopilotConfig';
@@ -36,7 +36,7 @@ import { createSchedule, hasRecipeInputs, hasRecipeRoom, MAX_STOCK_TARGET, selec
 import type { CombatAction } from './combatConfig';
 import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
-import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, type Product, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
+import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, type Product, REFINERY_RECIPES, FUEL_RECIPE, type Recipe, MOST_BUILDINGS } from './colonyConfig';
 import { clamp, wrap } from './math';
 import { inventoryMass, RESOURCES, type Resource } from './resources';
 import { STATIONS } from './stations';

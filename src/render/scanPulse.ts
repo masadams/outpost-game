@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { planetAt } from '../sim/celestial';
 import { heading } from '../sim/math';
-import { PROSPECT, scanPulse } from '../sim/prospect';
+import { scanPulse, scanReach } from '../sim/prospect';
 import type { WorldState } from '../sim/world';
 
 /** Seconds the pulse takes to spread to full reach, then to fade. */
@@ -22,7 +22,7 @@ export function drawScanPulse(g: Phaser.GameObjects.Graphics, world: WorldState)
   const radius = planet.radius;
   const spread = Math.min(1, age / SPREAD);
   const fade = age <= SPREAD ? 1 : 1 - (age - SPREAD) / FADE;
-  const reach = (PROSPECT.reach / radius) * (1 - (1 - spread) ** 2);
+  const reach = (scanReach(world) / radius) * (1 - (1 - spread) ** 2);
   g.save();
   g.translateCanvas(planet.position.x, planet.position.y);
   g.rotateCanvas(planet.spin);

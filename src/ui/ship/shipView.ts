@@ -15,6 +15,7 @@ import { nearbyBuilding } from '../../sim/colony';
 import { BLUEPRINTS } from '../../sim/colonyConfig';
 import { haulError } from '../../sim/freight';
 import { manifestPlan } from '../../sim/manifests';
+import { blueprintRevealed } from '../../sim/unlocks';
 import { availableProduct } from '../../sim/colonyPolicy';
 import { PRODUCTS } from '../../sim/colonyConfig';
 import type { WorldState } from '../../sim/world';
@@ -32,6 +33,8 @@ export interface ShipPanelView {
   kit: KitView | null;
   /** Ore waiting in the depot of another world, ready to haul home. */
   haul: { text: string; enabled: boolean; reason: string } | null;
+  /** The worker bay kit for an outpost: shown at home once the worker bay is offered and an outpost stands. */
+  outpostKit: { text: string; enabled: boolean; reason: string } | null;
   /** Ore piled beside a mine that is off the base grid, next to the landed lander. */
   piles: { text: string; enabled: boolean; reason: string } | null;
 }
@@ -167,7 +170,7 @@ function kit(w: WorldState): KitView | null {
   const onMoon = (w.siteBody ?? 'home') !== 'home';
   if (aboard) {
     const where = onMoon ? 'Land on the pad and press E to unload it.' : 'Pick a world on the Map, fly there and land on its pad.';
-    return { text: `Rig kit aboard. ${where}`, load: null };
+    return { text: `Kit aboard. ${where}`, load: null };
   }
   if (onMoon) return null;
   const plan = manifestPlan(w, 'nacreKit');
@@ -178,6 +181,26 @@ function kit(w: WorldState): KitView | null {
     : short.length ? `Needs ${short.join(', ')}`
       : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
   return { text: 'A rig, a solar array, a battery, a power relay and a refinery for another world: 24 alloy, 12 wire, 6 components. Refine ore there and carry home the lighter materials. Nights there are long; the battery carries the rig part of the way.', load: { enabled: plan.error === null, reason } };
+}
+
+/** A worker bay, battery and relay to carry to an outpost, so its buildings get built and mended while you are away. */
+function outpostKit(w: WorldState): ShipPanelView['outpostKit'] {
+  if ((w.siteBody ?? 'home') !== 'home') return null;
+  if (!blueprintRevealed(w, 'workerBay')) return null;
+  if (!Object.values(w.outposts).some(o => o.colony.buildings.length > 0)) return null;
+  if (PRODUCTS.some(p => w.ship.freight[p] > 0)) return null;
+  const plan = manifestPlan(w, 'outpostKit');
+  const short = PRODUCTS.flatMap(p => (plan.missing[p] > 0 && availableProduct(w.colony, p) + 1e-9 < plan.missing[p]
+    ? [`${Math.ceil(plan.missing[p] - availableProduct(w.colony, p))} more ${PRODUCT_NAME[p as keyof typeof PRODUCT_NAME] ?? p}`]
+    : []));
+  const reason = plan.error === null ? 'Load it, fly to the outpost, land on its pad and press E.'
+    : short.length ? `Needs ${short.join(', ')}`
+      : plan.error === 'Insufficient shared hold capacity' ? 'Empty the hold first.' : 'Land on the home pad to load the kit.';
+  return {
+    text: 'A worker bay, a battery and a power relay: 18 alloy, 11 wire, 8 components. Its drone builds and mends the outpost while you are away.',
+    enabled: plan.error === null,
+    reason,
+  };
 }
 
 /** Ore piled at mines beside the landed lander, out of reach of the base grid. */
@@ -231,6 +254,7 @@ export function shipPanelView(w: WorldState): ShipPanelView {
     depot: w.depotOpen,
     foot: w.playerMode === 'astronaut' ? foot(w) : null,
     kit: kit(w),
+    outpostKit: outpostKit(w),
     haul: haul(w),
     piles: piles(w),
   };

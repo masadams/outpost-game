@@ -1,7 +1,9 @@
 import type Phaser from 'phaser';
 import { BODIES, nearestPlanet, relative, type Planet } from '../sim/celestial';
 import { seasOf } from '../sim/nature';
-import { weatherOn } from '../sim/weather';
+import { SEA_WALL_REACH, weatherOn } from '../sim/weather';
+import { colonyWorld } from '../sim/localWorld';
+import { wrap } from '../sim/math';
 import type { WorldState } from '../sim/world';
 
 /** High water on Tide: a lighter band of water climbing past each sea's edge, its line shimmering. */
@@ -9,11 +11,16 @@ export function drawTide(g: Phaser.GameObjects.Graphics, body: Planet, world: Wo
   const now = weatherOn(world, body.id);
   if (!now || now.spec.kind !== 'tide' || now.strength <= 0) return;
   const climb = (now.spec.reach * now.strength) / body.radius;
+  const walls = colonyWorld(world, 'tide').colony.buildings.filter(b => b.kind === 'seaWall' && (b.health ?? 100) > 0);
+  const guard = SEA_WALL_REACH / body.radius;
+  const dry = (angle: number) => walls.some(w => Math.abs(wrap(w.angle - angle)) <= guard);
   g.save();
   g.translateCanvas(body.position.x, body.position.y);
   g.rotateCanvas(body.spin);
   for (const sea of seasOf(body.id, world.seed ?? 0)) {
     for (const side of [-1, 1]) {
+      // A wall on this shore holds the water back.
+      if (dry(sea.angle + side * (sea.half + climb / 2))) continue;
       const edge = sea.angle + side * sea.half - Math.PI / 2;
       const from = side < 0 ? edge - climb : edge;
       const to = side < 0 ? edge : edge + climb;

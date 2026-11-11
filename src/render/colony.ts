@@ -189,6 +189,11 @@ function drawColonyLocal(g: Phaser.GameObjects.Graphics, world: WorldState, sele
         const a = p(-10, 5 + i * 4), b = p(10, 5 + i * 4);
         g.lineBetween(a.x, a.y, b.x, b.y);
       }
+    } else if (entry.kind === 'seaWall') {
+      // A low, sloped wall facing both ways, with a coping line along the top.
+      g.strokePoints([p(-width, 0), p(-width + 4, 12), p(width - 4, 12), p(width, 0)], false);
+      const a = p(-width + 4, 9), b = p(width - 4, 9);
+      g.lineBetween(a.x, a.y, b.x, b.y);
     } else if (entry.kind === 'workerBay') {
       // A landing pad on a short post, with the drone sitting on it when it is home.
       const left = p(-6, 18), right = p(6, 18), post = p(0, 13);

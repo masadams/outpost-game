@@ -29,7 +29,7 @@ test('the research tree shows every technology, explains what is missing and lis
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
   await page.locator('[data-base-nav="research"]').click();
-  await expect(page.locator('.tree-node')).toHaveCount(29);
+  await expect(page.locator('.tree-node')).toHaveCount(32);
   await expect(page.locator('[data-tech="materials"]')).toHaveAttribute('data-state', 'done');
   await expect(page.locator('[data-tech="extraction"]')).toHaveAttribute('data-state', 'ready');
   await page.locator('[data-tech="ionics"]').click();

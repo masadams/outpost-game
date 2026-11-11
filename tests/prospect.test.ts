@@ -3,7 +3,7 @@ import { createWorld, stepWorld } from '../src/sim/world';
 import { planetAt, surfacePosition } from '../src/sim/celestial';
 import { WORLD } from '../src/sim/config';
 import { seamKnown } from '../src/sim/geology';
-import { PROSPECT, prospect, prospectBlock, scanButton } from '../src/sim/prospect';
+import { PROSPECT, prospect, prospectBlock, scanButton, scanCooldown, scanReach } from '../src/sim/prospect';
 import { wrap } from '../src/sim/math';
 
 const idle = { thrust: false, turn: 0 };
@@ -56,5 +56,15 @@ describe('ground scan from the lander', () => {
     expect(scanButton(w)?.unknown).toBeGreaterThan(0);
     for (const d of w.surfaceDeposits) d.surveyed = true;
     expect(scanButton(w)).toBeNull();
+  });
+});
+
+describe('Ground survey research', () => {
+  it('stretches the scan and shortens the recharge', () => {
+    const { w } = hovering();
+    expect(scanReach(w)).toBe(PROSPECT.reach);
+    w.colony.research.completed.push('groundSurvey');
+    expect(scanReach(w)).toBe(2500);
+    expect(scanCooldown(w)).toBe(25);
   });
 });

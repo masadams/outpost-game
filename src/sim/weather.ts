@@ -4,6 +4,7 @@ import { wrap } from './math';
 import { notify } from './messages';
 import { seasOf } from './nature';
 import { streamFor } from './seed';
+import { WORKER } from './workerBay';
 import type { WorldState } from './world';
 
 /**
@@ -72,8 +73,19 @@ export function weatherOn(world: WorldState, body: BodyId): WeatherNow | null {
   return { body, spec, strength, startsIn: 0, endsIn: spec.length - local };
 }
 
+/** Metres along the shore a sea wall keeps dry, either side of it. */
+export const SEA_WALL_REACH = 150;
+
+/** Whether a standing sea wall guards this spot. */
+export function walled(world: WorldState, angle: number): boolean {
+  const radius = colonyPlanet(world).radius;
+  return world.colony.buildings.some(b => b.kind === 'seaWall' && (b.health ?? 100) > 0
+    && Math.abs(wrap(b.angle - angle)) * radius <= SEA_WALL_REACH);
+}
+
 /** Whether high water covers this spot on Tide right now. */
 export function flooded(world: WorldState, angle: number): boolean {
+  if (walled(world, angle)) return false;
   const body = colonyPlanet(world).id;
   const now = weatherOn(world, body);
   if (!now || now.spec.kind !== 'tide' || now.strength <= 0) return false;
@@ -82,11 +94,23 @@ export function flooded(world: WorldState, angle: number): boolean {
   return seasOf(body, rootOf(world).seed ?? 0).some(sea => (Math.abs(wrap(angle - sea.angle)) - sea.half) * radius <= climb);
 }
 
-/** Multiplier on a solar array's output from the weather where it stands. */
-export function weatherSolar(world: WorldState): number {
+/** Whether a worker drone is near enough to sweep dust or ash off a panel at this spot. */
+function swept(world: WorldState, angle: number): boolean {
+  const radius = colonyPlanet(world).radius;
+  return world.colony.buildings.some(b => b.kind === 'workerBay' && b.enabled && (b.health ?? 100) > 0
+    && Math.abs(wrap(b.angle - angle)) * radius <= WORKER.reach);
+}
+
+/**
+ * Multiplier on a solar array's output from the weather where it stands. A worker drone in reach sweeps the panels,
+ * so they lose only half as much.
+ */
+export function weatherSolar(world: WorldState, angle?: number): number {
   const now = weatherOn(world, colonyPlanet(world).id);
   if (!now || now.strength <= 0) return 1;
-  return 1 - (1 - now.spec.solar) * now.strength;
+  const proofed = (world.rootWorld ?? world).colony.research.completed.includes('weatherproofing');
+  const loss = (1 - now.spec.solar) * now.strength * (proofed ? 0.6 : 1);
+  return 1 - (angle !== undefined && swept(world, angle) ? loss / 2 : loss);
 }
 
 /** Multiplier on what a mining rig brings up. */
