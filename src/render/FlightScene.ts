@@ -3,7 +3,7 @@ import { blueprintRevealed } from '../sim/unlocks';
 import { carriedStory, NEW_SYSTEM_EVENT } from '../sim/story';
 import { actionAllowed, featureVisible, filterActions } from '../preferences/features';
 import { applyAutopilotAction } from '../sim/autopilot';
-import { GameMenu, type MenuAction } from '../ui/GameMenu';
+import { GameMenu, type MenuAction, type SlotOp } from '../ui/GameMenu';
 import { screenToWorld } from './pointer';
 import { drawCrewOrder } from './crewOrders';
 import { VisualEffects } from './effects';
@@ -39,7 +39,8 @@ import { drawSurface } from './surface';
 import { drawColony } from './colony';
 import { applyColonyAction, type ColonyAction } from '../sim/colony';
 import { notify } from '../sim/messages';
-import { inspectCheckpoint, SaveRefused, writeCheckpoint } from '../persistence/checkpoint';
+import { inspectCheckpoint, SaveRefused, type CheckpointSelection } from '../persistence/checkpoint';
+import { deleteSlot, readSlot, slotRows, writeSlot, type SaveSlot, type SlotRow } from '../persistence/slots';
 import { GameAudio } from '../audio/GameAudio';
 import { Help } from '../ui/Help';
 import { tractorStats } from '../sim/shipStats';
@@ -391,6 +392,7 @@ export class FlightScene extends Phaser.Scene {
         }
       },
       () => controlHint('P resumes', this.preferences),
+      { rows: () => this.slotRowsSafe(), act: (op, slot) => this.slotAction(op, slot) },
     );
     this.setPaused(true);
     this.menu.open('title');
@@ -437,7 +439,7 @@ export class FlightScene extends Phaser.Scene {
     if (action === 'save') {
       if (this.hasRun) {
         try {
-          writeCheckpoint(localStorage, this.simulation);
+          writeSlot(localStorage, 'auto', this.simulation);
           this.menu.message('Game saved');
         } catch (error) {
           const text = saveFailure(error);
@@ -750,7 +752,7 @@ export class FlightScene extends Phaser.Scene {
   private quickSave(): void {
     if (!this.hasRun) return;
     try {
-      writeCheckpoint(window.localStorage, this.simulation);
+      writeSlot(window.localStorage, 'auto', this.simulation);
       notify(this.simulation, 'GAME SAVED');
     } catch (error) {
       notify(this.simulation, saveFailure(error), 8);
@@ -769,18 +771,52 @@ export class FlightScene extends Phaser.Scene {
     const w = this.simulation;
     if (!this.hasRun || w.ship.state === 'crashed' || w.astronaut.health <= 0) return;
     try {
-      writeCheckpoint(window.localStorage, w);
+      writeSlot(window.localStorage, 'auto', w);
       if (!w.notice.message) notify(w, 'AUTOSAVED');
     } catch (error) {
       // A failed autosave keeps the last good save, and says so: silence would hide lost progress.
       notify(w, saveFailure(error).replace('SAVE FAILED', 'AUTOSAVE FAILED'), 8);
     }
   }
-  private loadCheckpoint(requested: boolean): boolean {
+  private slotRowsSafe(): SlotRow[] {
+    try {
+      return slotRows(window.localStorage);
+    } catch {
+      return [];
+    }
+  }
+  /** Save, load or delete one of the menu's save rows; the menu shows how it went. */
+  private slotAction(op: SlotOp, slot: SaveSlot): void {
+    const name = slot === 'auto' ? 'the autosave' : `save ${slot}`;
+    if (op === 'delete') {
+      if (slot !== 'auto') deleteSlot(window.localStorage, slot);
+      this.menu.message(`Deleted ${name}.`);
+      return;
+    }
+    if (op === 'save') {
+      if (!this.hasRun) return;
+      try {
+        writeSlot(window.localStorage, slot, this.simulation);
+        this.menu.message(`Saved to ${name}.`);
+      } catch (error) {
+        const text = saveFailure(error);
+        this.menu.message(text.charAt(0) + text.slice(1).toLowerCase());
+      }
+      return;
+    }
+    if (this.loadCheckpoint(true, slot)) {
+      this.hasRun = true;
+      this.menu.close();
+      this.setPaused(true);
+    } else this.menu.message(`Could not load ${name} · current game kept`);
+  }
+  private loadCheckpoint(requested: boolean, slot: SaveSlot = 'auto'): boolean {
     this.autosaveTime = 0;
     try {
-      const selection = inspectCheckpoint(window.localStorage),
-        saved = selection.world;
+      const selection: CheckpointSelection = slot === 'auto'
+        ? inspectCheckpoint(window.localStorage)
+        : { world: readSlot(window.localStorage, slot), source: 'checkpoint' };
+      const saved = selection.world;
       if (saved) {
         if (selection.source === 'previous')
           notify(saved, 'PREVIOUS CHECKPOINT LOADED · LATEST MISSING OR INVALID · P TO RESUME');
