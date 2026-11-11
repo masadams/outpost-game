@@ -42,11 +42,11 @@ describe('surface construction', () => {
     expect(world.colony.buildings).toHaveLength(0); expect(world.colony.products.alloy).toBe(27);
     applyColonyAction(world, { type: 'demolish' }); expect(world.colony.products.alloy).toBe(27);
   });
-  it('blocks storage demolition that would strand inventory, and clamps discarded battery charge', () => {
+  it('loses ore that no longer fits when storage is demolished, and clamps discarded battery charge', () => {
     const world = createWorld(); build(world, 'storage', 120); world.depot.iron = 500;
     world.astronaut.position = stationPosition(120 / WORLD.radius); applyColonyAction(world, { type: 'demolish' });
-    expect(world.colony.buildings).toHaveLength(1);
-    world.depot.iron = 390; applyColonyAction(world, { type: 'demolish' }); expect(world.colony.buildings).toHaveLength(0);
+    // Storage never blocks a demolition: the ore that no longer fits is lost.
+    expect(world.colony.buildings).toHaveLength(0); expect(world.depot.iron).toBeCloseTo(400, 6);
     build(world, 'battery', 160); world.colony.energy = 1220;
     world.astronaut.position = stationPosition(160 / WORLD.radius); applyColonyAction(world, { type: 'demolish' });
     expect(world.colony.energy).toBe(20);

@@ -19,7 +19,7 @@ import { researchTreeView, type ResearchTreeView } from './researchTreeView';
 import { coreBlock, crystalBlock } from '../../sim/crystal';
 import { isTurret, WEAPONS } from '../../sim/defenceConfig';
 import { BLUEPRINTS, PRODUCTS, type BuildType, type Product } from '../../sim/colonyConfig';
-import { demolishError, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
+import { demolishError, demolishLoss, energyCapacity, oreCapacity, productCapacity, recipeFor, salvageOf, type Building } from '../../sim/colony';
 import { buildingHealth } from '../../sim/buildingHealth';
 import { ratedPower } from '../../sim/power';
 import { colonyPlanet, colonyWorld } from '../../sim/localWorld';
@@ -192,6 +192,8 @@ export interface BuildingView {
   salvage: string;
   /** Why it cannot be demolished right now, or null. */
   demolishBlocked: string | null;
+  /** What would be lost for lack of storage if it came down; a warning, not a block. */
+  demolishWarning: string | null;
 }
 
 export interface AttentionView {
@@ -335,6 +337,7 @@ export function buildingView(b: Building, w?: WorldState): BuildingView {
     upgrade: w && health > 0 ? upgradeView(w, b) : null,
     salvage: salvageText(b),
     demolishBlocked: w ? demolishError(w, b) : null,
+    demolishWarning: w ? demolishLoss(w, b) : null,
   };
 }
 
@@ -343,7 +346,8 @@ function powerSummary(w: WorldState): string {
   const panels = c.buildings.some(b => b.kind === 'solar');
   const dark = !!w.system.sun && panels && c.generation <= 1e-6;
   if (dark) {
-    const lasts = c.demand > 0 ? ` Stored power lasts about ${Math.floor(c.energy / c.demand)} s at this load.` : '';
+    // Minutes and seconds, like the day clock beside it.
+    const lasts = c.demand > 0 ? ` Stored power lasts about ${duration(c.energy / c.demand)} at this load.` : '';
     return `Night: solar panels are off.${lasts}`;
   }
   if (c.generation <= 0 && c.demand <= 0) return 'No power yet. Build a solar array.';

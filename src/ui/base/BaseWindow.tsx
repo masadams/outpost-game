@@ -545,6 +545,7 @@ function Inspector({ b, paused, on }: { b: BuildingView | null; paused: boolean;
         />
       </div>
       {b.demolishBlocked && <p class="base-why">{b.demolishBlocked}</p>}
+      {b.demolishWarning && <p class="base-why" data-demolish-warning>{b.demolishWarning}</p>}
       {paused && <p class="base-note">Resume the game to change buildings.</p>}
     </aside>
   );

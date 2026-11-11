@@ -34,7 +34,7 @@ import type { DefenceAction } from './defenceConfig';
 import { operational, buildingHealth } from './buildingHealth';
 import { BLUEPRINTS, BUILD_TYPES, PRODUCTS, type BuildType, type ProductInventory, type Product, REFINERY_RECIPES, FUEL_RECIPE, type Recipe } from './colonyConfig';
 import { clamp, wrap } from './math';
-import { inventoryMass, type Resource } from './resources';
+import { inventoryMass, RESOURCES, type Resource } from './resources';
 import { STATIONS } from './stations';
 import { notify } from './messages';
 import type { WorldState } from './world';
@@ -171,26 +171,54 @@ export function salvageOf(building: Building): Partial<ProductInventory> {
 }
 
 /** Why a building cannot be taken down right now, or null. */
-export function demolishError(world: WorldState, building: Building): string | null {
+/** Nothing stops a building coming down. Kept so callers have one place to ask; see `demolishLoss` for the warning. */
+export function demolishError(_world: WorldState, _building: Building): string | null {
+  return null;
+}
+
+/** What would not fit in the stores that are left if this building came down: materials by name, and ore in kg. */
+export function demolishOverflow(world: WorldState, building: Building): { products: Partial<Record<Product, number>>; ore: number } {
   const colony = world.colony;
   const remaining = { ...colony, buildings: colony.buildings.filter(b => b.id !== building.id) };
   const salvage = salvageOf(building);
-  const tooMuchOre = inventoryMass(world.depot) > oreCapacity(remaining);
-  const tooMuchStock = PRODUCTS.some(p => colony.products[p] + (salvage[p] ?? 0) > productCapacity(remaining));
-  return tooMuchOre || tooMuchStock ? 'Not enough storage left to take it down.' : null;
+  const cap = productCapacity(remaining);
+  const products: Partial<Record<Product, number>> = {};
+  for (const p of PRODUCTS) {
+    // Stock already above the stores (from an earlier loss) is not this building's doing.
+    const before = Math.min(colony.products[p], Math.max(cap, productCapacity(colony)));
+    const over = before + (salvage[p] ?? 0) - Math.max(cap, 0);
+    if (over > 1e-6 && productCapacity(colony) > cap - 1e-9) products[p] = over;
+  }
+  const ore = Math.max(0, inventoryMass(world.depot) - oreCapacity(remaining));
+  return { products, ore: oreCapacity(colony) > oreCapacity(remaining) ? ore : 0 };
 }
 
-/** Takes a building down and returns the salvage. Callers check `demolishError` first. */
+/** The warning to show before demolishing, in one line, or null when nothing would be lost. */
+export function demolishLoss(world: WorldState, building: Building): string | null {
+  const { products, ore } = demolishOverflow(world, building);
+  const parts = PRODUCTS.filter(p => (products[p] ?? 0) >= 0.5).map(p => `${Math.round(products[p]!)} ${p}`);
+  if (ore >= 0.5) parts.push(`${Math.round(ore)} kg of ore`);
+  return parts.length ? `Not enough storage without it: ${parts.join(', ')} will be lost.` : null;
+}
+
+/** Takes a building down and returns the salvage. Whatever no longer fits in the stores is lost. */
 export function demolishBuilding(world: WorldState, building: Building): void {
   const colony = world.colony;
   const salvage = salvageOf(building);
+  const loss = demolishLoss(world, building);
+  const { products, ore } = demolishOverflow(world, building);
   ventHabitat(world, building);
   drainShield(world, building);
   colony.buildings = colony.buildings.filter(b => b.id !== building.id);
   if (world.defence.controlled === building.id) world.defence.controlled = null;
-  for (const p of PRODUCTS) colony.products[p] += salvage[p] ?? 0;
+  for (const p of PRODUCTS) colony.products[p] = Math.max(0, colony.products[p] + (salvage[p] ?? 0) - (products[p] ?? 0));
+  if (ore > 0) {
+    // Ore is lost evenly across what is in the depot.
+    const keep = Math.max(0, 1 - ore / inventoryMass(world.depot));
+    for (const r of RESOURCES) world.depot[r] *= keep;
+  }
   colony.energy = Math.min(colony.energy, energyCapacity(colony));
-  notify(world, 'Building demolished. You got part of the materials back.');
+  notify(world, loss ? `Building demolished. ${loss.replace('will be lost', 'lost')}` : 'Building demolished. You got part of the materials back.', loss ? 6 : 3);
 }
 export function applyFacilityAction(world: WorldState, building: Building, action: ColonyAction): void {
   if (!operational(building)) { notify(world, 'FACILITY WRECKED · U TO REPAIR');

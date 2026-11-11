@@ -28,12 +28,13 @@ describe('demolish', () => {
     expect(baseView(w).buildings[0].salvage).toMatch(/alloy/);
   });
 
-  it('refuses when the salvage would not fit, and says why', () => {
+  it('goes ahead when stores are already overfull: storage never blocks a demolition', () => {
     const { w, b } = withSolar();
     w.colony.products.alloy = 400;
-    expect(demolishError(w, b)).toContain('storage');
+    expect(demolishError(w, b)).toBeNull();
     stepWorld(w, { thrust: false, turn: 0, colonyActions: [{ type: 'remote', id: b.id, operation: 'demolish' }] }, 1 / 60);
-    expect(w.colony.buildings.some(x => x.id === b.id)).toBe(true);
-    expect(baseView(w).buildings[0].demolishBlocked).not.toBeNull();
+    expect(w.colony.buildings.some(x => x.id === b.id)).toBe(false);
+    // A solar array holds nothing, so what was already in store stays.
+    expect(w.colony.products.alloy).toBeGreaterThanOrEqual(400);
   });
 });
