@@ -109,3 +109,7 @@
 #hud .map-tools { position: static; flex-wrap: wrap; }
 #hud .map-chart { cursor: grab; touch-action: none; }
 #hud .map-chart[data-dragging=true] { cursor: grabbing; }
+#hud .map-chart .map-deep path { fill: #8ea6b8; stroke: #dde9f0; stroke-width: 1; }
+#hud .map-chart .map-deep[data-found=true] path { fill: #ffe6b0; }
+#hud .map-chart .map-deep-label { font-size: 12px; fill: #b7c8d4; }
+#hud .map-chart .map-deep[data-found=true] .map-deep-label { fill: #ffe6b0; }

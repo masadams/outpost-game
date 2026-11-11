@@ -67,7 +67,7 @@ const RULES = [
   [/^src\/sim\/(research|progression|equipment|shipStats|shipProfile)/, ['progression', 'parts', 'researchTree', 'workspace']],
   [/^src\/sim\/(autopilot|guidance|flightController)/, ['automation']],
   [/^src\/sim\/events/, ['events']],
-  [/^src\/sim\/(exploration|probes|drift|crystal)/, ['exploration']],
+  [/^src\/sim\/(exploration|probes|drift|crystal|deepSpace)/, ['exploration']],
   [/^src\/sim\/(flight|handling|trajectory|environment|preflight|readiness)/, ['flight', 'flightRegion', 'flightWarnings', 'rotation', 'atmosphere', 'readiness']],
   [/^src\/sim\/(mining|surface|geology|survey|minerDrone|tugBay|nacreSurvey)/, ['surfaceMining']],
   [/^src\/sim\/(celestial|nature|star|sun|aurora)/, ['worlds', 'rotation', 'atmosphere']],

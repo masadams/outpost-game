@@ -52,7 +52,7 @@ import { buildSky, drawSky } from './skyBackdrop';
 import { lightAt, lightAtPoint } from '../sim/star';
 import { mixColor, skyLook } from './lighting';
 import { newWorld } from '../preferences/sun';
-import { drawStormSamples, drawCrystal, drawCore, drawKeystones } from './storm';
+import { drawStormSamples, drawCrystal, drawCore, drawKeystones, drawDeepSpace } from './storm';
 import { drawGround } from './ground';
 import { stormKnowledge } from '../sim/stormKnowledge';
 import { farPosition } from '../sim/storm';
@@ -998,6 +998,7 @@ export class FlightScene extends Phaser.Scene {
     drawCrystal(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawCore(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     drawKeystones(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
+    drawDeepSpace(g, this.simulation, this.follow.zoom, this.time.now / 1000, view);
     for (const probe of this.simulation.exploration.probes) {
       g.fillStyle(0x9fe4ff, 0.25);
       g.fillCircle(probe.position.x, probe.position.y, Math.max(6, 10 / this.follow.zoom));

@@ -1,3 +1,4 @@
+import { deepPointer } from '../../sim/deepSpace';
 import { nearestPlanet, planetAt, surfacePosition } from '../../sim/celestial';
 import { coreAngle, crystalAngle } from '../../sim/crystal';
 import { KEYSTONE_WORLDS, keystoneAngle, keystonesOpen, keystoneState } from '../../sim/keystones';
@@ -19,6 +20,9 @@ export function guideTarget(w: WorldState): Vec | null {
   if (nearestPlanet(viewer, w.system).id === 'cinder' && root.exploration.core === 'lying') {
     return surfacePosition(planetAt('cinder', w.system), coreAngle(), 0);
   }
+  // Far out in deep space, the nearest thing not yet found.
+  const far = deepPointer(root);
+  if (far) return far;
   // A part of the carrier on the world you are at.
   const here = nearestPlanet(viewer, w.system).id;
   const part = KEYSTONE_WORLDS.find(id => id === here);

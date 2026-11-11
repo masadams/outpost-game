@@ -1,3 +1,4 @@
+import { DEEP, DEEP_IDS, deepFound, deepHeard, deepPosition } from '../../sim/deepSpace';
 import { natureOf } from '../../sim/nature';
 import { courseTo } from '../../sim/intercept';
 import { probeError } from '../../sim/probes';
@@ -49,6 +50,8 @@ export interface MapView {
   beacons: BeaconMark[];
   /** A far system the beacon heard, shown at the edge of the chart in its direction. */
   echo: { label: string; bearing: number } | null;
+  /** Things far out in deep space: found ones by name, and once the relay is found, faint returns from the rest. */
+  deep: Array<{ id: string; label: string; bearing: number; km: number; found: boolean }>;
   /** Where a belt you picked will be when you get there, aiming from your ship. */
   intercept: { at: Vec; seconds: number } | null;
   ship: Vec;
@@ -250,6 +253,25 @@ function interceptMark(w: WorldState): { at: Vec; seconds: number } | null {
   return course ? { at: course.aim, seconds: course.seconds } : null;
 }
 
+/** Deep space finds, shown at the chart's edge in their direction from the middle of the system. */
+function deepMarks(w: WorldState): MapView['deep'] {
+  const root = w.rootWorld ?? w;
+  if (!root.system.sun) return [];
+  const found = deepFound(root);
+  const heard = deepHeard(root);
+  return DEEP_IDS.filter(id => found.includes(id) || heard).map(id => {
+    const at = deepPosition(id, root.seed);
+    const km = Math.round(Math.hypot(at.x, at.y) / 1000);
+    return {
+      id,
+      label: found.includes(id) ? `${DEEP[id].label} · ${km} km` : `Faint return · ${km} km`,
+      bearing: Math.atan2(at.y, at.x),
+      km,
+      found: found.includes(id),
+    };
+  });
+}
+
 function echoMark(w: WorldState): MapView['echo'] {
   const signal = w.exploration.signal;
   if (!signal) return null;
@@ -335,6 +357,7 @@ export function mapView(w: WorldState): MapView {
     sites,
     probes: w.exploration.probes.map(p => ({ at: p.position })),
     echo: echoMark(w),
+    deep: deepMarks(w),
     pods: podMarks(w),
     beacons: beaconMarks(w),
     intercept: interceptMark(w),

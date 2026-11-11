@@ -2,6 +2,7 @@ import type { BuildType } from './colonyConfig';
 import { oreCapacity, productCapacity } from './colony';
 import { PRODUCTS } from './colonyConfig';
 import { notify } from './messages';
+import { DEEP } from './deepSpace';
 import { inventoryMass } from './resources';
 import { fuelCapacity } from './shipStats';
 import { sunClock } from './sun';
@@ -212,6 +213,31 @@ export const MEMORIES: readonly Memory[] = [
     id: 'decided', title: 'Your own order',
     text: 'For 412 years the only order was theirs. This one is yours. The archive files it first, above the other.',
     when: w => !!w.exploration.seedShip?.ending,
+  },
+  {
+    id: 'deep-hulk', title: 'The spine',
+    text: DEEP.hulk.text,
+    when: w => (w.exploration.deep ?? []).includes('hulk'),
+  },
+  {
+    id: 'deep-marker', title: 'The makers\' marker',
+    text: DEEP.marker.text,
+    when: w => (w.exploration.deep ?? []).includes('marker'),
+  },
+  {
+    id: 'deep-comet', title: 'A frozen comet',
+    text: DEEP.comet.text,
+    when: w => (w.exploration.deep ?? []).includes('comet'),
+  },
+  {
+    id: 'deep-darkWorld', title: 'A dark world',
+    text: DEEP.darkWorld.text,
+    when: w => (w.exploration.deep ?? []).includes('darkWorld'),
+  },
+  {
+    id: 'deep-graveyard', title: 'The ring',
+    text: DEEP.graveyard.text,
+    when: w => (w.exploration.deep ?? []).includes('graveyard'),
   },
   {
     id: 'release', title: 'Not an order',

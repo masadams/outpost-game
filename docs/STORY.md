@@ -53,6 +53,11 @@ Later blueprints (Observatory, turrets, shields, domes and so on) keep their exi
 The rest of the story (a keystone on every world, the seed ship, the ending you choose) is planned in
 `docs/tasks/STORY_ACT_THREE.md`.
 
+## Deep space
+Five things drift far out, 95 to 240 km: the carrier's spine with its recorder bay opened from inside, the makers'
+marker, a frozen comet, a dark world on no chart, and a ring of landers from nowhere in the archive. They are
+details that do not add up, left for an expansion to answer. See `src/sim/deepSpace.ts`.
+
 ## Voice
 Terse, plain, second person or none. A machine log that is slowly becoming a person. No jokes, no jargon.
 Each memory stays under 170 characters.
