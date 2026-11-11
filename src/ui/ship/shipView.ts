@@ -1,3 +1,4 @@
+import { GRADE_LABEL, seamGrade, seamKnown } from '../../sim/geology';
 import { BODY_IDS } from '../../sim/celestial';
 import { liftoffWarning } from '../../sim/preflight';
 import { bodyKnown } from '../../sim/explorationConfig';
@@ -110,13 +111,14 @@ function nearestSeam(w: WorldState): FootView['seam'] {
   const found = [...w.surfaceDeposits].sort((a, b) => Math.abs(wrap(a.angle - at)) - Math.abs(wrap(b.angle - at)))[0];
   if (!found) return null;
   const offset = wrap(found.angle - at);
+  const known = seamKnown(found);
   return {
     id: found.id,
     resource: found.resource,
-    label: RESOURCE_INFO[found.resource].label,
+    label: known ? `${GRADE_LABEL[seamGrade(found)]} ${RESOURCE_INFO[found.resource].label.toLowerCase()}` : 'Unknown seam',
     distance: `${Math.round(Math.abs(offset) * radius)} m`,
     side: offset < 0 ? 'left' : 'right',
-    left: `${found.remaining.toFixed(0)} of ${found.initial} kg left`,
+    left: known ? `${found.remaining.toFixed(0)} of ${found.initial} kg left` : 'Walk over it to survey it',
     remaining: found.remaining.toFixed(2),
   };
 }

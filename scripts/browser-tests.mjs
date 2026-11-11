@@ -34,7 +34,7 @@ const RULES = [
   [/^(package(-lock)?\.json|vite\.config|playwright\.|tsconfig)/, ALL],
   // Screens.
   [/^src\/ui\/(map\/|Navigation)/, ['mapControls', 'exploration', 'worlds', 'pods', 'signal', 'wrecks']],
-  [/^src\/ui\/base\//, ['base', 'base', 'researchTree', 'scheduling', 'supply', 'pods', 'signal', 'priorities', 'storm', 'contextMenu', 'workspace']],
+  [/^src\/ui\/base\//, ['base', 'researchTree', 'scheduling', 'supply', 'pods', 'signal', 'priorities', 'storm', 'contextMenu', 'workspace']],
   [/^src\/ui\/build\//, ['directControls', 'focusMode', 'progression', 'flight']],
   [/^src\/ui\/flight\//, ['instrumentConsole', 'flightWarnings', 'flightRegion', 'storm', 'story', 'focusMode']],
   [/^src\/ui\/ship\//, ['parts', 'readiness', 'towing']],
@@ -69,7 +69,7 @@ const RULES = [
   [/^src\/sim\/events/, ['events']],
   [/^src\/sim\/(exploration|probes|drift|crystal)/, ['exploration']],
   [/^src\/sim\/(flight|handling|trajectory|environment|preflight|readiness)/, ['flight', 'flightRegion', 'flightWarnings', 'rotation', 'atmosphere', 'readiness']],
-  [/^src\/sim\/(mining|surface|geology|minerDrone|nacreSurvey)/, ['surfaceMining']],
+  [/^src\/sim\/(mining|surface|geology|survey|minerDrone|nacreSurvey)/, ['surfaceMining']],
   [/^src\/sim\/(celestial|nature|star|sun|aurora)/, ['worlds', 'rotation', 'atmosphere']],
   [/^src\/sim\/(combat|weapons|command|drones)/, ['defence', 'command']],
   [/^src\/sim\/(building|colonyPlacement|colonyService|headquarters)/, ['base', 'directControls', 'contextMenu', 'defence']],

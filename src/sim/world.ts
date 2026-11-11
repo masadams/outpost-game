@@ -20,6 +20,7 @@ import { stepDrift } from './drift';
 import { stepBlueprintNotices } from './blueprintNotice';
 import { stepStory } from './story';
 import { stepKeystones } from './keystones';
+import { stepSurvey } from './survey';
 import { ensureHq, isHqAction, upgradeHq } from './headquarters';
 import { applySeedShipAction, isSeedShipAction } from './seedShip';
 import { stepStarHeat } from './starHazard';
@@ -226,6 +227,7 @@ export function stepWorld(world: WorldState, input: WorldControls, dt: number): 
   stepCrystal(world);
   stepCore(world);
   stepKeystones(world);
+  stepSurvey(world);
   stepWrecks(world, dt);
   stepDefence(world, !!input.mine, input.turn, dt, startShip);
   stepCombat(world, !!input.combatFire, dt, { ship: startShip, suit: startSuit, rocks: starts, meteors: meteorStarts });

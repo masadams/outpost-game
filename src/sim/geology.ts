@@ -6,7 +6,27 @@ import { around, streamFor } from './seed';
 import type { Resource } from './resources';
 import type { Building } from './colony';
 
-export interface SurfaceDeposit { id: number; resource: Resource; angle: number; halfWidth: number; initial: number; remaining: number }
+export interface SurfaceDeposit {
+  id: number; resource: Resource; angle: number; halfWidth: number; initial: number; remaining: number;
+  /** How rich the ore is: it sets how fast a rig digs. Missing (older saves) counts as normal. */
+  grade?: SeamGrade;
+  /** False until someone walks over it or flies low across it. Missing (older saves) counts as surveyed. */
+  surveyed?: boolean;
+}
+
+export type SeamGrade = 'poor' | 'normal' | 'rich';
+/** How much faster or slower a rig digs on each grade. */
+export const GRADE_YIELD: Record<SeamGrade, number> = { poor: 0.7, normal: 1, rich: 1.5 };
+export const GRADE_LABEL: Record<SeamGrade, string> = { poor: 'Poor', normal: 'Good', rich: 'Rich' };
+/** Seams this close to the pad (m) are known from the start; farther ones need surveying. */
+export const SURVEYED_NEAR_PAD = 450;
+/** How close (m, along the ground past the seam's edge) the pilot on foot must come to survey it. */
+export const SURVEY_ON_FOOT = 60;
+/** How low (m) and how close (m past the edge) the lander must pass to survey a seam from the air. */
+export const SURVEY_FROM_AIR = { height: 350, reach: 120 } as const;
+
+export const seamGrade = (d: SurfaceDeposit): SeamGrade => d.grade ?? 'normal';
+export const seamKnown = (d: SurfaceDeposit): boolean => d.surveyed !== false;
 export const RIG = { power: 6, seconds: 2, yield: 0.5 } as const;
 const SEAMS: readonly [Resource, number, number, number][] = [
   ['iron', 160, 34, 180], ['ice', -180, 40, 120], ['copper', 420, 36, 180],
@@ -44,11 +64,19 @@ export function createSurfaceDeposits(radius: number = WORLD.radius, body?: Body
   return seams.map(([resource, rawArc, halfWidth, initial], i) => {
     const arc = dryArc(body, seed, rawArc, halfWidth, radius);
     if (seed === 0) return { id: i + 1, resource, angle: arc / radius, halfWidth, initial, remaining: initial };
+    // Grades come from their own stream, so adding them changed no seam's size or place.
+    const roll = streamFor(seed, `grade/${body ?? 'home'}/${i + 1}`)();
+    const fair = i < FAIR_SEAMS && (body ?? 'home') === 'home';
+    const grade: SeamGrade = roll < 0.25 && !fair ? 'poor' : roll > 0.78 ? 'rich' : 'normal';
+    const surveyed = Math.abs(arc) <= SURVEYED_NEAR_PAD;
     const size = i < FAIR_SEAMS && (body ?? 'home') === 'home' ? Math.max(1, around(rand, 0.25)) : around(rand, 0.25);
     const width = around(rand, 0.1);
     const boost = resource === 'iron' && (body ?? 'home') === 'home' && radius === WORLD.radius ? HOME_IRON_BOOST : 1;
     const amount = Math.round(initial * size * boost);
-    return { id: i + 1, resource, angle: arc / radius, halfWidth: Math.round(halfWidth * width * 10) / 10, initial: amount, remaining: amount };
+    return {
+      id: i + 1, resource, angle: arc / radius, halfWidth: Math.round(halfWidth * width * 10) / 10, initial: amount, remaining: amount,
+      grade, surveyed,
+    };
   });
 }
 export const surfaceDistance = (a: number, b: number): number => Math.abs(wrap(a - b)) * WORLD.radius;

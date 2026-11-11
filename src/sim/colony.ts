@@ -19,7 +19,7 @@ import type { ExplorationAction } from './explorationConfig';
 import { createCommand, type CommandState, type CommandAction } from './commandConfig';
 import { completedBuilding, stepConstruction } from './construction';
 import { orderedBuildings, powerFraction, ratedPower } from './power';
-import { depositAt } from './geology';
+import { depositAt, seamKnown } from './geology';
 import { foundationSites } from './colonyPlacement';
 import { isHabitat, type HabitatState } from './habitatConfig';
 import { stepHabitats, chargeHabitats, ventHabitat } from './habitats';
@@ -122,6 +122,7 @@ export function placementError(world: WorldState, kind = world.colony.selected, 
     const d = depositAt(world.surfaceDeposits, angle, width, colonyPlanet(world).radius);
     if (!d) return 'Place the rig on a marked ore deposit';
     if (d.remaining <= 1e-9) return 'This deposit is exhausted';
+    if (!seamKnown(d)) return 'Survey this seam first: walk over it, or fly low across it';
   }
   if (!options.paid && PRODUCTS.some(p => world.colony.products[p] + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Not enough materials';
   if (!options.paid && PRODUCTS.some(p => availableProduct(world.colony, p) + 1e-9 < (BLUEPRINTS[kind].cost[p] ?? 0))) return 'Materials reserved for turrets · lower reserves in Build';
