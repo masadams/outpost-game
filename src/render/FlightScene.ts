@@ -9,11 +9,12 @@ import { drawCrewOrder } from './crewOrders';
 import { VisualEffects } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
 import { RenderBudget, visible } from './budget';
-import { drawShip } from './ship';
+import { drawShip, entryHeat } from './ship';
+import { flightRegion } from '../sim/flightRegion';
 import { controlHint, readPresentation, applyPresentation } from '../preferences/presentation';
 import { Settings } from '../ui/Settings';
 import { sitePosition, activeWorld, allColonies } from '../sim/localWorld';
-import { bodyExists, nearestPlanet, onGroundNow, planetAt, planets, surfaceAngle } from '../sim/celestial';
+import { bodyExists, nearestPlanet, onGroundNow, planetAt, planets, relativeVelocity, surfaceAngle } from '../sim/celestial';
 import { flightSafety } from '../sim/flightSafety';
 import { drawShields } from './shields';
 import { applyExplorationAction } from '../sim/exploration';
@@ -1057,7 +1058,9 @@ export class FlightScene extends Phaser.Scene {
         g.fillCircle(wreck.ship.position.x, wreck.ship.position.y, Math.max(1, 2.5 / this.follow.zoom));
       }
     }
-    drawShip(g, s, this.follow.zoom, this.time.now, this.halted, this.preferences.reducedMotion);
+    const relative = relativeVelocity(s.velocity, nearestPlanet(s.position, this.simulation.system), s.position);
+    const heat = s.state === 'flying' ? entryHeat(Math.hypot(relative.x, relative.y), flightRegion(s.position, this.simulation.system)) : 0;
+    drawShip(g, s, this.follow.zoom, this.time.now, this.halted, this.preferences.reducedMotion, heat);
     const mx = width - 92,
       my = height - 100,
       m = this.map;
