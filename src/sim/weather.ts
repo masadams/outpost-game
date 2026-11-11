@@ -187,3 +187,14 @@ export function weatherChip(source: WorldState): { label: string; detail: string
   if (now.startsIn <= now.spec.lead) return { label: name, detail: `In ${Math.ceil(now.startsIn)} s`, active: false };
   return null;
 }
+
+/** "Dust storm now · 1 min 20 s left" or "Next ash fall in 6 min": for the Map. Null for a world without weather. */
+export function weatherForecast(world: WorldState, body: BodyId): string | null {
+  const now = weatherOn(world, body);
+  if (!now) return null;
+  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)} min${s % 60 >= 1 && s < 600 ? ` ${Math.floor(s % 60)} s` : ''}` : `${Math.ceil(s)} s`);
+  const name = WORDS[now.spec.kind].name;
+  const effect = now.spec.kind === 'tide' ? 'The shore floods' : 'Solar panels dim';
+  if (now.strength > 0) return `${name} now · ${clock(now.endsIn)} left. ${effect}.`;
+  return `Next ${name.toLowerCase()} in ${clock(now.startsIn)}. ${effect} while it lasts.`;
+}
