@@ -21,7 +21,9 @@ const PALETTE = {
 
 type Point = { x: number; y: number };
 
-export function drawShip(g: Phaser.GameObjects.Graphics, s: Ship, zoom: number, time: number, paused: boolean, reduced: boolean): void {
+export { entryHeat } from '../sim/flightRegion';
+
+export function drawShip(g: Phaser.GameObjects.Graphics, s: Ship, zoom: number, time: number, paused: boolean, reduced: boolean, heat = 0): void {
   const n = heading(s.angle);
   const right = { x: -n.y, y: n.x };
   const p = (x: number, y: number): Point => ({ x: s.position.x + right.x * x + n.x * y, y: s.position.y + right.y * x + n.y * y });
@@ -50,6 +52,27 @@ export function drawShip(g: Phaser.GameObjects.Graphics, s: Ship, zoom: number, 
     return;
   }
 
+  // Coming into the air fast: a hot glow on the leading side, around the lander.
+  if (heat > 0.02 && !wrecked) {
+    const speed = Math.hypot(s.velocity.x, s.velocity.y) || 1;
+    const ahead = { x: s.velocity.x / speed, y: s.velocity.y / speed };
+    const flicker = reduced || paused ? 0 : Math.sin(time / 40) * 0.08;
+    const glow = (r: number, along: number, color: number, alpha: number) => {
+      g.fillStyle(color, Math.max(0, alpha + flicker * alpha));
+      g.fillCircle(s.position.x + ahead.x * along, s.position.y + ahead.y * along, r);
+    };
+    // A trail of hot air streaming behind, longer the hotter it is.
+    const trail = 6 + Math.round(10 * heat);
+    for (let i = trail; i >= 1; i--) {
+      const fade = 1 - i / (trail + 1);
+      glow(Math.max(3, 12 * fade + 4 / zoom), -i * 7, 0xff6a2a, 0.12 * heat * fade);
+    }
+    // Never smaller on screen than a few pixels, so it reads when zoomed out.
+    const floor = 6 / zoom;
+    glow(Math.max(22, floor * 3), 4, 0xff6a2a, 0.2 * heat);
+    glow(Math.max(14, floor * 2), 6, 0xffa45c, 0.32 * heat);
+    glow(Math.max(8, floor), 7, 0xfff0c8, 0.4 * heat);
+  }
   // Engine flame is drawn first, so the hull sits in front of it.
   if (s.thrusting && !paused) {
     const flicker = reduced ? 0 : Math.sin(time / 65) * 2;

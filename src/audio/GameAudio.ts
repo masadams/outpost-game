@@ -192,7 +192,26 @@ export class GameAudio {
     gain.connect(this.effects!); this.track(source, gain); source.start(now);
   }
   private play(cue: Cue): void {
-    if(cue==='airlessArrival'){this.tone(220,330,.3,0,'sine');this.tone(440,330,.35,.3,'sine');}
+    // Air tearing past a lander coming in hot: a long low roar.
+    if (cue === 'reentry') { this.noise(1.8, 0.09, 380); this.noise(1.2, 0.04, 1400); this.tone(70, 50, 1.6, 0, 'sawtooth', 0.03); }
+    // Something remembered: three soft rising notes, like a terminal waking.
+    else if (cue === 'memory') { this.tone(392, 392, 0.35, 0, 'sine', 0.05); this.tone(523, 523, 0.35, 0.14, 'sine', 0.05); this.tone(659, 659, 0.6, 0.28, 'sine', 0.045); }
+    // A seam read off the ground: a quick double ping.
+    else if (cue === 'survey') { this.tone(1180, 1240, 0.09, 0, 'sine', 0.05); this.tone(1180, 1240, 0.12, 0.13, 'sine', 0.045); }
+    // Something far out in the dark: a low, slow, uneasy chord.
+    else if (cue === 'deepFind') {
+      this.tone(110, 98, 2.2, 0, 'sawtooth', 0.035); this.tone(165, 147, 2.2, 0.05, 'sine', 0.04);
+      this.tone(1760, 1700, 1.6, 0.4, 'sine', 0.012); this.noise(1.2, 0.02, 300);
+    }
+    // A part of the carrier: a struck bell.
+    else if (cue === 'keystone') { this.tone(523, 520, 1.6, 0, 'sine', 0.06); this.tone(784, 780, 1.4, 0, 'sine', 0.04); this.tone(1046, 1040, 1.1, 0, 'sine', 0.03); }
+    // The Headquarters grows: a rising chord.
+    else if (cue === 'hqUpgrade') { this.tone(262, 392, 0.5, 0, 'triangle', 0.06); this.tone(330, 494, 0.55, 0.08, 'triangle', 0.05); this.tone(523, 784, 0.7, 0.18, 'sine', 0.04); }
+    // A stage of the seed ship in place: a heavy clunk and a held note.
+    else if (cue === 'seedStage') { this.noise(0.3, 0.1, 400); this.tone(98, 60, 0.4, 0, 'sine', 0.08); this.tone(392, 392, 1.2, 0.25, 'sine', 0.04); }
+    // The tug coming down with a load: a rush and a settle.
+    else if (cue === 'tugReturn') { this.noise(0.6, 0.05, 900); this.tone(320, 140, 0.6, 0, 'sine', 0.04); }
+    else if(cue==='airlessArrival'){this.tone(220,330,.3,0,'sine');this.tone(440,330,.35,.3,'sine');}
     else if (cue === 'crash') { this.noise(0.45, 0.16); this.tone(130, 35, 0.45); }
     else if (cue === 'split') { this.noise(0.22, 0.12); this.tone(120, 48, 0.3); this.tone(300, 180, 0.1); }
     else if (cue === 'impact' || cue === 'fracture') { this.noise(0.16, 0.09); this.tone(160, 65, 0.18); }

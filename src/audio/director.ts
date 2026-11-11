@@ -1,6 +1,7 @@
 import { beaconPosition, podLane } from '../sim/pods';
 import { SIGHTING_SECONDS } from '../sim/stormKnowledge';
-import { relative } from '../sim/celestial';
+import { nearestPlanet, relative, relativeVelocity } from '../sim/celestial';
+import { entryHeat, flightRegion } from '../sim/flightRegion';
 import { airDensity } from '../sim/environment';
 import { colonyPlanet, sitePosition } from '../sim/localWorld';
 import { cargoMass } from '../sim/shipMass';
@@ -9,16 +10,39 @@ import { habitatContains, habitatSource } from '../sim/habitats';
 import { flightSafety } from '../sim/flightSafety';
 import type { WorldState } from '../sim/world';
 
-export type Cue = 'stormSiren' | 'stormAlarm' | 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver' | 'podLaunch' | 'podLand' | 'podLost' | 'signal';
+export type Cue = 'reentry' | 'memory' | 'survey' | 'deepFind' | 'keystone' | 'hqUpgrade' | 'seedStage' | 'tugReturn' | 'stormSiren' | 'stormAlarm' | 'airlessArrival' | 'launch' | 'land' | 'impact' | 'crash' | 'fracture' | 'split' | 'pickup' | 'delivery' | 'build' | 'demolish' | 'airlock' | 'jump' | 'step' | 'service' | 'refuel' | 'production' | 'warning' | 'shot' | 'landingWarning' | 'fuelWarning' | 'towLatch' | 'towRelease' | 'towSnap' | 'atmosphereExit' | 'atmosphereEntry' | 'shieldHit' | 'shieldBreach' | 'scan' | 'sighting' | 'stormOver' | 'podLaunch' | 'podLand' | 'podLost' | 'signal';
 export interface SoundFrame { cues: Cue[]; engine: boolean; mining: boolean; tractor: boolean; machinery: boolean }
 const silent = (): SoundFrame => ({ cues: [], engine: false, mining: false, tractor: false, machinery: false });
+/** How hot the air is making the lander right now (0 to 1). */
+function shipHeat(world: WorldState): number {
+  if (world.playerMode !== 'ship' || world.ship.state !== 'flying') return 0;
+  const planet = nearestPlanet(world.ship.position, world.system);
+  const v = relativeVelocity(world.ship.velocity, planet, world.ship.position);
+  return entryHeat(Math.hypot(v.x, v.y), flightRegion(world.ship.position, world.system));
+}
+/** Counts that only ever go up as the story and the base move on: a rise in any of them is a moment worth a sound. */
+function storyMarks(world: WorldState) {
+  const root = world.rootWorld ?? world;
+  const seams = [root.surfaceDeposits, ...Object.values(root.outposts).map(o => o.surfaceDeposits)];
+  const tugs = root.colony.buildings.filter(b => b.kind === 'tugBay');
+  return {
+    memoryCount: root.exploration.story?.memories.length ?? 0,
+    surveyedSeams: seams.flat().filter(d => d.surveyed === true).length,
+    deepCount: root.exploration.deep?.length ?? 0,
+    keystoneCount: Object.keys(root.exploration.keystones ?? {}).length,
+    hq: root.colony.buildings.find(b => b.kind === 'headquarters')?.hqLevel ?? 0,
+    seedStages: root.exploration.seedShip?.stages.length ?? 0,
+    tugLoads: tugs.reduce((sum, b) => sum + (b.progress ?? 0), 0),
+    tugCount: tugs.length,
+  };
+}
 function snapshot(world: WorldState) {
   return { body: world.siteBody ?? 'home', shieldHits: world.colony.shielding.hits, shieldBreaches: world.colony.shielding.breaches, research: world.colony.research.completed.length, equipment: world.ship.equipment.length, surveys: world.exploration.surveyed.length, salvage: world.exploration.salvaged, habitat: !!habitatSource(world), space: airDensity(world.ship.position, world.system) <= 0, towRig: world.ship.towRig, towTarget: world.towing.targetId, towBreaks: world.towing.breaks, combatKills: world.combat.kills, threats: world.defence.meteors.length + world.combat.enemies.length, shots: world.defence.shots + world.combat.shots + world.combat.enemyShots, impacts: world.defence.impacts,
     buildingHull: world.colony.buildings.reduce((sum, b) => sum + (b.health ?? 100), 0), mode: world.playerMode, state: world.ship.state, hull: world.ship.hull, fuel: world.ship.fuel,
     grounded: world.astronaut.grounded, suitHealth: world.astronaut.health, oxygen: world.astronaut.oxygen,
     position: relative(world.astronaut.position,colonyPlanet(world)), cargo: cargoMass(world.ship), unloaded: world.unloaded,
     crystal: world.exploration.crystal, core: world.exploration.core, held: world.storm.held,
-    scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over', stormNear: world.storm.armed && world.storm.phase === 'approaching', falling: world.defence.meteors.length,
+    scanning: world.colony.buildings.some(b => b.kind === 'observatory' && b.status === 'running'), sighted: world.storm.observed >= SIGHTING_SECONDS, stormOver: world.storm.phase === 'over', stormNear: world.storm.armed && world.storm.phase === 'approaching', ...storyMarks(world), hot: shipHeat(world) > 0.4, falling: world.defence.meteors.length,
     podIds: world.exploration.pods.map(p => p.id), beacons: (world.exploration.beacons ?? []).map(b => `${b.id}:${b.kind}`),
     signal: world.exploration.signal?.phase ?? 'none', expedition: world.exploration.expedition ? `${world.exploration.expedition.count}:${world.exploration.expedition.phase}` : 'none',
     rocks: new Map(world.asteroids.map(b => [b.id, { ...b.position, stage: b.stage }])),
@@ -47,6 +71,18 @@ export class AudioDirector {
     if (next.scanning && !prev.scanning) cues.push('scan');
     if (next.sighted && !prev.sighted) cues.push('sighting');
     if (next.stormOver && !prev.stormOver) cues.push('stormOver');
+    // Coming into the air hot: a roar as the glow builds.
+    if (next.hot && !prev.hot) cues.push('reentry');
+    // Story and base moments. A load of saves or catch-up never sounds: only a rise of one or two.
+    const rose = (a: number, b: number) => b > a && b - a <= 2;
+    if (rose(prev.deepCount, next.deepCount)) cues.push('deepFind');
+    else if (rose(prev.keystoneCount, next.keystoneCount)) cues.push('keystone');
+    else if (rose(prev.memoryCount, next.memoryCount)) cues.push('memory');
+    if (rose(prev.surveyedSeams, next.surveyedSeams)) cues.push('survey');
+    if (rose(prev.hq, next.hq) && prev.hq > 0) cues.push('hqUpgrade');
+    if (rose(prev.seedStages, next.seedStages)) cues.push('seedStage');
+    // A tug finishing its trip: its work drops back to nothing.
+    if (next.tugCount === prev.tugCount && next.tugLoads < prev.tugLoads - 30) cues.push('tugReturn');
     // The storm closing in sounds a slow siren; the first rock overhead sounds the alarm.
     if (next.stormNear && !prev.stormNear) cues.push('stormSiren');
     if (next.stormNear && next.falling > 0 && prev.falling === 0) cues.push('stormAlarm');

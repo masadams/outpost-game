@@ -53,6 +53,8 @@ export class VisualEffects {
   /** The ship's state and the air around it last frame, to notice lift-off and crossing the edge of the air. */
   private lastState: string | null = null;
   private lastRegion: FlightRegion | null = null;
+  /** Story and base counts last frame, so a rise can be marked on screen. */
+  private moments: Moments | null = null;
   /** A full-screen tint asked for since the last call: crossing into space or back into the air. */
   private flashes: Array<{ color: number; seconds: number }> = [];
   private dustClock = 0;
@@ -79,6 +81,7 @@ export class VisualEffects {
     this.dustClock = 0;
     this.lastState = w.ship.state;
     this.lastRegion = flightRegion(w.ship.position, w.system);
+    this.moments = moments(w);
   }
 
   /** Screen tints asked for since the last call. */
@@ -145,9 +148,41 @@ export class VisualEffects {
     }
 
     this.liftOffAndAir(w);
+    this.storyMoments(w);
     this.rocks = this.snapshotRocks(w);
     this.cargo = this.snapshotCargo(w);
     this.hull = w.ship.hull;
+  }
+
+  /**
+   * Marks the moments the story and the base move on: a soft tint for a memory, a slow dark one and a shudder for
+   * something found far out, rings where a seam is read or a building grows. Only for a rise of one or two, so
+   * loading a save never sets them off.
+   */
+  private storyMoments(w: WorldState): void {
+    const now = moments(w);
+    const was = this.moments;
+    this.moments = now;
+    if (!was) return;
+    const rose = (a: number, b: number) => b > a && b - a <= 2;
+    if (rose(was.deep, now.deep)) {
+      this.flashes.push({ color: 0x140a24, seconds: 1.4 });
+      this.kicks.push({ strength: 0.4, seconds: 0.8 });
+    } else if (rose(was.keystones, now.keystones)) {
+      this.flashes.push({ color: 0x3a2a08, seconds: 0.7 });
+      this.signals.push({ ...w.ship.position, age: 0, life: 1.6, color: 0xffe6b0, rings: 3, reach: 60 });
+    } else if (rose(was.memories, now.memories)) {
+      this.flashes.push({ color: 0x0c2a2a, seconds: 0.35 });
+    }
+    for (const at of now.newSeams(was.seamIds)) this.signals.push({ ...at, age: 0, life: 1.4, color: 0xd99b5c, rings: 2, reach: 45 });
+    if (rose(was.hq, now.hq) && was.hq > 0 && now.hqAt) {
+      this.signals.push({ ...now.hqAt, age: 0, life: 2.4, color: 0x7fe6d3, rings: 4, reach: 120 });
+      this.kicks.push({ strength: 0.3, seconds: 0.3 });
+    }
+    if (rose(was.stages, now.stages) && now.yardAt) {
+      this.signals.push({ ...now.yardAt, age: 0, life: 2, color: 0xffe6b0, rings: 3, reach: 90 });
+      this.kicks.push({ strength: 0.6, seconds: 0.35 });
+    }
   }
 
   /** A jolt as the lander leaves the ground, a shudder and a tint as it crosses the edge of the air either way. */
@@ -359,4 +394,39 @@ export class VisualEffects {
       }
     }
   }
+}
+
+interface Moments {
+  memories: number;
+  deep: number;
+  keystones: number;
+  hq: number;
+  stages: number;
+  seamIds: Set<string>;
+  hqAt: Vec | null;
+  yardAt: Vec | null;
+  /** Where seams surveyed since `before` lie, in world space. */
+  newSeams(before: Set<string>): Vec[];
+}
+
+function moments(w: WorldState): Moments {
+  const root = w.rootWorld ?? w;
+  const surveyed: Array<{ key: string; at: Vec }> = [];
+  for (const site of allColonies(root)) {
+    const body = site.siteBody ?? 'home';
+    for (const d of site.surfaceDeposits) if (d.surveyed === true) surveyed.push({ key: `${body}:${d.id}`, at: sitePosition(site, d.angle, 4) });
+  }
+  const hq = root.colony.buildings.find(b => b.kind === 'headquarters');
+  const yard = root.colony.buildings.find(b => b.kind === 'shipyard');
+  return {
+    memories: root.exploration.story?.memories.length ?? 0,
+    deep: root.exploration.deep?.length ?? 0,
+    keystones: Object.keys(root.exploration.keystones ?? {}).length,
+    hq: hq?.hqLevel ?? 0,
+    stages: root.exploration.seedShip?.stages.length ?? 0,
+    seamIds: new Set(surveyed.map(s => s.key)),
+    hqAt: hq ? sitePosition(root, hq.angle, 14) : null,
+    yardAt: yard ? sitePosition(root, yard.angle, 20) : null,
+    newSeams: before => (surveyed.length - before.size > 2 ? [] : surveyed.filter(s => !before.has(s.key)).map(s => s.at)),
+  };
 }
