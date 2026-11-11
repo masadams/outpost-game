@@ -34,7 +34,7 @@ const RULES = [
   [/^(package(-lock)?\.json|vite\.config|playwright\.|tsconfig)/, ALL],
   // Screens.
   [/^src\/ui\/(map\/|Navigation)/, ['mapControls', 'exploration', 'worlds', 'pods', 'signal', 'wrecks']],
-  [/^src\/ui\/base\//, ['base', 'researchTree', 'scheduling', 'supply', 'pods', 'signal', 'priorities', 'storm', 'contextMenu', 'workspace']],
+  [/^src\/ui\/base\//, ['base', 'base', 'researchTree', 'scheduling', 'supply', 'pods', 'signal', 'priorities', 'storm', 'contextMenu', 'workspace']],
   [/^src\/ui\/build\//, ['directControls', 'focusMode', 'progression', 'flight']],
   [/^src\/ui\/flight\//, ['instrumentConsole', 'flightWarnings', 'flightRegion', 'storm', 'story', 'focusMode']],
   [/^src\/ui\/ship\//, ['parts', 'readiness', 'towing']],
