@@ -259,7 +259,7 @@
 /* Stays in the right-hand column the instruments leave free; more tools wrap onto a row above. */
 #hud-chrome .view-tools {
   position: absolute; right: var(--ui-gap); bottom: 182px;
-  max-width: 172px; flex-wrap: wrap-reverse; justify-content: flex-end;
+  max-width: calc(180px - var(--ui-gap)); flex-wrap: wrap-reverse; justify-content: flex-end;
 }
 #hud-chrome .zoom-readout { display: none; }
 
