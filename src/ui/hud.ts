@@ -148,8 +148,14 @@ export class Hud {
         this.onAction({ type: 'buildMode', open: true });
         return;
       }
-      const view = ({ cargo: 'cargo', map: 'navigation', defence: 'defence' } as const)[link];
-      this.dock.open(view);
+      // A new player has no separate Defence panel: turrets are buildings, managed in Base.
+      if (link === 'defence' && !featureVisible('defence')) {
+        this.baseSection = 'buildings';
+        this.dock.open('command');
+      } else {
+        const view = ({ cargo: 'cargo', map: 'navigation', defence: 'defence' } as const)[link];
+        this.dock.open(view);
+      }
     }
     if (keyboard) this.dock.root.querySelector<HTMLButtonElement>('.dock-heading button')?.focus();
   });

@@ -20,7 +20,8 @@ function base(kind: Weapon = 'laser'): WorldState {
   const w = createWorld(); w.asteroids = []; w.playerMode = 'astronaut'; w.astronaut.position = stationPosition(0.1);
   w.colony.buildings = [
     { id: 1, kind: 'solar', angle: 0.16, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100 },
-    { id: 2, kind, angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100 },
+    // These tests drive the turret by hand; a turret built in play starts on automatic.
+    { id: 2, kind, angle: 0.1, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100, turret: { aim: 0, cooldown: 0, automatic: false } },
     { id: 3, kind: 'battery', angle: 0.2, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100 },
   ]; w.colony.nextId = 4; w.colony.energy = 20; return w;
 }

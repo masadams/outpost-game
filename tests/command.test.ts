@@ -53,7 +53,7 @@ describe('central command operations and power', () => {
     expect(b.habitat.energy).toBeCloseTo(0); expect(b.habitat.powered).toBe(false); expect(b.gridPower).toBe(0);
   });
   it('toggles remote automatic turrets while preserving paid shots and disallows remote steering', () => {
-    const w = fixture(); w.colony.buildings[1].kind = 'laser'; applyCommandAction(w, { type: 'remote', id: 2, operation: 'auto' });
+    const w = fixture(); w.colony.buildings[1].kind = 'laser'; w.colony.buildings[1].turret = { aim: 0, cooldown: 0, automatic: false }; applyCommandAction(w, { type: 'remote', id: 2, operation: 'auto' });
     expect(w.colony.buildings[1].turret?.automatic).toBe(true); expect(w.defence.controlled).toBeNull(); expect(w.defence.shots).toBe(0);
   });
   it('remote service cannot heal a distant crew member or teleport a ship', () => {

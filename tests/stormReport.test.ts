@@ -42,3 +42,21 @@ describe('storm summary', () => {
       .toBe('Storm 3 survived · 1 rock stopped · 4 landed · 2 buildings lost');
   });
 });
+
+describe('storm summary and demolition', () => {
+  it('does not call a building you demolished during the storm lost', async () => {
+    const { stormCounts } = await import('../src/sim/storm');
+    const { completedBuilding } = await import('../src/sim/construction');
+    const w = createWorld();
+    w.colony.buildings = [1, 2, 3, 4].map(i => completedBuilding(i, 'solar', 0.05 * i, w));
+    const before = stormCounts(w);
+    // Two demolished by the player, none hit.
+    w.colony.buildings = w.colony.buildings.slice(0, 2);
+    const after = stormCounts(w);
+    expect(after.standing - before.standing).toBe(0);
+    // One wrecked by a rock is a loss.
+    w.colony.buildings[0].health = 0;
+    w.colony.buildings[0].status = 'wrecked';
+    expect(stormCounts(w).standing - before.standing).toBe(1);
+  });
+});

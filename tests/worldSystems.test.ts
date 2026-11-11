@@ -2,7 +2,8 @@ import { pursuitAcceleration } from '../src/sim/guidance';
 import { stepWeapons } from '../src/sim/weapons';
 import { ORBIT_RATE } from '../src/sim/celestial';
 import { predictCoast } from '../src/sim/trajectory';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll } from 'vitest';
+import { SHIELDS as SHIELD_SIZES } from '../src/sim/shieldConfig';
 import { createWorld, stepWorld } from '../src/sim/world';
 import { planetAt, relative, surfacePosition, STATIC_SYSTEM } from '../src/sim/celestial';
 import { colonyWorld, colonyPlanet, allocateBuildingId } from '../src/sim/localWorld';
@@ -33,6 +34,18 @@ function fixture() {
   w.astronaut.position = surfacePosition(p, 0, 2.5); w.astronaut.velocity = { ...p.velocity };
   return { w, site, p };
 }
+// These cases are laid out around 60 m and 120 m domes (heights, distances, overlaps). They check how a dome
+// intercepts, not how wide it is, so they pin those sizes; the shipped sizes have their own test.
+const shipped = { small: SHIELD_SIZES.shieldSmall.radius, large: SHIELD_SIZES.shieldLarge.radius };
+beforeAll(() => {
+  (SHIELD_SIZES.shieldSmall as { radius: number }).radius = 60;
+  (SHIELD_SIZES.shieldLarge as { radius: number }).radius = 120;
+});
+afterAll(() => {
+  (SHIELD_SIZES.shieldSmall as { radius: number }).radius = shipped.small;
+  (SHIELD_SIZES.shieldLarge as { radius: number }).radius = shipped.large;
+});
+
 describe('all actors and defenses in moving frames', () => {
   it('applies both sources to meteors and hostile rounds in vacuum', () => {
     const { w, p } = fixture(), position = surfacePosition(p, .5, 300), velocity = { ...p.velocity };

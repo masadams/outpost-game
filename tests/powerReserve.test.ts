@@ -8,7 +8,8 @@ function base() {
   w.asteroids = [];
   w.colony.buildings = [
     { id: 1, kind: 'observatory', angle: 0.02, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100 },
-    { id: 2, kind: 'laser', angle: 0.075, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100 },
+    // Manual, so the turret's own idle draw does not blur what the reserve does.
+    { id: 2, kind: 'laser', angle: 0.075, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100, turret: { aim: 0, cooldown: 0, automatic: false } },
     { id: 3, kind: 'battery', angle: 0.06, enabled: true, progress: 0, recipe: 0, status: 'idle', health: 100 },
   ] as never;
   w.colony.nextId = 10;

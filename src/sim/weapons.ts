@@ -21,7 +21,8 @@ export const LASER_SPREAD = 0.012;
 /** A repeatable pseudo-random number from 0 to 1 for a shot, so saved games play out the same. */
 export const shotNoise = (shot: number, id: number): number => { const x = Math.sin(shot * 12.9898 + id * 78.233) * 43758.5453; return x - Math.floor(x); };
 export function turretState(building: Building) {
-  return building.turret ??= { aim: 0, cooldown: 0, automatic: false };
+  // Turrets defend by themselves from the moment they are built; automatic can be switched off per turret.
+  return building.turret ??= { aim: 0, cooldown: 0, automatic: true };
 }
 export function turretPosition(building: Building, world?: WorldState): Vec {
   if (world) return sitePosition(world, building.angle, 18);
