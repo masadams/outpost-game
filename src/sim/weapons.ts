@@ -34,7 +34,13 @@ export function lineOfSight(start: Vec, end: Vec, system = STATIC_SYSTEM): boole
 function targetFor(world: WorldState, b: Building) {
   if (!isTurret(b.kind)) return undefined;
   const at = turretPosition(b, world), range = turretRange(b);
-  return world.defence.meteors.filter(m => Math.hypot(m.position.x - at.x, m.position.y - at.y) <= range && lineOfSight(at, m.position, world.system) &&
+  // A missile turret holds fire on a rock that missiles already in the air will finish, and picks another.
+  const covered = (m: Meteor): boolean => {
+    if (b.kind !== 'missile') return false;
+    const inbound = world.defence.projectiles.filter(p => p.kind === 'missile' && p.targetId === m.id).length;
+    return inbound * blastDamage('missile', WEAPONS.missile.damage, m.radius) >= m.health;
+  };
+  return world.defence.meteors.filter(m => !covered(m) && Math.hypot(m.position.x - at.x, m.position.y - at.y) <= range && lineOfSight(at, m.position, world.system) &&
     Math.abs(wrap(localAngle({ x: m.position.x - at.x, y: m.position.y - at.y }) - b.angle - colonyPlanet(world).spin)) <= 1.4)
     .sort((a, c) => length(relative(a.position, colonyPlanet(world))) - length(relative(c.position, colonyPlanet(world))) || a.id - c.id)[0];
 }
@@ -46,6 +52,34 @@ export const turretRange = (b: Building): number => WEAPONS[b.kind as keyof type
 export const HEAVY_ROCK = { radius: 20, missileFactor: 3 } as const;
 export const blastDamage = (kind: 'flak' | 'missile', damage: number, rockRadius: number): number =>
   kind === 'missile' && rockRadius >= HEAVY_ROCK.radius ? damage * HEAVY_ROCK.missileFactor : damage;
+/** How a missile flies: how hard it can turn, how far ahead it aims, and when it goes off. */
+export const MISSILE = {
+  /** Steering limit, m/s². */
+  turn: 160,
+  /** The furthest ahead it will aim, in seconds of the rock's travel. */
+  maxLead: 8,
+  /** Goes off this close to the rock's surface, in metres. */
+  fuse: 35,
+  /** Also goes off if it starts falling behind within this share of its blast reach. */
+  passShare: 0.8,
+  /** How far it will look for another rock once its own is gone, in metres. */
+  retarget: 900,
+} as const;
+
+function nearestMeteor(meteors: Meteor[], from: Vec, reach: number): Meteor | undefined {
+  let best: Meteor | undefined;
+  let bestDistance = reach;
+  for (const m of meteors) {
+    if (m.health <= 0) continue;
+    const d = Math.hypot(m.position.x - from.x, m.position.y - from.y);
+    if (d < bestDistance) {
+      best = m;
+      bestDistance = d;
+    }
+  }
+  return best;
+}
+
 function blast(world: WorldState, at: Vec, radius: number, damage: number, kind: 'flak' | 'missile'): void {
   for (const m of world.defence.meteors) {
     if (Math.hypot(m.position.x - at.x, m.position.y - at.y) > radius + m.radius || !lineOfSight(at, m.position, world.system)) continue;
@@ -112,8 +146,19 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
   const remaining: Projectile[] = [];
   for (const p of defence.projectiles) {
     const spec = WEAPONS[p.kind], start = { ...p.position }, acceleration = { x: 0, y: 0 };
-    const target = defence.meteors.find(m => m.id === p.targetId && m.health > 0);
-    if (p.kind === 'missile' && target) Object.assign(acceleration, pursuitAcceleration(p.position, p.velocity, target.position, spec.speed, 100, p.frameVelocity));
+    let target = defence.meteors.find(m => m.id === p.targetId && m.health > 0);
+    if (p.kind === 'missile' && !target) {
+      // Its rock is gone: go for the nearest one still falling within reach.
+      target = nearestMeteor(defence.meteors, p.position, MISSILE.retarget);
+      p.targetId = target?.id ?? null;
+    }
+    const before = target ? Math.hypot(target.position.x - p.position.x, target.position.y - p.position.y) : Infinity;
+    if (p.kind === 'missile' && target) {
+      // Steer for where the rock will be when the missile gets there, not where it is now.
+      const lead = Math.min(MISSILE.maxLead, before / spec.speed);
+      const aim = { x: target.position.x + target.velocity.x * lead, y: target.position.y + target.velocity.y * lead };
+      Object.assign(acceleration, pursuitAcceleration(p.position, p.velocity, aim, spec.speed, MISSILE.turn, p.frameVelocity));
+    }
     // Ammunition mass comes from the stock consumed at launch; both variants share a tuned ballistic coefficient.
     const mass = spec.alloy + spec.components;
     p.velocity = integrateVelocity(start, p.velocity, acceleration, mass, mass * 0.00125, dt, world.system);
@@ -125,6 +170,15 @@ export function stepWeapons(world: WorldState, fire: boolean, turn: number, dt: 
       const old = starts.get(m.id) ?? m.position;
       const hit = surfaceHit({ x: start.x - old.x, y: start.y - old.y }, { x: p.position.x - m.position.x, y: p.position.y - m.position.y }, m.radius + 3);
       if (hit !== null && (first === null || hit < first)) { first = hit; terrain = false; }
+    }
+    // Proximity fuse: a missile goes off beside its rock, or the moment it starts to fall behind one it has
+    // closed with, instead of needing to strike it.
+    const after = target ? Math.hypot(target.position.x - p.position.x, target.position.y - p.position.y) : Infinity;
+    const near = target ? after - target.radius : Infinity;
+    const passing = after > before && near < spec.blast * MISSILE.passShare;
+    if (first === null && p.kind === 'missile' && target && (near <= MISSILE.fuse || passing)) {
+      blast(world, p.position, spec.blast, spec.damage, p.kind);
+      continue;
     }
     if (first !== null) {
       const at = { x: start.x + (p.position.x - start.x) * first, y: start.y + (p.position.y - start.y) * first };
