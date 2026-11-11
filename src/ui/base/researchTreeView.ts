@@ -163,6 +163,7 @@ const EARNED: Record<BuildType, string> = {
   headquarters: 'Stands from the start',
   tugBay: 'After a drone bay',
   workerBay: 'With the Headquarters at level 2',
+  seaWall: 'Once you have an outpost on Tide',
   droneBay: 'Research Precision extraction',
   service: 'Not offered yet',
   flak: 'Not offered yet',

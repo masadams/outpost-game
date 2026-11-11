@@ -4,7 +4,7 @@ import { HABITATS, HABITAT } from './habitatConfig';
 export const PRODUCTS = ['alloy', 'wire', 'components', 'water', 'oxygen', 'fuel'] as const;
 export type Product = typeof PRODUCTS[number];
 export type ProductInventory = Record<Product, number>;
-export const BUILD_TYPES = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'service', 'laser', 'flak', 'missile', 'miningRig', 'habitatSmall', 'habitatLarge', 'researchLab', 'observatory', 'shieldSmall', 'shieldLarge', 'relay', 'droneBay', 'condenser', 'antenna', 'workshop', 'geothermal', 'windTurbine', 'massDriver', 'shipyard', 'headquarters', 'tugBay', 'workerBay'] as const;
+export const BUILD_TYPES = ['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'service', 'laser', 'flak', 'missile', 'miningRig', 'habitatSmall', 'habitatLarge', 'researchLab', 'observatory', 'shieldSmall', 'shieldLarge', 'relay', 'droneBay', 'condenser', 'antenna', 'workshop', 'geothermal', 'windTurbine', 'massDriver', 'shipyard', 'headquarters', 'tugBay', 'workerBay', 'seaWall'] as const;
 export type BuildType = typeof BUILD_TYPES[number];
 export interface Blueprint { label: string; cost: Partial<ProductInventory>; halfWidth: number; color: number }
 export const BLUEPRINTS: Record<BuildType, Blueprint> = {
@@ -15,6 +15,7 @@ export const BLUEPRINTS: Record<BuildType, Blueprint> = {
   windTurbine: { label: 'Wind turbine', cost: { alloy: 8, wire: 5, components: 2 }, halfWidth: 8, color: 0xc7f0ff },
   massDriver: { label: 'Mass driver', cost: { alloy: 16, wire: 6, components: 5 }, halfWidth: 14, color: 0xffb8d9 },
   tugBay: { label: 'Tug bay', cost: { alloy: 18, wire: 8, components: 8 }, halfWidth: 12, color: 0xb6f0ff },
+  seaWall: { label: 'Sea wall', cost: { alloy: 10, wire: 0, components: 0 }, halfWidth: 10, color: 0x9fc6e0 },
   workerBay: { label: 'Worker bay', cost: { alloy: 12, wire: 6, components: 6 }, halfWidth: 9, color: 0xffd98a },
   headquarters: { label: 'Headquarters', cost: { alloy: 30, wire: 12, components: 8 }, halfWidth: 10, color: 0x7fe6d3 },
   shipyard: { label: 'Shipyard', cost: { alloy: 40, wire: 20, components: 15 }, halfWidth: 20, color: 0xffe6b0 },

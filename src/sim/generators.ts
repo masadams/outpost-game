@@ -27,5 +27,5 @@ export function generatorOutput(world: WorldState, b: Building): number {
   if (b.kind === 'geothermal') return GEOTHERMAL.power * base;
   if (b.kind === 'windTurbine') return WIND.power * base * Math.min(1.5, surfaceAir(world) / WIND.referenceDensity);
   const gain = world.colony.research.completed.includes('photovoltaics') ? PHOTOVOLTAIC_GAIN : 1;
-  return 8 * base * gain * solarFactor(world.system, b.angle, colonyPlanet(world).id) * eventSolarFactor(world) * weatherSolar(world) * natureOf(colonyPlanet(world).id).haze;
+  return 8 * base * gain * solarFactor(world.system, b.angle, colonyPlanet(world).id) * eventSolarFactor(world) * weatherSolar(world, b.angle) * natureOf(colonyPlanet(world).id).haze;
 }

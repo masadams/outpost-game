@@ -39,6 +39,7 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
     if (w.colony.buildings.some(b => b.kind === 'headquarters')) return homeHqAtLeast(w, 2);
     return colonies(w).some(c => c.buildings.some(b => b.kind === 'workshop' || b.kind === 'droneBay'));
   }
+  if (kind === 'seaWall') return (w.outposts.tide?.colony.buildings.length ?? 0) > 0;
   if (kind === 'tugBay') return colonies(w).some(c => c.buildings.some(b => b.kind === 'droneBay'));
   if (kind === 'droneBay') return w.colony.research.completed.includes('precision');
   // Shields come after the second storm has been survived; domes once there is a base on another world.
