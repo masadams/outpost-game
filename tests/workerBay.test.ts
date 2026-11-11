@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createWorld, stepWorld } from '../src/sim/world';
 import { completedBuilding } from '../src/sim/construction';
 import { WORLD } from '../src/sim/config';
-import { WORKER, workerPosition } from '../src/sim/workerBay';
+import { TIER_REACH, WORKER, workerPosition, workerReach } from '../src/sim/workerBay';
+import { tugLoad, TUG } from '../src/sim/tugBay';
+import { tierEffect } from '../src/ui/base/upgradeView';
+import { tierTechs } from '../src/sim/tiers';
 import { blueprintRevealed } from '../src/sim/unlocks';
 import { decodeCheckpoint, encodeCheckpoint } from '../src/persistence/checkpoint';
 
@@ -81,5 +84,25 @@ describe('the worker bay', () => {
     expect(blueprintRevealed(w, 'workerBay')).toBe(false);
     w.colony.buildings.push(completedBuilding(9, 'workshop', at(-200), w));
     expect(blueprintRevealed(w, 'workerBay')).toBe(true);
+  });
+});
+
+describe('worker and tug bay tiers', () => {
+  it('reach farther and say so, and Tier III needs research of their family', () => {
+    const { w, bay } = base();
+    expect(workerReach(w, bay)).toBe(WORKER.reach);
+    bay.level = 3;
+    expect(workerReach(w, bay)).toBe(WORKER.reach + 2 * TIER_REACH);
+    expect(tierEffect({ ...bay, level: 1 }, 2)).toContain(`${WORKER.reach + TIER_REACH} m`);
+    expect(tierTechs('workerBay', 3)).toContain('autonomy');
+    expect(tierTechs('tugBay', 3)).toContain('industrial');
+  });
+
+  it('give the tug a bigger load each tier', () => {
+    const { w } = base();
+    const tug = completedBuilding(30, 'tugBay', at(-300), w);
+    expect(tugLoad(tug)).toBe(TUG.load);
+    tug.level = 3;
+    expect(tugLoad(tug)).toBe(TUG.load + 10);
   });
 });

@@ -1,3 +1,5 @@
+import { TIER_REACH, WORKER } from '../../sim/workerBay';
+import { TUG, tugLoad } from '../../sim/tugBay';
 import { turretRange } from '../../sim/weapons';
 import { buildingUpgradeError } from '../../sim/buildingUpgrades';
 import { PRODUCTS } from '../../sim/colonyConfig';
@@ -52,6 +54,10 @@ export function tierEffect(b: Building, tier: 2 | 3 = 2): string {
     case 'habitatSmall':
     case 'habitatLarge':
       return `Holds ${power}× the air`;
+    case 'workerBay':
+      return `Its drone reaches ${WORKER.reach + TIER_REACH * (tier - 1)} m and works ${speed}× as fast`;
+    case 'tugBay':
+      return `Brings down ${tugLoad(next)} kg a trip instead of ${TUG.load}, ${speed}× as often`;
     default: return 'Tougher against damage';
   }
 }

@@ -12,6 +12,8 @@ export const TIER3_FAMILY: Partial<Record<BuildType, TechId>> = {
   fuelProcessor: 'industrial',
   miningRig: 'industrial',
   droneBay: 'industrial',
+  tugBay: 'industrial',
+  workerBay: 'autonomy',
   workshop: 'industrial',
   massDriver: 'industrial',
   geothermal: 'reactor',

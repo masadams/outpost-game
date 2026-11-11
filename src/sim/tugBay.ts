@@ -1,5 +1,5 @@
 import { planetAt } from './celestial';
-import { workFactor } from './facilityStats';
+import { facilityLevel, workFactor } from './facilityStats';
 import { buildingHealth } from './buildingHealth';
 import { industrialPowerBlock, policyFor } from './colonyPolicy';
 import { WORLD } from './config';
@@ -28,6 +28,9 @@ export const TUG = {
   /** A rock smaller than this (kg) is taken whole. */
   scrap: 4,
 } as const;
+
+/** A bigger tug for each tier: 15, 20 and 25 kg a trip. */
+export const tugLoad = (bay: Building): number => TUG.load + 5 * (facilityLevel(bay) - 1);
 
 /** Rocks circling home that a tug can reach, nearest first. Only whole rocks, not fragments or belt rocks. */
 export function tugTargets(world: WorldState): Asteroid[] {
@@ -93,8 +96,9 @@ export function stepTugBay(world: WorldState, bay: Building, dt: number, capacit
   if (bay.progress + 1e-9 < TUG.seconds) return;
   // Home with a load.
   // What is left after one load would be too small to bother with: bring the whole rock.
-  const whole = rock.mass - TUG.load < TUG.scrap;
-  const take = Math.min(whole ? rock.mass : TUG.load, room);
+  const load = tugLoad(bay);
+  const whole = rock.mass - load < TUG.scrap;
+  const take = Math.min(whole ? rock.mass : load, room);
   world.depot[rock.resource] += take;
   if (rock.mass - take < TUG.scrap) {
     world.asteroids = world.asteroids.filter(a => a.id !== rock.id);

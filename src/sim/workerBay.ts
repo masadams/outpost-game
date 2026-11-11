@@ -1,7 +1,7 @@
 import { buildingHealth, operational } from './buildingHealth';
 import { headquarters, hqLevel } from './headquarters';
 import { availableProduct, industrialPowerBlock } from './colonyPolicy';
-import { workFactor } from './facilityStats';
+import { facilityLevel, workFactor } from './facilityStats';
 import { colonyPlanet } from './localWorld';
 import { wrap } from './math';
 import { powerFraction } from './power';
@@ -38,7 +38,11 @@ export type WorkerJob = {
 
 /** A level-4 Headquarters (or outpost core) sends its worker drones farther and faster. */
 const boosted = (world: WorldState): boolean => !!headquarters(world.colony) && hqLevel(world.colony) >= 4;
-export const workerReach = (world: WorldState): number => WORKER.reach * (boosted(world) ? 1.5 : 1);
+/** Extra metres of reach for each tier of the bay above the first. */
+export const TIER_REACH = 150;
+/** How far a bay's drone flies: more with each tier, half as far again with a level-4 centre. */
+export const workerReach = (world: WorldState, bay?: Building): number =>
+  (WORKER.reach + TIER_REACH * (facilityLevel(bay ?? ({} as Building)) - 1)) * (boosted(world) ? 1.5 : 1);
 const workerPace = (world: WorldState): number => (boosted(world) ? 1.5 : 1);
 
 const bays = (world: WorldState): Building[] => world.colony.buildings.filter(b => b.kind === 'workerBay');
@@ -52,10 +56,16 @@ const flight = (world: WorldState, bay: Building, angle: number): number =>
 
 /** Whether a worker drone is at a construction order now, building it. */
 /** How fast a drone builds, as a share of the pilot. */
-export const droneBuildRate = (world: WorldState): number => WORKER.build * workerPace(world);
+export function droneBuildRate(world: WorldState, orderId: number): number {
+  const bay = builderOf(world, orderId);
+  return WORKER.build * workerPace(world) * (bay ? workFactor(bay) : 1);
+}
+
+const builderOf = (world: WorldState, orderId: number): Building | undefined =>
+  bays(world).find(b => b.job?.kind === 'build' && b.job.target === orderId && b.job.leg === 'work');
 
 export function droneBuilding(world: WorldState, orderId: number): boolean {
-  return bays(world).some(b => b.job?.kind === 'build' && b.job.target === orderId && b.job.leg === 'work');
+  return builderOf(world, orderId) !== undefined;
 }
 
 const claimed = (world: WorldState, self: Building, kind: WorkerJob['kind'], target: number): boolean =>
@@ -66,13 +76,13 @@ const hullPerAlloy = (world: WorldState): number => (world.colony.research.compl
 /** The next job for a bay: the order being built first, then the most damaged building in reach. */
 function nextJob(world: WorldState, bay: Building): WorkerJob | null {
   const order = world.colony.command.queue.find(o => !o.paused);
-  if (order && metresBetween(world, bay.angle, order.angle) <= workerReach(world) && !claimed(world, bay, 'build', order.id)) {
+  if (order && metresBetween(world, bay.angle, order.angle) <= workerReach(world, bay) && !claimed(world, bay, 'build', order.id)) {
     return { kind: 'build', target: order.id, leg: 'out', t: 0, angle: order.angle };
   }
   if (availableProduct(world.colony, 'alloy') <= 1e-6) return null;
   const damaged = world.colony.buildings
     .filter(b => b !== bay && buildingHealth(b) < 100 - 1e-6)
-    .filter(b => metresBetween(world, bay.angle, b.angle) <= workerReach(world) && !claimed(world, bay, 'repair', b.id))
+    .filter(b => metresBetween(world, bay.angle, b.angle) <= workerReach(world, bay) && !claimed(world, bay, 'repair', b.id))
     .sort((a, b) => buildingHealth(a) - buildingHealth(b) || a.id - b.id)[0];
   return damaged ? { kind: 'repair', target: damaged.id, leg: 'out', t: 0, angle: damaged.angle } : null;
 }
