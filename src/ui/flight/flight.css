@@ -256,11 +256,7 @@
 #hud-chrome .tray[data-status=locked] .tool-button[aria-label="Toggle sound mute"] { color: var(--ui-amber); }
 
 /* View tools sit just above the radar in the bottom-right corner. */
-/* Stays in the right-hand column the instruments leave free; more tools wrap onto a row above. */
-#hud-chrome .view-tools {
-  position: absolute; right: var(--ui-gap); bottom: 182px;
-  max-width: calc(180px - var(--ui-gap)); flex-wrap: wrap-reverse; justify-content: flex-end;
-}
+#hud-chrome .view-tools { position: absolute; right: var(--ui-gap); bottom: 182px; }
 #hud-chrome .zoom-readout { display: none; }
 
 @media (max-width: 1100px) {

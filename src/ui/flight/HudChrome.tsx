@@ -225,6 +225,13 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           <ToolButton icon="save" label="Quick save" hint={`Quick save · ${keys.save}`} onClick={on.save} />
           <ToolButton icon="settings" label="Open settings" hint="Settings" onClick={on.settings} />
           <ToolButton
+            icon="grid"
+            label="Power lines"
+            hint={`Power lines ${state.grid ? 'on' : 'off'}`}
+            pressed={state.grid}
+            onClick={() => on.view('grid')}
+          />
+          <ToolButton
             icon={state.paused ? 'play' : 'pause'}
             label="Pause or resume game"
             hint={`${state.paused ? 'Resume' : 'Pause'} · ${keys.pause}`}
@@ -269,13 +276,6 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
             onClick={() => on.view('scan')}
           />
         )}
-        <ToolButton
-          icon="grid"
-          label="Power lines"
-          hint={`Power lines ${state.grid ? 'on' : 'off'}`}
-          pressed={state.grid}
-          onClick={() => on.view('grid')}
-        />
         <ToolButton icon="zoomOut" label="Zoom out" hint={`Zoom out · ${keys.zoomOut}`} onClick={() => on.view('zoomOut')} />
         <ToolButton icon="zoomIn" label="Zoom in" hint={`Zoom in · ${keys.zoomIn}`} onClick={() => on.view('zoomIn')} />
         <ToolButton
