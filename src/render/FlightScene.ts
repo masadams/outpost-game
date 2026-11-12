@@ -6,7 +6,7 @@ import { applyAutopilotAction } from '../sim/autopilot';
 import { GameMenu, type MenuAction, type SlotOp } from '../ui/GameMenu';
 import { screenToWorld } from './pointer';
 import { drawCrewOrder } from './crewOrders';
-import { VisualEffects } from './effects';
+import { VisualEffects, veilStrength, type Veil } from './effects';
 import { decorateShortcuts } from '../ui/shortcuts';
 import { RenderBudget, visible } from './budget';
 import { drawShip, entryHeat } from './ship';
@@ -137,6 +137,8 @@ export class FlightScene extends Phaser.Scene {
   private sky!: Phaser.GameObjects.Graphics;
   /** Dust or ash over the screen, above the world. */
   private haze!: Phaser.GameObjects.Graphics;
+  /** Soft screen tints in progress, drawn over the world on the haze layer. */
+  private veils: Array<Veil & { start: number }> = [];
   private starVisibility = 1;
   private soundEnabling = false;
   private help!: Help;
@@ -706,9 +708,7 @@ export class FlightScene extends Phaser.Scene {
     if (!this.preferences.reducedMotion) {
       for (const k of this.effects.takeKicks())
         this.cameras.main.shake(Math.round(k.seconds * 1000), 0.0035 * k.strength);
-      for (const f of this.effects.takeFlashes()) {
-        this.cameras.main.flash(Math.round(f.seconds * 1000), (f.color >> 16) & 255, (f.color >> 8) & 255, f.color & 255);
-      }
+      for (const f of this.effects.takeFlashes()) this.veils.push({ ...f, start: this.time.now / 1000 });
     } else {
       this.effects.takeKicks();
       this.effects.takeFlashes();
@@ -972,6 +972,12 @@ export class FlightScene extends Phaser.Scene {
     this.starVisibility = look.stars;
     this.drawSun(width, height, daylight);
     drawHaze(this.haze, width, height, this.simulation, this.time.now / 1000, !this.preferences.reducedMotion);
+    const clock = this.time.now / 1000;
+    this.veils = this.veils.filter(v => clock - v.start < v.seconds);
+    for (const v of this.veils) {
+      this.haze.fillStyle(v.color, veilStrength(v.peak, (clock - v.start) / v.seconds));
+      this.haze.fillRect(0, 0, width, height);
+    }
     const home = planetAt('home', this.simulation.system),
       moon = planetAt('moon', this.simulation.system);
     this.atmosphere.setAlpha(look.atmosphere);
