@@ -47,7 +47,7 @@ describe('the story', () => {
     expect(hasMemory(w, 'fuelProcessor')).toBe(true);
     stepBlueprintNotices(w);
     expect(w.notice.message).toContain('MEMORY RESTORED · FUEL PROCESSOR');
-    expect(w.notice.message).toContain('Ice is fuel');
+    expect(w.notice.message).toContain('NOW IN BUILD');
     expect(blueprintRevealed(w, 'storage')).toBe(false);
     w.unloaded = 300;
     stepStory(w);
@@ -165,6 +165,6 @@ describe('the story', () => {
 
   it('has short, unique memories', () => {
     expect(new Set(MEMORIES.map(m => m.id)).size).toBe(MEMORIES.length);
-    for (const m of MEMORIES) expect(m.text.length).toBeLessThan(170);
+    for (const m of MEMORIES) expect(m.text.length).toBeLessThanOrEqual(260);
   });
 });

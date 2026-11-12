@@ -10,8 +10,12 @@ It does not know its makers are long gone.
 
 ## How the story is told
 - **Boot log.** The first seconds of a new game print five lines in the console style. It never blocks input.
-- **Memories.** Things the unit recalls as events happen. Each is one or two short lines, announced once
-  ("MEMORY RESTORED · ...") and kept in the Journal, newest first, with how much of the archive now reads back.
+- **Journal entries.** What the unit writes down as things happen. When one comes back it is shown on screen as a
+  card (chapter, title, the entry) for as long as it takes to read; Open Journal or Dismiss puts it away, and a
+  pause never eats the reading time. Several at once queue up. The objective card shows how many are unread.
+- **The Journal.** Entries are filed by chapter: Waking, The sky, The other units, The signal, Long Patience, Far out.
+  Each chapter shows how many of its entries have come back. Unread entries are marked New until the Journal is
+  closed. A **Leads** box at the top gives one line per chapter on what to do next to find more.
 - **Blueprint memories.** Six early buildings are memories too. Each comes back when the base meets the problem
   it solves, with the reason in the notice. This replaces handing over six blueprints at once.
 - **What others left.** The derelict, the fuel tender and every other world hold a line from an earlier unit or
@@ -59,8 +63,14 @@ marker, a frozen comet, a dark world on no chart, and a ring of landers from now
 details that do not add up, left for an expansion to answer. See `src/sim/deepSpace.ts`.
 
 ## Voice
-Terse, plain, second person or none. A machine log that is slowly becoming a person. No jokes, no jargon.
-Each memory stays under 170 characters.
+The unit's own log, first person, written the way a careful engineer writes up a shift: what happened, what was
+found, what it means for the work. Rules for anyone adding entries:
+- Say the concrete thing: a number, a name, what the log or the hull plate actually reads.
+- Plain sentences of mixed length. No "it is not X, it is Y", no rows of three fragments, no closing aphorism.
+- "I", never "you". Other voices (earlier units, the makers) appear only as quoted lines.
+- Feeling is shown by what the unit notices and does, not named.
+- No jokes, no jargon. An entry is at most 260 characters.
+`tests/journalView.test.ts` checks the last three.
 
 ## Not yet
 - After "To the living colony", Begin again starts a new system as the copy that went with the ship: a different boot log, a memory of the systems made before, and the same journey. The old game stays saved until saved over.

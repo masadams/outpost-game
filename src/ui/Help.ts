@@ -34,7 +34,7 @@ const FOCUS_HELP = `
       <p>Right-click any building for its menu. <b>Demolish</b> asks first and gives back part of the materials.</p>
       <h2>As you grow</h2>
       <p><b>Base</b> shows every building, what it is doing and what it needs. Build a <b>Research lab</b> and open the research tree there: each technology costs materials and lab time, and some only open once something has happened. Ship parts are built and fitted at the home pad from <b>Ship</b>. The <b>Map</b> shows the worlds you have found and where your pods are.</p>
-      <p>New blueprints are announced when they become available. The Journal (the card at top left) records what has happened so far.</p>
+      <p>New blueprints are announced when they become available. The Journal (the card at top left) keeps the story as it comes back, sorted into chapters, with a <b>Leads</b> box that says what to look into next. New entries also appear on screen for a moment as they return.</p>
       <h2>Finding ore</h2>
       <p>Seams near the pad are known from the start. Others show as a broken line with a question mark until you walk over them or fly low across them. In the lander, below 1.5 km, press <b>R</b> (or the scan button by the zoom buttons) to pulse the ground and find every seam within 1.5 km. It recharges in 40 seconds. A rig must stand on a known seam.</p>
       <h2>Other worlds</h2>

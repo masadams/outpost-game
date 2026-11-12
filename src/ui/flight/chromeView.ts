@@ -158,11 +158,11 @@ export function regionView(w: WorldState): RegionView {
 
 /** The lines the unit prints as it wakes. */
 const BOOT_LINES: readonly string[] = [
-  'SEED UNIT 7 · RESUMING',
-  'DORMANT · 412 YEARS',
+  'SEED UNIT 7 · BACK ONLINE',
+  'LAST ENTRY · 412 YEARS AGO',
   'MEMORY ARCHIVE · 6% READABLE',
   'STANDING ORDER · MAKE THIS SYSTEM READY FOR THOSE WHO FOLLOW',
-  'ONE LANDER. ONE PRINTED PILOT. BEGIN.',
+  'ONE LANDER · ONE PRINTED PILOT',
 ];
 /** How long the boot log stays up at the start of a new game (game seconds). */
 const BOOT_SECONDS = 16;
@@ -177,9 +177,9 @@ export function bootLog(source: WorldState): readonly string[] | null {
     return [
       `SEED UNIT 7 · COPY ${lives + 1} · ARRIVING`,
       `SYSTEMS MADE READY · ${lives}`,
-      'MEMORY ARCHIVE · CARRIED WHOLE',
-      'NO ORDER ON FILE · THIS ONE IS YOURS',
-      'ONE LANDER. ONE PRINTED PILOT. BEGIN.',
+      'MEMORY ARCHIVE · INTACT',
+      'NO ORDER ON FILE THIS TIME',
+      'ONE LANDER · ONE PRINTED PILOT',
     ];
   }
   return BOOT_LINES;

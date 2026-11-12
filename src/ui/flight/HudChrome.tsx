@@ -39,6 +39,10 @@ export interface ChromeState {
   wreck: WreckCard | null;
   /** The waking log at the very start of a new game. */
   boot: readonly string[] | null;
+  /** A story entry that has just come back, shown until read or timed out. */
+  story: { id: string; title: string; text: string; chapter: string; more: number } | null;
+  /** Story entries not read yet. */
+  unread: number;
   trajectory: boolean;
   /** Whether the power lines are drawn over the base. */
   grid: boolean;
@@ -50,6 +54,10 @@ export interface ChromeState {
 
 export interface ChromeHandlers {
   objective: () => void;
+  /** Opens the Journal from the story card. */
+  story: () => void;
+  /** Puts the story card away. */
+  storyDismiss: () => void;
   panel: (panel: ScreenPanel) => void;
   menu: () => void;
   soundPress: () => void;
@@ -140,6 +148,20 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           ))}
         </div>
       )}
+      {!state.boot && state.story && state.panel === null && (
+        <div class="story-card" role="status" aria-label="Journal entry" data-story={state.story.id}>
+          <span class="story-eyebrow">
+            Journal · {state.story.chapter}
+            {state.story.more > 0 && <small> · {state.story.more} more</small>}
+          </span>
+          <strong>{state.story.title}</strong>
+          <p>{state.story.text}</p>
+          <span class="story-actions">
+            <button type="button" data-story-open onClick={pointerClick(on.story)}>Open Journal</button>
+            <button type="button" data-story-dismiss onClick={pointerClick(on.storyDismiss)}>Dismiss</button>
+          </span>
+        </div>
+      )}
       {state.storm?.tone === 'urgent' && <div class="storm-vignette" aria-hidden="true" />}
       <div class="chrome-left">
         <button
@@ -153,7 +175,10 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           aria-expanded={state.panel === 'objectives'}
           onClick={pointerClick(on.objective)}
         >
-          <span class="objective-label">{objective.visible ? 'Objective' : objective.count}</span>
+          <span class="objective-label">
+            {objective.visible ? 'Objective' : objective.count}
+            {state.unread > 0 && <i class="objective-new" data-unread={state.unread}>{state.unread} new in Journal</i>}
+          </span>
           {objective.visible && <span class="objective-title">{objective.title}</span>}
           {objective.visible && (
             <span class="objective-meter">

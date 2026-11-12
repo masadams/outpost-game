@@ -35,25 +35,25 @@ export interface DeepFind {
 export const DEEP: Record<DeepId, DeepFind> = {
   hulk: {
     label: 'Carrier hulk', km: 95, look: 'hulk', size: 160,
-    text: 'A length of Long Patience\'s spine, drifting. Its recorder bay is open and empty. The latches were undone from inside.',
+    text: 'A section of Long Patience\'s spine, adrift. The recorder bay is open and the recorder is gone. The latches were released from the inside.',
     salvage: { alloy: 30, components: 15 },
   },
   marker: {
     label: 'Makers\' marker', km: 130, look: 'marker', size: 20,
-    text: 'A marker the makers left at the edge of the system before any unit came. It counts down to an arrival. The date passed 300 years ago.',
+    text: 'A marker placed at the edge of the system before any unit arrived. It is counting down to an arrival. The date it gives passed three hundred years ago.',
   },
   comet: {
     label: 'Frozen comet', km: 120, look: 'comet', size: 220,
-    text: 'A comet core, asleep out here, older than the storms. Its ice is clean enough to drink.',
+    text: 'A dormant comet core, older than the storms. The ice is clean, and I have taken some aboard.',
     ore: { ice: 60 },
   },
   darkWorld: {
     label: 'Dark world', km: 185, look: 'dark', size: 1400,
-    text: 'A world with no star, passing through. It is on none of the makers\' charts. Its surface is too smooth to be rock.',
+    text: 'A planet without a star, passing through the outer system. It is on none of the charts I was given. From here the surface looks smooth, more like something made than like rock.',
   },
   graveyard: {
     label: 'Lander ring', km: 240, look: 'ring', size: 600,
-    text: 'Landers, dozens, parked in a neat ring and powered down. Not from the carrier. Not from anything in the archive.',
+    text: 'Dozens of landers parked in a ring, all powered down. They did not come from the carrier, and no design like them is in the archive.',
   },
 };
 
@@ -93,7 +93,7 @@ export function stepDeepSpace(source: WorldState): void {
     if (Math.hypot(at.x - w.ship.position.x, at.y - w.ship.position.y) > FIND_RANGE + DEEP[id].size) continue;
     w.exploration.deep = [...deepFound(w), id];
     const took = takeSalvage(w, DEEP[id]);
-    notify(w, `FOUND · ${DEEP[id].label.toUpperCase()}${took ? ` · ${took}` : ''} · SEE THE JOURNAL`, 8);
+    notify(w, `FOUND · ${DEEP[id].label.toUpperCase()}${took ? ` · ${took}` : ''}`, 8);
   }
 }
 

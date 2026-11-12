@@ -32,31 +32,31 @@ export interface Keystone {
 export const KEYSTONES: Record<KeystoneWorld, Keystone> = {
   moon: {
     label: 'Crystal lattice', stage: 'Hull plating', metres: -210,
-    found: 'A lattice grown on a carrier hull plate. The plate is stamped LONG PATIENCE.',
+    found: 'A crystal lattice grown over a hull plate. The plate is stamped LONG PATIENCE.',
   },
   cinder: {
     label: 'Unit 2\'s archive', stage: 'Archive core', metres: -170,
-    found: 'Unit 2\'s archive, sealed and whole. It kept its memory. It lost everything else.',
+    found: 'Unit 2\'s archive, sealed and undamaged. The rest of the unit did not survive the landing.',
   },
   ember: {
     label: 'Engine test records', stage: 'Long-burn drive', metres: 190,
-    found: 'Years of engine tests, each a little better than the last, all for a launch that needed a reply.',
+    found: 'Years of engine test records, each run a little better than the one before.',
   },
   glint: {
     label: 'Tracking mirror', stage: 'Navigation', metres: 160,
-    found: 'One mirror from the field, still true. It can hold a star for a very long time.',
+    found: 'One mirror from the field, still true after two hundred years.',
   },
   verdant: {
     label: 'Living samples', stage: 'Seed bank', metres: 230,
-    found: 'Seed, soil and spore, sealed cold. This is what the carrier was for.',
+    found: 'Seed, soil and spores in cold storage. This is the cargo the carrier was built to deliver.',
   },
   tide: {
     label: 'Landing grid survey', stage: 'Landing gear', metres: 200,
-    found: 'The survey for a landing grid built for the carrier. It never came down on it.',
+    found: 'The survey for the landing grid. It was drawn up for the carrier, which never used it.',
   },
   murk: {
     label: 'Unit 5', stage: 'A second mind', metres: 180,
-    found: 'Unit 5 stops building when you lift its core. It says one thing: "Is it time?"',
+    found: 'Unit 5 stops work when its core is lifted. It asks one question: "Is it time?"',
   },
 };
 

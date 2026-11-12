@@ -80,7 +80,7 @@ export class OperationsDock {
     if(this.view!=='command')this.inspection=false;this.root.dataset.inspection=String(this.inspection);
     const expanded=!this.inspection&&this.view!==null&&this.expanded.has(this.view);
     this.layoutControls(expanded);
-    this.heading.textContent = this.view ? ({cargo:'Ship',combat:featureVisible('combat')?'Ship / Weapons':'Ship / Recovery',defence:'Ship / Defence',command:'Base',navigation:'Map',objectives:'Objectives',autopilot:'Ship / Flight computer'} as const)[this.view] : '';
+    this.heading.textContent = this.view ? ({cargo:'Ship',combat:featureVisible('combat')?'Ship / Weapons':'Ship / Recovery',defence:'Ship / Defence',command:'Base',navigation:'Map',objectives:'Journal',autopilot:'Ship / Flight computer'} as const)[this.view] : '';
     if(this.inspection)this.heading.textContent=this.inspectionTitle;
     const ship=['cargo','combat','defence','autopilot'].includes(this.view??'');this.shipTabs.hidden=!ship||this.shipTabs.children.length<2;for(const b of Array.from(this.shipTabs.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.panel===this.view));
     const changed=this.renderedView!==this.view;this.renderedView=this.view;
