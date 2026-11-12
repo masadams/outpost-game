@@ -9,6 +9,22 @@ import { dustStrength, groundBelow } from './landing';
 import { allColonies, sitePosition } from '../sim/localWorld';
 import { BLUEPRINTS } from '../sim/colonyConfig';
 
+/** A soft full-screen tint that eases in and out: crossing the edge of the air, a memory, a deep find. */
+export interface Veil {
+  color: number;
+  /** Seconds from the first hint of it to gone. */
+  seconds: number;
+  /** Strongest it gets, 0 to 1. It never covers the screen. */
+  peak: number;
+}
+
+/** How strong a veil is part-way through: eases up over the first third, then fades slowly. */
+export function veilStrength(peak: number, t: number): number {
+  if (t <= 0 || t >= 1) return 0;
+  const ease = (x: number) => x * x * (3 - 2 * x);
+  return peak * (t < 0.35 ? ease(t / 0.35) : 1 - ease((t - 0.35) / 0.65));
+}
+
 /** An expanding ring with a few dots: a flash. */
 interface Burst { position: Vec; life: number; color: number; size: number }
 /** A piece of debris or a glint, flying free. */
@@ -56,7 +72,7 @@ export class VisualEffects {
   /** Story and base counts last frame, so a rise can be marked on screen. */
   private moments: Moments | null = null;
   /** A full-screen tint asked for since the last call: crossing into space or back into the air. */
-  private flashes: Array<{ color: number; seconds: number }> = [];
+  private flashes: Veil[] = [];
   private dustClock = 0;
   /** What happened this frame, for the camera: a rock broke close by, the hull took a knock. Read and cleared each frame. */
   private kicks: Array<{ strength: number; seconds: number }> = [];
@@ -85,7 +101,7 @@ export class VisualEffects {
   }
 
   /** Screen tints asked for since the last call. */
-  takeFlashes(): Array<{ color: number; seconds: number }> {
+  takeFlashes(): Veil[] {
     const out = this.flashes;
     this.flashes = [];
     return out;
@@ -166,13 +182,13 @@ export class VisualEffects {
     if (!was) return;
     const rose = (a: number, b: number) => b > a && b - a <= 2;
     if (rose(was.deep, now.deep)) {
-      this.flashes.push({ color: 0x140a24, seconds: 1.4 });
+      this.flashes.push({ color: 0x140a24, seconds: 2.4, peak: 0.55 });
       this.kicks.push({ strength: 0.4, seconds: 0.8 });
     } else if (rose(was.keystones, now.keystones)) {
-      this.flashes.push({ color: 0x3a2a08, seconds: 0.7 });
+      this.flashes.push({ color: 0x3a2a08, seconds: 1.6, peak: 0.35 });
       this.signals.push({ ...w.ship.position, age: 0, life: 1.6, color: 0xffe6b0, rings: 3, reach: 60 });
     } else if (rose(was.memories, now.memories)) {
-      this.flashes.push({ color: 0x0c2a2a, seconds: 0.35 });
+      this.flashes.push({ color: 0x0c2a2a, seconds: 1.2, peak: 0.3 });
     }
     for (const at of now.newSeams(was.seamIds)) this.signals.push({ ...at, age: 0, life: 1.4, color: 0xd99b5c, rings: 2, reach: 45 });
     if (rose(was.hq, now.hq) && was.hq > 0 && now.hqAt) {
@@ -196,12 +212,12 @@ export class VisualEffects {
       if (leaving) {
         // The last of the air lets go: a short shudder, then the dark comes up.
         this.kicks.push({ strength: 0.5, seconds: 0.35 });
-        this.flashes.push({ color: 0x02060d, seconds: 0.6 });
+        this.flashes.push({ color: 0x02060d, seconds: 2.6, peak: 0.45 });
       } else if (entering) {
         // Hitting the top of the air: a harder buffet and a warm glow, stronger the faster the lander is going.
         const speed = Math.hypot(w.ship.velocity.x, w.ship.velocity.y);
         this.kicks.push({ strength: Math.min(1.6, 0.6 + speed / 120), seconds: 0.45 });
-        this.flashes.push({ color: 0xffa45c, seconds: 0.5 });
+        this.flashes.push({ color: 0xffa45c, seconds: 2, peak: 0.35 });
       }
     }
     this.lastState = w.ship.state;
