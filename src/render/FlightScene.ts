@@ -146,6 +146,7 @@ export class FlightScene extends Phaser.Scene {
   private flightTools!: FlightTools;
   /** Power lines drawn over the base: toggled from the view tools, always on while building. */
   private showGrid = false;
+  private storyClock = 0;
   private prediction: Trajectory | null = null;
   private predictionTime = 0;
   private threats: ThreatPrediction[] = [];
@@ -191,6 +192,8 @@ export class FlightScene extends Phaser.Scene {
     );
     this.chrome = new FlightChrome({
       objective: () => this.hud.openObjectives(),
+      story: () => this.hud.openObjectives(),
+      storyDismiss: () => this.hud.journal.dismiss(),
       panel: (panel) => this.hud.chooseScreen(panel),
       menu: () => {
         this.setPaused(true);
@@ -534,6 +537,8 @@ export class FlightScene extends Phaser.Scene {
       event: eventChip(world) ?? weatherChip(world),
       wreck: wreckCard(world),
       boot: bootLog(world),
+      story: this.hud.journal.current(),
+      unread: this.hud.journal.unread,
       trajectory: this.flightTools.trajectory,
       grid: this.showGrid,
       scan: scanButton(world),
@@ -693,6 +698,9 @@ export class FlightScene extends Phaser.Scene {
       this.simulation.system,
     );
     this.audio.update(activeWorld(this.simulation), this.halted, delta / 1000);
+    // The story card's clock only runs while the game does, so a pause never eats reading time.
+    if (!this.halted) this.storyClock += delta / 1000;
+    this.hud.journal.observe(this.simulation, this.storyClock);
     this.updateChrome();
     this.pickupFeed.update(this.simulation, this.halted ? 0 : Math.min(delta / 1000, 0.1));
     this.effects.update(

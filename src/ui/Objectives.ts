@@ -1,6 +1,7 @@
 import { featureVisible } from '../preferences/features';
 import { OBJECTIVES, objectiveProgress, type ObjectiveId, type ObjectiveLink } from '../sim/objectives';
-import { archiveReadable, memories } from '../sim/story';
+import { memories } from '../sim/story';
+import { JournalReader, journalView } from './journal/journalView';
 import { starterPlan } from '../sim/starterPlan';
 import type { WorldState } from '../sim/world';
 import { patchMarkup } from './dom';
@@ -13,12 +14,26 @@ import { isolateControlKeys } from './controlKeys';
 const LINKS: Record<ObjectiveLink, string> = { cargo:'Open Ship / Cargo', build:'Open Build', equipment:'Open Manage / Ship fitting', map:'Open Map', research:'Open Manage / Research', defence:'Open Ship / Defence' };
 const FOCUS_LINKS: Partial<Record<ObjectiveLink, string>> = { equipment:'Open Base / Ship parts', research:'Open Base / Research' };
 const recent = (w: WorldState): string => { const lines = (w.rootWorld ?? w).exploration.events?.journal.slice(-5) ?? []; return lines.length ? `<h3>Recently</h3>${lines.map(l => `<p data-event-line>${l}</p>`).join('')}` : ''; };
-/** What the unit has remembered so far, newest first. */
-const recalled = (w: WorldState): string => {
-  const list = memories(w).slice().reverse();
-  if (!list.length) return '';
-  const rows = list.map(m => `<p class="memory" data-memory="${m.id}"><b>${escapeHtml(m.title)}</b><span>${escapeHtml(m.text)}</span></p>`);
-  return `<h3 data-archive="${archiveReadable(w)}">Memory archive · ${archiveReadable(w)}% readable</h3>${rows.join('')}`;
+/**
+ * The story so far, by chapter: what has come back in each, newest chapter with news opened, and one line on what
+ * to follow next. Entries not read yet are marked New.
+ */
+const recalled = (w: WorldState, read: ReadonlySet<string>): string => {
+  const view = journalView(w, read);
+  if (!view.chapters.length) return '';
+  const leads = view.chapters.filter(c => c.lead).map(c => `<li data-lead="${c.id}"><b>${escapeHtml(c.title)}</b> ${escapeHtml(c.lead!)}</li>`);
+  // Open the chapters with something new; with nothing new, the latest one that has entries.
+  const latest = [...view.chapters].reverse().find(c => c.entries.length > 0)?.id;
+  const chapters = view.chapters.filter(c => c.entries.length > 0).map(c => {
+    const rows = c.entries.map(e =>
+      `<p class="memory" data-memory="${e.id}" data-fresh="${e.fresh}"><b>${escapeHtml(e.title)}${e.fresh ? ' <i class="memory-new">New</i>' : ''}</b><span>${escapeHtml(e.text)}</span></p>`);
+    const open = c.fresh || (view.unread === 0 && c.id === latest);
+    return `<details class="chapter" data-chapter="${c.id}" data-preserve-open ${open ? 'open' : ''}><summary><span>${escapeHtml(c.title)}</span><small>${c.entries.length} of ${c.total}${c.fresh ? ' · new' : ''}</small></summary>${rows.join('')}</details>`;
+  });
+  return `<h3 data-archive="${view.readable}">Memory archive · ${view.readable}% readable</h3>
+    <div class="archive-meter" aria-hidden="true"><i style="width:${view.readable}%"></i></div>
+    ${leads.length ? `<div class="leads"><h4>Leads</h4><ul>${leads.join('')}</ul></div>` : ''}
+    ${chapters.join('')}`;
 };
 const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 /** Notices that have been shown this session, newest first, in a section that starts closed. */
@@ -35,6 +50,11 @@ export class Objectives {
  readonly content = document.createElement('section');
  private includeRecovery=false;
  private readonly notices = new NoticeLog();
+ /** Which story entries have been read, and which are waiting to be shown on screen. */
+ readonly reader = new JournalReader();
+ /** Entries that were unread when the Journal was opened: marked New until it closes. */
+ private fresh = new Set<string>();
+ private wasOpen = false;
  private tracked: ObjectiveId | 'auto' = 'auto';
  get trackedId(): ObjectiveId | 'auto' { return this.tracked; }
  constructor(navigate: (link: ObjectiveLink, keyboard: boolean) => void) {
@@ -48,12 +68,18 @@ export class Objectives {
   const all=shownObjectives(w), done=w.objectives.completed.filter(id=>all.some(o=>o.id===id));
   const shown=all.filter(o=>done.includes(o.id)||cued(w,o.id));
   const next=this.tracked==='auto'?shown.find(o=>!done.includes(o.id)):shown.find(o=>o.id===this.tracked);
-  if(this.content.closest('[hidden]'))return;
+  if(this.content.closest('[hidden]')){this.wasOpen=false;this.fresh.clear();return;}
+  const ids=(w.rootWorld??w).exploration.story?.memories??[];
+  // Opening the Journal reads everything; what was unread stays marked New until it is closed.
+  for(const id of ids)if(!this.reader.seen.has(id))this.fresh.add(id);
+  if(!this.wasOpen||this.reader.unread>0)this.reader.readAll();
+  this.wasOpen=true;
+  const read=new Set(ids.filter(id=>!this.fresh.has(id)));
   const progress=next?objectiveProgress(w,next.id):null, recorded=!!next&&done.includes(next.id);
   const plan=starterPlan(w,this.includeRecovery), fmt=(n:number)=>Number(n.toFixed(2));
   patchMarkup(this.content, `<label for="tracked-objective">Following</label><select id="tracked-objective"><option value="auto" ${this.tracked==='auto'?'selected':''}>Latest</option>${shown.map(o=>`<option value="${o.id}" ${this.tracked===o.id?'selected':''}>${done.includes(o.id)?'✓ ':''}${o.label}</option>`).join('')}</select>
    ${next&&progress?`<article class="tracked-goal" data-objective="${next.id}" data-complete="${recorded}"><h3>${recorded?'✓ ':''}${next.label}</h3><label for="objective-progress">${recorded?'Recorded · ':''}${fmt(progress.value)} / ${progress.target} ${progress.unit}</label><progress id="objective-progress" max="${progress.target}" value="${progress.value}"></progress><p>${controlHint(next.hint,p)}</p><button data-objective-link="${next.link}">${(!featureVisible('catalogue') && FOCUS_LINKS[next.link]) || LINKS[next.link]}</button></article>`:'<p>Nothing pressing. Keep going at your own pace.</p>'}
-   <details data-preserve-open ${done.length || (w.exploration.events?.journal.length ?? 0) || memories(w).length ? 'open' : ''}><summary>Journal · ${done.length}</summary>${recent(w)}${recalled(w)}${said(this.notices, w.system.time)}${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
+   <details data-preserve-open ${done.length || (w.exploration.events?.journal.length ?? 0) || memories(w).length ? 'open' : ''}><summary>Journal · ${done.length}</summary>${recent(w)}${recalled(w,read)}${said(this.notices, w.system.time)}${(['expedition','colony'] as const).filter(g=>shown.some(o=>o.group===g)).map(group=>`<h3>${group==='expedition'?'Expedition':'Colony'}</h3>${shown.filter(o=>o.group===group).map(o=>`<p data-milestone="${o.id}">${done.includes(o.id)?'✓':'○'} ${o.label}</p>`).join('')}`).join('')}</details>
    ${featureVisible('starterBudget')?`<details id="starter-budget" data-preserve-open><summary>Selene starter-route budget</summary><p>Solar + refinery → lab + Applied materials → cargo rack. Missing work on Selene only; remote stock and ship freight are not pooled.</p>
    <label class="budget-spares"><input id="budget-recovery" type="checkbox" ${this.includeRecovery?'checked':''}> Include recovery parts in this budget</label><small>Planning allowance only; no stock is locked. Turret reserves can block recovery.</small><div class="route-budget">${plan.rows.map(r=>`<p data-budget="${r.product}"><b>${r.product}</b><br>Need ${fmt(r.need)} kg · usable ${fmt(r.usable)} kg<br><span ${r.shortfall>0?'class="budget-shortfall"':''}>Shortfall ${fmt(r.shortfall)} kg</span></p>`).join('')||'<p>You have the materials for this route.</p>'}</div>
    ${plan.raw.length?`<p>Refining inputs for the shortfall (whole cycles):</p>${plan.raw.map(r=>`<p data-raw-budget="${r.resource}">${r.resource}: ${fmt(r.need)} kg needed · ${fmt(r.inDepot)} kg in Selene depot · ${fmt(r.shortfall)} kg still to deliver</p>`).join('')}`:'<p>Materials covered. Feedstock, power and travel still count.</p>'}

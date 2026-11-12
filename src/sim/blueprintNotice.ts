@@ -21,7 +21,8 @@ export function stepBlueprintNotices(w: WorldState): BuildType[] {
     const memory = blueprintMemory(kind);
     const label = BLUEPRINTS[kind].label.toUpperCase();
     // A remembered blueprint says why it came back; the rest are simply new.
-    if (memory) notify(w, `MEMORY RESTORED · ${label} · ${memory.text}`, 7);
+    // The memory itself is shown as a story card; the notice only says what it opened.
+    if (memory) notify(w, `MEMORY RESTORED · ${label} · NOW IN BUILD`, 5);
     else notify(w, `NEW BLUEPRINT · ${label}`);
   }
   return fresh;

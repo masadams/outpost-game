@@ -206,6 +206,10 @@ export class Hud {
     if (this.latestWorld?.colony.buildOpen) return 'colony';
     return this.dock.root.hidden ? null : this.dock.current;
   }
+  /** The story reader: what is unread and what is on screen. */
+  get journal() {
+    return this.objectives.reader;
+  }
   get trackedObjective() {
     return this.objectives.trackedId;
   }

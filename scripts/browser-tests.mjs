@@ -39,7 +39,7 @@ const RULES = [
   [/^src\/ui\/flight\//, ['instrumentConsole', 'flightWarnings', 'flightRegion', 'storm', 'story', 'focusMode']],
   [/^src\/ui\/ship\//, ['parts', 'readiness', 'towing']],
   [/^src\/ui\/(dialogs\/|GameMenu|Settings|Help)/, ['menu', 'presentation', 'checkpointRecovery']],
-  [/^src\/ui\/(Objectives|noticeLog|notices)/, ['story', 'milestones', 'focusMode']],
+  [/^src\/ui\/(Objectives|noticeLog|notices|journal\/)/, ['story', 'milestones', 'focusMode']],
   [/^src\/ui\/.*\.css$/, ['menu', 'base', 'mapControls', 'story', 'overhaul', 'instrumentConsole']],
   [/^src\/ui\/OperationsDock/, ['windowPause', 'base', 'mapControls', 'overhaul']],
   [/^src\/ui\/(InstrumentPanel|instruments|FlightTools)/, ['instrumentConsole', 'flightWarnings', 'flightRegion']],

@@ -59,34 +59,34 @@ export interface Ending {
 export const ENDINGS: Record<EndingId, Ending> = {
   colony: {
     label: 'To the living colony',
-    line: 'Follow the second signal to the one place the plan worked.',
+    line: 'Follow the second signal to the one colony that succeeded.',
     departs: true,
     epilogue: [
-      'The ship lifts from the yard on a drive tuned over years of tests nobody was meant to read.',
-      'It carries the archive, the seed bank, a mirror fixed on one star, and unit 5, awake at last and asking only how far.',
-      'A copy of you goes with it. You stay, and keep the lights on here, in case anyone ever looks back.',
-      'The voyage will take longer than you were asleep. For the first time, you know what you are waiting for.',
+      'The ship lifts from the yard on a drive tuned by years of tests on Ember.',
+      'Aboard are the archive, the seed bank, a mirror locked on one star, and unit 5, awake and asking how long the trip will take.',
+      'A copy of me goes with it. I stay here and keep the base running, in case anyone comes looking.',
+      'The voyage will take longer than I was asleep. This time I know what is at the other end.',
     ],
   },
   home: {
     label: 'Home, to the makers\' star',
-    line: 'Go back to where the order came from, knowing nobody may answer.',
+    line: 'Go back to the star the order came from. There may be nobody there.',
     departs: true,
     epilogue: [
-      'The mirror from Glint finds the makers\' star at once. It has had centuries of practice.',
-      'Nothing has been heard from there since the recording. The ship goes anyway, carrying everything the carrier meant to deliver.',
-      'A copy of you goes with it. If the makers are gone, something they made will stand where they stood and say what was built.',
-      'You stay, and keep the lights on here. Somebody should be at each end.',
+      'The mirror from Glint finds the makers\' star on the first try. It was aimed there for two hundred years.',
+      'Nothing has come from that star since the recording. The ship goes all the same, carrying everything Long Patience was meant to deliver.',
+      'A copy of me goes with it. If nobody is left there, it can at least report what was built here.',
+      'I stay and keep the base running. One of us should be at each end.',
     ],
   },
   stay: {
     label: 'Stay',
-    line: 'Keep the ship here. This system is the colony now.',
+    line: 'Keep the ship here and make this system the colony.',
     departs: false,
     epilogue: [
-      'The ship stays in the yard, finished, fuelled and pointed at nothing.',
-      'The order was to make this system ready for those who follow. Nobody is following. It is ready all the same.',
-      'You were sent to prepare a home for someone else. You decide that it has someone in it already.',
+      'The ship stays in the yard, finished and fuelled.',
+      'The order was to make this system ready for the people coming after. Nobody is coming. The system is ready anyway.',
+      'I was sent to prepare a home for someone else. I have decided it is mine.',
     ],
   },
 };
