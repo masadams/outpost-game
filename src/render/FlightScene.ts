@@ -698,8 +698,9 @@ export class FlightScene extends Phaser.Scene {
       this.simulation.system,
     );
     this.audio.update(activeWorld(this.simulation), this.halted, delta / 1000);
-    // The story card's clock only runs while the game does, so a pause never eats reading time.
-    if (!this.halted) this.storyClock += delta / 1000;
+    // The story card's clock only runs while the game does and no window is open over it, so neither a pause nor a
+    // window eats reading time.
+    if (!this.halted && this.hud.currentPanel === null) this.storyClock += delta / 1000;
     this.hud.journal.observe(this.simulation, this.storyClock);
     this.updateChrome();
     this.pickupFeed.update(this.simulation, this.halted ? 0 : Math.min(delta / 1000, 0.1));

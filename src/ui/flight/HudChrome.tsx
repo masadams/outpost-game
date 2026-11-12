@@ -148,7 +148,7 @@ export function HudChrome({ state, on }: { state: ChromeState; on: ChromeHandler
           ))}
         </div>
       )}
-      {!state.boot && state.story && (
+      {!state.boot && state.story && state.panel === null && (
         <div class="story-card" role="status" aria-label="Journal entry" data-story={state.story.id}>
           <span class="story-eyebrow">
             Journal · {state.story.chapter}
