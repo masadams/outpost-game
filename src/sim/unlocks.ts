@@ -32,7 +32,11 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   if (kind === 'massDriver') return w.colony.research.completed.includes('massDrivers');
   if (kind === 'shipyard') return hasMemory(w, 'makersRelay') && homeHqAtLeast(w, 3);
   if (kind === 'workshop') return Object.values(w.outposts).some(o => o.colony.buildings.length > 0);
-  if (kind === 'antenna') return [w.colony, ...Object.values(w.outposts).map(o => o.colony)].some(c => c.buildings.some(b => b.kind === 'observatory'));
+  // The antenna comes once a storm piece has been analysed: there is something worth listening for by then.
+  if (kind === 'antenna') {
+    const observatory = colonies(w).some(c => c.buildings.some(b => b.kind === 'observatory'));
+    return observatory && (!w.system.sun || w.objectives.completed.includes('analysis'));
+  }
   // The tug bay follows the drone bay: once one is working, the next step is the rocks overhead.
   // A Headquarters at level 2 opens the worker bay; without one (no day cycle) a workshop or drone bay does.
   if (kind === 'workerBay') {
@@ -47,7 +51,8 @@ export function blueprintRevealed(world: WorldState, kind: BuildType): boolean {
   if (kind === 'shieldLarge') return w.colony.buildings.some(b => b.kind === 'shieldSmall');
   if (kind === 'habitatSmall') return Object.values(w.outposts).some(o => o.colony.buildings.length > 0);
   if (kind === 'habitatLarge') return [w.colony, ...Object.values(w.outposts).map(o => o.colony)].some(c => c.buildings.some(b => b.kind === 'habitatSmall'));
-  if (kind === 'researchLab') return studiedFinds(w).length > 0;
+  // The buoy's data alone does not open the lab: the first storm piece does, so the Frost trip opens one thing.
+  if (kind === 'researchLab') return studiedFinds(w).some(f => !w.system.sun || f.id !== 'buoy');
   if (kind === 'missile') return w.storm.wave >= 2;
   if (kind === 'laser') {
     return w.colony.buildings.some(b => b.kind === 'observatory') || w.objectives.completed.includes('sky');

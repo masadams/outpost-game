@@ -76,7 +76,10 @@ function Detail({ node, view, select, on, paused }: { node: TreeNode; view: Rese
 
 function Tree({ view, on, paused }: { view: ResearchTreeView; on: ResearchTreeHandlers; paused: boolean }) {
   const first = view.nodes.find(n => n.state === 'active') ?? view.nodes.find(n => n.state === 'ready') ?? view.nodes[0];
-  const [picked, setPicked] = useState<string>(first.id);
+  const [picked, setPicked] = useState<string>(first?.id ?? '');
+  if (!first) {
+    return <p class="base-note tree-empty">Nothing to research yet. Study something you find, and the first lines of research open here.</p>;
+  }
   const node = view.nodes.find(n => n.id === picked) ?? first;
   const byId = new Map(view.nodes.map(n => [n.id, n]));
   const width = PAD * 2 + (view.columns - 1) * COL_W + NODE_W;
@@ -109,6 +112,7 @@ function Tree({ view, on, paused }: { view: ResearchTreeView; on: ResearchTreeHa
         </div>
       </div>
       <Detail node={node} view={view} select={setPicked} on={on} paused={paused} />
+      {view.hidden > 0 && <p class="base-note tree-more">{view.hidden} more lines of research appear as the tree reaches them.</p>}
     </div>
   );
 }
@@ -124,6 +128,7 @@ function Parts({ view, on, paused }: { view: ResearchTreeView; on: ResearchTreeH
             <small>{slot.fitted ?? 'Standard'}</small>
           </header>
           <div class="part-row">
+            {slot.parts.length === 0 && <small class="base-note">No parts known yet. Research opens them.</small>}
             {slot.parts.map(p => (
               <article class="part-card" key={p.id} data-part={p.id} data-state={p.state}>
                 <strong>{p.label}</strong>

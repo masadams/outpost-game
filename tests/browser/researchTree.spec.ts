@@ -5,7 +5,7 @@ import { completedBuilding } from '../../src/sim/construction';
 
 test.use({ viewport: { width: 1600, height: 900 }, storageState: { cookies: [], origins: [] } });
 
-test('the research tree shows every technology, explains what is missing and lists the ship parts', async ({ page }) => {
+test('the research tree shows what is known and the next step, explains what is missing and lists known parts', async ({ page }) => {
   test.setTimeout(90000);
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -29,19 +29,20 @@ test('the research tree shows every technology, explains what is missing and lis
   await page.keyboard.press('p');
   await page.getByRole('button', { name: 'Base', exact: true }).click();
   await page.locator('[data-base-nav="research"]').click();
-  await expect(page.locator('.tree-node')).toHaveCount(32);
+  // Only what is done and the next step from it: later lines stay hidden until the tree reaches them.
   await expect(page.locator('[data-tech="materials"]')).toHaveAttribute('data-state', 'done');
   await expect(page.locator('[data-tech="extraction"]')).toHaveAttribute('data-state', 'ready');
-  await page.locator('[data-tech="ionics"]').click();
-  await expect(page.locator('.tree-detail')).toContainText('Needs Orbital propulsion and Thermal engineering first');
+  await expect(page.locator('[data-tech="ionics"]')).toHaveCount(0);
+  await expect(page.locator('.tree-more')).toContainText('more lines of research');
   await page.locator('[data-tech="extraction"]').click();
   await expect(page.locator('.tree-detail')).toContainText('Powered mining head');
   await page.getByRole('button', { name: 'Start research', exact: true }).click();
   await expect(page.locator('[data-tech="extraction"]')).toHaveAttribute('data-state', 'active');
   await page.getByRole('tab', { name: 'Ship parts' }).click();
   await expect(page.locator('.part-card[data-part="cargo"]')).toBeVisible();
-  await expect(page.locator('.part-card[data-part="bulkHold"]')).toContainText('Needs Bulk logistics');
+  await expect(page.locator('.part-card[data-part="bulkHold"]')).toHaveCount(0);
   await page.getByRole('tab', { name: 'Buildings' }).click();
   await expect(page.locator('.building-card[data-kind="solar"]')).toContainText('Cell engineering');
+  await expect(page.locator('.building-card[data-kind="shipyard"]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
