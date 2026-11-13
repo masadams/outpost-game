@@ -1,3 +1,4 @@
+import { studiedFinds } from '../../sim/finds';
 import { BLUEPRINTS, BUILD_TYPES, type BuildType } from '../../sim/colonyConfig';
 import type { Building } from '../../sim/colony';
 import { facilityLevel } from '../../sim/facilityStats';
@@ -77,6 +78,8 @@ export interface BuildingRow {
 export interface ResearchTreeView {
   buildings: BuildingRow[];
   nodes: TreeNode[];
+  /** Technologies not shown yet: further along than the tree has reached. */
+  hidden: number;
   edges: TreeEdge[];
   columns: number;
   rows: number;
@@ -146,15 +149,15 @@ const EARNED: Record<BuildType, string> = {
   battery: 'After your first industry',
   storage: 'After your first industry',
   fuelProcessor: 'After your first industry',
-  miningRig: 'After your first industry',
+  miningRig: 'After hauling 250 kg of ore home by hand',
   relay: 'After your first industry',
-  condenser: 'After your first industry',
+  condenser: 'After the first storm, with a fuel processor running',
   geothermal: 'Research Geoscience',
   windTurbine: 'Research Aeronautics',
   massDriver: 'Research Mass drivers',
   observatory: 'After the survey buoy data',
-  researchLab: 'After studying a find',
-  antenna: 'Once an Observatory stands',
+  researchLab: 'After analysing a piece of the storm',
+  antenna: 'After analysing a piece of the storm',
   laser: 'Once an Observatory stands',
   missile: 'From the second storm',
   shieldSmall: 'After the second storm',
@@ -193,14 +196,22 @@ function buildingRows(w: WorldState): BuildingRow[] {
       built: mine.length,
       tiers,
     };
-  });
+  // Blueprints not given yet stay out of the list: they turn up when the game hands them over.
+  }).filter(row => row.open || row.built > 0);
 }
 
 export function researchTreeView(w: WorldState): ResearchTreeView {
   const root = w.rootWorld ?? w;
   const r = root.colony.research;
   const hasLab = root.colony.buildings.some(b => b.kind === 'researchLab');
-  const nodes: TreeNode[] = TECH_IDS.map(id => {
+  // Research opens with a lab or a studied find. Before that the tree is empty; after, it shows what is done, what
+  // is under way and the next step from each, and nothing further: later techs appear as the tree reaches them.
+  const open = hasLab || studiedFinds(root).length > 0 || r.completed.length > 0;
+  const known = (id: TechId): boolean =>
+    r.completed.includes(id) || r.queue.some(p => p.tech === id)
+    || (open && TECHNOLOGIES[id].requires.every(req => r.completed.includes(req)));
+  const shown = TECH_IDS.filter(known);
+  const nodes: TreeNode[] = shown.map(id => {
     const spec = TECHNOLOGIES[id];
     const queued = r.queue.find(p => p.tech === id);
     const error = researchError(root, id);
@@ -222,11 +233,14 @@ export function researchTreeView(w: WorldState): ResearchTreeView {
       start: state === 'locked' || state === 'ready' ? { reason: error ?? (hasLab ? null : 'Build a Research lab first') } : null,
     };
   });
-  const edges: TreeEdge[] = TECH_IDS.flatMap(to => TECHNOLOGIES[to].requires.map(from => ({ from, to, done: r.completed.includes(from) })));
+  const edges: TreeEdge[] = shown.flatMap(to => TECHNOLOGIES[to].requires
+    .filter(from => shown.includes(from))
+    .map(from => ({ from, to, done: r.completed.includes(from) })));
   // Slots for systems a new player does not have are left out, so nothing is listed that cannot be fitted.
   const slots = PART_SLOTS.filter(slot => partSlotVisible(slot)).map(slot => {
     const fittedId = root.ship.equipment.find(id => UPGRADES[id].slot === slot) ?? null;
-    const parts: PartRow[] = UPGRADE_IDS.filter(id => UPGRADES[id].slot === slot).map(id => {
+    // Only parts whose technology is known: the rest are a surprise for later.
+    const parts: PartRow[] = UPGRADE_IDS.filter(id => UPGRADES[id].slot === slot && r.completed.includes(UPGRADES[id].tech)).map(id => {
       const spec = UPGRADES[id];
       const known = r.completed.includes(spec.tech);
       const fitted = root.ship.equipment.includes(id);
@@ -245,9 +259,9 @@ export function researchTreeView(w: WorldState): ResearchTreeView {
     });
     return { slot, label: SLOT_LABELS[slot], fitted: fittedId ? UPGRADES[fittedId].label : null, parts };
   });
-  const cols = Math.max(...nodes.map(n => n.col)) + 1;
-  const rows = Math.max(...nodes.map(n => n.row)) + 1;
-  return { buildings: buildingRows(w), nodes, edges, columns: cols, rows, hasLab, slots };
+  const cols = nodes.length ? Math.max(...nodes.map(n => n.col)) + 1 : 1;
+  const rows = nodes.length ? Math.max(...nodes.map(n => n.row)) + 1 : 1;
+  return { buildings: buildingRows(w), nodes, edges, columns: cols, rows, hasLab, slots, hidden: TECH_IDS.length - nodes.length };
 }
 
 export { isFindTech };

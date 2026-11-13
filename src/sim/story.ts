@@ -126,7 +126,7 @@ export const MEMORIES: readonly Memory[] = [
     id: 'miningRig', title: 'Mining rig', blueprint: 'miningRig',
     chapter: 'waking',
     text: 'So far every kilogram has come down in the lander\'s hold. There are seams in the ground near the base, and I remember the rig that works them.',
-    when: w => done(w, 'industry') && (w.unloaded >= 250 || surveyed(w, 'frost')),
+    when: w => done(w, 'industry') && w.unloaded >= 250,
   },
   {
     id: 'relay', title: 'Power relay', blueprint: 'relay',
@@ -138,7 +138,8 @@ export const MEMORIES: readonly Memory[] = [
     id: 'condenser', title: 'Air condenser', blueprint: 'condenser',
     chapter: 'waking',
     text: 'The fuel plant uses more water than I can haul. Selene\'s air is thin, but there is water in it, and a condenser can draw it out.',
-    when: w => done(w, 'industry') && built(w, 'fuelProcessor'),
+    // Later than the other early blueprints: after the first storm, once the fuel plant has been running a while.
+    when: w => done(w, 'storm') && built(w, 'fuelProcessor'),
   },
   {
     id: 'buoy', title: 'The buoy',

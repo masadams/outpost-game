@@ -32,16 +32,29 @@ describe('the earned sequence', () => {
     expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig']);
     w.colony.buildings = [1, 2, 3, 4, 5].map(i => completedBuilding(i, i === 5 ? 'fuelProcessor' : 'solar', 0.02 * i, w));
     stepStory(w);
-    expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'relay', 'condenser']);
+    // The air condenser waits for the first storm, even with a fuel plant running.
+    expect(menu()).toEqual(['solar', 'battery', 'storage', 'refinery', 'fuelProcessor', 'miningRig', 'relay']);
 
+    // The Frost trip opens one thing: the Observatory. Not the lab, not the antenna.
+    const before = menu().length;
     w.exploration.surveyed.push('frost');
     expect(menu()).toContain('observatory');
-    expect(menu()).toContain('researchLab');
-    expect(menu()).not.toContain('laser');
+    expect(menu().length).toBe(before + 1);
 
     w.colony.buildings.push(completedBuilding(1, 'observatory', 0.1, w));
     expect(menu()).toContain('laser');
+    expect(menu()).not.toContain('antenna');
     expect(menu()).not.toContain('missile');
+
+    // The first storm brings the condenser; analysing a piece of it brings the lab and the antenna.
+    w.objectives.completed.push('storm');
+    stepStory(w);
+    expect(menu()).toContain('condenser');
+    expect(menu()).not.toContain('researchLab');
+    w.objectives.completed.push('analysis');
+    w.storm.analysed = true;
+    expect(menu()).toContain('researchLab');
+    expect(menu()).toContain('antenna');
 
     w.storm.wave = 2;
     expect(menu()).toContain('missile');

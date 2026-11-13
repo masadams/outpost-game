@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld } from '../src/sim/world';
+import { completedBuilding } from '../src/sim/construction';
 import { researchTreeView } from '../src/ui/base/researchTreeView';
 import { researchError } from '../src/sim/research';
 import { TECH_IDS } from '../src/sim/progressionConfig';
@@ -14,18 +15,31 @@ function day() {
 }
 
 describe('research tree view', () => {
-  it('has a node for every technology, laid out on a grid, and an edge per prerequisite', () => {
-    const view = researchTreeView(day());
+  it('shows nothing before research opens, and every technology once all is done, laid out on a grid', () => {
+    expect(researchTreeView(day()).nodes).toEqual([]);
+    const w = day();
+    w.colony.research.completed.push(...TECH_IDS);
+    const view = researchTreeView(w);
     expect(view.nodes).toHaveLength(TECH_IDS.length);
+    expect(view.hidden).toBe(0);
     const seen = new Set(view.nodes.map(n => `${n.col},${n.row}`));
     expect(seen.size).toBe(view.nodes.length);
     expect(view.edges.length).toBeGreaterThan(20);
   });
 
-  it('says what a find-gated tech needs, and what a later one needs first', () => {
-    const view = researchTreeView(day());
-    expect(view.nodes.find(n => n.id === 'materials')!.line).toMatch(/Needs a find: Pieces of the storm/);
-    expect(view.nodes.find(n => n.id === 'ionics')!.line).toMatch(/Needs .* first/);
+  it('shows what is done and the next step from it, and hides the rest', () => {
+    const w = day();
+    w.colony.buildings.push(completedBuilding(1, 'researchLab', 0.2, w));
+    w.colony.research.completed.push('materials');
+    const view = researchTreeView(w);
+    const ids = view.nodes.map(n => n.id);
+    expect(ids).toContain('materials');
+    expect(ids).toContain('propulsion');
+    expect(ids).toContain('extraction');
+    expect(ids).not.toContain('combat');
+    expect(ids).not.toContain('ionics');
+    expect(view.hidden).toBe(TECH_IDS.length - ids.length);
+    expect(view.nodes.find(n => n.id === 'propulsion')!.line).toMatch(/Needs a find|lab|Start|materials/i);
   });
 
   it('opens later techs by prerequisites alone once the tree reaches them', () => {
@@ -44,8 +58,8 @@ describe('research tree view', () => {
     expect(view.nodes.find(n => n.id === 'materials')!.unlocks.join(' ')).toMatch(/Cargo rack|Impact armour/);
     const hold = view.slots.find(s => s.slot === 'hold')!;
     expect(hold.parts.find(p => p.id === 'cargo')!.state).toBe('ready');
-    expect(hold.parts.find(p => p.id === 'bulkHold')!.state).toBe('locked');
-    expect(hold.parts.find(p => p.id === 'bulkHold')!.reason).toMatch(/Needs Bulk logistics/);
+    // A part whose research is not done is not listed at all.
+    expect(hold.parts.find(p => p.id === 'bulkHold')).toBeUndefined();
   });
 });
 
@@ -53,13 +67,16 @@ describe('building upgrade tree', () => {
   it('lists every building with two tiers, the techs each needs, and what is already built', () => {
     const w = day();
     const view = researchTreeView(w);
-    expect(view.buildings.length).toBeGreaterThanOrEqual(20);
+    // Only blueprints already given are listed.
+    expect(view.buildings.map(b => b.kind)).toEqual(['solar', 'refinery']);
+    w.colony.buildings.push(completedBuilding(9, 'droneBay', 0.4, w));
+    expect(researchTreeView(w).buildings.find(b => b.kind === 'droneBay')!.open).toBe(false);
     const solar = view.buildings.find(b => b.kind === 'solar')!;
     expect(solar.tiers.map(t => t.tier)).toEqual([2, 3]);
     expect(solar.tiers[0].needs.map(n => n.label)).toEqual(['Infrastructure upgrades']);
     expect(solar.tiers[1].needs.map(n => n.label)).toEqual(['Advanced facility systems', 'Cell engineering']);
     expect(solar.tiers[0].effect).toMatch(/power/);
-    expect(view.buildings.find(b => b.kind === 'droneBay')!.open).toBe(false);
+
   });
 
   it('tier III needs the family technology on top of Advanced facility systems', async () => {

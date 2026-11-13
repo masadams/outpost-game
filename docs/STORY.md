@@ -29,9 +29,9 @@ All need the first refinery, rig or fuel plant to have run. Each has a second tr
 | Battery | Night falls at the pad | 200 kg delivered |
 | Fuel processor | The lander is under 60% fuel | 150 kg delivered |
 | Storage | The depot is half full, or a material is 60% full | 300 kg delivered |
-| Mining rig | 250 kg delivered by hand | The survey buoy is reached |
+| Mining rig | 250 kg delivered by hand | |
 | Power relay | The base has five buildings | |
-| Air condenser | A fuel processor is built | |
+| Air condenser | The first storm is over, with a fuel processor built | |
 
 Later blueprints (Observatory, turrets, shields, domes and so on) keep their existing event triggers.
 
